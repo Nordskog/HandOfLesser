@@ -3,7 +3,45 @@
 #
 
 # Add source to this project's executable.
-add_executable (HandOfLesser "HandOfLesser.cpp" "HandOfLesser.h")
+add_executable (
+	HandOfLesser 
+	
+	"HandOfLesser.cpp" 
+	"HandOfLesser.h" 
+	
+	"InstanceHolder.cpp" 
+	"InstanceHolder.h" 
+	
+	"XrUtils.cpp"
+	"XrUtils.h"
+ 
+	"HandTracking.cpp" 
+	"HandTracking.h" 
+	
+	"HandTrackingInterface.cpp"
+	"HandTrackingInterface.h" 
+	
+	"TrackedHand.cpp" 
+	"TrackedHand.h" 
+	
+	"HandOfLesserCore.h" 
+	"HandOfLesserCore.cpp"
+
+)
+
+target_link_libraries(
+	HandOfLesser 
+	
+	openxr_loader
+	d3d11
+	openxr-hpp
+)
+
+target_compile_definitions(HandOfLesser PUBLIC XR_USE_PLATFORM_WIN32)
+target_compile_definitions(HandOfLesser PUBLIC XR_USE_GRAPHICS_API_D3D11)
+target_compile_definitions(HandOfLesser PUBLIC XR_KHR_D3D11_enable)
+target_compile_definitions(HandOfLesser PUBLIC NOMINMAX)
+target_compile_definitions(HandOfLesser PUBLIC WIN32_LEAN_AND_MEAN)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET HandOfLesser PROPERTY CXX_STANDARD 20)
