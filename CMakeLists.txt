@@ -10,6 +10,10 @@ if (POLICY CMP0141)
 endif()
 
 project ("HandOfLesser")
+set(CMAKE_CXX_STANDARD 14)
+
 
 # Include sub-projects.
+add_subdirectory ("openxr_sdk")
 add_subdirectory ("HandOfLesser")
+
