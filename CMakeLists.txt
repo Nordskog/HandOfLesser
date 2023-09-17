@@ -12,6 +12,8 @@ endif()
 project ("HandOfLesser")
 set(CMAKE_CXX_STANDARD 14)
 
+add_library(openxr-hpp INTERFACE)
+target_include_directories(openxr-hpp INTERFACE vendor/openxr-hpp)
 
 # Include sub-projects.
 add_subdirectory ("openxr_sdk")
