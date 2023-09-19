@@ -6,26 +6,26 @@
 add_executable (
 	HandOfLesser 
 	
-	"HandOfLesser.cpp" 
-	"HandOfLesser.h" 
-	
-	"InstanceHolder.cpp" 
-	"InstanceHolder.h" 
-	
-	"XrUtils.cpp"
-	"XrUtils.h"
- 
-	"HandTracking.cpp" 
-	"HandTracking.h" 
-	
-	"HandTrackingInterface.cpp"
-	"HandTrackingInterface.h" 
-	
-	"TrackedHand.cpp" 
-	"TrackedHand.h" 
-	
-	"HandOfLesserCore.h" 
-	"HandOfLesserCore.cpp"
+	"src/HandOfLesser.cpp" 
+	"src/HandOfLesser.h" 
+
+	"src/InstanceHolder.cpp" 
+	"src/InstanceHolder.h" 
+
+	"src/XrUtils.cpp"
+	"src/XrUtils.h"
+
+	"src/HandTracking.cpp" 
+	"src/HandTracking.h" 
+
+	"src/HandTrackingInterface.cpp"
+	"src/HandTrackingInterface.h" 
+
+	"src/TrackedHand.cpp" 
+	"src/TrackedHand.h" 
+
+	"src/HandOfLesserCore.h" 
+	"src/HandOfLesserCore.cpp"
 
 )
 
