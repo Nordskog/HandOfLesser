@@ -43,6 +43,11 @@ target_compile_definitions(HandOfLesser PUBLIC XR_KHR_D3D11_enable)
 target_compile_definitions(HandOfLesser PUBLIC NOMINMAX)
 target_compile_definitions(HandOfLesser PUBLIC WIN32_LEAN_AND_MEAN)
 
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../output/")
+set(ARCH_TARGET "win64") 
+set_target_properties(HandOfLesser PROPERTIES RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bin/${ARCH_TARGET}>)
+
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET HandOfLesser PROPERTY CXX_STANDARD 20)
 endif()

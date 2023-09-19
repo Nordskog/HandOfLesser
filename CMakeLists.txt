@@ -18,4 +18,5 @@ target_include_directories(openxr-hpp INTERFACE vendor/openxr-hpp)
 # Include sub-projects.
 add_subdirectory ("openxr_sdk")
 add_subdirectory ("HandOfLesser")
+add_subdirectory ("HandOfLesserDriver")
 
