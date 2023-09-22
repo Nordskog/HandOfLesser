@@ -11,11 +11,6 @@ endif()
 
 project ("HandOfLesserDriver")
 
-#${OPENVR_LIBRARIES}
-#${OPENVR_INCLUDE_DIR}
-
-set(OPENVR_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/openvr")
-set(OPENVR_INCLUDE_DIR "${OPENVR_LIB_DIR}/headers")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../output/drivers")
 add_definitions(-D_WIN32)
 set(ARCH_TARGET "win64") # This is where steam looks for it on windows
@@ -25,7 +20,6 @@ set(ARCH_TARGET "win64") # This is where steam looks for it on windows
 # ultimately move to steamVR drivers but this is easier while dev'ing
 
 # Include sub-projects.
-#add_subdirectory ("openvr")
 add_subdirectory("utils")
-add_subdirectory ("HandOfLesserDriver")
+add_subdirectory("HandOfLesserDriver")
 

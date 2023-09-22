@@ -104,8 +104,6 @@ vr::EVRInitError MyControllerDeviceDriver::Activate( uint32_t unObjectId )
 	// These are global across the device, and you can only have one per device.
 	vr::VRDriverInput()->CreateHapticComponent( container, "/output/haptic", &input_handles_[ MyComponent_haptic ] );
 
-	my_pose_update_thread_ = std::thread( &MyControllerDeviceDriver::MyPoseUpdateThread, this );
-
 	// We've activated everything successfully!
 	// Let's tell SteamVR that by saying we don't have any errors.
 	return vr::VRInitError_None;
@@ -138,28 +136,42 @@ void MyControllerDeviceDriver::DebugRequest( const char *pchRequest, char *pchRe
 //-----------------------------------------------------------------------------
 vr::DriverPose_t MyControllerDeviceDriver::GetPose()
 {
+	return this->mLastPose;
+}
+
+void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
+{
 	// Let's retrieve the Hmd pose to base our controller pose off.
 
 	// First, initialize the struct that we'll be submitting to the runtime to tell it we've updated our pose.
 	vr::DriverPose_t pose = { 0 };
 
+	// Constant stolen from hydra, maybe use later.
+	// However, we can also get a predicted pose directly from openxr.
+	// Probably better to use the latter.
+	pose.poseTimeOffset = -0.016f;
+
 	// These need to be set to be valid quaternions. The device won't appear otherwise.
 	pose.qWorldFromDriverRotation.w = 1.f;
 	pose.qDriverFromHeadRotation.w = 1.f;
+	// I guess this would be to align coordinate systems if they were offset.
+	// Probably won't need that for quest
 
+
+	
 	vr::TrackedDevicePose_t hmd_pose{};
 
 	// GetRawTrackedDevicePoses expects an array.
 	// We only want the hmd pose, which is at index 0 of the array so we can just pass the struct in directly, instead of in an array
-	vr::VRServerDriverHost()->GetRawTrackedDevicePoses( 0.f, &hmd_pose, 1 );
+	vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, &hmd_pose, 1);
 
 	// Get the position of the hmd from the 3x4 matrix GetRawTrackedDevicePoses returns
-	const vr::HmdVector3_t hmd_position = HmdVector3_From34Matrix( hmd_pose.mDeviceToAbsoluteTracking );
+	const vr::HmdVector3_t hmd_position = HmdVector3_From34Matrix(hmd_pose.mDeviceToAbsoluteTracking);
 	// Get the orientation of the hmd from the 3x4 matrix GetRawTrackedDevicePoses returns
-	const vr::HmdQuaternion_t hmd_orientation = HmdQuaternion_FromMatrix( hmd_pose.mDeviceToAbsoluteTracking );
+	const vr::HmdQuaternion_t hmd_orientation = HmdQuaternion_FromMatrix(hmd_pose.mDeviceToAbsoluteTracking);
 
 	// pitch the controller 90 degrees so the face of the controller is facing towards us
-	const vr::HmdQuaternion_t offset_orientation = HmdQuaternion_FromEulerAngles( 0.f, DEG_TO_RAD(90.f), 0.f );
+	const vr::HmdQuaternion_t offset_orientation = HmdQuaternion_FromEulerAngles(0.f, DEG_TO_RAD(90.f), 0.f);
 
 	// Set the pose orientation to the hmd orientation with the offset applied.
 	pose.qRotation = hmd_orientation * offset_orientation;
@@ -171,13 +183,27 @@ vr::DriverPose_t MyControllerDeviceDriver::GetPose()
 	};
 
 	// Rotate our offset by the hmd quaternion (so the controllers are always facing towards us), and add then add the position of the hmd to put it into position.
-	const vr::HmdVector3_t position = hmd_position + ( offset_position * hmd_orientation );
+	const vr::HmdVector3_t position = hmd_position + (offset_position * hmd_orientation);
+
+	
 
 	// copy our position to our pose
-	pose.vecPosition[ 0 ] = position.v[ 0 ];
-	pose.vecPosition[ 1 ] = position.v[ 1 ];
-	pose.vecPosition[ 2 ] = position.v[ 2 ];
+	pose.vecPosition[0] = packet->position.v[0];
+	pose.vecPosition[1] = packet->position.v[1];
+	pose.vecPosition[2] = packet->position.v[2];
 
+	pose.qRotation = packet->qRotation;
+	/*
+	// Positions are relative to hMD?
+	vr::HmdVector3_t controllerPosition = packet->position;
+
+	controllerPosition = hmd_position + controllerPosition;
+	pose.vecPosition[0] = controllerPosition.v[0];
+	pose.vecPosition[1] = controllerPosition.v[1];
+	pose.vecPosition[2] = controllerPosition.v[2];
+
+	pose.qRotation = hmd_orientation * packet->qRotation;
+	*/
 	// The pose we provided is valid.
 	// This should be set is
 	pose.poseIsValid = true;
@@ -192,19 +218,16 @@ vr::DriverPose_t MyControllerDeviceDriver::GetPose()
 	// and update the icons to inform the user accordingly.
 	pose.result = vr::TrackingResult_Running_OK;
 
-	return pose;
+	// Store the pose somewhere
+	this->mLastPose = pose;
 }
 
-void MyControllerDeviceDriver::MyPoseUpdateThread()
+void MyControllerDeviceDriver::SubmitPose()
 {
-	while ( is_active_ )
+	if (this->is_active_)
 	{
 		// Inform the vrserver that our tracked device's pose has updated, giving it the pose returned by our GetPose().
-		vr::VRServerDriverHost()->TrackedDevicePoseUpdated( my_controller_index_, GetPose(), sizeof( vr::DriverPose_t ) );
-
-		// Update our pose every five milliseconds.
-		// In reality, you should update the pose whenever you have new data from your device.
-		std::this_thread::sleep_for( std::chrono::milliseconds( 5 ) );
+		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(my_controller_index_, GetPose(), sizeof(vr::DriverPose_t));
 	}
 }
 
@@ -225,14 +248,6 @@ void MyControllerDeviceDriver::EnterStandby()
 //-----------------------------------------------------------------------------
 void MyControllerDeviceDriver::Deactivate()
 {
-	// Let's join our pose thread that's running
-	// by first checking then setting is_active_ to false to break out
-	// of the while loop, if it's running, then call .join() on the thread
-	if ( is_active_.exchange( false ) )
-	{
-		my_pose_update_thread_.join();
-	}
-
 	// unassign our controller index (we don't want to be calling vrserver anymore after Deactivate() has been called
 	my_controller_index_ = vr::k_unTrackedDeviceIndexInvalid;
 }

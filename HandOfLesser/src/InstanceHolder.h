@@ -19,6 +19,7 @@ class InstanceHolder
         xr::UniqueDynamicInstance mInstance;
         xr::UniqueDynamicSession mSession;
         xr::UniqueDynamicSpace mLocalSpace;
+        xr::UniqueDynamicSpace mStageSpace;
         xr::DispatchLoaderDynamic mDispatcher;
 
 	private:

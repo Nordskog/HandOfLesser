@@ -5,8 +5,10 @@
 #include <string>
 
 #include "openvr_driver.h"
+#include <HandOfLesserCommon.h>
 #include <atomic>
 #include <thread>
+
 
 enum MyComponent
 {
@@ -41,6 +43,10 @@ public:
 
 	vr::DriverPose_t GetPose() override;
 
+	void UpdatePose( HOL::HandTransformPacket* packet );
+
+	void SubmitPose();
+
 	void Deactivate() override;
 
 	// ----- Functions we declare ourselves below -----
@@ -63,5 +69,6 @@ private:
 	std::array< vr::VRInputComponentHandle_t, MyComponent_MAX > input_handles_;
 
 	std::atomic< bool > is_active_;
-	std::thread my_pose_update_thread_;
+
+	vr::DriverPose_t mLastPose;
 };

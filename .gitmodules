@@ -1,6 +1,6 @@
 [submodule "openxr_sdk"]
 	path = openxr_sdk
 	url = https://github.com/KhronosGroup/OpenXR-SDK.git
-[submodule "HandOfLesserDriver/openvr"]
-	path = HandOfLesserDriver/openvr
+[submodule "openvr"]
+	path = openvr
 	url = https://github.com/ValveSoftware/openvr.git

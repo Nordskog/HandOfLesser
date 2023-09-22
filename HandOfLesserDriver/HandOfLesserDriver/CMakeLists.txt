@@ -16,11 +16,21 @@ add_library(${DRIVER_NAME} SHARED
 message( "\${CMAKE_RUNTIME_OUTPUT_DIRECTORY}: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" )
 message( "\${TARGET_NAME}: ${TARGET_NAME}" )
 message( "\${ARCH_TARGET}: ${ARCH_TARGET}" )
+message( "\${OPENVR_LIBRARIES}: ${OPENVR_LIBRARIES}" )
 
 # This is so we can build directly to "<binary_dir>/<target_name>/<platform>/<arch>/<driver_name>.<dll/so>"
 set_target_properties(${DRIVER_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME}/bin/${ARCH_TARGET}>)
 
-target_link_libraries(${DRIVER_NAME} PRIVATE ${OPENVR_LIBRARIES} util_driverlog util_vrmath)
+target_link_libraries(
+    ${DRIVER_NAME}
+    PRIVATE 
+    
+    ${OPENVR_LIBRARIES} 
+    util_driverlog 
+    util_vrmath
+    HandOfLesserCommon
+
+)
 target_include_directories(${DRIVER_NAME} PRIVATE ${OPENVR_INCLUDE_DIR})
 
 # Copy driver assets to output folder

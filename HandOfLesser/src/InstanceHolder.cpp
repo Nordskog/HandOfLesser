@@ -32,16 +32,16 @@ int InstanceHolder::mainLoop()
         pollEvent(this->mInstance.get(), this->mDispatcher);
         xr::Time time = getXrTimeNow(this->mInstance.get(), this->mDispatcher);
 
-        std::cout << "Iteration: " << frameNum << "\n";
+        //std::cout << "Iteration: " << frameNum << "\n";
 
         if (this->mCallback != nullptr)
         {
-            std::cout << "Will call callback" << std::endl;
+            //std::cout << "Will call callback" << std::endl;
             this->mCallback->onFrame(time.get());
         }
 
         // Must manually sleep since we aren't waiting on a frame.
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
     }
 
@@ -101,6 +101,9 @@ void InstanceHolder::initSpaces()
 {
     this->mLocalSpace = this->mSession->createReferenceSpaceUnique(
         xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Local, xr::Posef{}}, this->mDispatcher);
+
+    mStageSpace = this->mSession->createReferenceSpaceUnique(
+        xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Stage, xr::Posef{}}, this->mDispatcher);
 }
 
 void InstanceHolder::beginSession()

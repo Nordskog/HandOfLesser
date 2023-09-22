@@ -19,6 +19,10 @@ vr::EVRInitError MyDeviceProvider::Init( vr::IVRDriverContext *pDriverContext )
 	my_left_controller_device_ = std::make_unique< MyControllerDeviceDriver >( vr::TrackedControllerRole_LeftHand );
 	my_right_controller_device_ = std::make_unique< MyControllerDeviceDriver >( vr::TrackedControllerRole_RightHand );
 
+
+	this->mTransport.init(9006);	// Hardcoded for now, needs to be negotaited somehow
+	my_pose_update_thread_ = std::thread(&MyDeviceProvider::ReceiveDataThread, this);
+
 	// Now we need to tell vrserver about our controllers.
 	// The first argument is the serial number of the device, which must be unique across all devices.
 	// We get it from our driver settings when we instantiate,
@@ -98,6 +102,63 @@ void MyDeviceProvider::RunFrame()
 	}
 }
 
+void MyDeviceProvider::ReceiveDataThread()
+{
+	while (this-mActive)
+	{
+		HOL::NativePacket* rawPacket = this->mTransport.receive();
+
+		switch (rawPacket->packetType)
+		{
+			case HOL::NativePacketType::HandTransform:
+			{
+				HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*) rawPacket;
+
+				MyControllerDeviceDriver* controller;
+				if (packet->hand == vr::ETrackedControllerRole::TrackedControllerRole_LeftHand)
+				{
+					controller = this->my_left_controller_device_.get();
+					/*
+					DriverLog("Got position: %.2f, %.2f, %.2f ",
+						packet->position.v[0],
+						packet->position.v[1],
+						packet->position.v[2]
+					);
+					*/
+				}
+				else
+				{
+					controller = this->my_right_controller_device_.get();
+				}
+
+				controller->UpdatePose(packet);
+				controller->SubmitPose();
+				
+				break;
+		
+			}
+
+			default:
+			{
+				// Invalid packet type!
+			}
+		}
+	}
+
+
+
+	/*
+	while (is_active_)
+	{
+		// Inform the vrserver that our tracked device's pose has updated, giving it the pose returned by our GetPose().
+		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(my_controller_index_, GetPose(), sizeof(vr::DriverPose_t));
+
+		// Update our pose every five milliseconds.
+		// In reality, you should update the pose whenever you have new data from your device.
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	}*/
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: This function is called when the system enters a period of inactivity.
 // The devices might want to turn off their displays or go into a low power mode to preserve them.
@@ -121,6 +182,15 @@ void MyDeviceProvider::LeaveStandby()
 //-----------------------------------------------------------------------------
 void MyDeviceProvider::Cleanup()
 {
+	// Let's join our pose thread that's running
+	// by first checking then setting is_active_ to false to break out
+	// of the while loop, if it's running, then call .join() on the thread
+	//if (is_active_.exchange(false))
+	this->mActive = false;
+	{
+		my_pose_update_thread_.join();
+	}
+
 	// Our controller devices will have already deactivated. Let's now destroy them.
 	my_left_controller_device_ = nullptr;
 	my_right_controller_device_ = nullptr;

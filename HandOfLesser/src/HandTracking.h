@@ -9,6 +9,7 @@ class HandTracking
 	public:
 		void init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session);
 		void updateHands(xr::UniqueDynamicSpace& space, XrTime time);
+		HOL::HandTransformPacket getNativePacket(XrHandEXT side);
 
 	private:
 		void initHands(xr::UniqueDynamicSession& session);

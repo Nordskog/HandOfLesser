@@ -12,11 +12,32 @@ endif()
 project ("HandOfLesser")
 set(CMAKE_CXX_STANDARD 14)
 
+## Needed for OpenXR
 add_library(openxr-hpp INTERFACE)
 target_include_directories(openxr-hpp INTERFACE vendor/openxr-hpp)
 
+## Needed for OpenVR
+set(OPENVR_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/openvr")
+set(OPENVR_INCLUDE_DIR "${OPENVR_LIB_DIR}/headers")
+
+message( "\${PLATFORM}: ${PLATFORM}" )
+
+find_library(OPENVR_LIBRARIES
+  NAMES
+    openvr_api
+  PATHS
+    ${OPENVR_LIB_DIR}/bin
+    ${OPENVR_LIB_DIR}/lib
+  PATH_SUFFIXES
+    win64
+  NO_DEFAULT_PATH
+  NO_CMAKE_FIND_ROOT_PATH
+)
+
 # Include sub-projects.
-add_subdirectory ("openxr_sdk")
-add_subdirectory ("HandOfLesser")
-add_subdirectory ("HandOfLesserDriver")
+add_subdirectory("openxr_sdk")
+add_subdirectory("openvr")
+add_subdirectory("HandOfLesserCommon")
+add_subdirectory("HandOfLesser")
+add_subdirectory("HandOfLesserDriver")
 

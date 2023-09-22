@@ -31,11 +31,18 @@ add_executable (
 
 target_link_libraries(
 	HandOfLesser 
+	PRIVATE
 	
+	HandOfLesserCommon
+	${OPENVR_LIBRARIES}
 	openxr_loader
 	d3d11
 	openxr-hpp
 )
+
+target_link_libraries(HandOfLesser PRIVATE ${OPENVR_LIBRARIES})
+target_include_directories(HandOfLesser PRIVATE ${OPENVR_INCLUDE_DIR})
+
 
 target_compile_definitions(HandOfLesser PUBLIC XR_USE_PLATFORM_WIN32)
 target_compile_definitions(HandOfLesser PUBLIC XR_USE_GRAPHICS_API_D3D11)
