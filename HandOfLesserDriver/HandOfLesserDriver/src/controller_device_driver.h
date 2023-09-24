@@ -18,6 +18,8 @@ enum MyComponent
 	MyComponent_trigger_value,
 	MyComponent_trigger_click,
 
+	MyComponent_system_click,
+
 	MyComponent_haptic,
 
 	MyComponent_MAX
@@ -42,6 +44,8 @@ public:
 	void DebugRequest( const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize ) override;
 
 	vr::DriverPose_t GetPose() override;
+
+	void UpdateData(HOL::HandTransformPacket* packet);
 
 	void UpdatePose( HOL::HandTransformPacket* packet );
 
@@ -71,4 +75,6 @@ private:
 	std::atomic< bool > is_active_;
 
 	vr::DriverPose_t mLastPose;
+
+	HOL::HandTransformPacket mLastData;
 };

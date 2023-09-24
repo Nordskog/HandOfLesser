@@ -10,7 +10,13 @@ public:
 	static void init(xr::UniqueDynamicInstance& instance);
 
 	static void createHandTracker(xr::UniqueDynamicSession& session, XrHandEXT side, XrHandTrackerEXT& handTrackerOut);
-	static void locateHandJoints(XrHandTrackerEXT& handTracker, xr::UniqueDynamicSpace& space, XrTime time, XrHandJointLocationEXT* handJointLocationsOut);
+	static void locateHandJoints(
+		XrHandTrackerEXT& handTracker,
+		xr::UniqueDynamicSpace& space,
+		XrTime time,
+		XrHandJointLocationEXT* handJointLocationsOut,
+		XrHandJointVelocityEXT* handJointVelocitiesOut,
+		XrHandTrackingAimStateFB* aimStateOut);
 	static void destroyHandTracker();
 
 private:

@@ -1,6 +1,7 @@
 {
 	"jsonid": "input_profile",
 	"controller_type": "mycontroller",
+	"compatibility_mode_controller_type": "knuckles",
 	"input_bindingui_mode": "controller_handed",
 	"input_bindingui_left": {
 		"image": "{simplecontroller}/icons/sample_controller.svg"
@@ -12,13 +13,21 @@
 		"/input/a": {
 			"binding_image_point": [ 80, 60 ],
 			"type": "button",
-			"touch": true,
+			"touch": false,
 			"order": 1
 		},
 		"/input/trigger": {
 			"binding_image_point": [ 250, 60 ],
 			"type": "trigger",
+			"click": true,
+			"value": true,
 			"order": 2
+		},
+		"/input/system": {
+			"binding_image_point": [ 80, 60 ],
+			"type": "button",
+			"click": true,
+			"order": 3
 		},
 		"/output/haptic": {
 			"binding_image_point": [ 300, 150 ],

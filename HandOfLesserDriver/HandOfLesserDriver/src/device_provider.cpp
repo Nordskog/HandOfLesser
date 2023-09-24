@@ -75,6 +75,7 @@ bool MyDeviceProvider::ShouldBlockStandbyMode()
 //-----------------------------------------------------------------------------
 void MyDeviceProvider::RunFrame()
 {
+
 	// call our devices to run a frame
 	if ( my_left_controller_device_ != nullptr )
 	{
@@ -114,26 +115,22 @@ void MyDeviceProvider::ReceiveDataThread()
 			{
 				HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*) rawPacket;
 
-				MyControllerDeviceDriver* controller;
-				if (packet->hand == vr::ETrackedControllerRole::TrackedControllerRole_LeftHand)
+				if (packet->valid == XR_TRUE)
 				{
-					controller = this->my_left_controller_device_.get();
-					/*
-					DriverLog("Got position: %.2f, %.2f, %.2f ",
-						packet->position.v[0],
-						packet->position.v[1],
-						packet->position.v[2]
-					);
-					*/
-				}
-				else
-				{
-					controller = this->my_right_controller_device_.get();
+					MyControllerDeviceDriver* controller;
+					if (packet->side == XR_HAND_LEFT_EXT)
+					{
+						controller = this->my_left_controller_device_.get();
+					}
+					else
+					{
+						controller = this->my_right_controller_device_.get();
+					}
+
+					controller->UpdateData(packet);
+					controller->SubmitPose();
 				}
 
-				controller->UpdatePose(packet);
-				controller->SubmitPose();
-				
 				break;
 		
 			}

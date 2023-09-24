@@ -45,10 +45,27 @@ void HandTrackingInterface::createHandTracker( xr::UniqueDynamicSession& session
     handleXR("xrCreateHandTrackerEXT_ call", xrCreateHandTrackerEXT_(session.get(), &createInfo, &handTrackerOut));
 }
 
-void HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker, xr::UniqueDynamicSpace& space, XrTime time, XrHandJointLocationEXT* handJointLocationsOut)
+void HandTrackingInterface::locateHandJoints
+(
+    XrHandTrackerEXT& handTracker,
+    xr::UniqueDynamicSpace& space, 
+    XrTime time, 
+    XrHandJointLocationEXT* handJointLocationsOut,
+    XrHandJointVelocityEXT* handJointVelocitiesOut,
+    XrHandTrackingAimStateFB* aimStateOut
+)
 {
+    // Data is returned directly to this struct
+    aimStateOut->type = XR_TYPE_HAND_TRACKING_AIM_STATE_FB;
+    aimStateOut->next = NULL;
+
+    XrHandJointVelocitiesEXT velocities{ XR_TYPE_HAND_JOINT_VELOCITIES_EXT };
+    velocities.next = aimStateOut; 
+    velocities.jointCount = XR_HAND_JOINT_COUNT_EXT;
+    velocities.jointVelocities = handJointVelocitiesOut;
+
     XrHandJointLocationsEXT locations{ XR_TYPE_HAND_JOINT_LOCATIONS_EXT };
-    locations.next = NULL;
+    locations.next = &velocities;
     locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
     locations.jointLocations = handJointLocationsOut;
 

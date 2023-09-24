@@ -14,11 +14,11 @@ add_library(HandOfLesserCommon
     "src/transport/nativetransport.cpp"
 
 	"src/packet/nativepacket.h"
-)
+ )
 target_link_libraries(
 	HandOfLesserCommon 
 	
-	${OPENVR_LIBRARIES}
+	openxr_loader
 	wsock32
 
 )

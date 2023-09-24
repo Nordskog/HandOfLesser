@@ -100,6 +100,8 @@ vr::EVRInitError MyControllerDeviceDriver::Activate( uint32_t unObjectId )
 	vr::VRDriverInput()->CreateScalarComponent( container, "/input/trigger/value", &input_handles_[ MyComponent_trigger_value ], vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided );
 	vr::VRDriverInput()->CreateBooleanComponent( container, "/input/trigger/click", &input_handles_[ MyComponent_trigger_click ] );
 
+	vr::VRDriverInput()->CreateBooleanComponent(container, "/input/system/click", &input_handles_[MyComponent_trigger_click]);
+
 	// Let's create our haptic component.
 	// These are global across the device, and you can only have one per device.
 	vr::VRDriverInput()->CreateHapticComponent( container, "/output/haptic", &input_handles_[ MyComponent_haptic ] );
@@ -139,6 +141,15 @@ vr::DriverPose_t MyControllerDeviceDriver::GetPose()
 	return this->mLastPose;
 }
 
+void MyControllerDeviceDriver::UpdateData(HOL::HandTransformPacket* packet)
+{
+	// packet data resides in receive buffer and will be replaced on next receive, 
+	// so make a copy now.
+	this->mLastData = *packet;
+	UpdatePose(&this->mLastData);
+
+}
+
 void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 {
 	// Let's retrieve the Hmd pose to base our controller pose off.
@@ -146,64 +157,48 @@ void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 	// First, initialize the struct that we'll be submitting to the runtime to tell it we've updated our pose.
 	vr::DriverPose_t pose = { 0 };
 
-	// Constant stolen from hydra, maybe use later.
 	// However, we can also get a predicted pose directly from openxr.
-	// Probably better to use the latter.
-	pose.poseTimeOffset = -0.016f;
+	//pose.poseTimeOffset = -0.016f;
+	//pose.poseTimeOffset = -0.008f;
+	//pose.poseTimeOffset = 0;
+	pose.poseTimeOffset = 0.016f;	// read 16ms in the future from openxr, submit acordingly
 
 	// These need to be set to be valid quaternions. The device won't appear otherwise.
 	pose.qWorldFromDriverRotation.w = 1.f;
 	pose.qDriverFromHeadRotation.w = 1.f;
 	// I guess this would be to align coordinate systems if they were offset.
 	// Probably won't need that for quest
-
-
 	
-	vr::TrackedDevicePose_t hmd_pose{};
-
-	// GetRawTrackedDevicePoses expects an array.
-	// We only want the hmd pose, which is at index 0 of the array so we can just pass the struct in directly, instead of in an array
-	vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, &hmd_pose, 1);
-
-	// Get the position of the hmd from the 3x4 matrix GetRawTrackedDevicePoses returns
-	const vr::HmdVector3_t hmd_position = HmdVector3_From34Matrix(hmd_pose.mDeviceToAbsoluteTracking);
-	// Get the orientation of the hmd from the 3x4 matrix GetRawTrackedDevicePoses returns
-	const vr::HmdQuaternion_t hmd_orientation = HmdQuaternion_FromMatrix(hmd_pose.mDeviceToAbsoluteTracking);
-
-	// pitch the controller 90 degrees so the face of the controller is facing towards us
-	const vr::HmdQuaternion_t offset_orientation = HmdQuaternion_FromEulerAngles(0.f, DEG_TO_RAD(90.f), 0.f);
-
-	// Set the pose orientation to the hmd orientation with the offset applied.
-	pose.qRotation = hmd_orientation * offset_orientation;
-
-	const vr::HmdVector3_t offset_position = {
-		my_controller_role_ == vr::TrackedControllerRole_LeftHand ? -0.15f : 0.15f, // translate the controller left/right 0.15m depending on its role
-		0.1f,																		// shift it up a little to make it more in view
-		-0.5f,																		// put each controller 0.5m forward in front of the hmd so we can see it.
-	};
-
-	// Rotate our offset by the hmd quaternion (so the controllers are always facing towards us), and add then add the position of the hmd to put it into position.
-	const vr::HmdVector3_t position = hmd_position + (offset_position * hmd_orientation);
-
-	
+	float velocityMultiplier = 0.5f;
 
 	// copy our position to our pose
-	pose.vecPosition[0] = packet->position.v[0];
-	pose.vecPosition[1] = packet->position.v[1];
-	pose.vecPosition[2] = packet->position.v[2];
+	pose.vecPosition[0] = packet->location.pose.position.x;
+	pose.vecPosition[1] = packet->location.pose.position.y;
+	pose.vecPosition[2] = packet->location.pose.position.z;
 
-	pose.qRotation = packet->qRotation;
-	/*
-	// Positions are relative to hMD?
-	vr::HmdVector3_t controllerPosition = packet->position;
+	pose.qRotation.w = packet->location.pose.orientation.w;
+	pose.qRotation.x = packet->location.pose.orientation.x;
+	pose.qRotation.y = packet->location.pose.orientation.y;
+	pose.qRotation.z = packet->location.pose.orientation.z;
 
-	controllerPosition = hmd_position + controllerPosition;
-	pose.vecPosition[0] = controllerPosition.v[0];
-	pose.vecPosition[1] = controllerPosition.v[1];
-	pose.vecPosition[2] = controllerPosition.v[2];
+	// Velocity numbers are bogus on the quest 1 at least, not useful
+	//pose.vecVelocity[0] = packet->velocity.linearVelocity.x * velocityMultiplier;
+	//pose.vecVelocity[1] = packet->velocity.linearVelocity.y * velocityMultiplier;
+	//pose.vecVelocity[2] = packet->velocity.linearVelocity.z * velocityMultiplier;
+	//
+	//pose.vecAngularVelocity[0] = packet->velocity.angularVelocity.x * velocityMultiplier;
+	//pose.vecAngularVelocity[1] = packet->velocity.angularVelocity.y * velocityMultiplier;
+	//pose.vecAngularVelocity[2] = packet->velocity.angularVelocity.z * velocityMultiplier;
 
-	pose.qRotation = hmd_orientation * packet->qRotation;
-	*/
+	// Acceleration being wrong can make controllers not appear
+	pose.vecAcceleration[0] = 0;
+	pose.vecAcceleration[1] = 0;
+	pose.vecAcceleration[2] = 0;
+
+	pose.vecAngularAcceleration[0] = 0;
+	pose.vecAngularAcceleration[1] = 0;
+	pose.vecAngularAcceleration[2] = 0;
+
 	// The pose we provided is valid.
 	// This should be set is
 	pose.poseIsValid = true;
@@ -217,6 +212,8 @@ void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 	// but this can get set differently to inform the runtime about the state of the device's tracking
 	// and update the icons to inform the user accordingly.
 	pose.result = vr::TrackingResult_Running_OK;
+
+
 
 	// Store the pose somewhere
 	this->mLastPose = pose;
@@ -259,7 +256,21 @@ void MyControllerDeviceDriver::Deactivate()
 //-----------------------------------------------------------------------------
 void MyControllerDeviceDriver::MyRunFrame()
 {
+	//DriverLog("run frame");
+	/*
+	//if (this->mLastData.side == XR_HAND_LEFT_EXT)
+	{
+		DriverLog("Index value: %.2f, click: %d",
+			this->mLastData.inputs.trigger,
+			this->mLastData.inputs.triggerClick);
+	}
+
+	*/
 	// update our inputs here
+	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[MyComponent_trigger_value], this->mLastData.inputs.trigger, 0.0);
+	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[MyComponent_trigger_click], this->mLastData.inputs.triggerClick, 0.0);
+
+	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[MyComponent_system_click], this->mLastData.inputs.systemClick, 0.0);
 }
 
 
