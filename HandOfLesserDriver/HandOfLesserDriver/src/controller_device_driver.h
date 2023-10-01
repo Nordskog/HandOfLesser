@@ -45,9 +45,9 @@ public:
 
 	vr::DriverPose_t GetPose() override;
 
-	void UpdateData(HOL::HandTransformPacket* packet);
-
 	void UpdatePose( HOL::HandTransformPacket* packet );
+	void UpdateInput(HOL::ControllerInputPacket* packet);
+
 
 	void SubmitPose();
 
@@ -76,5 +76,6 @@ private:
 
 	vr::DriverPose_t mLastPose;
 
-	HOL::HandTransformPacket mLastData;
+	HOL::HandTransformPacket mLastTransformPacket;
+	HOL::ControllerInputPacket mLastInputPacket;
 };

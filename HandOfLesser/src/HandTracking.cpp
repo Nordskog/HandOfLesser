@@ -1,6 +1,7 @@
 #include "HandTracking.h"
 #include "HandTrackingInterface.h"
 #include <HandOfLesserCommon.h>
+#include "simple_gesture_detector.h"
 
 void HandTracking::init( xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session)
 {
@@ -20,14 +21,37 @@ void HandTracking::updateHands( xr::UniqueDynamicSpace& space, XrTime time )
 	this->mRightHand->updateJointLocations(space, time);
 }
 
-HOL::HandTransformPacket HandTracking::getNativePacket(XrHandEXT side)
+void HandTracking::updateInputs()
+{
+	updateSimpleGestures();
+}
+
+void HandTracking::updateSimpleGestures()
+{
+	HOL::SimpleGesture::populateGestures(this->mLeftHand.get()->mSimpleGestures, this->mLeftHand.get());
+	HOL::SimpleGesture::populateGestures(this->mRightHand.get()->mSimpleGestures, this->mRightHand.get());
+}
+
+HOL::HandTransformPacket HandTracking::getTransformPacket(XrHandEXT side)
 {
 	if (side == XrHandEXT::XR_HAND_LEFT_EXT)
 	{
-		return this->mLeftHand.get()->getNativePacket();
+		return this->mLeftHand.get()->getTransformPacket();
 	}
 	else 
 	{
-		return this->mRightHand.get()->getNativePacket();
+		return this->mRightHand.get()->getTransformPacket();
+	}
+}
+
+HOL::ControllerInputPacket HandTracking::getInputPacket(XrHandEXT side)
+{
+	if (side == XrHandEXT::XR_HAND_LEFT_EXT)
+	{
+		return this->mLeftHand.get()->getInputPacket();
+	}
+	else
+	{
+		return this->mRightHand.get()->getInputPacket();
 	}
 }

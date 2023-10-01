@@ -25,19 +25,34 @@ std::vector<const char*> HandOfLesserCore::getRequiredExtensions()
 
 void HandOfLesserCore::onFrame( XrTime time )
 {
-	time += 1000000 * 16;
+	time += 1000000 * 32;
 
 	this->mHandTracking->updateHands( this->mInstanceHolder->mStageSpace, time );
+	this->mHandTracking->updateInputs();
+
 	this->sendUpdate();
 
 }
 
 void HandOfLesserCore::sendUpdate()
 {
-	HOL::HandTransformPacket packet = this->mHandTracking->getNativePacket(XrHandEXT::XR_HAND_LEFT_EXT);
-	this->mTransport.send(9006, (char*) &packet, sizeof(HOL::HandTransformPacket));
+	{
+		HOL::HandTransformPacket packet = this->mHandTracking->getTransformPacket(XrHandEXT::XR_HAND_LEFT_EXT);
+		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::HandTransformPacket));
 
-	packet = this->mHandTracking->getNativePacket(XrHandEXT::XR_HAND_RIGHT_EXT);
-	this->mTransport.send(9006, (char*)&packet, sizeof(HOL::HandTransformPacket));
+		packet = this->mHandTracking->getTransformPacket(XrHandEXT::XR_HAND_RIGHT_EXT);
+		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::HandTransformPacket));
+	}
+
+	{
+		HOL::ControllerInputPacket packet = this->mHandTracking->getInputPacket(XrHandEXT::XR_HAND_LEFT_EXT);
+		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
+
+		packet = this->mHandTracking->getInputPacket(XrHandEXT::XR_HAND_RIGHT_EXT);
+		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
+	}
+
+
+
 
 }

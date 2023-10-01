@@ -25,4 +25,5 @@ private:
 	static PFN_xrLocateHandJointsEXT xrLocateHandJointsEXT_;
 	
 	static void initFunctions(xr::UniqueDynamicInstance& instance);
+
 };

@@ -127,12 +127,33 @@ void MyDeviceProvider::ReceiveDataThread()
 						controller = this->my_right_controller_device_.get();
 					}
 
-					controller->UpdateData(packet);
+					controller->UpdatePose(packet);
 					controller->SubmitPose();
 				}
 
 				break;
-		
+			}
+
+			case HOL::NativePacketType::ControllerInput:
+			{
+				HOL::ControllerInputPacket* packet = (HOL::ControllerInputPacket*)rawPacket;
+
+				if (packet->valid == XR_TRUE)
+				{
+					MyControllerDeviceDriver* controller;
+					if (packet->side == XR_HAND_LEFT_EXT)
+					{
+						controller = this->my_left_controller_device_.get();
+					}
+					else
+					{
+						controller = this->my_right_controller_device_.get();
+					}
+
+					controller->UpdateInput(packet);
+				}
+
+				break;
 			}
 
 			default:

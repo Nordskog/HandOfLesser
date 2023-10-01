@@ -8,15 +8,19 @@ namespace HOL
 	{
 		InvalidPacket = 100,
 		HandTransform = 500,
+		ControllerInput = 600,
 	};
 
 	struct NativePacket
 	{
-		NativePacketType packetType = NativePacketType::HandTransform;
+		NativePacketType packetType = NativePacketType::InvalidPacket;
 	};
 
-	struct ControllerInput
+	struct ControllerInputPacket
 	{
+		NativePacketType packetType = NativePacketType::ControllerInput;
+		XrBool32 valid;
+		XrHandEXT side;
 		float trigger;
 		bool triggerClick;
 		bool systemClick;
@@ -32,8 +36,6 @@ namespace HOL
 		XrHandEXT side;
 		XrHandJointLocationEXT location;
 		XrHandJointVelocityEXT velocity;
-
-		ControllerInput inputs;
 	};
 
 }

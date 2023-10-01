@@ -20,7 +20,6 @@
 			"binding_image_point": [ 250, 60 ],
 			"type": "trigger",
 			"click": true,
-			"value": true,
 			"order": 2
 		},
 		"/input/system": {

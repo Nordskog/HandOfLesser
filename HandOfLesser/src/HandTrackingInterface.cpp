@@ -6,6 +6,9 @@ PFN_xrCreateHandTrackerEXT HandTrackingInterface::xrCreateHandTrackerEXT_ = null
 PFN_xrDestroyHandTrackerEXT HandTrackingInterface::xrDestroyHandTrackerEXT_ = nullptr;
 PFN_xrLocateHandJointsEXT HandTrackingInterface::xrLocateHandJointsEXT_ = nullptr;
 
+XrPath LeftHandInteractionPath;
+XrPath RightHandInteractionPath;
+
 void HandTrackingInterface::init(xr::UniqueDynamicInstance& instance)
 {
     initFunctions( instance );
@@ -34,7 +37,6 @@ void HandTrackingInterface::initFunctions(xr::UniqueDynamicInstance& instance )
         "xrLocateHandJointsEXT", 
         (PFN_xrVoidFunction*)(&xrLocateHandJointsEXT_))
     );
-
 }
 
 void HandTrackingInterface::createHandTracker( xr::UniqueDynamicSession& session, XrHandEXT side, XrHandTrackerEXT& handTrackerOut)

@@ -46,6 +46,7 @@ MyControllerDeviceDriver::MyControllerDeviceDriver( vr::ETrackedControllerRole r
 	// "<driver_name>:". You can search this in the top search bar to find the info that you've logged.
 	DriverLog( "My Controller Model Number: %s", my_controller_model_number_.c_str() );
 	DriverLog( "My Controller Serial Number: %s", my_controller_serial_number_.c_str() );
+
 }
 
 //-----------------------------------------------------------------------------
@@ -64,6 +65,12 @@ vr::EVRInitError MyControllerDeviceDriver::Activate( uint32_t unObjectId )
 	// The properties we want, so we call this to retrieve a handle to it.
 	vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer( my_controller_index_ );
 
+	vr::VRProperties()->SetStringProperty(container, vr::Prop_RenderModelName_String, my_controller_model_number_.c_str());
+	//vr::VRProperties()->SetStringProperty(container, vr::Prop_RenderModelName_String, "C:\\Users\\Roughy\\workspace\\HandOfLesser\\output\\drivers\\simplecontroller\\resources\\rendermodels\\MyControllerModelNumber\\MyControllerModelNumber.obj");
+
+
+
+
 	// Let's begin setting up the properties now we've got our container.
 	// A list of properties available is contained in vr::ETrackedDeviceProperty.
 
@@ -72,7 +79,6 @@ vr::EVRInitError MyControllerDeviceDriver::Activate( uint32_t unObjectId )
 
 	// Let's tell SteamVR our role which we received from the constructor earlier.
 	vr::VRProperties()->SetInt32Property( container, vr::Prop_ControllerRoleHint_Int32, my_controller_role_ );
-
 
 	// Now let's set up our inputs
 
@@ -97,10 +103,10 @@ vr::EVRInitError MyControllerDeviceDriver::Activate( uint32_t unObjectId )
 	// can do it absolute.
 	// EVRScalarUnits - whether the devices has two "sides", like a joystick. This makes the range of valid inputs -1
 	// to 1. Otherwise, it's 0 to 1. We only have one "side", so ours is onesided.
-	vr::VRDriverInput()->CreateScalarComponent( container, "/input/trigger/value", &input_handles_[ MyComponent_trigger_value ], vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided );
+	//vr::VRDriverInput()->CreateScalarComponent( container, "/input/trigger/value", &input_handles_[ MyComponent_trigger_value ], vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided );
 	vr::VRDriverInput()->CreateBooleanComponent( container, "/input/trigger/click", &input_handles_[ MyComponent_trigger_click ] );
 
-	vr::VRDriverInput()->CreateBooleanComponent(container, "/input/system/click", &input_handles_[MyComponent_trigger_click]);
+	vr::VRDriverInput()->CreateBooleanComponent(container, "/input/system/click", &input_handles_[MyComponent_system_click]);
 
 	// Let's create our haptic component.
 	// These are global across the device, and you can only have one per device.
@@ -141,27 +147,22 @@ vr::DriverPose_t MyControllerDeviceDriver::GetPose()
 	return this->mLastPose;
 }
 
-void MyControllerDeviceDriver::UpdateData(HOL::HandTransformPacket* packet)
-{
-	// packet data resides in receive buffer and will be replaced on next receive, 
-	// so make a copy now.
-	this->mLastData = *packet;
-	UpdatePose(&this->mLastData);
-
-}
-
 void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 {
+	// packet data resides in receive buffer and will be replaced on next receive, 
+// so make a copy now.
+	this->mLastTransformPacket = *packet;
+
 	// Let's retrieve the Hmd pose to base our controller pose off.
 
 	// First, initialize the struct that we'll be submitting to the runtime to tell it we've updated our pose.
 	vr::DriverPose_t pose = { 0 };
 
 	// However, we can also get a predicted pose directly from openxr.
-	//pose.poseTimeOffset = -0.016f;
+	pose.poseTimeOffset = -0.016f;
 	//pose.poseTimeOffset = -0.008f;
 	//pose.poseTimeOffset = 0;
-	pose.poseTimeOffset = 0.016f;	// read 16ms in the future from openxr, submit acordingly
+	//pose.poseTimeOffset = 0.016f;	// read 16ms in the future from openxr, submit acordingly
 
 	// These need to be set to be valid quaternions. The device won't appear otherwise.
 	pose.qWorldFromDriverRotation.w = 1.f;
@@ -169,7 +170,7 @@ void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 	// I guess this would be to align coordinate systems if they were offset.
 	// Probably won't need that for quest
 	
-	float velocityMultiplier = 0.5f;
+	float velocityMultiplier = 0.2f;
 
 	// copy our position to our pose
 	pose.vecPosition[0] = packet->location.pose.position.x;
@@ -217,6 +218,11 @@ void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 
 	// Store the pose somewhere
 	this->mLastPose = pose;
+}
+
+void MyControllerDeviceDriver::UpdateInput(HOL::ControllerInputPacket* packet)
+{
+	this->mLastInputPacket = *packet;
 }
 
 void MyControllerDeviceDriver::SubmitPose()
@@ -267,10 +273,10 @@ void MyControllerDeviceDriver::MyRunFrame()
 
 	*/
 	// update our inputs here
-	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[MyComponent_trigger_value], this->mLastData.inputs.trigger, 0.0);
-	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[MyComponent_trigger_click], this->mLastData.inputs.triggerClick, 0.0);
+	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[MyComponent_trigger_value], this->mLastInputPacket.trigger, 0.0);
+	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[MyComponent_trigger_click], this->mLastInputPacket.triggerClick, 0.0);
 
-	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[MyComponent_system_click], this->mLastData.inputs.systemClick, 0.0);
+	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[MyComponent_system_click], this->mLastInputPacket.systemClick, 0.0);
 }
 
 

@@ -27,7 +27,10 @@ add_executable (
 	"src/HandOfLesserCore.h" 
 	"src/HandOfLesserCore.cpp"
 
-)
+	"src/simple_gesture.h"
+
+	"src/simple_gesture_detector.h"
+	"src/simple_gesture_detector.cpp")
 
 target_link_libraries(
 	HandOfLesser 

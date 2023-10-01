@@ -4,6 +4,9 @@
 #include <iostream>
 #include <utility>
 
+using namespace HOL;
+using namespace HOL::SimpleGesture;
+
 TrackedHand::TrackedHand(xr::UniqueDynamicSession& session, XrHandEXT side)
 {
 	init(session, side);
@@ -39,7 +42,7 @@ void TrackedHand::updateJointLocations( xr::UniqueDynamicSpace& space, XrTime ti
 	}
 }
 
-HOL::HandTransformPacket TrackedHand::getNativePacket()
+HOL::HandTransformPacket TrackedHand::getTransformPacket()
 {
 	HOL::HandTransformPacket packet;
 
@@ -47,25 +50,23 @@ HOL::HandTransformPacket TrackedHand::getNativePacket()
 	packet.side = this->mSide;
 	packet.location = this->mLocation;
 	packet.velocity = this->mVelocity;
-	if (packet.valid)
-	{
-		packet.inputs.trigger = this->mAimState.pinchStrengthIndex;
-		packet.inputs.triggerClick = packet.inputs.trigger >= 1.0f;
 
-		// Hand infront of face with open hand
-		if (((this->mAimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB) == XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB))
-		{
-			
-			packet.inputs.systemClick = true;
-		}
-	}
-	else
-	{
-		packet.inputs.trigger = 0;
-		packet.inputs.triggerClick = false;
+	return packet;
+}
 
-		packet.inputs.systemClick = false;
-	}
+HOL::ControllerInputPacket TrackedHand::getInputPacket()
+{
+	HOL::ControllerInputPacket packet;
+
+	packet.valid = this->mPoseValid;
+	packet.side = this->mSide;
+
+	packet.trigger = this->mSimpleGestures[SimpleGestureType::IndexFingerPinch].value;
+	packet.triggerClick = this->mSimpleGestures[SimpleGestureType::IndexFingerPinch].click;
+	packet.systemClick = this->mSimpleGestures[SimpleGestureType::OpenHandFacingFace].click;
+
+	{
+
 
 
 	return packet;
