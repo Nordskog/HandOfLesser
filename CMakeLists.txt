@@ -14,13 +14,17 @@ set(CMAKE_CXX_STANDARD 14)
 
 ## Needed for OpenXR
 add_library(openxr-hpp INTERFACE)
-target_include_directories(openxr-hpp INTERFACE vendor/openxr-hpp)
+target_include_directories(openxr-hpp INTERFACE lib/openxr-hpp)
 
 ## Needed for OpenVR
-set(OPENVR_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/openvr")
+set(OPENVR_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/openvr")
 set(OPENVR_INCLUDE_DIR "${OPENVR_LIB_DIR}/headers")
 
-message( "\${PLATFORM}: ${PLATFORM}" )
+message( "\${OPENVR_LIB_DIR}: ${OPENVR_LIB_DIR}" )
+message( "\${OPENVR_INCLUDE_DIR}: ${OPENVR_INCLUDE_DIR}" )
+
+# Doesn't update unless explicitly cleared first. gg'
+unset(OPENVR_LIBRARIES CACHE) 
 
 find_library(OPENVR_LIBRARIES
   NAMES
@@ -34,9 +38,11 @@ find_library(OPENVR_LIBRARIES
   NO_CMAKE_FIND_ROOT_PATH
 )
 
+message( "\${OPENVR_LIBRARIES}: ${OPENVR_LIBRARIES}" )
+
 # Include sub-projects.
-add_subdirectory("openxr_sdk")
-add_subdirectory("openvr")
+add_subdirectory("lib/openxr_sdk")
+add_subdirectory("lib/openvr")
 add_subdirectory("HandOfLesserCommon")
 add_subdirectory("HandOfLesser")
 add_subdirectory("HandOfLesserDriver")

@@ -1,6 +1,6 @@
 [submodule "openxr_sdk"]
-	path = openxr_sdk
+	path = lib/openxr_sdk
 	url = https://github.com/KhronosGroup/OpenXR-SDK.git
 [submodule "openvr"]
-	path = openvr
+	path = lib/openvr
 	url = https://github.com/ValveSoftware/openvr.git
