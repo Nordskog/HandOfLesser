@@ -22,35 +22,6 @@ void InstanceHolder::init()
     this->initSpaces();
 }
 
-int InstanceHolder::mainLoop()
-{
-    int frameNum = 0;
-
-    while (1)
-    {
-        ++frameNum;
-        pollEvent(this->mInstance.get(), this->mDispatcher);
-        xr::Time time = getXrTimeNow(this->mInstance.get(), this->mDispatcher);
-
-        //std::cout << "Iteration: " << frameNum << "\n";
-
-        if (this->mCallback != nullptr)
-        {
-            //std::cout << "Will call callback" << std::endl;
-            this->mCallback->onFrame(time.get());
-        }
-
-        // Must manually sleep since we aren't waiting on a frame.
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
-
-    }
-
-    this->mSession->requestExitSession(this->mDispatcher);
-    this->mSession->endSession(this->mDispatcher);
-
-    return 0;
-}
-
 void InstanceHolder::initInstance()
 {
     // We don't enable any 
@@ -72,7 +43,7 @@ void InstanceHolder::initInstance()
     // Update the dispatch now that we have an instance
     this->mDispatcher = xr::DispatchLoaderDynamic::createFullyPopulated(this->mInstance.get(), &::xrGetInstanceProcAddr);
 
-    pollEvent(this->mInstance.get(), this->mDispatcher);
+    pollEvent();
 }
 
 void InstanceHolder::initSession()
@@ -94,7 +65,7 @@ void InstanceHolder::initSession()
 
     this->mSession = this->mInstance->createSessionUnique(createInfo, this->mDispatcher);
 
-    pollEvent(this->mInstance.get(), this->mDispatcher);
+    pollEvent();
 }
 
 void InstanceHolder::initSpaces()
@@ -106,6 +77,17 @@ void InstanceHolder::initSpaces()
         xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Stage, xr::Posef{}}, this->mDispatcher);
 }
 
+void InstanceHolder::pollEvent()
+{
+    pollEventInternal(this->mInstance.get(), this->mDispatcher);
+}
+
+void InstanceHolder::endSession()
+{
+    this->mSession->requestExitSession(this->mDispatcher);
+    this->mSession->endSession(this->mDispatcher);
+}
+
 void InstanceHolder::beginSession()
 {
     auto viewConfigType = xr::ViewConfigurationType::PrimaryStereo;
@@ -113,7 +95,7 @@ void InstanceHolder::beginSession()
     // Begin session
     this->mSession->beginSession({ viewConfigType }, this->mDispatcher);
 
-    pollEvent(this->mInstance.get(), this->mDispatcher);
+    this->pollEvent();
 }
 
 void InstanceHolder::enumerateLayers()
@@ -159,5 +141,10 @@ void InstanceHolder::initExtensions()
 void InstanceHolder::setCallback(XrEventsInterface* callback)
 {
     this->mCallback = callback;
+}
+
+XrTime InstanceHolder::getTime()
+{
+    return getXrTimeNow(this->mInstance.get(), this->mDispatcher).get();
 }
 

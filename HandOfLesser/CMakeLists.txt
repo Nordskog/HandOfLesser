@@ -30,7 +30,16 @@ add_executable (
 	"src/simple_gesture.h"
 
 	"src/simple_gesture_detector.h"
-	"src/simple_gesture_detector.cpp")
+	"src/simple_gesture_detector.cpp" 
+	
+	"src/user_interface.h"
+	"src/user_interface.cpp"
+
+	"src/settings_global.h"
+
+ "src/settings_global.cpp")
+
+find_package(OpenGL REQUIRED)
 
 target_link_libraries(
 	HandOfLesser 
@@ -41,11 +50,17 @@ target_link_libraries(
 	openxr_loader
 	d3d11
 	openxr-hpp
+	openxr-common 
+	glfw
+	imgui
+	${OPENGL_LIBRARY}
 )
 
 target_link_libraries(HandOfLesser PRIVATE ${OPENVR_LIBRARIES})
 target_include_directories(HandOfLesser PRIVATE ${OPENVR_INCLUDE_DIR})
 
+# openxr math functions live here
+#target_include_directories(HandOfLesser PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../lib/openxr_sdk/src/common)
 
 target_compile_definitions(HandOfLesser PUBLIC XR_USE_PLATFORM_WIN32)
 target_compile_definitions(HandOfLesser PUBLIC XR_USE_GRAPHICS_API_D3D11)

@@ -1,7 +1,9 @@
 #include "HandOfLesserCore.h"
+#include <thread>
 
 void HandOfLesserCore::init( int serverPort )
 {
+	
 	this->mInstanceHolder = std::make_unique<InstanceHolder>();
 	this->mInstanceHolder->init();
 	this->mInstanceHolder->beginSession();
@@ -10,12 +12,14 @@ void HandOfLesserCore::init( int serverPort )
 	this->mHandTracking->init(this->mInstanceHolder->mInstance, this->mInstanceHolder->mSession);
 
 	this->mTransport.init(serverPort);
+	
+	this->mUserInterface = std::make_unique<UserInterface>();
+	this->mUserInterface.get()->init();
 }
 
 void HandOfLesserCore::start()
 {
-	this->mInstanceHolder->setCallback(this);
-	this->mInstanceHolder->mainLoop();
+	this->mainLoop();
 }
 
 std::vector<const char*> HandOfLesserCore::getRequiredExtensions()
@@ -23,15 +27,37 @@ std::vector<const char*> HandOfLesserCore::getRequiredExtensions()
 	return std::vector<const char*>();
 }
 
-void HandOfLesserCore::onFrame( XrTime time )
+void HandOfLesserCore::mainLoop()
 {
+	while (1)
+	{
+		doOpenXRStuff();
+
+		this->mUserInterface.get()->onFrame();
+		if (this->mUserInterface.get()->shouldClose())
+		{
+			break;
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(2));
+	}
+
+	std::cout << "Exiting loop" << std::endl;
+}
+
+void HandOfLesserCore::doOpenXRStuff()
+{
+	XrTime time = this->mInstanceHolder.get()->getTime();
 	time += 1000000 * 32;
 
-	this->mHandTracking->updateHands( this->mInstanceHolder->mStageSpace, time );
+	this->mInstanceHolder.get()->pollEvent();
+
+	this->mHandTracking->updateHands(this->mInstanceHolder->mStageSpace, time);
 	this->mHandTracking->updateInputs();
 
 	this->sendUpdate();
 
+	return;
 }
 
 void HandOfLesserCore::sendUpdate()
@@ -51,8 +77,4 @@ void HandOfLesserCore::sendUpdate()
 		packet = this->mHandTracking->getInputPacket(XrHandEXT::XR_HAND_RIGHT_EXT);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
 	}
-
-
-
-
 }

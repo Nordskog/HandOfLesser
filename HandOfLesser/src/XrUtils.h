@@ -42,3 +42,11 @@ template <typename Dispatch> void pollEvent(xr::Instance instance, Dispatch&& d)
 }
 
 bool handleXR(std::string what, XrResult res);
+
+XrQuaternionf quaternionFromEulerAnglesDegrees(XrVector3f degrees);
+XrQuaternionf quaternionFromEulerAnglesDegrees(float x, float y, float z);
+XrQuaternionf quaternionFromEulerAngles(float x, float y, float z);
+float degreesToRadians(float degrees);
+
+XrVector3f flipTranslation(XrVector3f trans);
+XrVector3f flipRotation(XrVector3f trans);

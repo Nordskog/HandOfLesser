@@ -13,8 +13,10 @@ class InstanceHolder
         InstanceHolder();
         void init();
         void beginSession();
-        int mainLoop();
+        void pollEvent();
+        void endSession();
         void setCallback(XrEventsInterface* callback);
+        XrTime getTime();
 
         xr::UniqueDynamicInstance mInstance;
         xr::UniqueDynamicSession mSession;
@@ -40,7 +42,7 @@ class InstanceHolder
         void initSession();
         void initSpaces();
 
-        template <typename Dispatch> void pollEvent(xr::Instance instance, Dispatch&& d)
+        template <typename Dispatch> void pollEventInternal(xr::Instance instance, Dispatch&& d)
         {
             while (1)
             {
