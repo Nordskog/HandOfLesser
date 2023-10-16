@@ -159,7 +159,7 @@ void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 	vr::DriverPose_t pose = { 0 };
 
 	// However, we can also get a predicted pose directly from openxr.
-	pose.poseTimeOffset = -0.016f;
+	pose.poseTimeOffset = -0.032f;
 	//pose.poseTimeOffset = -0.008f;
 	//pose.poseTimeOffset = 0;
 	//pose.poseTimeOffset = 0.016f;	// read 16ms in the future from openxr, submit acordingly
@@ -182,14 +182,27 @@ void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 	pose.qRotation.y = packet->location.pose.orientation.y;
 	pose.qRotation.z = packet->location.pose.orientation.z;
 
-	// Velocity numbers are bogus on the quest 1 at least, not useful
-	//pose.vecVelocity[0] = packet->velocity.linearVelocity.x * velocityMultiplier;
-	//pose.vecVelocity[1] = packet->velocity.linearVelocity.y * velocityMultiplier;
-	//pose.vecVelocity[2] = packet->velocity.linearVelocity.z * velocityMultiplier;
+	
+	// rotate palm joint position into grip pose orientation
+	//pose.qRotation = pose.qRotation * HmdQuaternion_FromEulerAngles(0.f, DEG_TO_RAD(90.f), 0.0);
+	//pose.qRotation = pose.qRotation * HmdQuaternion_FromEulerAngles(DEG_TO_RAD(45.f), 0.f, 0.f);
+	
+	//pose.qRotation = pose.qRotation * HmdQuaternion_FromEulerAngles(0.0, DEG_TO_RAD(-45.f), 0.f);
+
+	// The two above, but y and z; remember rotations are applied in order.
+	//pose.qRotation = pose.qRotation * HmdQuaternion_FromEulerAngles(0.f, DEG_TO_RAD(45.f), DEG_TO_RAD(90.f));
+
+	
+
+	// Velocity numbers are bogus on the quest1 ( pure noise ), but fine on quest3.
+	pose.vecVelocity[0] = packet->velocity.linearVelocity.x * velocityMultiplier;
+	pose.vecVelocity[1] = packet->velocity.linearVelocity.y * velocityMultiplier;
+	pose.vecVelocity[2] = packet->velocity.linearVelocity.z * velocityMultiplier;
 	//
-	//pose.vecAngularVelocity[0] = packet->velocity.angularVelocity.x * velocityMultiplier;
-	//pose.vecAngularVelocity[1] = packet->velocity.angularVelocity.y * velocityMultiplier;
-	//pose.vecAngularVelocity[2] = packet->velocity.angularVelocity.z * velocityMultiplier;
+	pose.vecAngularVelocity[0] = packet->velocity.angularVelocity.x * velocityMultiplier;
+	pose.vecAngularVelocity[1] = packet->velocity.angularVelocity.y * velocityMultiplier;
+	pose.vecAngularVelocity[2] = packet->velocity.angularVelocity.z * velocityMultiplier;
+
 
 	// Acceleration being wrong can make controllers not appear
 	pose.vecAcceleration[0] = 0;
