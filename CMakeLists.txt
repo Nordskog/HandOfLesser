@@ -1,7 +1,4 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
-cmake_minimum_required (VERSION 3.8)
+﻿cmake_minimum_required (VERSION 3.8)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -12,15 +9,15 @@ endif()
 project ("HandOfLesser")
 set(CMAKE_CXX_STANDARD 14)
 
-## Needed for OpenXR
+# Needed for OpenXR
 add_library(openxr-hpp INTERFACE)
 target_include_directories(openxr-hpp INTERFACE lib/openxr-hpp)
 
-## Needed for OpenXR math
+# Needed for OpenXR math
 add_library(openxr-common INTERFACE)
 target_include_directories(openxr-common INTERFACE lib/openxr_sdk/src/common)
 
-## Needed for OpenVR
+# Needed for OpenVR
 set(OPENVR_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/openvr")
 set(OPENVR_INCLUDE_DIR "${OPENVR_LIB_DIR}/headers")
 
@@ -74,10 +71,9 @@ target_link_libraries("imgui" PRIVATE glfw)
 # ----------------------------------------------------------------------
 
 # Include sub-projects.
-add_subdirectory("lib/openxr_sdk")
-add_subdirectory("lib/openvr")
-add_subdirectory("lib/glfw")
-add_subdirectory("HandOfLesserCommon")
-add_subdirectory("HandOfLesser")
-add_subdirectory("HandOfLesserDriver")
-
+add_subdirectory(lib/openxr_sdk)
+add_subdirectory(lib/openvr)
+add_subdirectory(lib/glfw)
+add_subdirectory(HandOfLesserCommon)
+add_subdirectory(HandOfLesser)
+add_subdirectory(HandOfLesserDriver)
