@@ -118,10 +118,10 @@ void MyDeviceProvider::ReceiveDataThread()
 			{
 				HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*) rawPacket;
 
-				if (packet->valid == XR_TRUE)
+				if (packet->valid)
 				{
 					MyControllerDeviceDriver* controller;
-					if (packet->side == XR_HAND_LEFT_EXT)
+					if (packet->side == HOL::HandSide::LeftHand)
 					{
 						controller = this->my_left_controller_device_.get();
 					}
@@ -141,10 +141,10 @@ void MyDeviceProvider::ReceiveDataThread()
 			{
 				HOL::ControllerInputPacket* packet = (HOL::ControllerInputPacket*)rawPacket;
 
-				if (packet->valid == XR_TRUE)
+				if (packet->valid)
 				{
 					MyControllerDeviceDriver* controller;
-					if (packet->side == XR_HAND_LEFT_EXT)
+					if (packet->side == HOL::HandSide::LeftHand)
 					{
 						controller = this->my_left_controller_device_.get();
 					}

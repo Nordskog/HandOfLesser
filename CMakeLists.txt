@@ -17,10 +17,6 @@ target_include_directories(openxr-hpp INTERFACE lib/openxr-hpp)
 add_library(eigen INTERFACE)
 target_include_directories(eigen INTERFACE lib/eigen)
 
-# Needed for OpenXR math
-add_library(openxr-common INTERFACE)
-target_include_directories(openxr-common INTERFACE lib/openxr_sdk/src/common)
-
 # Needed for OpenVR
 set(OPENVR_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib/openvr")
 set(OPENVR_INCLUDE_DIR "${OPENVR_LIB_DIR}/headers")

@@ -1,6 +1,6 @@
 #pragma once
-#include <openxr/openxr_platform.h>
-#include <openxr/openxr.h>
+
+#include "../struct.h"
 
 namespace HOL
 {
@@ -19,8 +19,8 @@ namespace HOL
 	struct ControllerInputPacket
 	{
 		NativePacketType packetType = NativePacketType::ControllerInput;
-		XrBool32 valid;
-		XrHandEXT side;
+		bool valid;
+		HOL::HandSide side;
 		float trigger;
 		bool triggerClick;
 		bool systemClick;
@@ -32,10 +32,10 @@ namespace HOL
 	struct HandTransformPacket
 	{
 		NativePacketType packetType = NativePacketType::HandTransform;
-		XrBool32 valid;
-		XrHandEXT side;
-		XrHandJointLocationEXT location;
-		XrHandJointVelocityEXT velocity;
+		bool valid;
+		HOL::HandSide side;
+		HOL::PoseLocation location;
+		HOL::PoseVelocity velocity;
 	};
 
 }

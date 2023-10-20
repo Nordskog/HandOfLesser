@@ -1,11 +1,13 @@
 #include "TrackedHand.h"
 #include "HandTrackingInterface.h"
 #include "settings_global.h"
-#include "XrUtils.h"
-
-#include <xr_linear.h>
+#include "display_global.h"
+#include "math_utils.h"
 #include <iostream>
 #include <utility>
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 using namespace HOL;
 using namespace HOL::SimpleGesture;
@@ -23,13 +25,13 @@ void TrackedHand::init( xr::UniqueDynamicSession& session,  XrHandEXT side )
 
 void TrackedHand::updateJointLocations( xr::UniqueDynamicSpace& space, XrTime time ) 
 {
-	HandTrackingInterface::locateHandJoints(this->mHandTracker, space, time, this->mJointocations, this->mJointVelocities, &this->mAimState);
+	HandTrackingInterface::locateHandJoints(this->mHandTracker, space, time, this->mJointLocations, this->mJointVelocities, &this->mAimState);
 
-	this->mLocation = this->mJointocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
-	this->mVelocity = this->mJointVelocities[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
+	auto palmLocation = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
+	auto palmVelocity = this->mJointVelocities[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 
 	// Orientation is not going to be set without position for hand tracking.
-	this->mPoseValid = (this->mLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) == XR_SPACE_LOCATION_POSITION_VALID_BIT;
+	this->mPoseValid = (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) == XR_SPACE_LOCATION_POSITION_VALID_BIT;
 	/*
 	if (this->mSide == XrHandEXT::XR_HAND_RIGHT_EXT)
 	{
@@ -45,45 +47,38 @@ void TrackedHand::updateJointLocations( xr::UniqueDynamicSpace& space, XrTime ti
 			);
 	}*/
 
+	this->mPalmVelocity.linearVelocity = HOL::toEigenVector(palmVelocity.linearVelocity);
+	this->mPalmVelocity.angularVelocity = HOL::toEigenVector(palmVelocity.angularVelocity);
+
 	//printf("%.2f, %.2f, %.2f\n", HOL::settings::OrientationOffset.x, HOL::settings::OrientationOffset.y, HOL::settings::OrientationOffset.z);
 
 	// Transform location to grip pose
 	// left
-	XrVector3f gripRotationOffset = XrVector3f(
+	Eigen::Vector3f gripRotationOffset = Eigen::Vector3f(
 		45 + 15,
 		0,
 		-90 + 13
 	);
 
 	// left
-	XrVector3f gripTranslationOffset = XrVector3f(
+	Eigen::Vector3f gripTranslationOffset = Eigen::Vector3f(
 		0.021,
 		0.009,
 		-0.097
 	);
 
 	// Transform location to grip pose
-	XrVector3f mainRotationOffset;
-	XrVector3f secondaryRotationOffset;
-
-	XrVector3f mainTranslationOffset;
-	XrVector3f secondaryTranslationOffset;
+	Eigen::Vector3f mainRotationOffset = gripRotationOffset + HOL::settings::OrientationOffset;
+	Eigen::Vector3f mainTranslationOffset = gripTranslationOffset + HOL::settings::PositionOffset;
 
 	if (this->mSide == XR_HAND_LEFT_EXT)
 	{
-		mainRotationOffset = gripRotationOffset;
-		secondaryRotationOffset = HOL::settings::OrientationOffset;
-
-		mainTranslationOffset = gripTranslationOffset;
-		secondaryTranslationOffset = HOL::settings::PositionOffset;
+		// Base offsets are for the left hand
 	}
 	else
 	{
-		mainRotationOffset = flipRotation(gripRotationOffset);
-		secondaryRotationOffset = flipRotation(HOL::settings::OrientationOffset);
-
-		mainTranslationOffset = flipTranslation(gripTranslationOffset);
-		secondaryTranslationOffset = flipTranslation(HOL::settings::PositionOffset);
+		mainRotationOffset = flipHandRotation(mainRotationOffset);
+		mainTranslationOffset = flipHandTranslation(mainTranslationOffset);
 	}
 
 	//printf("%.2f, %.2f, %.2f, %.2f\n", offset.x, offset.y, offset.z, offset.w);
@@ -92,37 +87,41 @@ void TrackedHand::updateJointLocations( xr::UniqueDynamicSpace& space, XrTime ti
 	// Rot
 	///////////
 
+	Eigen::Quaternionf rawOrientation = HOL::toEigenQuaternion(palmLocation.pose.orientation);
+	Eigen::Quaternionf rotationOffsetQuat = HOL::quaternionFromEulerAnglesDegrees(mainRotationOffset);
 
-	XrQuaternionf originalOrientation = this->mLocation.pose.orientation;
-	XrVector3f rotationOffset;
-	XrVector3f_Add(&rotationOffset, &mainRotationOffset, &secondaryRotationOffset);
-	XrQuaternionf rotationOffsetQuat = quaternionFromEulerAnglesDegrees(rotationOffset);
-
-	XrQuaternionf_Multiply(&this->mLocation.pose.orientation, &rotationOffsetQuat, &originalOrientation);
+	this->mPalmLocation.orientation = rawOrientation * rotationOffsetQuat;
 
 	//////////////
 	// Trans
 	/////////////
 
-	XrVector3f originalPosition = this->mLocation.pose.position;
-	XrVector3f positionOffset;
-	XrVector3f rotatedPositionOffset;
-	XrVector3f_Add(&positionOffset, &mainTranslationOffset, &secondaryTranslationOffset);
-
-	XrQuaternionf_RotateVector3f(&rotatedPositionOffset, &this->mLocation.pose.orientation, &positionOffset);
-	XrVector3f_Add(&this->mLocation.pose.position, &originalPosition, &rotatedPositionOffset);
+	Eigen::Vector3f rawPosition = HOL::toEigenVector(palmLocation.pose.position);
+	Eigen::Vector3f rotationOffsetLocal = this->mPalmLocation.orientation * mainTranslationOffset;
+	this->mPalmLocation.position = rawPosition + rotationOffsetLocal;
 
 	if (this->mSide == XR_HAND_LEFT_EXT)
 	{
-		HOL::settings::FinalOrientationOffsetLeft = rotationOffset;
-		HOL::settings::FinalPositionOffsetLeft = positionOffset;
+		HOL::display::FinalOffsetLeft.position = mainTranslationOffset;
+		HOL::display::FinalOffsetLeft.orientation = rotationOffsetQuat;
+
+		HOL::display::RawPoseLeft.position = rawPosition;
+		HOL::display::RawPoseLeft.orientation = rawOrientation;
+
+		HOL::display::FinalPoseLeft.position = this->mPalmLocation.position;
+		HOL::display::FinalPoseLeft.orientation = this->mPalmLocation.orientation;
 	}
 	else
 	{
-		HOL::settings::FinalOrientationOffsetRight = rotationOffset;
-		HOL::settings::FinalPositionOffsetRight = positionOffset;
-	}
+		HOL::display::FinalOffsetRight.position = mainTranslationOffset;
+		HOL::display::FinalOffsetRight.orientation = rotationOffsetQuat;
 
+		HOL::display::RawPoseRight.position = rawPosition;
+		HOL::display::RawPoseRight.orientation = rawOrientation;
+
+		HOL::display::FinalPoseRight.position = this->mPalmLocation.position;
+		HOL::display::FinalPoseRight.orientation = this->mPalmLocation.orientation;
+	}
 }
 
 HOL::HandTransformPacket TrackedHand::getTransformPacket()
@@ -130,9 +129,9 @@ HOL::HandTransformPacket TrackedHand::getTransformPacket()
 	HOL::HandTransformPacket packet;
 
 	packet.valid = this->mPoseValid;
-	packet.side = this->mSide;
-	packet.location = this->mLocation;
-	packet.velocity = this->mVelocity;
+	packet.side = (HOL::HandSide) this->mSide;
+	packet.location = this->mPalmLocation;
+	packet.velocity = this->mPalmVelocity;
 
 	return packet;
 }
@@ -142,7 +141,7 @@ HOL::ControllerInputPacket TrackedHand::getInputPacket()
 	HOL::ControllerInputPacket packet;
 
 	packet.valid = this->mPoseValid;
-	packet.side = this->mSide;
+	packet.side = (HOL::HandSide) this->mSide;
 
 	packet.trigger = this->mSimpleGestures[SimpleGestureType::IndexFingerPinch].value;
 	packet.triggerClick = this->mSimpleGestures[SimpleGestureType::IndexFingerPinch].click;

@@ -169,20 +169,17 @@ void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 	pose.qDriverFromHeadRotation.w = 1.f;
 	// I guess this would be to align coordinate systems if they were offset.
 	// Probably won't need that for quest
-	
-	float velocityMultiplier = 0.2f;
 
 	// copy our position to our pose
-	pose.vecPosition[0] = packet->location.pose.position.x;
-	pose.vecPosition[1] = packet->location.pose.position.y;
-	pose.vecPosition[2] = packet->location.pose.position.z;
+	pose.vecPosition[0] = packet->location.position.x();
+	pose.vecPosition[1] = packet->location.position.y();
+	pose.vecPosition[2] = packet->location.position.z();
 
-	pose.qRotation.w = packet->location.pose.orientation.w;
-	pose.qRotation.x = packet->location.pose.orientation.x;
-	pose.qRotation.y = packet->location.pose.orientation.y;
-	pose.qRotation.z = packet->location.pose.orientation.z;
+	pose.qRotation.w = packet->location.orientation.w();
+	pose.qRotation.x = packet->location.orientation.x();
+	pose.qRotation.y = packet->location.orientation.y();
+	pose.qRotation.z = packet->location.orientation.z();
 
-	
 	// rotate palm joint position into grip pose orientation
 	//pose.qRotation = pose.qRotation * HmdQuaternion_FromEulerAngles(0.f, DEG_TO_RAD(90.f), 0.0);
 	//pose.qRotation = pose.qRotation * HmdQuaternion_FromEulerAngles(DEG_TO_RAD(45.f), 0.f, 0.f);
@@ -192,17 +189,20 @@ void MyControllerDeviceDriver::UpdatePose( HOL::HandTransformPacket* packet )
 	// The two above, but y and z; remember rotations are applied in order.
 	//pose.qRotation = pose.qRotation * HmdQuaternion_FromEulerAngles(0.f, DEG_TO_RAD(45.f), DEG_TO_RAD(90.f));
 
-	
 
-	// Velocity numbers are bogus on the quest1 ( pure noise ), but fine on quest3.
-	pose.vecVelocity[0] = packet->velocity.linearVelocity.x * velocityMultiplier;
-	pose.vecVelocity[1] = packet->velocity.linearVelocity.y * velocityMultiplier;
-	pose.vecVelocity[2] = packet->velocity.linearVelocity.z * velocityMultiplier;
+
+	// I can't test this properly. We're already using other predictions
+	float velocityMultiplier = 0.2f;
+	// Controllers will vanish if velocities are invalid? not initialized?
+	// Velocity numbers are bogus on the quest1 ( pure noise ), but fine on quest3?
+	pose.vecVelocity[0] = packet->velocity.linearVelocity.x() * velocityMultiplier;
+	pose.vecVelocity[1] = packet->velocity.linearVelocity.y() * velocityMultiplier;
+	pose.vecVelocity[2] = packet->velocity.linearVelocity.z() * velocityMultiplier;
 	//
-	pose.vecAngularVelocity[0] = packet->velocity.angularVelocity.x * velocityMultiplier;
-	pose.vecAngularVelocity[1] = packet->velocity.angularVelocity.y * velocityMultiplier;
-	pose.vecAngularVelocity[2] = packet->velocity.angularVelocity.z * velocityMultiplier;
-
+	pose.vecAngularVelocity[0] = packet->velocity.angularVelocity.x() * velocityMultiplier;
+	pose.vecAngularVelocity[1] = packet->velocity.angularVelocity.y() * velocityMultiplier;
+	pose.vecAngularVelocity[2] = packet->velocity.angularVelocity.z() * velocityMultiplier;
+	
 
 	// Acceleration being wrong can make controllers not appear
 	pose.vecAcceleration[0] = 0;
