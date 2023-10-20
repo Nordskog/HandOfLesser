@@ -21,7 +21,7 @@ vr::EVRInitError MyDeviceProvider::Init( vr::IVRDriverContext *pDriverContext )
 
 
 	this->mTransport.init(9006);	// Hardcoded for now, needs to be negotaited somehow
-	my_pose_update_thread_ = std::thread(&MyDeviceProvider::ReceiveDataThread, this);
+		my_pose_update_thread_ = std::thread(&MyDeviceProvider::ReceiveDataThread, this);
 
 	// Now we need to tell vrserver about our controllers.
 	// The first argument is the serial number of the device, which must be unique across all devices.
@@ -105,10 +105,13 @@ void MyDeviceProvider::RunFrame()
 
 void MyDeviceProvider::ReceiveDataThread()
 {
-	while (this-mActive)
+	while (this->mActive)
 	{
 		HOL::NativePacket* rawPacket = this->mTransport.receive();
-
+		if (rawPacket == nullptr)
+		{
+			continue;
+		}
 		switch (rawPacket->packetType)
 		{
 			case HOL::NativePacketType::HandTransform:
