@@ -8,6 +8,7 @@ add_library(HandOfLesserCommon STATIC
 target_link_libraries(HandOfLesserCommon PUBLIC
 	openxr_loader
 	wsock32
+	eigen
 )
 
 #set(HAND_OF_LESSER_COMMON_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")

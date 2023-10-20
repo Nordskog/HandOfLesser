@@ -22,6 +22,7 @@ target_link_libraries(HandOfLesser PRIVATE
     openxr-common
     glfw
     imgui
+    eigen
     ${OPENGL_LIBRARY}
 )
 

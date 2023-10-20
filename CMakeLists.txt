@@ -13,6 +13,10 @@ set(CMAKE_CXX_STANDARD 14)
 add_library(openxr-hpp INTERFACE)
 target_include_directories(openxr-hpp INTERFACE lib/openxr-hpp)
 
+# Eigen
+add_library(eigen INTERFACE)
+target_include_directories(eigen INTERFACE lib/eigen)
+
 # Needed for OpenXR math
 add_library(openxr-common INTERFACE)
 target_include_directories(openxr-common INTERFACE lib/openxr_sdk/src/common)

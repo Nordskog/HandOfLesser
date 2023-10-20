@@ -25,6 +25,7 @@ target_link_libraries(${DRIVER_NAME} PRIVATE
     ${OPENVR_LIBRARIES}
     util_driverlog
     util_vrmath
+    eigen
     HandOfLesserCommon
 )
 
