@@ -9,6 +9,8 @@
     src/simple_gesture_detector.cpp
     src/user_interface.cpp
     src/settings_global.cpp
+    src/math_utils.cpp
+    src/display_global.cpp
 )
 
 find_package(OpenGL REQUIRED)
@@ -19,9 +21,9 @@ target_link_libraries(HandOfLesser PRIVATE
     openxr_loader
     d3d11
     openxr-hpp
-    openxr-common
     glfw
     imgui
+    eigen
     ${OPENGL_LIBRARY}
 )
 

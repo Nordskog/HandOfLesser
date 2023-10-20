@@ -17,12 +17,12 @@ class TrackedHand
 		HOL::HandTransformPacket getTransformPacket();
 		HOL::ControllerInputPacket getInputPacket();
 
-		XrHandJointLocationEXT mJointocations[XR_HAND_JOINT_COUNT_EXT];
+		XrHandJointLocationEXT mJointLocations[XR_HAND_JOINT_COUNT_EXT];
 		XrHandJointVelocityEXT mJointVelocities[XR_HAND_JOINT_COUNT_EXT];
 		XrHandTrackingAimStateFB mAimState{ XR_TYPE_HAND_TRACKING_AIM_STATE_FB };
-		XrBool32 mPoseValid;
-		XrHandJointLocationEXT mLocation;
-		XrHandJointVelocityEXT mVelocity;
+		bool mPoseValid;
+		HOL::PoseLocation mPalmLocation;
+		HOL::PoseVelocity mPalmVelocity;
 
 		SimpleGesture::SimpleGestureState mSimpleGestures[SimpleGesture::SimpleGestureType::SIMPLE_GESTURE_MAX];
 
