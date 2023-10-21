@@ -15,3 +15,14 @@ target_include_directories(HandOfLesserCommon
 	INTERFACE include
 	PRIVATE ${OPENVR_INCLUDE_DIR}
 )
+
+add_executable(HandOfLesserCommon.Tests
+	tests/test_example.cpp
+)
+
+target_link_libraries(HandOfLesserCommon.Tests PRIVATE
+	gtest
+	gtest_main
+)
+
+gtest_discover_tests(HandOfLesserCommon.Tests)
