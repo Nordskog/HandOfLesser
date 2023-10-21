@@ -62,7 +62,8 @@ void UserInterface::onFrame()
 
 void UserInterface::updateStyles(float scale)
 {
-	scale *= 2;
+	scale *= 1.25f;
+	this->mScale = scale;
 
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -145,101 +146,121 @@ void UserInterface::windows_scale_callback(GLFWwindow* window, float xscale, flo
 	UserInterface::mCurrent->updateStyles(xscale); // xy should be the same?
 }
 
+float UserInterface::scaleSize(float size)
+{
+	return size * this->mScale;
+}
+
+void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
+{
+	const char* sideName = (side == HOL::LeftHand ? "Left" : "Right");
+	const char* windowName = (side == HOL::LeftHand ? "LeftChild" : "RightRight");
+	int width = (side == HOL::LeftHand ? ImGui::GetContentRegionAvail().x * 0.5f : 0);
+
+	ImGuiWindowFlags window_flags = 0;
+	ImGui::BeginChild(windowName, ImVec2(width, scaleSize(200)), false, window_flags);
+
+	ImGui::SeparatorText(sideName);
+	ImGui::SeparatorText("Position");
+
+	ImGui::Text(
+		"Raw   : %.3f, %.3f, %.3f",
+		HOL::display::HandTransform[side].rawPose.position.x(),
+		HOL::display::HandTransform[side].rawPose.position.y(),
+		HOL::display::HandTransform[side].rawPose.position.z()
+	);
+
+	ImGui::Text(
+		"Final : %.3f, %.3f, %.3f",
+		HOL::display::HandTransform[side].finalPose.position.x(),
+		HOL::display::HandTransform[side].finalPose.position.y(),
+		HOL::display::HandTransform[side].finalPose.position.z()
+	);
+
+	ImGui::Text(
+		"Offset: %.3f, %.3f, %.3f",
+		HOL::display::HandTransform[side].finalOffset.position.x(),
+		HOL::display::HandTransform[side].finalOffset.position.y(),
+		HOL::display::HandTransform[side].finalOffset.position.z()
+	);
+
+	ImGui::SeparatorText("Orientation");
+
+	{
+		Eigen::Vector3f asEuler
+			= HOL::display::HandTransform[side].rawPose.orientation.toRotationMatrix().eulerAngles(
+				0, 1, 2
+			);
+		ImGui::Text("Raw   : %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
+	}
+
+	{
+		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
+									  .finalPose.orientation.toRotationMatrix()
+									  .eulerAngles(0, 1, 2);
+		ImGui::Text("Final : %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
+	}
+
+	{
+		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
+									  .finalOffset.orientation.toRotationMatrix()
+									  .eulerAngles(0, 1, 2);
+		ImGui::Text("Offset: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
+	}
+
+	ImGui::EndChild();
+}
+
+void UserInterface::buildHandTransformDisplay()
+{
+	buildSingleHandTransformDisplay(HOL::LeftHand);
+	ImGui::SameLine();
+	buildSingleHandTransformDisplay(HOL::RightHand);
+}
+
 void UserInterface::buildMainInterface()
 {
 	ImGui::Begin("My First Tool", NULL, ImGuiWindowFlags_MenuBar);
+	ImGuiWindowFlags window_flags = 0;
 
-	ImGui::SeparatorText("Orientation");
-	ImGui::InputFloat("rotX", &HOL::settings::OrientationOffset.x(), 1.0f, 5.0f, "%.3f");
-	ImGui::InputFloat("rotY", &HOL::settings::OrientationOffset.y(), 1.0f, 5.0f, "%.3f");
-	ImGui::InputFloat("rotZ", &HOL::settings::OrientationOffset.z(), 1.0f, 5.0f, "%.3f");
+	ImGui::BeginChild("LeftMainWindow", ImVec2(scaleSize(500), 0), false, window_flags);
 
-	{
-		Eigen::Vector3f asEuler
-			= HOL::display::FinalOffsetLeft.orientation.toRotationMatrix().eulerAngles(0, 1, 2);
-		ImGui::Text("Left: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
-	}
+	/////////////////
+	// Offset inputs
+	/////////////////
 
-	{
-		Eigen::Vector3f asEuler
-			= HOL::display::FinalOffsetRight.orientation.toRotationMatrix().eulerAngles(0, 1, 2);
-		ImGui::Text("Right: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
-	}
+	window_flags = 0;
+	ImGui::BeginChild(
+		"TranslationInput",
+		ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, scaleSize(100)),
+		false,
+		window_flags
+	);
 
 	ImGui::SeparatorText("Translation");
 	ImGui::InputFloat("posX", &HOL::settings::PositionOffset.x(), 0.001f, 0.01f, "%.3f");
 	ImGui::InputFloat("posY", &HOL::settings::PositionOffset.y(), 0.001f, 0.01f, "%.3f");
 	ImGui::InputFloat("posZ", &HOL::settings::PositionOffset.z(), 0.001f, 0.01f, "%.3f");
 
-	ImGui::Text(
-		"Left: %.3f, %.3f, %.3f",
-		HOL::display::FinalOffsetLeft.position.x(),
-		HOL::display::FinalOffsetLeft.position.y(),
-		HOL::display::FinalOffsetLeft.position.z()
-	);
+	ImGui::EndChild();
+	ImGui::SameLine();
 
-	ImGui::Text(
-		"Right: %.3f, %.3f, %.3f",
-		HOL::display::FinalOffsetRight.position.x(),
-		HOL::display::FinalOffsetRight.position.y(),
-		HOL::display::FinalOffsetRight.position.z()
-	);
+	window_flags = 0;
+	ImGui::BeginChild("OrientationInput", ImVec2(0, scaleSize(100)), false, window_flags);
 
-	ImGui::SeparatorText("Raw position");
+	ImGui::SeparatorText("Orientation");
+	ImGui::InputFloat("rotX", &HOL::settings::OrientationOffset.x(), 1.0f, 5.0f, "%.3f");
+	ImGui::InputFloat("rotY", &HOL::settings::OrientationOffset.y(), 1.0f, 5.0f, "%.3f");
+	ImGui::InputFloat("rotZ", &HOL::settings::OrientationOffset.z(), 1.0f, 5.0f, "%.3f");
 
-	ImGui::Text(
-		"Left Pos: %.3f, %.3f, %.3f",
-		HOL::display::RawPoseLeft.position.x(),
-		HOL::display::RawPoseLeft.position.y(),
-		HOL::display::RawPoseLeft.position.z()
-	);
+	ImGui::EndChild();
 
-	{
-		Eigen::Vector3f asEuler
-			= HOL::display::RawPoseLeft.orientation.toRotationMatrix().eulerAngles(0, 1, 2);
-		ImGui::Text("Left Rot: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
-	}
+	///////////////////
+	// Hand pose
+	///////////////////
 
-	ImGui::Text(
-		"Right: %.3f, %.3f, %.3f",
-		HOL::display::RawPoseRight.position.x(),
-		HOL::display::RawPoseRight.position.y(),
-		HOL::display::RawPoseRight.position.z()
-	);
+	buildHandTransformDisplay();
 
-	{
-		Eigen::Vector3f asEuler
-			= HOL::display::RawPoseRight.orientation.toRotationMatrix().eulerAngles(0, 1, 2);
-		ImGui::Text("Right Rot: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
-	}
-
-	ImGui::SeparatorText("Final position");
-
-	ImGui::Text(
-		"Left: %.3f, %.3f, %.3f",
-		HOL::display::FinalPoseLeft.position.x(),
-		HOL::display::FinalPoseLeft.position.y(),
-		HOL::display::FinalPoseLeft.position.z()
-	);
-
-	{
-		Eigen::Vector3f asEuler
-			= HOL::display::FinalPoseLeft.orientation.toRotationMatrix().eulerAngles(0, 1, 2);
-		ImGui::Text("Left Rot: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
-	}
-
-	ImGui::Text(
-		"Right: %.3f, %.3f, %.3f",
-		HOL::display::FinalPoseRight.position.x(),
-		HOL::display::FinalPoseRight.position.y(),
-		HOL::display::FinalPoseRight.position.z()
-	);
-
-	{
-		Eigen::Vector3f asEuler
-			= HOL::display::FinalPoseRight.orientation.toRotationMatrix().eulerAngles(0, 1, 2);
-		ImGui::Text("Right Rot: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
-	}
-
+	ImGui::EndChild();
 	ImGui::End();
 }

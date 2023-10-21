@@ -6,14 +6,6 @@ namespace HOL
 {
 namespace display
 {
-HOL::PoseLocation FinalOffsetLeft;
-HOL::PoseLocation FinalOffsetRight;
-
-HOL::PoseLocation RawPoseLeft;
-HOL::PoseLocation RawPoseRight;
-
-HOL::PoseLocation FinalPoseLeft;
-HOL::PoseLocation FinalPoseRight;
-
+	HandTransformDisplay HandTransform[2];
 } // namespace display
 } // namespace HOL

@@ -104,27 +104,15 @@ void TrackedHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime tim
 	Eigen::Vector3f rotationOffsetLocal = this->mPalmLocation.orientation * mainTranslationOffset;
 	this->mPalmLocation.position = rawPosition + rotationOffsetLocal;
 
-	if (this->mSide == XR_HAND_LEFT_EXT)
 	{
-		HOL::display::FinalOffsetLeft.position = mainTranslationOffset;
-		HOL::display::FinalOffsetLeft.orientation = rotationOffsetQuat;
+		HOL::display::HandTransform[this->mSide].rawPose.position = rawPosition;
+		HOL::display::HandTransform[this->mSide].rawPose.orientation = rawOrientation;
 
-		HOL::display::RawPoseLeft.position = rawPosition;
-		HOL::display::RawPoseLeft.orientation = rawOrientation;
+		HOL::display::HandTransform[this->mSide].finalPose.position = this->mPalmLocation.position;
+		HOL::display::HandTransform[this->mSide].finalPose.orientation = this->mPalmLocation.orientation;
 
-		HOL::display::FinalPoseLeft.position = this->mPalmLocation.position;
-		HOL::display::FinalPoseLeft.orientation = this->mPalmLocation.orientation;
-	}
-	else
-	{
-		HOL::display::FinalOffsetRight.position = mainTranslationOffset;
-		HOL::display::FinalOffsetRight.orientation = rotationOffsetQuat;
-
-		HOL::display::RawPoseRight.position = rawPosition;
-		HOL::display::RawPoseRight.orientation = rawOrientation;
-
-		HOL::display::FinalPoseRight.position = this->mPalmLocation.position;
-		HOL::display::FinalPoseRight.orientation = this->mPalmLocation.orientation;
+		HOL::display::HandTransform[this->mSide].finalOffset.position = mainTranslationOffset;
+		HOL::display::HandTransform[this->mSide].finalOffset.orientation = rotationOffsetQuat;
 	}
 }
 
