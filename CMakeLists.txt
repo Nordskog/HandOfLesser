@@ -7,7 +7,7 @@ if (POLICY CMP0141)
 endif()
 
 project(HandOfLesser)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # Needed for OpenXR
 add_library(openxr-hpp INTERFACE)
