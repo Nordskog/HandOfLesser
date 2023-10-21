@@ -9,6 +9,9 @@ endif()
 project(HandOfLesser)
 set(CMAKE_CXX_STANDARD 17)
 
+# Silence C++17 deprecation warnings
+add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+
 # Needed for CTest
 enable_testing()
 
