@@ -4,16 +4,16 @@
 
 namespace HOL
 {
-	namespace display
-	{
-		HOL::PoseLocation FinalOffsetLeft;
-		HOL::PoseLocation FinalOffsetRight;
+namespace display
+{
+HOL::PoseLocation FinalOffsetLeft;
+HOL::PoseLocation FinalOffsetRight;
 
-		HOL::PoseLocation RawPoseLeft;
-		HOL::PoseLocation RawPoseRight;
+HOL::PoseLocation RawPoseLeft;
+HOL::PoseLocation RawPoseRight;
 
-		HOL::PoseLocation FinalPoseLeft;
-		HOL::PoseLocation FinalPoseRight;
+HOL::PoseLocation FinalPoseLeft;
+HOL::PoseLocation FinalPoseRight;
 
-	}
-}
+} // namespace display
+} // namespace HOL

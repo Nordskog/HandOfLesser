@@ -6,145 +6,157 @@
 
 InstanceHolder::InstanceHolder()
 {
-    this->mCallback = nullptr;
+	this->mCallback = nullptr;
 }
 
 void InstanceHolder::init()
 {
 	this->mDispatcher = xr::DispatchLoaderDynamic{};
 
-    this->enumerateLayers();
-    this->enumerateExtensions();
-    this->initExtensions();
+	this->enumerateLayers();
+	this->enumerateExtensions();
+	this->initExtensions();
 
-    this->initInstance();
-    this->initSession();
-    this->initSpaces();
+	this->initInstance();
+	this->initSession();
+	this->initSpaces();
 }
 
 void InstanceHolder::initInstance()
 {
-    // We don't enable any 
-    std::vector<const char*> enabledLayers;
+	// We don't enable any
+	std::vector<const char*> enabledLayers;
 
-    this->mInstance = xr::createInstanceUnique(
-        xr::InstanceCreateInfo{
-        xr::InstanceCreateFlagBits::None,
-            xr::ApplicationInfo{"HandOfLesser", 1, // app version
-            "", 0,                     // engine version
-            xr::Version::current()},
-            uint32_t(enabledLayers.size()),
-            enabledLayers.data(),
-            uint32_t(this->mEnabledExtensions.size()),
-            this->mEnabledExtensions.data(),
-    },
-        this->mDispatcher);
+	this->mInstance = xr::createInstanceUnique(
+		xr::InstanceCreateInfo{
+			xr::InstanceCreateFlagBits::None,
+			xr::ApplicationInfo{
+				"HandOfLesser",
+				1, // app version
+				"",
+				0, // engine version
+				xr::Version::current()},
+			uint32_t(enabledLayers.size()),
+			enabledLayers.data(),
+			uint32_t(this->mEnabledExtensions.size()),
+			this->mEnabledExtensions.data(),
+		},
+		this->mDispatcher
+	);
 
-    // Update the dispatch now that we have an instance
-    this->mDispatcher = xr::DispatchLoaderDynamic::createFullyPopulated(this->mInstance.get(), &::xrGetInstanceProcAddr);
+	// Update the dispatch now that we have an instance
+	this->mDispatcher = xr::DispatchLoaderDynamic::createFullyPopulated(
+		this->mInstance.get(), &::xrGetInstanceProcAddr
+	);
 
-    pollEvent();
+	pollEvent();
 }
 
 void InstanceHolder::initSession()
 {
-    this->mSystemId = this->mInstance->getSystem(xr::SystemGetInfo{xr::FormFactor::HeadMountedDisplay}, this->mDispatcher);
+	this->mSystemId = this->mInstance->getSystem(
+		xr::SystemGetInfo{xr::FormFactor::HeadMountedDisplay}, this->mDispatcher
+	);
 
-    xr::SessionCreateInfo createInfo{xr::SessionCreateFlagBits::None, this->mSystemId};
-    xr::GraphicsBindingD3D11KHR D3D11Binding;
-    D3D11Binding.type = xr::StructureType::GraphicsBindingD3D11KHR;
+	xr::SessionCreateInfo createInfo{xr::SessionCreateFlagBits::None, this->mSystemId};
+	xr::GraphicsBindingD3D11KHR D3D11Binding;
+	D3D11Binding.type = xr::StructureType::GraphicsBindingD3D11KHR;
 
-    auto requirements = this->mInstance->getD3D11GraphicsRequirementsKHR(this->mSystemId, this->mDispatcher);
-    createInfo.next = get(D3D11Binding);
+	auto requirements
+		= this->mInstance->getD3D11GraphicsRequirementsKHR(this->mSystemId, this->mDispatcher);
+	createInfo.next = get(D3D11Binding);
 
-    ID3D11Device* Device;
-    D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0x00, NULL, 0, D3D11_SDK_VERSION, &Device, NULL, NULL);
-    D3D11Binding.device = Device;
+	ID3D11Device* Device;
+	D3D11CreateDevice(
+		NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0x00, NULL, 0, D3D11_SDK_VERSION, &Device, NULL, NULL
+	);
+	D3D11Binding.device = Device;
 
-    createInfo.systemId = this->mSystemId;
+	createInfo.systemId = this->mSystemId;
 
-    this->mSession = this->mInstance->createSessionUnique(createInfo, this->mDispatcher);
+	this->mSession = this->mInstance->createSessionUnique(createInfo, this->mDispatcher);
 
-    pollEvent();
+	pollEvent();
 }
 
 void InstanceHolder::initSpaces()
 {
-    this->mLocalSpace = this->mSession->createReferenceSpaceUnique(
-        xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Local, xr::Posef{}}, this->mDispatcher);
+	this->mLocalSpace = this->mSession->createReferenceSpaceUnique(
+		xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Local, xr::Posef{}}, this->mDispatcher
+	);
 
-    mStageSpace = this->mSession->createReferenceSpaceUnique(
-        xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Stage, xr::Posef{}}, this->mDispatcher);
+	mStageSpace = this->mSession->createReferenceSpaceUnique(
+		xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Stage, xr::Posef{}}, this->mDispatcher
+	);
 }
 
 void InstanceHolder::pollEvent()
 {
-    pollEventInternal(this->mInstance.get(), this->mDispatcher);
+	pollEventInternal(this->mInstance.get(), this->mDispatcher);
 }
 
 void InstanceHolder::endSession()
 {
-    this->mSession->requestExitSession(this->mDispatcher);
-    this->mSession->endSession(this->mDispatcher);
+	this->mSession->requestExitSession(this->mDispatcher);
+	this->mSession->endSession(this->mDispatcher);
 }
 
 void InstanceHolder::beginSession()
 {
-    auto viewConfigType = xr::ViewConfigurationType::PrimaryStereo;
+	auto viewConfigType = xr::ViewConfigurationType::PrimaryStereo;
 
-    // Begin session
-    this->mSession->beginSession({ viewConfigType }, this->mDispatcher);
+	// Begin session
+	this->mSession->beginSession({viewConfigType}, this->mDispatcher);
 
-    this->pollEvent();
+	this->pollEvent();
 }
 
 void InstanceHolder::enumerateLayers()
 {
-    this->mLayers = xr::enumerateApiLayerPropertiesToVector(this->mDispatcher);
-    std::cout << "Enumerating layers:" << std::endl;
-    std::cout << "Number of layers: " << this->mLayers.size() << std::endl;
-    for (const auto& prop : this->mLayers)
-    {
-        std::cout << prop.layerName << " - " << prop.description << std::endl;
-    }
+	this->mLayers = xr::enumerateApiLayerPropertiesToVector(this->mDispatcher);
+	std::cout << "Enumerating layers:" << std::endl;
+	std::cout << "Number of layers: " << this->mLayers.size() << std::endl;
+	for (const auto& prop : this->mLayers)
+	{
+		std::cout << prop.layerName << " - " << prop.description << std::endl;
+	}
 }
 
 void InstanceHolder::enumerateExtensions()
 {
-    this->mExtensions = xr::enumerateInstanceExtensionPropertiesToVector(nullptr, this->mDispatcher);
-    std::cout << "Enumerating extensions:" << std::endl;
-    std::cout << "Number of extensions: " << this->mExtensions.size() << std::endl;
-    for (auto& extension : this->mExtensions)
-    {
-        std::cout << extension.extensionName << std::endl;
-    }
+	this->mExtensions
+		= xr::enumerateInstanceExtensionPropertiesToVector(nullptr, this->mDispatcher);
+	std::cout << "Enumerating extensions:" << std::endl;
+	std::cout << "Number of extensions: " << this->mExtensions.size() << std::endl;
+	for (auto& extension : this->mExtensions)
+	{
+		std::cout << extension.extensionName << std::endl;
+	}
 }
 
 void InstanceHolder::initExtensions()
 {
-    this->mEnabledExtensions = {
-     XR_EXT_HAND_TRACKING_EXTENSION_NAME,
-     XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME,    // Gestures
-     XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME,   // Used to get current time.
-     XR_KHR_D3D11_ENABLE_EXTENSION_NAME
-    };
+	this->mEnabledExtensions = {
+		XR_EXT_HAND_TRACKING_EXTENSION_NAME,
+		XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME,						  // Gestures
+		XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME, // Used to get current time.
+		XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
 
-    for (auto& extension : this->mEnabledExtensions)
-    {
-        if ( !hasExtension(this->mExtensions, extension) )
-        {
-            std::cout << "Missing required extensions: " << extension << std::endl;
-        }
-    }
+	for (auto& extension : this->mEnabledExtensions)
+	{
+		if (!hasExtension(this->mExtensions, extension))
+		{
+			std::cout << "Missing required extensions: " << extension << std::endl;
+		}
+	}
 }
 
 void InstanceHolder::setCallback(XrEventsInterface* callback)
 {
-    this->mCallback = callback;
+	this->mCallback = callback;
 }
 
 XrTime InstanceHolder::getTime()
 {
-    return getXrTimeNow(this->mInstance.get(), this->mDispatcher).get();
+	return getXrTimeNow(this->mInstance.get(), this->mDispatcher).get();
 }
-
