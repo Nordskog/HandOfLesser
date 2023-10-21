@@ -1,12 +1,12 @@
 {
    "driver_handoflesser" : {
       "enable" : true,
-      "mycontroller_model_number" : "HandOfLesser"
+      "controller_model_number" : "HandOfLesser"
    },
    "driver_handoflesser_left_controller": {
-      "mycontroller_serial_number": "HandOfLesserL"
+      "controller_serial_number": "HandOfLesserL"
    },
    "driver_handoflesser_right_controller": {
-      "mycontroller_serial_number": "HandOfLesserR"
+      "controller_serial_number": "HandOfLesserR"
    }
 }

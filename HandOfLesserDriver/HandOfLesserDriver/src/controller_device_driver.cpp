@@ -15,8 +15,8 @@ static const char* my_controller_right_settings_section = "driver_handoflesser_l
 static const char* my_controller_left_settings_section = "driver_handoflesser_right_controller";
 
 // These are the keys we want to retrieve the values for in the settings
-static const char* my_controller_settings_key_model_number = "handoflesser_model_number";
-static const char* my_controller_settings_key_serial_number = "handoflesser_serial_number";
+static const char* my_controller_settings_key_model_number = "controller_model_number";
+static const char* my_controller_settings_key_serial_number = "controller_serial_number";
 
 MyControllerDeviceDriver::MyControllerDeviceDriver(vr::ETrackedControllerRole role)
 {
@@ -56,8 +56,8 @@ MyControllerDeviceDriver::MyControllerDeviceDriver(vr::ETrackedControllerRole ro
 	// prefix of
 	// "<driver_name>:". You can search this in the top search bar to find the info that you've
 	// logged.
-	DriverLog("My Controller Model Number: %s", my_controller_model_number_.c_str());
-	DriverLog("My Controller Serial Number: %s", my_controller_serial_number_.c_str());
+	DriverLog("HandOfLesser controller model number: %s", my_controller_model_number_.c_str());
+	DriverLog("HandOfLesser controller serial number: %s", my_controller_serial_number_.c_str());
 }
 
 //-----------------------------------------------------------------------------
