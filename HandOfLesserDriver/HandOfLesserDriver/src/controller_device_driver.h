@@ -9,7 +9,6 @@
 #include <atomic>
 #include <thread>
 
-
 enum MyComponent
 {
 	MyComponent_a_touch,
@@ -33,21 +32,22 @@ enum MyComponent
 class MyControllerDeviceDriver : public vr::ITrackedDeviceServerDriver
 {
 public:
-	MyControllerDeviceDriver( vr::ETrackedControllerRole role );
+	MyControllerDeviceDriver(vr::ETrackedControllerRole role);
 
-	vr::EVRInitError Activate( uint32_t unObjectId ) override;
+	vr::EVRInitError Activate(uint32_t unObjectId) override;
 
 	void EnterStandby() override;
 
-	void *GetComponent( const char *pchComponentNameAndVersion ) override;
+	void* GetComponent(const char* pchComponentNameAndVersion) override;
 
-	void DebugRequest( const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize ) override;
+	void DebugRequest(
+		const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize
+	) override;
 
 	vr::DriverPose_t GetPose() override;
 
-	void UpdatePose( HOL::HandTransformPacket* packet );
+	void UpdatePose(HOL::HandTransformPacket* packet);
 	void UpdateInput(HOL::ControllerInputPacket* packet);
-
 
 	void SubmitPose();
 
@@ -55,24 +55,24 @@ public:
 
 	// ----- Functions we declare ourselves below -----
 
-	const std::string &MyGetSerialNumber();
+	const std::string& MyGetSerialNumber();
 
 	void MyRunFrame();
-	void MyProcessEvent( const vr::VREvent_t &vrevent );
+	void MyProcessEvent(const vr::VREvent_t& vrevent);
 
 	void MyPoseUpdateThread();
 
 private:
-	std::atomic< vr::TrackedDeviceIndex_t > my_controller_index_;
+	std::atomic<vr::TrackedDeviceIndex_t> my_controller_index_;
 
 	vr::ETrackedControllerRole my_controller_role_;
 
 	std::string my_controller_model_number_;
 	std::string my_controller_serial_number_;
 
-	std::array< vr::VRInputComponentHandle_t, MyComponent_MAX > input_handles_;
+	std::array<vr::VRInputComponentHandle_t, MyComponent_MAX> input_handles_;
 
-	std::atomic< bool > is_active_;
+	std::atomic<bool> is_active_;
 
 	vr::DriverPose_t mLastPose;
 

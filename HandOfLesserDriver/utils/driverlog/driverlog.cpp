@@ -4,38 +4,36 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#if !defined( WIN32 )
+#if !defined(WIN32)
 #define vsnprintf_s vsnprintf
 #endif
 
-static void DriverLogVarArgs( const char *pMsgFormat, va_list args )
+static void DriverLogVarArgs(const char* pMsgFormat, va_list args)
 {
-	char buf[ 1024 ];
-	vsnprintf_s( buf, sizeof( buf ), pMsgFormat, args );
+	char buf[1024];
+	vsnprintf_s(buf, sizeof(buf), pMsgFormat, args);
 
-	vr::VRDriverLog()->Log( buf );
+	vr::VRDriverLog()->Log(buf);
 }
 
-
-void DriverLog( const char *pMsgFormat, ... )
+void DriverLog(const char* pMsgFormat, ...)
 {
 	va_list args;
-	va_start( args, pMsgFormat );
+	va_start(args, pMsgFormat);
 
-	DriverLogVarArgs( pMsgFormat, args );
+	DriverLogVarArgs(pMsgFormat, args);
 
-	va_end( args );
+	va_end(args);
 }
 
-
-void DebugDriverLog( const char *pMsgFormat, ... )
+void DebugDriverLog(const char* pMsgFormat, ...)
 {
 #ifdef _DEBUG
 	va_list args;
-	va_start( args, pMsgFormat );
+	va_start(args, pMsgFormat);
 
-	DriverLogVarArgs( pMsgFormat, args );
+	DriverLogVarArgs(pMsgFormat, args);
 
-	va_end( args );
+	va_end(args);
 #endif
 }

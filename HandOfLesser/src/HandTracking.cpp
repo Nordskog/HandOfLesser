@@ -3,7 +3,7 @@
 #include <HandOfLesserCommon.h>
 #include "simple_gesture_detector.h"
 
-void HandTracking::init( xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session)
+void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session)
 {
 	HandTrackingInterface::init(instance);
 	this->initHands(session);
@@ -15,7 +15,7 @@ void HandTracking::initHands(xr::UniqueDynamicSession& session)
 	this->mRightHand = std::make_unique<TrackedHand>(session, XrHandEXT::XR_HAND_RIGHT_EXT);
 }
 
-void HandTracking::updateHands( xr::UniqueDynamicSpace& space, XrTime time )
+void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time)
 {
 	this->mLeftHand->updateJointLocations(space, time);
 	this->mRightHand->updateJointLocations(space, time);
@@ -28,8 +28,12 @@ void HandTracking::updateInputs()
 
 void HandTracking::updateSimpleGestures()
 {
-	HOL::SimpleGesture::populateGestures(this->mLeftHand.get()->mSimpleGestures, this->mLeftHand.get());
-	HOL::SimpleGesture::populateGestures(this->mRightHand.get()->mSimpleGestures, this->mRightHand.get());
+	HOL::SimpleGesture::populateGestures(
+		this->mLeftHand.get()->mSimpleGestures, this->mLeftHand.get()
+	);
+	HOL::SimpleGesture::populateGestures(
+		this->mRightHand.get()->mSimpleGestures, this->mRightHand.get()
+	);
 }
 
 HOL::HandTransformPacket HandTracking::getTransformPacket(XrHandEXT side)
@@ -38,7 +42,7 @@ HOL::HandTransformPacket HandTracking::getTransformPacket(XrHandEXT side)
 	{
 		return this->mLeftHand.get()->getTransformPacket();
 	}
-	else 
+	else
 	{
 		return this->mRightHand.get()->getTransformPacket();
 	}

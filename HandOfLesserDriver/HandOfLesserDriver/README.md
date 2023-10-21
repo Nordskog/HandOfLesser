@@ -11,7 +11,7 @@ They get their tracking data from the current HMD position, with a few examples 
 
 ## Folder Structure
 
-`simplecontroller/` - contains resource files.
+`handoflesser/` - contains resource files.
 
 `src/` - contains source code.
 

@@ -1,4 +1,4 @@
-set(TARGET_NAME simplecontroller)
+set(TARGET_NAME handoflesser)
 
 # This is the name of the driver according to SteamVR
 set(DRIVER_NAME "driver_${TARGET_NAME}")

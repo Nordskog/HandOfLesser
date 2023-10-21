@@ -1,9 +1,8 @@
 #include "HandOfLesserCore.h"
 #include <thread>
 
-void HandOfLesserCore::init( int serverPort )
+void HandOfLesserCore::init(int serverPort)
 {
-	
 	this->mInstanceHolder = std::make_unique<InstanceHolder>();
 	this->mInstanceHolder->init();
 	this->mInstanceHolder->beginSession();
@@ -12,7 +11,7 @@ void HandOfLesserCore::init( int serverPort )
 	this->mHandTracking->init(this->mInstanceHolder->mInstance, this->mInstanceHolder->mSession);
 
 	this->mTransport.init(serverPort);
-	
+
 	this->mUserInterface = std::make_unique<UserInterface>();
 	this->mUserInterface.get()->init();
 }
@@ -63,7 +62,8 @@ void HandOfLesserCore::doOpenXRStuff()
 void HandOfLesserCore::sendUpdate()
 {
 	{
-		HOL::HandTransformPacket packet = this->mHandTracking->getTransformPacket(XrHandEXT::XR_HAND_LEFT_EXT);
+		HOL::HandTransformPacket packet
+			= this->mHandTracking->getTransformPacket(XrHandEXT::XR_HAND_LEFT_EXT);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::HandTransformPacket));
 
 		packet = this->mHandTracking->getTransformPacket(XrHandEXT::XR_HAND_RIGHT_EXT);
@@ -71,7 +71,8 @@ void HandOfLesserCore::sendUpdate()
 	}
 
 	{
-		HOL::ControllerInputPacket packet = this->mHandTracking->getInputPacket(XrHandEXT::XR_HAND_LEFT_EXT);
+		HOL::ControllerInputPacket packet
+			= this->mHandTracking->getInputPacket(XrHandEXT::XR_HAND_LEFT_EXT);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
 
 		packet = this->mHandTracking->getInputPacket(XrHandEXT::XR_HAND_RIGHT_EXT);
