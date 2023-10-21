@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
 
 # Needed for CTest
+include(CTest)
 enable_testing()
 
 # Needed for GoogleTest
