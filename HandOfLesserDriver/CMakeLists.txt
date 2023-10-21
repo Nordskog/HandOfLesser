@@ -15,7 +15,7 @@ add_definitions(-D_WIN32)
 set(ARCH_TARGET "win64") # This is where steam looks for it on windows
 
 #cd to ... Steam\steamapps\common\SteamVR\bin\win64
-#./vrpathreg.exe adddriver " ... output\drivers\simplecontroller"
+#./vrpathreg.exe adddriver " ... output\drivers\handoflesser"
 # ultimately move to steamVR drivers but this is easier while dev'ing
 
 add_subdirectory(utils)

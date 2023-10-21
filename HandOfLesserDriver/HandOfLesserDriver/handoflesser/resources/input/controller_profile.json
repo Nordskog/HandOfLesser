@@ -4,47 +4,67 @@
 	"compatibility_mode_controller_type": "knuckles",
 	"input_bindingui_mode": "controller_handed",
 	"input_bindingui_left": {
-		"image": "{simplecontroller}/icons/sample_controller.svg"
+		"image": "{handoflesser}/icons/sample_controller.svg"
 	},
 	"input_bindingui_right": {
-		"image": "{simplecontroller}/icons/sample_controller.svg"
+		"image": "{handoflesser}/icons/sample_controller.svg"
 	},
 	"input_source": {
 		"/input/a": {
-			"binding_image_point": [ 80, 60 ],
+			"binding_image_point": [
+				80,
+				60
+			],
 			"type": "button",
 			"touch": false,
 			"order": 1
 		},
 		"/input/trigger": {
-			"binding_image_point": [ 250, 60 ],
+			"binding_image_point": [
+				250,
+				60
+			],
 			"type": "trigger",
 			"click": true,
 			"order": 2
 		},
 		"/input/system": {
-			"binding_image_point": [ 80, 60 ],
+			"binding_image_point": [
+				80,
+				60
+			],
 			"type": "button",
 			"click": true,
 			"order": 3
 		},
 		"/output/haptic": {
-			"binding_image_point": [ 300, 150 ],
+			"binding_image_point": [
+				300,
+				150
+			],
 			"type": "vibration",
 			"order": 4
 		},
-
 		"/pose/raw": {
 			"type": "pose",
-			"binding_image_point": [ 14, 16 ]
+			"binding_image_point": [
+				14,
+				16
+			]
 		},
 		"/pose/handgrip": {
 			"type": "pose",
-			"binding_image_point": [ 24, 86 ]
+			"binding_image_point": [
+				24,
+				86
+			]
 		},
 		"/pose/grip": {
 			"type": "pose",
-			"binding_image_point": [ 24, 86 ]
+			"binding_image_point": [
+				24,
+				86
+			]
 		}
 	},
 	"default_bindings": []
