@@ -7,15 +7,15 @@
 
 namespace HOL
 {
+	struct HandTransformDisplay
+	{
+		HOL::PoseLocation finalOffset;
+		HOL::PoseLocation rawPose;
+		HOL::PoseLocation finalPose;
+	};
+
 	namespace display
 	{
-		extern HOL::PoseLocation FinalOffsetLeft;
-		extern HOL::PoseLocation FinalOffsetRight;
-
-		extern HOL::PoseLocation RawPoseLeft;
-		extern HOL::PoseLocation RawPoseRight;
-
-		extern HOL::PoseLocation FinalPoseLeft;
-		extern HOL::PoseLocation FinalPoseRight;
+		extern HandTransformDisplay HandTransform[2];
 	}
 }
