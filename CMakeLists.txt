@@ -9,6 +9,13 @@ endif()
 project(HandOfLesser)
 set(CMAKE_CXX_STANDARD 17)
 
+# Needed for CTest
+enable_testing()
+
+# Needed for GoogleTest
+set(gtest_force_shared_crt ON)
+include(GoogleTest)
+
 # Needed for OpenXR
 add_library(openxr-hpp INTERFACE)
 target_include_directories(openxr-hpp INTERFACE lib/openxr-hpp)
@@ -61,6 +68,7 @@ target_link_libraries(imgui PRIVATE glfw)
 add_subdirectory(lib/openxr_sdk)
 add_subdirectory(lib/openvr)
 add_subdirectory(lib/glfw)
+add_subdirectory(lib/googletest)
 add_subdirectory(HandOfLesserCommon)
 add_subdirectory(HandOfLesser)
 add_subdirectory(HandOfLesserDriver)
