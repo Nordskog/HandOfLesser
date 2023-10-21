@@ -2,10 +2,9 @@
 
 namespace HOL
 {
-	bool ensureWSAStartup();
-	void printWSAError(const char* message);
-	bool initSocketWSA();
-}
 
+bool ensureWSAStartup();
+void printWSAError(const char* message);
+bool initSocketWSA();
 
-
+} // namespace HOL

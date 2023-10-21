@@ -17,7 +17,7 @@ HOL::NativePacket* HOL::NativeTransport::receive()
 	if (length > sizeof(HOL::NativePacket))
 	{
 		// Do proper checks at some point
-		return (HOL::NativePacket*) (this->mTransport.getReceiveBuffer());
+		return (HOL::NativePacket*)(this->mTransport.getReceiveBuffer());
 	}
 	else
 	{
