@@ -19,7 +19,7 @@ Before diving in, ensure your Quest is primed to stream the hand tracking data:
 Register the driver with SteamVR after building the project:
 
 ```ps1
-vrpathreg.exe .\output\drivers\handoflesser
+vrpathreg.exe adddriver ...\output\drivers\handoflesser
 ```
 
 ## Usage
