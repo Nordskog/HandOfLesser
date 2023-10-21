@@ -11,8 +11,8 @@
 class MyDeviceProvider : public vr::IServerTrackedDeviceProvider
 {
 public:
-	vr::EVRInitError Init( vr::IVRDriverContext *pDriverContext ) override;
-	const char *const *GetInterfaceVersions() override;
+	vr::EVRInitError Init(vr::IVRDriverContext* pDriverContext) override;
+	const char* const* GetInterfaceVersions() override;
 
 	void RunFrame() override;
 	void ReceiveDataThread();
@@ -28,6 +28,5 @@ private:
 	std::unique_ptr<MyControllerDeviceDriver> my_right_controller_device_;
 	std::thread my_pose_update_thread_;
 	HOL::NativeTransport mTransport;
-	bool mActive = true;	// Just so we can make the loop exit. Fix later.
-
+	bool mActive = true; // Just so we can make the loop exit. Fix later.
 };
