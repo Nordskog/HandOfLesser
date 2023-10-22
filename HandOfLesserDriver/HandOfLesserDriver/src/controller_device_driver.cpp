@@ -101,10 +101,12 @@ vr::EVRInitError ControllerDeviceDriver::Activate(uint32_t unObjectId)
 	// As well as what default bindings should be for legacy apps.
 	// Note, we can use the wildcard {<driver_name>} to match the root folder location
 	// of our driver.
-	vr::VRProperties()->SetStringProperty(
-		container, vr::Prop_InputProfilePath_String, "{handoflesser}/input/controller_profile.json"
-	);
-
+    props->SetStringProperty(container, vr::Prop_ModelNumber_String, (my_controller_role_ == vr::TrackedControllerRole_LeftHand) ? "Knuckles Left" : "Knuckles Right");
+    props->SetStringProperty(container, vr::Prop_RenderModelName_String, (my_controller_role_ == vr::TrackedControllerRole_LeftHand) ? "{indexcontroller}valve_controller_knu_1_0_left" : "{indexcontroller}valve_controller_knu_1_0_right");
+    props->SetStringProperty(container, vr::Prop_ResourceRoot_String, "indexcontroller");
+    props->SetStringProperty(container, vr::Prop_RegisteredDeviceType_String, (my_controller_role_ == vr::TrackedControllerRole_LeftHand) ? "valve/index_controllerLHR-E217CD00" : "valve/index_controllerLHR-E217CD01");
+    props->SetStringProperty(container, vr::Prop_InputProfilePath_String, "{indexcontroller}/input/index_controller_profile.json");
+    props->SetStringProperty(container, vr::Prop_ControllerType_String, "knuckles");
 	// Let's set up handles for all of our components.
 	// Even though these are also defined in our input profile,
 	// We need to get handles to them to update the inputs.
