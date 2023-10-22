@@ -105,7 +105,7 @@ void UserInterface::initGLFW()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	this->mWindow = glfwCreateWindow(640 * 4, 480 * 4, "My Title", NULL, NULL);
+	this->mWindow = glfwCreateWindow(640 * 4, 480 * 4, "Hand of Lesser", NULL, NULL);
 	if (!this->mWindow)
 	{
 		std::cerr << "glfw windows creation failed!" << std::endl;
@@ -187,24 +187,23 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	ImGui::SeparatorText("Orientation");
 
 	{
-		Eigen::Vector3f asEuler
-			= HOL::display::HandTransform[side].rawPose.orientation.toRotationMatrix().eulerAngles(
-				0, 1, 2
-			);
+		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
+			.rawPose.orientation.toRotationMatrix()
+			.eulerAngles(0, 1, 2);
 		ImGui::Text("Raw   : %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
 	}
 
 	{
 		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
-									  .finalPose.orientation.toRotationMatrix()
-									  .eulerAngles(0, 1, 2);
+			.finalPose.orientation.toRotationMatrix()
+			.eulerAngles(0, 1, 2);
 		ImGui::Text("Final : %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
 	}
 
 	{
 		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
-									  .finalOffset.orientation.toRotationMatrix()
-									  .eulerAngles(0, 1, 2);
+			.finalOffset.orientation.toRotationMatrix()
+			.eulerAngles(0, 1, 2);
 		ImGui::Text("Offset: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
 	}
 
@@ -220,7 +219,7 @@ void UserInterface::buildHandTransformDisplay()
 
 void UserInterface::buildMainInterface()
 {
-	ImGui::Begin("My First Tool", NULL, ImGuiWindowFlags_MenuBar);
+	ImGui::Begin("Controllers", NULL, ImGuiWindowFlags_MenuBar);
 	ImGuiWindowFlags window_flags = 0;
 
 	ImGui::BeginChild("LeftMainWindow", ImVec2(scaleSize(500), 0), false, window_flags);

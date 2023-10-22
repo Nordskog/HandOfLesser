@@ -24,8 +24,8 @@ public:
 	void Cleanup() override;
 
 private:
-	std::unique_ptr<MyControllerDeviceDriver> my_left_controller_device_;
-	std::unique_ptr<MyControllerDeviceDriver> my_right_controller_device_;
+	std::unique_ptr<ControllerDeviceDriver> my_left_controller_device_;
+	std::unique_ptr<ControllerDeviceDriver> my_right_controller_device_;
 	std::thread my_pose_update_thread_;
 	HOL::NativeTransport mTransport;
 	bool mActive = true; // Just so we can make the loop exit. Fix later.

@@ -1,8 +1,8 @@
-#pragma once 
+#pragma once
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <d3d11.h> 
+#include <d3d11.h>
 #include <openxr/openxr_platform.h>
 #include "openxr/openxr_structs.hpp"
 
@@ -16,9 +16,4 @@ namespace HOL
 
 	Eigen::Vector3f flipHandRotation(Eigen::Vector3f& rot);
 	Eigen::Vector3f flipHandTranslation(Eigen::Vector3f& trans);
-
-	Eigen::Vector3f toEigenVector(XrVector3f& xrVector);
-	Eigen::Quaternionf toEigenQuaternion(XrQuaternionf& xrQuat);
 }
-
-

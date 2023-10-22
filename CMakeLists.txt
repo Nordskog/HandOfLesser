@@ -7,10 +7,14 @@ if (POLICY CMP0141)
 endif()
 
 project(HandOfLesser)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 # Silence C++17 deprecation warnings
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
+# Silence C++20 deprecation warnings
+add_definitions(-D_SILENCE_CXX20_CODECVT_FACETS_DEPRECATION_WARNING)
+# Silence security warnings
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 # Needed for CTest
 include(CTest)

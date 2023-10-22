@@ -3,6 +3,8 @@ add_library(HandOfLesserCommon STATIC
 	src/transport/transport.cpp
 	src/transport/transportutil.cpp
 	src/transport/udptransport.cpp
+	src/math/fingers.cpp
+	src/math/utils.cpp
 )
 
 target_link_libraries(HandOfLesserCommon PUBLIC

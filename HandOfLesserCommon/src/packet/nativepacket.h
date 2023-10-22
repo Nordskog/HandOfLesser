@@ -19,11 +19,15 @@ struct NativePacket
 struct ControllerInputPacket
 {
 	NativePacketType packetType = NativePacketType::ControllerInput;
-	bool valid;
-	HOL::HandSide side;
-	float trigger;
-	bool triggerClick;
-	bool systemClick;
+	bool valid = 0;
+	HOL::HandSide side = HOL::HandSide::LeftHand;
+	float trigger = 0.0f;
+	bool triggerClick = false;
+	bool systemClick = false;
+	float fingerCurlIndex = 0.0f;
+	float fingerCurlMiddle = 0.0f;
+	float fingerCurlRing = 0.0f;
+	float fingerCurlPinky = 0.0f;
 };
 
 // Mimics vr::DriverPose_t, but only contains the bits we care about.

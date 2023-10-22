@@ -139,14 +139,46 @@ HOL::ControllerInputPacket TrackedHand::getInputPacket()
 	packet.triggerClick = this->mSimpleGestures[SimpleGestureType::IndexFingerPinch].click;
 	packet.systemClick = this->mSimpleGestures[SimpleGestureType::OpenHandFacingFace].click;
 
-	/*
-	if (this->mSide == XrHandEXT::XR_HAND_RIGHT_EXT)
-	{
-		printf("Trigger: %d, System: %d\n",
-			this->mSimpleGestures[SimpleGestureType::IndexFingerPinch].click,
-			this->mSimpleGestures[SimpleGestureType::OpenHandFacingFace].click
-		);
-	}*/
+	const auto getJoint = [&](XrHandJointEXT joint) {
+		return HOL::toEigenVector(this->mJointLocations[joint].pose.position);
+	};
+
+	packet.fingerCurlIndex = computeOpenXrCurl(
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_INDEX_METACARPAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_INDEX_PROXIMAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_INDEX_INTERMEDIATE_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_INDEX_DISTAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_INDEX_TIP_EXT)
+	);
+	packet.fingerCurlMiddle = computeOpenXrCurl(
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_MIDDLE_METACARPAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_MIDDLE_INTERMEDIATE_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_MIDDLE_DISTAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_MIDDLE_TIP_EXT)
+	);
+	packet.fingerCurlRing = computeOpenXrCurl(
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_RING_METACARPAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_RING_PROXIMAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_RING_INTERMEDIATE_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_RING_DISTAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_RING_TIP_EXT)
+	);
+	packet.fingerCurlPinky = computeOpenXrCurl(
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_LITTLE_METACARPAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_LITTLE_PROXIMAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_LITTLE_INTERMEDIATE_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_LITTLE_DISTAL_EXT),
+		getJoint(XrHandJointEXT::XR_HAND_JOINT_LITTLE_TIP_EXT)
+	);
+
+	// std::cout
+	// 	<< "Side: " << this->mSide
+	// 	<< "; Index: " << packet.fingerCurlIndex
+	// 	<< "; Middle: " << packet.fingerCurlMiddle
+	// 	<< "; Ring: " << packet.fingerCurlRing
+	// 	<< "; Pinky: " << packet.fingerCurlPinky
+	// 	<< std::endl;
 
 	return packet;
 }

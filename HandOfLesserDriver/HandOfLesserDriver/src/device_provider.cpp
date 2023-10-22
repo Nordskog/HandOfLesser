@@ -17,9 +17,9 @@ vr::EVRInitError MyDeviceProvider::Init(vr::IVRDriverContext* pDriverContext)
 	// First, we need to actually instantiate our controller devices.
 	// We made the constructor take in a controller role, so let's pass their respective roles in.
 	my_left_controller_device_
-		= std::make_unique<MyControllerDeviceDriver>(vr::TrackedControllerRole_LeftHand);
+		= std::make_unique<ControllerDeviceDriver>(vr::TrackedControllerRole_LeftHand);
 	my_right_controller_device_
-		= std::make_unique<MyControllerDeviceDriver>(vr::TrackedControllerRole_RightHand);
+		= std::make_unique<ControllerDeviceDriver>(vr::TrackedControllerRole_RightHand);
 
 	this->mTransport.init(9006); // Hardcoded for now, needs to be negotaited somehow
 	my_pose_update_thread_ = std::thread(&MyDeviceProvider::ReceiveDataThread, this);
@@ -127,7 +127,7 @@ void MyDeviceProvider::ReceiveDataThread()
 
 			if (packet->valid)
 			{
-				MyControllerDeviceDriver* controller;
+				ControllerDeviceDriver* controller;
 				if (packet->side == HOL::HandSide::LeftHand)
 				{
 					controller = this->my_left_controller_device_.get();
@@ -149,7 +149,7 @@ void MyDeviceProvider::ReceiveDataThread()
 
 			if (packet->valid)
 			{
-				MyControllerDeviceDriver* controller;
+				ControllerDeviceDriver* controller;
 				if (packet->side == HOL::HandSide::LeftHand)
 				{
 					controller = this->my_left_controller_device_.get();

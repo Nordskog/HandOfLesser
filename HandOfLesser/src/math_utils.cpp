@@ -42,14 +42,4 @@ Eigen::Vector3f flipHandTranslation(Eigen::Vector3f& trans)
 	return Eigen::Vector3f(-trans.x(), trans.y(), trans.z());
 }
 
-Eigen::Vector3f toEigenVector(XrVector3f& xrVector)
-{
-	return Eigen::Vector3f(xrVector.x, xrVector.y, xrVector.z);
-}
-
-Eigen::Quaternionf toEigenQuaternion(XrQuaternionf& xrQuat)
-{
-	return Eigen::Quaternionf(xrQuat.w, xrQuat.x, xrQuat.y, xrQuat.z);
-}
-
 } // namespace HOL

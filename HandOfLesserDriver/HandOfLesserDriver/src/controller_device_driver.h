@@ -8,20 +8,28 @@
 #include <HandOfLesserCommon.h>
 #include <atomic>
 #include <thread>
+#include "hand_simulation.h"
 
-enum MyComponent
+enum InputHandleType
 {
-	MyComponent_a_touch,
-	MyComponent_a_click,
+	a_touch,
+	a_click,
 
-	MyComponent_trigger_value,
-	MyComponent_trigger_click,
+	trigger_value,
+	trigger_click,
 
-	MyComponent_system_click,
+	system_click,
 
-	MyComponent_haptic,
+	finger_index,
+	finger_middle,
+	finger_ring,
+	finger_pinky,
 
-	MyComponent_MAX
+	skeleton,
+
+	haptic,
+
+	MAX
 };
 
 //-----------------------------------------------------------------------------
@@ -29,10 +37,10 @@ enum MyComponent
 // What this device actually is (controller, hmd) depends on the
 // properties you set within the device (see implementation of Activate)
 //-----------------------------------------------------------------------------
-class MyControllerDeviceDriver : public vr::ITrackedDeviceServerDriver
+class ControllerDeviceDriver : public vr::ITrackedDeviceServerDriver
 {
 public:
-	MyControllerDeviceDriver(vr::ETrackedControllerRole role);
+	ControllerDeviceDriver(vr::ETrackedControllerRole role);
 
 	vr::EVRInitError Activate(uint32_t unObjectId) override;
 
@@ -63,6 +71,13 @@ public:
 	void MyPoseUpdateThread();
 
 private:
+	void UpdateSkeleton();
+
+	std::unique_ptr< MyHandSimulation > my_hand_simulation_;
+	std::atomic<int> frame_ = 0;
+	std::atomic<float> last_curl_ = 0.f;
+	std::atomic<float> last_splay_ = 0.f;
+
 	std::atomic<vr::TrackedDeviceIndex_t> my_controller_index_;
 
 	vr::ETrackedControllerRole my_controller_role_;
@@ -70,7 +85,7 @@ private:
 	std::string my_controller_model_number_;
 	std::string my_controller_serial_number_;
 
-	std::array<vr::VRInputComponentHandle_t, MyComponent_MAX> input_handles_;
+	std::array<vr::VRInputComponentHandle_t, InputHandleType::MAX> mInputHandles;
 
 	std::atomic<bool> is_active_;
 
