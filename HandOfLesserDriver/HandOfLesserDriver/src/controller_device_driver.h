@@ -29,10 +29,10 @@ enum MyComponent
 // What this device actually is (controller, hmd) depends on the
 // properties you set within the device (see implementation of Activate)
 //-----------------------------------------------------------------------------
-class MyControllerDeviceDriver : public vr::ITrackedDeviceServerDriver
+class ControllerDeviceDriver : public vr::ITrackedDeviceServerDriver
 {
 public:
-	MyControllerDeviceDriver(vr::ETrackedControllerRole role);
+	ControllerDeviceDriver(vr::ETrackedControllerRole role);
 
 	vr::EVRInitError Activate(uint32_t unObjectId) override;
 
@@ -70,7 +70,7 @@ private:
 	std::string my_controller_model_number_;
 	std::string my_controller_serial_number_;
 
-	std::array<vr::VRInputComponentHandle_t, MyComponent_MAX> input_handles_;
+	std::array<vr::VRInputComponentHandle_t, InputHandleType::MAX> mInputHandles;
 
 	std::atomic<bool> is_active_;
 
