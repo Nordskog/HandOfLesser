@@ -1,6 +1,6 @@
 {
 	"jsonid": "input_profile",
-	"controller_type": "mycontroller",
+	"controller_type": "handoflesser",
 	"compatibility_mode_controller_type": "knuckles",
 	"input_bindingui_mode": "controller_handed",
 	"input_bindingui_left": {
@@ -37,13 +37,59 @@
 			"click": true,
 			"order": 3
 		},
-		"/output/haptic": {
+		"/input/finger/index": {
+			"type": "trigger",
+			"visibility": "InputValueVisibility_AvailableButHidden",
 			"binding_image_point": [
-				300,
-				150
+				56,
+				86
 			],
-			"type": "vibration",
-			"order": 4
+			"order": 100
+		},
+		"/input/finger/middle": {
+			"type": "trigger",
+			"visibility": "InputValueVisibility_AvailableButHidden",
+			"binding_image_point": [
+				56,
+				86
+			],
+			"order": 101
+		},
+		"/input/finger/ring": {
+			"type": "trigger",
+			"visibility": "InputValueVisibility_AvailableButHidden",
+			"binding_image_point": [
+				56,
+				86
+			],
+			"order": 102
+		},
+		"/input/finger/pinky": {
+			"type": "trigger",
+			"visibility": "InputValueVisibility_AvailableButHidden",
+			"binding_image_point": [
+				56,
+				86
+			],
+			"order": 103
+		},
+		"/input/skeleton/left": {
+			"type": "skeleton",
+			"skeleton": "/skeleton/hand/left",
+			"side": "left",
+			"binding_image_point": [
+				5,
+				35
+			]
+		},
+		"/input/skeleton/right": {
+			"type": "skeleton",
+			"skeleton": "/skeleton/hand/right",
+			"side": "right",
+			"binding_image_point": [
+				5,
+				35
+			]
 		},
 		"/pose/raw": {
 			"type": "pose",
@@ -65,6 +111,14 @@
 				24,
 				86
 			]
+		},
+		"/output/haptic": {
+			"binding_image_point": [
+				300,
+				150
+			],
+			"type": "vibration",
+			"order": 4
 		}
 	},
 	"default_bindings": []
