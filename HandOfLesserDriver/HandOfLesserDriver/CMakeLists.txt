@@ -9,6 +9,7 @@ add_library(${DRIVER_NAME} SHARED
     src/hmd_driver_factory.cpp
     src/device_provider.cpp
     src/controller_device_driver.cpp
+    src/hand_simulation.cpp
 )
 
 message( "\${CMAKE_RUNTIME_OUTPUT_DIRECTORY}: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" )
