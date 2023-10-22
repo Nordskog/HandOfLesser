@@ -172,13 +172,13 @@ HOL::ControllerInputPacket TrackedHand::getInputPacket()
 		getJoint(XrHandJointEXT::XR_HAND_JOINT_LITTLE_TIP_EXT)
 	);
 
-	std::cout
-		<< "Side: " << this->mSide
-		<< "; Index: " << packet.fingerCurlIndex
-		<< "; Middle: " << packet.fingerCurlMiddle
-		<< "; Ring: " << packet.fingerCurlRing
-		<< "; Pinky: " << packet.fingerCurlPinky
-		<< std::endl;
+	// std::cout
+	// 	<< "Side: " << this->mSide
+	// 	<< "; Index: " << packet.fingerCurlIndex
+	// 	<< "; Middle: " << packet.fingerCurlMiddle
+	// 	<< "; Ring: " << packet.fingerCurlRing
+	// 	<< "; Pinky: " << packet.fingerCurlPinky
+	// 	<< std::endl;
 
 	return packet;
 }
