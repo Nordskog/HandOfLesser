@@ -1,5 +1,6 @@
 #include "HandOfLesserCore.h"
 #include <thread>
+#include "openxr_hacks.h"
 
 void HandOfLesserCore::init(int serverPort)
 {
@@ -14,6 +15,10 @@ void HandOfLesserCore::init(int serverPort)
 
 	this->mUserInterface = std::make_unique<UserInterface>();
 	this->mUserInterface.get()->init();
+
+	// Only necessary if using Airlink runtime
+	// Doesn't hurt to run otherwise though.
+	HOL::hacks::fixOvrSessionStateRestriction();
 }
 
 void HandOfLesserCore::start()

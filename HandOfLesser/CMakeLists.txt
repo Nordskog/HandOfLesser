@@ -11,6 +11,7 @@
 	src/TrackedHand.cpp
 	src/user_interface.cpp
 	src/XrUtils.cpp
+	src/openxr_hacks.cpp
 )
 
 find_package(OpenGL REQUIRED)
