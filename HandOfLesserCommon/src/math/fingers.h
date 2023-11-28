@@ -1,21 +1,15 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <numbers>
 
-float computeAngleBetweenVectors(const Eigen::Vector3f& a, const Eigen::Vector3f& b);
+namespace HOL
+{
+	float computeAngleBetweenVectors(const Eigen::Vector3f& a, const Eigen::Vector3f& b);
 
-float computeOpenXrCurl(
-	const Eigen::Vector3f& metacarpal,
-	const Eigen::Vector3f& proximal,
-	const Eigen::Vector3f& intermediate,
-	const Eigen::Vector3f& distal,
-	const Eigen::Vector3f& tip
-);
+	float computeCurl(const Eigen::Quaternionf& previous, const Eigen::Quaternionf& next);
+	float computeSplay(const Eigen::Quaternionf& previous, const Eigen::Quaternionf& next);
 
-Eigen::Vector3f computeOpenXrNormal(
-	const Eigen::Vector3f& metacarpal,
-	const Eigen::Vector3f& proximal,
-	const Eigen::Vector3f& intermediate
-);
-
-float computeOpenXrSplay(const Eigen::Vector3f& normal1, const Eigen::Vector3f& normal2);
+	float mapCurlToSteamVR(float curlInRadians, float maxCurlRadians = std::numbers::pi_v<float>);
+} // namespace HOL

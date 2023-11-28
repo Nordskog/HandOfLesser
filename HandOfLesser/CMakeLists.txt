@@ -8,7 +8,7 @@
 	src/math_utils.cpp
 	src/settings_global.cpp
 	src/simple_gesture_detector.cpp
-	src/TrackedHand.cpp
+	src/openxr_hand.cpp
 	src/user_interface.cpp
 	src/XrUtils.cpp
 	src/openxr_hacks.cpp

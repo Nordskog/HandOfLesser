@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TrackedHand.h"
+#include "openxr_hand.h"
 
 namespace HOL
 {
@@ -24,6 +24,5 @@ namespace HOL
 			float value = 0;
 			bool click = false;
 		};
-	}
-}
-
+	} // namespace SimpleGesture
+} // namespace HOL

@@ -1,60 +1,57 @@
 #include "simple_gesture_detector.h"
 
-namespace HOL
+namespace HOL::SimpleGesture
 {
-namespace SimpleGesture
-{
-SimpleGestureState getGesture(SimpleGestureType type, TrackedHand* hand)
-{
-	switch (type)
+	SimpleGestureState getGesture(SimpleGestureType type, OpenXRHand* hand)
 	{
-	case SimpleGestureType::IndexFingerPinch: {
-		return {
-			hand->mAimState.pinchStrengthIndex,
-			hand->mAimState.pinchStrengthIndex >= 1.0f,
-		};
+		switch (type)
+		{
+		case SimpleGestureType::IndexFingerPinch: {
+			return {
+				hand->mAimState.pinchStrengthIndex,
+				hand->mAimState.pinchStrengthIndex >= 1.0f,
+			};
+		}
+
+		case SimpleGestureType::MiddleFingerPinch: {
+			return {
+				hand->mAimState.pinchStrengthMiddle,
+				hand->mAimState.pinchStrengthMiddle >= 1.0f,
+			};
+		}
+
+		case SimpleGestureType::RingFingerPinch: {
+			return {
+				hand->mAimState.pinchStrengthRing,
+				hand->mAimState.pinchStrengthRing >= 1.0f,
+			};
+		}
+
+		case SimpleGestureType::PinkyFingerPinch: {
+			return {
+				hand->mAimState.pinchStrengthLittle,
+				hand->mAimState.pinchStrengthLittle >= 1.0f,
+			};
+		}
+
+		case SimpleGestureType::OpenHandFacingFace: {
+			return {
+				(hand->mAimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB)
+						== XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB
+					? 1.0f
+					: 0.0f,
+				(hand->mAimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB)
+					== XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB,
+			};
+		}
+		}
 	}
 
-	case SimpleGestureType::MiddleFingerPinch: {
-		return {
-			hand->mAimState.pinchStrengthMiddle,
-			hand->mAimState.pinchStrengthMiddle >= 1.0f,
-		};
-	}
-
-	case SimpleGestureType::RingFingerPinch: {
-		return {
-			hand->mAimState.pinchStrengthRing,
-			hand->mAimState.pinchStrengthRing >= 1.0f,
-		};
-	}
-
-	case SimpleGestureType::PinkyFingerPinch: {
-		return {
-			hand->mAimState.pinchStrengthLittle,
-			hand->mAimState.pinchStrengthLittle >= 1.0f,
-		};
-	}
-
-	case SimpleGestureType::OpenHandFacingFace: {
-		return {
-			(hand->mAimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB)
-					== XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB
-				? 1.0f
-				: 0.0f,
-			(hand->mAimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB)
-				== XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB,
-		};
-	}
-	}
-}
-
-void populateGestures(SimpleGestureState* stateArray, TrackedHand* hand)
-{
-	for (int i = 0; i < SimpleGestureType::SIMPLE_GESTURE_MAX; i++)
+	void populateGestures(SimpleGestureState* stateArray, OpenXRHand* hand)
 	{
-		stateArray[i] = getGesture((SimpleGestureType)i, hand);
+		for (int i = 0; i < SimpleGestureType::SIMPLE_GESTURE_MAX; i++)
+		{
+			stateArray[i] = getGesture((SimpleGestureType)i, hand);
+		}
 	}
-}
-} // namespace SimpleGesture
-} // namespace HOL
+} // namespace HOL::SimpleGesture

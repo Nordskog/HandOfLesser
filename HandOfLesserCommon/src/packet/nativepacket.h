@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../struct.h"
+#include "../hand.h"
 
 namespace HOL
 {
