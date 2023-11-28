@@ -268,7 +268,7 @@ void ControllerDeviceDriver::UpdatePose(HOL::HandTransformPacket* packet)
 	// DEG_TO_RAD(90.f));
 
 	// I can't test this properly. We're already using other predictions
-	float velocityMultiplier = 0.2f;
+	float velocityMultiplier = 0.0f;
 	// Controllers will vanish if velocities are invalid? not initialized?
 	// Velocity numbers are bogus on the quest1 ( pure noise ), but fine on quest3?
 	pose.vecVelocity[0] = packet->velocity.linearVelocity.x() * velocityMultiplier;
