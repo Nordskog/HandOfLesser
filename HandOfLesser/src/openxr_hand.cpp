@@ -95,15 +95,11 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	this->handPose.palmVelocity.linearVelocity = HOL::toEigenVector(palmVelocity.linearVelocity);
 	this->handPose.palmVelocity.angularVelocity = HOL::toEigenVector(palmVelocity.angularVelocity);
 
-	// Transform palm ( grip ) to equivalent index controller tracker position
-	// left
-	Eigen::Vector3f gripRotationOffset
-		= Eigen::Vector3f(45 + 15 + (-8), 0, -90 - 3); // not sure about -8
+	// Transform palm ( not actually same as grip ) to index controller tracker position
+	Eigen::Vector3f gripRotationOffset = Eigen::Vector3f(63, 0, -99);
+	Eigen::Vector3f gripTranslationOffset = Eigen::Vector3f(0.021, 0, -0.114);
 
-	// left
-	Eigen::Vector3f gripTranslationOffset = Eigen::Vector3f(0.021, -0.032, -0.134);
-
-	// Transform location to grip pose
+	// Add configurable offset
 	Eigen::Vector3f mainRotationOffset = gripRotationOffset + HOL::settings::OrientationOffset;
 	Eigen::Vector3f mainTranslationOffset = gripTranslationOffset + HOL::settings::PositionOffset;
 
