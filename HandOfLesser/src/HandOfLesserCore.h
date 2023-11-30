@@ -9,20 +9,19 @@
 
 class HandOfLesserCore // : public XrEventsInterface
 {
-	public:
-		void init(int serverPort);
-		void start();
+public:
+	void init(int serverPort);
+	void start();
 
-		virtual std::vector<const char*> getRequiredExtensions();
+	virtual std::vector<const char*> getRequiredExtensions();
 
+private:
+	std::unique_ptr<InstanceHolder> mInstanceHolder;
+	std::unique_ptr<HandTracking> mHandTracking;
+	std::unique_ptr<UserInterface> mUserInterface;
+	HOL::NativeTransport mTransport;
 
-	private:
-		std::unique_ptr<InstanceHolder> mInstanceHolder;
-		std::unique_ptr<HandTracking> mHandTracking;
-		std::unique_ptr<UserInterface> mUserInterface;
-		HOL::NativeTransport mTransport;
-		
-		void mainLoop();
-		void doOpenXRStuff();
-		void sendUpdate();
+	void mainLoop();
+	void doOpenXRStuff();
+	void sendUpdate();
 };

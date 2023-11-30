@@ -91,9 +91,7 @@ vr::EVRInitError ControllerDeviceDriver::Activate(uint32_t unObjectId)
 	);
 
 	// Let's tell SteamVR our role which we received from the constructor earlier.
-	props->SetInt32Property(
-		container, vr::Prop_ControllerRoleHint_Int32, my_controller_role_
-	);
+	props->SetInt32Property(container, vr::Prop_ControllerRoleHint_Int32, my_controller_role_);
 
 	// Now let's set up our inputs
 
@@ -101,17 +99,40 @@ vr::EVRInitError ControllerDeviceDriver::Activate(uint32_t unObjectId)
 	// As well as what default bindings should be for legacy apps.
 	// Note, we can use the wildcard {<driver_name>} to match the root folder location
 	// of our driver.
-    props->SetStringProperty(container, vr::Prop_ModelNumber_String, (my_controller_role_ == vr::TrackedControllerRole_LeftHand) ? "Knuckles Left" : "Knuckles Right");
-    props->SetStringProperty(container, vr::Prop_RenderModelName_String, (my_controller_role_ == vr::TrackedControllerRole_LeftHand) ? "{indexcontroller}valve_controller_knu_1_0_left" : "{indexcontroller}valve_controller_knu_1_0_right");
-    props->SetStringProperty(container, vr::Prop_ResourceRoot_String, "indexcontroller");
-    props->SetStringProperty(container, vr::Prop_RegisteredDeviceType_String, (my_controller_role_ == vr::TrackedControllerRole_LeftHand) ? "valve/index_controllerLHR-E217CD00" : "valve/index_controllerLHR-E217CD01");
-    props->SetStringProperty(container, vr::Prop_InputProfilePath_String, "{indexcontroller}/input/index_controller_profile.json");
-    props->SetStringProperty(container, vr::Prop_ControllerType_String, "knuckles");
+	props->SetStringProperty(
+		container,
+		vr::Prop_ModelNumber_String,
+		(my_controller_role_ == vr::TrackedControllerRole_LeftHand) ? "Knuckles Left"
+																	: "Knuckles Right"
+	);
+	props->SetStringProperty(
+		container,
+		vr::Prop_RenderModelName_String,
+		(my_controller_role_ == vr::TrackedControllerRole_LeftHand)
+			? "{indexcontroller}valve_controller_knu_1_0_left"
+			: "{indexcontroller}valve_controller_knu_1_0_right"
+	);
+	props->SetStringProperty(container, vr::Prop_ResourceRoot_String, "indexcontroller");
+	props->SetStringProperty(
+		container,
+		vr::Prop_RegisteredDeviceType_String,
+		(my_controller_role_ == vr::TrackedControllerRole_LeftHand)
+			? "valve/index_controllerLHR-E217CD00"
+			: "valve/index_controllerLHR-E217CD01"
+	);
+	props->SetStringProperty(
+		container,
+		vr::Prop_InputProfilePath_String,
+		"{indexcontroller}/input/index_controller_profile.json"
+	);
+	props->SetStringProperty(container, vr::Prop_ControllerType_String, "knuckles");
 	// Let's set up handles for all of our components.
 	// Even though these are also defined in our input profile,
 	// We need to get handles to them to update the inputs.
 
 	auto input = vr::VRDriverInput();
+	const auto abs = vr::VRScalarType_Absolute;
+	const auto norm = vr::VRScalarUnits_NormalizedOneSided;
 
 	// Let's set up our "A" button. We've defined it to have a touch and a click component.
 	input->CreateBooleanComponent(
@@ -128,19 +149,42 @@ vr::EVRInitError ControllerDeviceDriver::Activate(uint32_t unObjectId)
 	// where it was last. We can do it absolute. EVRScalarUnits - whether the devices has two
 	// "sides", like a joystick. This makes the range of valid inputs -1 to 1. Otherwise, it's 0
 	// to 1. We only have one "side", so ours is onesided.
-	// input->CreateScalarComponent( container, "/input/trigger/value",
-	// &mInputHandles[ DeviceInput::trigger_value ], vr::VRScalarType_Absolute,
-	// vr::VRScalarUnits_NormalizedOneSided );
+
+	///////////
+	// Trigger
+	///////////
+
+	input->CreateScalarComponent(
+		container, "/input/trigger/value", &mInputHandles[InputHandleType::trigger_value], abs, norm
+	);
+
+	input->CreateBooleanComponent(
+		container, "/input/trigger/touch", &mInputHandles[InputHandleType::trigger_touch]
+	);
+
 	input->CreateBooleanComponent(
 		container, "/input/trigger/click", &mInputHandles[InputHandleType::trigger_click]
 	);
 
-	input->CreateBooleanComponent(
-		container, "/input/system/click", &mInputHandles[InputHandleType::system_click]
+	//////////
+	// Grip
+	//////////
+
+	input->CreateScalarComponent(
+		container, "/input/grip/value", &mInputHandles[InputHandleType::grip_value], abs, norm
 	);
 
-	const auto abs = vr::VRScalarType_Absolute;
-	const auto norm = vr::VRScalarUnits_NormalizedOneSided;
+	input->CreateScalarComponent(
+		container, "/input/grip/force", &mInputHandles[InputHandleType::grip_force], abs, norm
+	);
+
+	input->CreateBooleanComponent(
+		container, "/input/grip/touch", &mInputHandles[InputHandleType::grip_touch]
+	);
+
+	//////////////////
+	// Finger curl
+	/////////////////
 
 	input->CreateScalarComponent(
 		container, "/input/finger/index", &mInputHandles[InputHandleType::finger_index], abs, norm
@@ -153,6 +197,14 @@ vr::EVRInitError ControllerDeviceDriver::Activate(uint32_t unObjectId)
 	);
 	input->CreateScalarComponent(
 		container, "/input/finger/pinky", &mInputHandles[InputHandleType::finger_pinky], abs, norm
+	);
+
+	////////////////
+	// Buttons
+	////////////////
+
+	input->CreateBooleanComponent(
+		container, "/input/system/click", &mInputHandles[InputHandleType::system_click]
 	);
 
 	const vr::EVRInputError err = input->CreateSkeletonComponent(
@@ -268,7 +320,7 @@ void ControllerDeviceDriver::UpdatePose(HOL::HandTransformPacket* packet)
 	// DEG_TO_RAD(90.f));
 
 	// I can't test this properly. We're already using other predictions
-	float velocityMultiplier = 0.2f;
+	float velocityMultiplier = 0.0f;
 	// Controllers will vanish if velocities are invalid? not initialized?
 	// Velocity numbers are bogus on the quest1 ( pure noise ), but fine on quest3?
 	pose.vecVelocity[0] = packet->velocity.linearVelocity.x() * velocityMultiplier;
@@ -365,27 +417,66 @@ void ControllerDeviceDriver::MyRunFrame()
 	}
 
 	*/
-	// update our inputs here
-	// input->UpdateScalarComponent(mInputHandles[DeviceInput::trigger_value],
-	// this->mLastInputPacket.trigger, 0.0);
+
 	const auto timeOffset = 0.0f;
 
-	input->UpdateBooleanComponent(
-		mInputHandles[InputHandleType::trigger_click], this->mLastInputPacket.triggerClick, timeOffset
-	);
-	input->UpdateBooleanComponent(
-		mInputHandles[InputHandleType::system_click], this->mLastInputPacket.systemClick, timeOffset
+	////////////////
+	// Trigger
+	///////////////
+
+	input->UpdateScalarComponent(
+		mInputHandles[InputHandleType::trigger_value],
+		this->mLastInputPacket.triggerValue,
+		timeOffset
 	);
 
+	input->UpdateBooleanComponent(
+		mInputHandles[InputHandleType::trigger_touch],
+		this->mLastInputPacket.triggerTouch,
+		timeOffset
+	);
+
+	input->UpdateBooleanComponent(
+		mInputHandles[InputHandleType::trigger_click],
+		this->mLastInputPacket.triggerClick,
+		timeOffset
+	);
+
+	////////////
+	// Grip
+	///////////
+
+	input->UpdateScalarComponent(
+		mInputHandles[InputHandleType::grip_value], this->mLastInputPacket.gripValue, timeOffset
+	);
+
+	input->UpdateScalarComponent(
+		mInputHandles[InputHandleType::grip_force], this->mLastInputPacket.gripForce, timeOffset
+	);
+
+	input->UpdateBooleanComponent(
+		mInputHandles[InputHandleType::grip_touch], this->mLastInputPacket.gripTouch, timeOffset
+	);
+
+	///////////////
+	// Finger curl
+	///////////////
+
 	auto updateFinger = [&](InputHandleType handle, float fingerCurl)
-	{
-		input->UpdateScalarComponent(mInputHandles[handle], fingerCurl, timeOffset);
-	};
+	{ input->UpdateScalarComponent(mInputHandles[handle], fingerCurl, timeOffset); };
 
 	updateFinger(InputHandleType::finger_index, mLastInputPacket.fingerCurlIndex);
 	updateFinger(InputHandleType::finger_middle, mLastInputPacket.fingerCurlMiddle);
 	updateFinger(InputHandleType::finger_ring, mLastInputPacket.fingerCurlRing);
 	updateFinger(InputHandleType::finger_pinky, mLastInputPacket.fingerCurlPinky);
+
+	//////////////////
+	// Other buttons
+	//////////////////
+
+	input->UpdateBooleanComponent(
+		mInputHandles[InputHandleType::system_click], this->mLastInputPacket.systemClick, timeOffset
+	);
 
 	// DriverLog(
 	// 	"Index value: %.2f, middle: %.2f, ring: %.2f, pinky: %.2f",

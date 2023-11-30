@@ -16,7 +16,12 @@ enum InputHandleType
 	a_click,
 
 	trigger_value,
+	trigger_touch,
 	trigger_click,
+
+	grip_value,
+	grip_force,
+	grip_touch,
 
 	system_click,
 
@@ -73,7 +78,7 @@ public:
 private:
 	void UpdateSkeleton();
 
-	std::unique_ptr< MyHandSimulation > my_hand_simulation_;
+	std::unique_ptr<MyHandSimulation> my_hand_simulation_;
 	std::atomic<int> frame_ = 0;
 	std::atomic<float> last_curl_ = 0.f;
 	std::atomic<float> last_splay_ = 0.f;

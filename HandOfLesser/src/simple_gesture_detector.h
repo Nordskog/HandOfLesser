@@ -1,15 +1,12 @@
 #pragma once
 
-#include "TrackedHand.h"
+#include "openxr_hand.h"
 #include "simple_gesture.h"
 
-namespace HOL
+namespace HOL::SimpleGesture
 {
-	namespace SimpleGesture
-	{
-		SimpleGestureState getGesture(SimpleGestureType type, TrackedHand* hand);
+	SimpleGestureState getGesture(SimpleGestureType type, OpenXRHand* hand);
 
-		void populateGestures(SimpleGestureState* stateArray, TrackedHand* hand);
-	}
-}
+	void populateGestures(SimpleGestureState* stateArray, OpenXRHand* hand);
 
+} // namespace HOL::SimpleGesture

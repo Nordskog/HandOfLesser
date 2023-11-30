@@ -1,29 +1,25 @@
 #pragma once
 
-#include "TrackedHand.h"
+#include "openxr_hand.h"
 
-namespace HOL
+namespace HOL::SimpleGesture
 {
-	namespace SimpleGesture
+	enum SimpleGestureType
 	{
-		enum SimpleGestureType
-		{
-			IndexFingerPinch,
-			MiddleFingerPinch,
-			RingFingerPinch,
-			PinkyFingerPinch,
-			IndexMiddlePinkyGrip,
-			OpenHandFacingFace,
+		IndexFingerPinch,
+		MiddleFingerPinch,
+		RingFingerPinch,
+		PinkyFingerPinch,
+		IndexMiddlePinkyGrip,
+		OpenHandFacingFace,
 
-			SIMPLE_GESTURE_MAX
+		SIMPLE_GESTURE_MAX
 
-		};
+	};
 
-		struct SimpleGestureState
-		{
-			float value = 0;
-			bool click = false;
-		};
-	}
-}
-
+	struct SimpleGestureState
+	{
+		float value = 0;
+		bool click = false;
+	};
+} // namespace HOL::SimpleGesture

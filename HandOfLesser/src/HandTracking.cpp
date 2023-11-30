@@ -2,6 +2,12 @@
 #include "HandTrackingInterface.h"
 #include <HandOfLesserCommon.h>
 #include "simple_gesture_detector.h"
+#include <algorithm>
+#include <iterator>
+#include <iostream>
+
+using namespace HOL;
+using namespace HOL::SimpleGesture;
 
 void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session)
 {
@@ -11,8 +17,8 @@ void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSe
 
 void HandTracking::initHands(xr::UniqueDynamicSession& session)
 {
-	this->mLeftHand = std::make_unique<TrackedHand>(session, XrHandEXT::XR_HAND_LEFT_EXT);
-	this->mRightHand = std::make_unique<TrackedHand>(session, XrHandEXT::XR_HAND_RIGHT_EXT);
+	this->mLeftHand = std::make_unique<OpenXRHand>(session, XrHandEXT::XR_HAND_LEFT_EXT);
+	this->mRightHand = std::make_unique<OpenXRHand>(session, XrHandEXT::XR_HAND_RIGHT_EXT);
 }
 
 void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time)
@@ -29,33 +35,102 @@ void HandTracking::updateInputs()
 void HandTracking::updateSimpleGestures()
 {
 	HOL::SimpleGesture::populateGestures(
-		this->mLeftHand.get()->mSimpleGestures, this->mLeftHand.get()
+		this->mLeftHand.get()->simpleGestures, this->mLeftHand.get()
 	);
 	HOL::SimpleGesture::populateGestures(
-		this->mRightHand.get()->mSimpleGestures, this->mRightHand.get()
+		this->mRightHand.get()->simpleGestures, this->mRightHand.get()
 	);
 }
 
-HOL::HandTransformPacket HandTracking::getTransformPacket(XrHandEXT side)
+OpenXRHand* HandTracking::getHand(HOL::HandSide side)
 {
-	if (side == XrHandEXT::XR_HAND_LEFT_EXT)
+	if (side == HOL::HandSide::LeftHand)
 	{
-		return this->mLeftHand.get()->getTransformPacket();
+		return this->mLeftHand.get();
 	}
 	else
 	{
-		return this->mRightHand.get()->getTransformPacket();
+		return this->mRightHand.get();
 	}
 }
 
-HOL::ControllerInputPacket HandTracking::getInputPacket(XrHandEXT side)
+HOL::HandTransformPacket HandTracking::getTransformPacket(HOL::HandSide side)
 {
-	if (side == XrHandEXT::XR_HAND_LEFT_EXT)
+	OpenXRHand* hand = getHand(side);
+
+	HOL::HandTransformPacket packet;
+
+	packet.valid = hand->handPose.poseValid;
+	packet.side = (HOL::HandSide)side;
+	packet.location = hand->handPose.palmLocation;
+	packet.velocity = hand->handPose.palmVelocity;
+
+	return packet;
+}
+
+HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
+{
+	// todo we're replacing all of this
+	OpenXRHand* hand = getHand(side);
+	OpenXRHand* otherHand = getHand(
+		side == HOL::HandSide::LeftHand ? HOL::HandSide::RightHand : HOL::HandSide::LeftHand
+	);
+
+	HOL::ControllerInputPacket packet;
+
+	packet.valid = hand->handPose.poseValid;
+	packet.side = (HOL::HandSide)side;
+
+	// A temporary end to the accidentally opening menu madness. System gesture is terrible.
+	if (side == HOL::HandSide::RightHand)
 	{
-		return this->mLeftHand.get()->getInputPacket();
+		// Require both hands to do the thing, only trigger on right hand
+		packet.systemClick
+			= hand->simpleGestures[SimpleGestureType::OpenHandFacingFace].click
+			  && otherHand->simpleGestures[SimpleGestureType::OpenHandFacingFace].click;
 	}
 	else
 	{
-		return this->mRightHand.get()->getInputPacket();
+		packet.systemClick = false;
 	}
+
+	packet.triggerClick = hand->simpleGestures[SimpleGestureType::IndexFingerPinch].click;
+
+	//
+	packet.fingerCurlIndex
+		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerIndex].getCurlSum());
+	packet.fingerCurlMiddle
+		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerMiddle].getCurlSum());
+	packet.fingerCurlRing
+		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerRing].getCurlSum());
+	packet.fingerCurlPinky
+		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerPinky].getCurlSum());
+
+	// map index curl to trigger touch and force
+	float triggerValueRange = 0.15f;
+	packet.triggerValue = std::clamp(
+		(packet.fingerCurlIndex - (1.0f - triggerValueRange)) / triggerValueRange, 0.0f, 1.0f
+	);
+	packet.triggerTouch = packet.fingerCurlIndex >= (1.0f - triggerValueRange);
+
+	// steamvr will not allow a click unless the triggerValue is 1'ish
+	// does touch matter? who knows
+	if (packet.triggerClick)
+	{
+		packet.triggerValue = 1.0f;
+		packet.triggerTouch = true;
+	}
+
+	float gripRaw // use average of remaining finger's curl for grip
+		= (packet.fingerCurlMiddle + packet.fingerCurlRing + packet.fingerCurlPinky) / 3.0f;
+
+	// Map rest of fingers to grip touch and force
+	// Vrchat jumps to fist pose as soon as there is any force
+	float gripForceRange = 0.01f; // Just jump to 1 at full bend
+	float gripValueRange = 0.3f;
+	packet.gripValue = std::clamp((gripRaw - (1.0f - gripValueRange)) / gripValueRange, 0.0f, 1.0f);
+	packet.gripForce = std::clamp((gripRaw - (1.0f - gripForceRange)) / gripForceRange, 0.0f, 1.0f);
+	packet.gripTouch = gripRaw >= (1.0f - gripValueRange);
+
+	return packet;
 }
