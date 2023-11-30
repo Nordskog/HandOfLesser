@@ -145,8 +145,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		HOL::display::HandTransform[this->mSide].finalPose.orientation
 			= this->handPose.palmLocation.orientation;
 
-		HOL::display::HandTransform[this->mSide].finalOffset.position = mainTranslationOffset;
-		HOL::display::HandTransform[this->mSide].finalOffset.orientation = rotationOffsetQuat;
+		HOL::display::HandTransform[this->mSide].finalTranslationOffset = mainTranslationOffset;
+		HOL::display::HandTransform[this->mSide].finalOrientationOffset = mainRotationOffset;
 	}
 
 	this->calculateCurlSplay();

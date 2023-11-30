@@ -8,6 +8,7 @@
 #include <iostream>
 #include <imgui_impl_win32.h>
 
+#include "math_utils.h"
 #include "settings_global.h"
 #include "display_global.h"
 
@@ -179,32 +180,45 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 
 	ImGui::Text(
 		"Offset: %.3f, %.3f, %.3f",
-		HOL::display::HandTransform[side].finalOffset.position.x(),
-		HOL::display::HandTransform[side].finalOffset.position.y(),
-		HOL::display::HandTransform[side].finalOffset.position.z()
+		HOL::display::HandTransform[side].finalTranslationOffset.x(),
+		HOL::display::HandTransform[side].finalTranslationOffset.y(),
+		HOL::display::HandTransform[side].finalTranslationOffset.z()
 	);
 
 	ImGui::SeparatorText("Orientation");
 
 	{
-		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
-			.rawPose.orientation.toRotationMatrix()
-			.eulerAngles(0, 1, 2);
-		ImGui::Text("Raw   : %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
+		Eigen::Vector3f asEuler
+			= HOL::display::HandTransform[side].rawPose.orientation.toRotationMatrix().eulerAngles(
+				0, 1, 2
+			);
+		ImGui::Text(
+			"Raw   : %.3f, %.3f, %.3f",
+			HOL::radiansToDegrees(asEuler.x()),
+			HOL::radiansToDegrees(asEuler.y()),
+			HOL::radiansToDegrees(asEuler.z())
+		);
 	}
 
 	{
 		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
-			.finalPose.orientation.toRotationMatrix()
-			.eulerAngles(0, 1, 2);
-		ImGui::Text("Final : %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
+									  .finalPose.orientation.toRotationMatrix()
+									  .eulerAngles(0, 1, 2);
+		ImGui::Text(
+			"Final : %.3f, %.3f, %.3f",
+			HOL::radiansToDegrees(asEuler.x()),
+			HOL::radiansToDegrees(asEuler.y()),
+			HOL::radiansToDegrees(asEuler.z())
+		);
 	}
 
 	{
-		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
-			.finalOffset.orientation.toRotationMatrix()
-			.eulerAngles(0, 1, 2);
-		ImGui::Text("Offset: %.3f, %.3f, %.3f", asEuler.x(), asEuler.y(), asEuler.z());
+		ImGui::Text(
+			"Offset: %.3f, %.3f, %.3f",
+			HOL::display::HandTransform[side].finalOrientationOffset.x(),
+			HOL::display::HandTransform[side].finalOrientationOffset.y(),
+			HOL::display::HandTransform[side].finalOrientationOffset.z()
+		);
 	}
 
 	ImGui::EndChild();

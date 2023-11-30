@@ -2,10 +2,7 @@
 
 #include "display_global.h"
 
-namespace HOL
-{
-namespace display
+namespace HOL::display
 {
 	HandTransformDisplay HandTransform[2];
-} // namespace display
-} // namespace HOL
+} // namespace HOL::display
