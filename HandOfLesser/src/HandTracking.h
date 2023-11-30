@@ -10,13 +10,13 @@ public:
 	void init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session);
 	void updateHands(xr::UniqueDynamicSpace& space, XrTime time);
 	void updateInputs();
-	HOL::HandTransformPacket getTransformPacket(XrHandEXT side);
-	HOL::ControllerInputPacket getInputPacket(XrHandEXT side);
+	HOL::HandTransformPacket getTransformPacket(HOL::HandSide side);
+	HOL::ControllerInputPacket getInputPacket(HOL::HandSide side);
 
 private:
 	void initHands(xr::UniqueDynamicSession& session);
 	void updateSimpleGestures();
-	OpenXRHand* getHand(XrHandEXT side);
+	OpenXRHand* getHand(HOL::HandSide side);
 	std::unique_ptr<OpenXRHand> mLeftHand;
 	std::unique_ptr<OpenXRHand> mRightHand;
 };

@@ -67,20 +67,18 @@ void HandOfLesserCore::doOpenXRStuff()
 void HandOfLesserCore::sendUpdate()
 {
 	{
-		HOL::HandTransformPacket packet
-			= this->mHandTracking->getTransformPacket(XrHandEXT::XR_HAND_LEFT_EXT);
+		HOL::HandTransformPacket packet = this->mHandTracking->getTransformPacket(HOL::LeftHand);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::HandTransformPacket));
 
-		packet = this->mHandTracking->getTransformPacket(XrHandEXT::XR_HAND_RIGHT_EXT);
+		packet = this->mHandTracking->getTransformPacket(HOL::RightHand);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::HandTransformPacket));
 	}
 
 	{
-		HOL::ControllerInputPacket packet
-			= this->mHandTracking->getInputPacket(XrHandEXT::XR_HAND_LEFT_EXT);
+		HOL::ControllerInputPacket packet = this->mHandTracking->getInputPacket(HOL::LeftHand);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
 
-		packet = this->mHandTracking->getInputPacket(XrHandEXT::XR_HAND_RIGHT_EXT);
+		packet = this->mHandTracking->getInputPacket(HOL::RightHand);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
 	}
 }

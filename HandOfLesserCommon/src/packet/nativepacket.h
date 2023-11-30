@@ -21,9 +21,17 @@ struct ControllerInputPacket
 	NativePacketType packetType = NativePacketType::ControllerInput;
 	bool valid = 0;
 	HOL::HandSide side = HOL::HandSide::LeftHand;
-	float trigger = 0.0f;
+
+	float triggerValue = 0.0f;
+	bool triggerTouch = false;
 	bool triggerClick = false;
+
+	float gripTouch = 0.0f;	
+	float gripValue = 0.0f;	// Like a trigger, if it had a grip trigger?
+	float gripForce = 0.0f; // Squeeze? This triggers vrchat grip
+
 	bool systemClick = false;
+
 	float fingerCurlIndex = 0.0f;
 	float fingerCurlMiddle = 0.0f;
 	float fingerCurlRing = 0.0f;

@@ -16,7 +16,12 @@ enum InputHandleType
 	a_click,
 
 	trigger_value,
+	trigger_touch,
 	trigger_click,
+
+	grip_value,
+	grip_force,
+	grip_touch,
 
 	system_click,
 
