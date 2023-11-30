@@ -68,7 +68,6 @@ void OpenXRHand::calculateCurlSplay()
 		// Between metacarpal and intermediate. No flipping this.
 		bend->splay = computeSplay(getJoint(rootJoint), getJoint((XrHandJointEXT)(rootJoint + 1)));
 	}
-
 }
 
 void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time)

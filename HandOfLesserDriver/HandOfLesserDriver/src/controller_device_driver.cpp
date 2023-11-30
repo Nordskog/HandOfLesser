@@ -153,15 +153,15 @@ vr::EVRInitError ControllerDeviceDriver::Activate(uint32_t unObjectId)
 	///////////
 	// Trigger
 	///////////
-	
+
 	input->CreateScalarComponent(
 		container, "/input/trigger/value", &mInputHandles[InputHandleType::trigger_value], abs, norm
 	);
-	
+
 	input->CreateBooleanComponent(
 		container, "/input/trigger/touch", &mInputHandles[InputHandleType::trigger_touch]
 	);
-	
+
 	input->CreateBooleanComponent(
 		container, "/input/trigger/click", &mInputHandles[InputHandleType::trigger_click]
 	);
@@ -423,20 +423,19 @@ void ControllerDeviceDriver::MyRunFrame()
 	////////////////
 	// Trigger
 	///////////////
-	
+
 	input->UpdateScalarComponent(
 		mInputHandles[InputHandleType::trigger_value],
 		this->mLastInputPacket.triggerValue,
 		timeOffset
 	);
 
-	
 	input->UpdateBooleanComponent(
 		mInputHandles[InputHandleType::trigger_touch],
 		this->mLastInputPacket.triggerTouch,
 		timeOffset
 	);
-	
+
 	input->UpdateBooleanComponent(
 		mInputHandles[InputHandleType::trigger_click],
 		this->mLastInputPacket.triggerClick,

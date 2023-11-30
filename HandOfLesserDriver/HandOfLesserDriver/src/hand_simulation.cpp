@@ -133,7 +133,7 @@ static void ComputeBoneTransform(
 	out_transform.position.v[3] = 1.f;
 
 	//"up" axis is flipped between hands, so inverse the joint length for the right hand, as we base
-	//all our computations of the left skeleton pose.
+	// all our computations of the left skeleton pose.
 	if (role == vr::TrackedControllerRole_RightHand)
 	{
 		out_transform.position.v[0] *= -1.f;
@@ -185,7 +185,7 @@ static void ComputeBoneTransformMetacarpal(
 	vr::HmdVector3_t bone_position = offset * bone_orientation;
 
 	//"up" axis is flipped between hands, so we need to inverse the x and y axis for the right hand,
-	//as all our calculations are based on the left hand currently.
+	// as all our calculations are based on the left hand currently.
 	if (role == vr::TrackedControllerRole_RightHand)
 	{
 		std::swap(bone_orientation.w, bone_orientation.x);

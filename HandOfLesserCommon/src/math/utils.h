@@ -8,7 +8,7 @@
 namespace HOL
 {
 
-Eigen::Vector3f toEigenVector(const XrVector3f& xrVector);
-Eigen::Quaternionf toEigenQuaternion(const XrQuaternionf& xrQuat);
+	Eigen::Vector3f toEigenVector(const XrVector3f& xrVector);
+	Eigen::Quaternionf toEigenQuaternion(const XrQuaternionf& xrQuat);
 
 } // namespace HOL
