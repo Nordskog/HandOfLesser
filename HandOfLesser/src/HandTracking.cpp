@@ -34,12 +34,10 @@ void HandTracking::updateInputs()
 
 void HandTracking::updateSimpleGestures()
 {
-	HOL::SimpleGesture::populateGestures(
-		this->mLeftHand.get()->simpleGestures, this->mLeftHand.get()
-	);
-	HOL::SimpleGesture::populateGestures(
-		this->mRightHand.get()->simpleGestures, this->mRightHand.get()
-	);
+	HOL::SimpleGesture::populateGestures(this->mLeftHand.get()->simpleGestures,
+										 this->mLeftHand.get());
+	HOL::SimpleGesture::populateGestures(this->mRightHand.get()->simpleGestures,
+										 this->mRightHand.get());
 }
 
 OpenXRHand* HandTracking::getHand(HOL::HandSide side)
@@ -72,9 +70,8 @@ HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
 {
 	// todo we're replacing all of this
 	OpenXRHand* hand = getHand(side);
-	OpenXRHand* otherHand = getHand(
-		side == HOL::HandSide::LeftHand ? HOL::HandSide::RightHand : HOL::HandSide::LeftHand
-	);
+	OpenXRHand* otherHand = getHand(side == HOL::HandSide::LeftHand ? HOL::HandSide::RightHand
+																	: HOL::HandSide::LeftHand);
 
 	HOL::ControllerInputPacket packet;
 
@@ -104,13 +101,12 @@ HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
 	packet.fingerCurlRing
 		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerRing].getCurlSum());
 	packet.fingerCurlPinky
-		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerPinky].getCurlSum());
+		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerLittle].getCurlSum());
 
 	// map index curl to trigger touch and force
 	float triggerValueRange = 0.15f;
 	packet.triggerValue = std::clamp(
-		(packet.fingerCurlIndex - (1.0f - triggerValueRange)) / triggerValueRange, 0.0f, 1.0f
-	);
+		(packet.fingerCurlIndex - (1.0f - triggerValueRange)) / triggerValueRange, 0.0f, 1.0f);
 	packet.triggerTouch = packet.fingerCurlIndex >= (1.0f - triggerValueRange);
 
 	// steamvr will not allow a click unless the triggerValue is 1'ish

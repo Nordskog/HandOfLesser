@@ -13,12 +13,21 @@ namespace HOL
 
 	enum FingerType
 	{
-		FingerThumb,
 		FingerIndex,
 		FingerMiddle,
 		FingerRing,
-		FingerPinky,
-		FINGER_MAX_COUNT
+		FingerLittle,
+		FingerThumb,
+		FingerType_MAX
+	};
+
+	enum FingerBendType
+	{
+		CurlFirst,
+		CurlSecond,
+		CurlThird,
+		Splay,
+		FingerBendType_MAX
 	};
 
 	struct PoseLocation

@@ -12,6 +12,7 @@
 	src/user_interface.cpp
 	src/XrUtils.cpp
 	src/openxr_hacks.cpp
+	src/vrchat/vrchat_osc.cpp
 )
 
 find_package(OpenGL REQUIRED)

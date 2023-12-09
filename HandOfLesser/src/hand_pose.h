@@ -8,7 +8,7 @@ namespace HOL
 	class HandPose
 	{
 	public:
-		FingerBend fingers[FingerType::FINGER_MAX_COUNT];
+		FingerBend fingers[FingerType::FingerType_MAX];
 
 		bool poseValid;
 
