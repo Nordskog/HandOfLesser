@@ -1,4 +1,4 @@
-#include "openxr_hacks.h"
+#include "oculus_hacks.h"
 
 #include <tchar.h>
 #include <psapi.h>

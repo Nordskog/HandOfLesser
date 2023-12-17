@@ -1,6 +1,6 @@
 #include "HandOfLesserCore.h"
 #include <thread>
-#include "openxr_hacks.h"
+#include "src/oculus/oculus_hacks.h"
 
 void HandOfLesserCore::init(int serverPort)
 {

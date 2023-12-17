@@ -8,9 +8,8 @@
 #include <iostream>
 #include <imgui_impl_win32.h>
 
-#include "math_utils.h"
-#include "settings_global.h"
-#include "display_global.h"
+#include "src/core/settings_global.h"
+#include "src/core/ui/display_global.h"
 
 UserInterface* UserInterface::mCurrent = nullptr;
 

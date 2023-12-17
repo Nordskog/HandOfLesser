@@ -4,8 +4,8 @@
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr.hpp>
 #include <HandOfLesserCommon.h>
-#include "simple_gesture.h"
-#include "hand_pose.h"
+#include "src/hands/simple_gesture.h"
+#include "src/hands/hand_pose.h"
 
 using namespace HOL;
 

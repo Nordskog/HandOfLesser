@@ -1,7 +1,7 @@
 #pragma once
 
 #include "transport.h"
-#include "../packet/nativepacket.h"
+#include "src/packet/nativepacket.h"
 
 namespace HOL
 {

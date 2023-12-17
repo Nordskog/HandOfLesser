@@ -1,7 +1,5 @@
 #pragma once
 
-#include "openxr_hand.h"
-
 namespace HOL::SimpleGesture
 {
 	enum SimpleGestureType

@@ -1,11 +1,11 @@
 #pragma once
 
 #include <memory>
-#include "InstanceHolder.h"
-#include "HandTracking.h"
-#include "XrEventsInterface.h"
+#include "src/openxr/InstanceHolder.h"
+#include "src/openxr/HandTracking.h"
+#include "src/openxr/XrEventsInterface.h"
 #include <HandOfLesserCommon.h>
-#include "user_interface.h"
+#include "src/core/ui/user_interface.h"
 
 class HandOfLesserCore // : public XrEventsInterface
 {

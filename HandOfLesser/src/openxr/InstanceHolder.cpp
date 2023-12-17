@@ -4,6 +4,8 @@
 #include "XrUtils.h"
 #include <thread>
 
+using namespace HOL::OpenXR;
+
 InstanceHolder::InstanceHolder()
 {
 	this->mCallback = nullptr;

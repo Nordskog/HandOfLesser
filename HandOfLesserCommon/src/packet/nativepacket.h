@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../hand.h"
+#include "src/hand/hand.h"
 
 namespace HOL
 {

@@ -9,6 +9,8 @@ PFN_xrLocateHandJointsEXT HandTrackingInterface::xrLocateHandJointsEXT_ = nullpt
 XrPath LeftHandInteractionPath;
 XrPath RightHandInteractionPath;
 
+using namespace HOL::OpenXR;
+
 void HandTrackingInterface::init(xr::UniqueDynamicInstance& instance)
 {
 	initFunctions(instance);

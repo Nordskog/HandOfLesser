@@ -1,5 +1,5 @@
 ﻿#include "HandOfLesser.h"
-#include "HandOfLesserCore.h"
+#include "core/HandOfLesserCore.h"
 #include <HandOfLesserCommon.h>
 
 int main(int /* argc */, char* /* argv */[])

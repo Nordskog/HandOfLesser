@@ -1,7 +1,7 @@
 #include "HandTracking.h"
 #include "HandTrackingInterface.h"
 #include <HandOfLesserCommon.h>
-#include "simple_gesture_detector.h"
+#include "src/hands/simple_gesture_detector.h"
 #include <algorithm>
 #include <iterator>
 #include <iostream>
