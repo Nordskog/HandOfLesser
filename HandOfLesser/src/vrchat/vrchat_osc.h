@@ -1,6 +1,7 @@
 #pragma once
 
 #include <HandOfLesserCommon.h>
+#include "src/hands/hand_pose.h"
 
 namespace HOL::VRChat
 {
@@ -13,12 +14,14 @@ namespace HOL::VRChat
 	public:
 		static void init();
 		static int getParameterIndex(HOL::FingerType finger, HOL::FingerBendType joint);
-		static void computeParameterValue(float rawValue,
-										  HOL::HandSide,
-										  HOL::FingerType finger,
-										  HOL::FingerBendType joint);
+		static float computeParameterValue(float rawValue,
+										   HOL::HandSide,
+										   HOL::FingerType finger,
+										   HOL::FingerBendType joint);
 
-		static void generateOscOutput();
+		static void generateOscOutput(HOL::HandPose* leftHand, HOL::HandPose* rightHand);
+
+		static float encodePacked(float left, float right);
 
 		// these guys need to be easily configurable
 		static float HUMAN_RIG_RANGE[PARAMETER_COUNT];
