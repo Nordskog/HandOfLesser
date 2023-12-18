@@ -238,6 +238,21 @@ void UserInterface::buildMainInterface()
 	ImGui::BeginChild("LeftMainWindow", ImVec2(scaleSize(500), 0), false, window_flags);
 
 	/////////////////
+	// General
+	/////////////////
+
+	window_flags = 0;
+	ImGui::BeginChild("GeneralSettings",
+					  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, scaleSize(50)),
+					  false,
+					  window_flags);
+
+	ImGui::SeparatorText("General");
+	ImGui::InputInt("Prediction (ms)", &HOL::settings::MotionPredictionMS);
+
+	ImGui::EndChild();
+
+	/////////////////
 	// Offset inputs
 	/////////////////
 

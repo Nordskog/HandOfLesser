@@ -1,6 +1,7 @@
 #include "HandOfLesserCore.h"
 #include <thread>
 #include "src/oculus/oculus_hacks.h"
+#include "src/core/settings_global.h"
 
 void HandOfLesserCore::init(int serverPort)
 {
@@ -52,7 +53,7 @@ void HandOfLesserCore::mainLoop()
 void HandOfLesserCore::doOpenXRStuff()
 {
 	XrTime time = this->mInstanceHolder.get()->getTime();
-	time += 1000000 * 32;
+	time += 1000000LL * (XrTime)HOL::settings::MotionPredictionMS;
 
 	this->mInstanceHolder.get()->pollEvent();
 
