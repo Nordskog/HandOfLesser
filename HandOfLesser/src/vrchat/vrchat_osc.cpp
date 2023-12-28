@@ -1,4 +1,5 @@
 #include "vrchat_osc.h"
+#include "src/core/settings_global.h"
 
 float HOL::VRChat::VRChatOSC::HUMAN_RIG_RANGE[PARAMETER_COUNT];
 float HOL::VRChat::VRChatOSC::HUMAN_RIG_CENTER[PARAMETER_COUNT];
@@ -31,18 +32,6 @@ void HOL::VRChat::VRChatOSC::initParameters()
 	setHumanRigRange(FingerType::FingerLittle,	100, 90, 90, 40);
 
 	setHumanRigRange(FingerType::FingerThumb,	40, 75, 75, 50);
-
-	// What the center of this range is we're just going to have to eyeball.
-	// This will likely also need some adjustment depending on the avatar.
-	// For curls this would be about 45 degrees, splays close to 0,
-	// but the finger can bend backwawrds a bit too
-	setHumanRigCenter(FingerType::FingerIndex,	45, 45, 45, 0);
-	setHumanRigCenter(FingerType::FingerMiddle,	45, 45, 45, 0);
-	setHumanRigCenter(FingerType::FingerRing,	45, 45, 45, 0);
-	setHumanRigCenter(FingerType::FingerLittle,	45, 45, 45, 0);
-	
-	// Thumb is weird
-	setHumanRigCenter(FingerType::FingerThumb,	0, 22, 22, 0);
 
 	// clang-format on
 }
@@ -84,25 +73,10 @@ void HOL::VRChat::VRChatOSC::setHumanRigRange(HOL::FingerType finger,
 	// Indieces are in sequence
 	int index = VRChatOSC::getParameterIndex(finger, HOL::FingerBendType::CurlFirst);
 
-	VRChatOSC::HUMAN_RIG_RANGE[index] = first;
-	VRChatOSC::HUMAN_RIG_RANGE[index + 1] = second;
-	VRChatOSC::HUMAN_RIG_RANGE[index + 2] = third;
-	VRChatOSC::HUMAN_RIG_RANGE[index + 3] = splay;
-}
-
-void HOL::VRChat::VRChatOSC::setHumanRigCenter(HOL::FingerType finger,
-											   float first,
-											   float second,
-											   float third,
-											   float splay)
-{
-	// Indieces are in sequence
-	int index = VRChatOSC::getParameterIndex(finger, HOL::FingerBendType::CurlFirst);
-
-	VRChatOSC::HUMAN_RIG_CENTER[index] = first;
-	VRChatOSC::HUMAN_RIG_CENTER[index + 1] = second;
-	VRChatOSC::HUMAN_RIG_CENTER[index + 2] = third;
-	VRChatOSC::HUMAN_RIG_CENTER[index + 3] = splay;
+	VRChatOSC::HUMAN_RIG_RANGE[index] = HOL::degreesToRadians(first);
+	VRChatOSC::HUMAN_RIG_RANGE[index + 1] = HOL::degreesToRadians(second);
+	VRChatOSC::HUMAN_RIG_RANGE[index + 2] = HOL::degreesToRadians(third);
+	VRChatOSC::HUMAN_RIG_RANGE[index + 3] = HOL::degreesToRadians(splay);
 }
 
 int HOL::VRChat::VRChatOSC::getParameterIndex(HOL::FingerType finger, HOL::FingerBendType joint)
@@ -115,7 +89,7 @@ int HOL::VRChat::VRChatOSC::getParameterIndex(HOL::FingerType finger, HOL::Finge
 
 // Individual joint on one hand
 float HOL::VRChat::VRChatOSC::computeParameterValue(float rawValue,
-													HOL::HandSide,
+													HOL::HandSide side,
 													HOL::FingerType finger,
 													HOL::FingerBendType joint)
 {
@@ -125,30 +99,89 @@ float HOL::VRChat::VRChatOSC::computeParameterValue(float rawValue,
 	float rawRangeStart = 0; // Must be <= 0
 	float rawRangeEnd = 1;	 // Must be >= 0, but realistically >= 1
 
+	// What the center of this range is we're just going to have to eyeball.
+	// This will likely also need some adjustment depending on the avatar.
+	// For curls this would be about 45 degrees, splays close to 0,
+	// but the finger can bend backwawrds a bit too
+	float center;
 	if (joint == HOL::FingerBendType::Splay)
 	{
 		// Splay is always inwards towards the center of the hand,
-		// so it will be different for left/right hands. Also there's the thumb.
+		// so it will be different for left/right hands. 0 in, 1 out.
+		// Thumb is 0: downwards ( towards palm ), 1: upwards.
+		center = HOL::settings::FingerSplayCenter[finger];
+
+		// Raw values are provided, so we do the conversion for unity here.
+		// I /think/ all we need to do is flip the input, but...
+		// These are probably going to be wrong for now, but just flip them if they are.
+		// What we know for sure now is that all the source values will be ortation in the same
+		// direction, probably left
+		if (side == HandSide::LeftHand)
+		{
+			// If so, index and middle flipped. Probably thumb too
+			switch (finger)
+			{
+				case HOL::FingerIndex:
+				case HOL::FingerMiddle:
+				case HOL::FingerThumb: {
+					rawValue *= -1.f;
+					break;
+				}
+				default:
+					break;
+			}
+		}
+		else
+		{
+			// And opposite for right hand
+			switch (finger)
+			{
+				case HOL::FingerLittle:
+				case HOL::FingerRing: {
+					rawValue *= -1.f;
+					break;
+				}
+				default:
+					break;
+			}
+		}
+
+		// rawRangeStart / End will probably need to be adjusted somehow
+		// if the are not chnaged by an equal amount. Problem for later.
 	}
 	else
 	{
-		float range = VRChatOSC::HUMAN_RIG_RANGE[index];
-		float center = VRChatOSC::HUMAN_RIG_CENTER[index];
-		float halfRange = VRChatOSC::HUMAN_RIG_RANGE[index] * 0.5f;
-
-		// rangeStart is where the unity curl value should be 0, and rangeEnd 1.
-		// Adjust rawRangeStart and end to extend range of joint, but animations
-		// in unity must be generated to match this value.
-		// human rig range/center assume an unmodified unity humanoid rig, and should not be
-		// modified.
-		float rangeStart = (center - halfRange) + (rawRangeStart * range); // raw curl equivalent to unity 0
-		float rangeEnd = (center + halfRange) + (rawRangeEnd * range);	   // raw curl equivalent to unity 1
-
-		// Ratio of RawValue between rangeStart and rangeEnd
-		float outputCurl = (rawValue - rangeStart) / (rangeEnd - rangeStart);
-		// clamp between 0 and 1
-		return std::clamp(outputCurl, 0.f, 1.f);
+		if (finger == FingerType::FingerThumb)
+		{
+			center = HOL::settings::ThumbCurlCenter[joint];
+		}
+		else
+		{
+			center = HOL::settings::CommonCurlCenter[joint];
+		}
 	}
+
+	// Any user inputs, such as settings, will be in degrees rather than radians
+	center = HOL::degreesToRadians(center);
+
+	float range = VRChatOSC::HUMAN_RIG_RANGE[index];
+
+	float halfRange = VRChatOSC::HUMAN_RIG_RANGE[index] * 0.5f;
+
+	// rangeStart is where the unity curl value should be 0, and rangeEnd 1.
+	// Adjust rawRangeStart and end to extend range of joint, but animations
+	// in unity must be generated to match this value.
+	// human rig range/center assume an unmodified unity humanoid rig, and should not be
+	// modified.
+	float rangeStart
+		= (center - halfRange) + (rawRangeStart * range); // raw curl equivalent to unity 0
+	float rangeEnd
+		= (center + halfRange) + ((1.f - rawRangeEnd) * range); // raw curl equivalent to unity 1
+
+	// Ratio of RawValue between rangeStart and rangeEnd
+	float outputCurl = (rawValue - rangeStart) / (rangeEnd - rangeStart);
+	// clamp between 0 and 1
+	return std::clamp(outputCurl, 0.f, 1.f);
 }
 
 float HOL::VRChat::VRChatOSC::encodePacked(float left, float right)
@@ -160,17 +193,19 @@ float HOL::VRChat::VRChatOSC::encodePacked(float left, float right)
 	// Right will be 0-1 scaled to 0-15, added to the value we calculated for left.
 
 	// 0-1 to 0-15, multiply by 16 to get the first entry of the group of 16 where left is in the
-	// correct position
+	// correct position, 0, 16, 32, 48, 64 ... 240
 	float leftEncoded = roundf((left * 15.f)) * 16.f;
 
 	// the same, except do not multiply by 16 because this is the index inside the group of 16
 	float rightEncoded = roundf((right * 15.f));
 
+	// Adding the two together, we get two separate 0-15 values encoded in a single 0-255 value.
+	// Left will be in the same position for values 0 to 15, 16 to 31, and so on.
+	float packed = leftEncoded + rightEncoded;
+
 	// 0 to 255, but we need this to be in the range -1 to 1 for vrchat and the blendtrees.
 	// vrchat will ultimately transmit the float value as an 8-bit float, so there will only
 	// be 256 steps between -1 and 1
-	float packed = leftEncoded + rightEncoded;
-
 	return ((packed / 255.f) * 2.f) - 1.f;
 }
 

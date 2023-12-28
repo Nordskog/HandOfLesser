@@ -24,6 +24,23 @@ private:
 
 	void updateStyles(float scale);
 
+	void InputFloatMultipleSingleLableWithButtons(std::string inputLabelBase,
+												  std::string visibleLabel,
+												  float smallIncrement,
+												  float largeIncrement,
+												  std::string format,
+												  int width,
+												  const std::vector<const float*>& values);
+
+	void InputFloatMultipleTopLableWithButtons(std::string inputLabelBase,
+											   const std::vector<std::string>& visibleLabel,
+											   float smallIncrement,
+											   float largeIncrement,
+											   std::string format,
+											   int width,
+											   const std::vector<const float*>& values);
+
 	void buildSingleHandTransformDisplay(HOL::HandSide side);
 	void buildHandTransformDisplay();
+	void BuildVRChatOSCSettings();
 };

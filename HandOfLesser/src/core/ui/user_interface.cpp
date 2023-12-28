@@ -163,61 +163,48 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	ImGui::SeparatorText(sideName);
 	ImGui::SeparatorText("Position");
 
-	ImGui::Text(
-		"Raw   : %.3f, %.3f, %.3f",
-		HOL::display::HandTransform[side].rawPose.position.x(),
-		HOL::display::HandTransform[side].rawPose.position.y(),
-		HOL::display::HandTransform[side].rawPose.position.z()
-	);
+	ImGui::Text("Raw   : %.3f, %.3f, %.3f",
+				HOL::display::HandTransform[side].rawPose.position.x(),
+				HOL::display::HandTransform[side].rawPose.position.y(),
+				HOL::display::HandTransform[side].rawPose.position.z());
 
-	ImGui::Text(
-		"Final : %.3f, %.3f, %.3f",
-		HOL::display::HandTransform[side].finalPose.position.x(),
-		HOL::display::HandTransform[side].finalPose.position.y(),
-		HOL::display::HandTransform[side].finalPose.position.z()
-	);
+	ImGui::Text("Final : %.3f, %.3f, %.3f",
+				HOL::display::HandTransform[side].finalPose.position.x(),
+				HOL::display::HandTransform[side].finalPose.position.y(),
+				HOL::display::HandTransform[side].finalPose.position.z());
 
-	ImGui::Text(
-		"Offset: %.3f, %.3f, %.3f",
-		HOL::display::HandTransform[side].finalTranslationOffset.x(),
-		HOL::display::HandTransform[side].finalTranslationOffset.y(),
-		HOL::display::HandTransform[side].finalTranslationOffset.z()
-	);
+	ImGui::Text("Offset: %.3f, %.3f, %.3f",
+				HOL::display::HandTransform[side].finalTranslationOffset.x(),
+				HOL::display::HandTransform[side].finalTranslationOffset.y(),
+				HOL::display::HandTransform[side].finalTranslationOffset.z());
 
 	ImGui::SeparatorText("Orientation");
 
 	{
 		Eigen::Vector3f asEuler
 			= HOL::display::HandTransform[side].rawPose.orientation.toRotationMatrix().eulerAngles(
-				0, 1, 2
-			);
-		ImGui::Text(
-			"Raw   : %.3f, %.3f, %.3f",
-			HOL::radiansToDegrees(asEuler.x()),
-			HOL::radiansToDegrees(asEuler.y()),
-			HOL::radiansToDegrees(asEuler.z())
-		);
+				0, 1, 2);
+		ImGui::Text("Raw   : %.3f, %.3f, %.3f",
+					HOL::radiansToDegrees(asEuler.x()),
+					HOL::radiansToDegrees(asEuler.y()),
+					HOL::radiansToDegrees(asEuler.z()));
 	}
 
 	{
 		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
 									  .finalPose.orientation.toRotationMatrix()
 									  .eulerAngles(0, 1, 2);
-		ImGui::Text(
-			"Final : %.3f, %.3f, %.3f",
-			HOL::radiansToDegrees(asEuler.x()),
-			HOL::radiansToDegrees(asEuler.y()),
-			HOL::radiansToDegrees(asEuler.z())
-		);
+		ImGui::Text("Final : %.3f, %.3f, %.3f",
+					HOL::radiansToDegrees(asEuler.x()),
+					HOL::radiansToDegrees(asEuler.y()),
+					HOL::radiansToDegrees(asEuler.z()));
 	}
 
 	{
-		ImGui::Text(
-			"Offset: %.3f, %.3f, %.3f",
-			HOL::display::HandTransform[side].finalOrientationOffset.x(),
-			HOL::display::HandTransform[side].finalOrientationOffset.y(),
-			HOL::display::HandTransform[side].finalOrientationOffset.z()
-		);
+		ImGui::Text("Offset: %.3f, %.3f, %.3f",
+					HOL::display::HandTransform[side].finalOrientationOffset.x(),
+					HOL::display::HandTransform[side].finalOrientationOffset.y(),
+					HOL::display::HandTransform[side].finalOrientationOffset.z());
 	}
 
 	ImGui::EndChild();
@@ -228,6 +215,131 @@ void UserInterface::buildHandTransformDisplay()
 	buildSingleHandTransformDisplay(HOL::LeftHand);
 	ImGui::SameLine();
 	buildSingleHandTransformDisplay(HOL::RightHand);
+}
+
+void UserInterface::InputFloatMultipleSingleLableWithButtons(
+	std::string inputLabelBase,
+	std::string visibleLabel,
+	float smallIncrement,
+	float largeIncrement,
+	std::string format,
+	int width,
+	const std::vector<const float*>& values)
+{
+	ImGui::PushItemWidth(scaleSize(width));
+
+	for (int i = 0; i < values.size(); i++)
+	{
+		ImGui::InputFloat(("##" + inputLabelBase + std::to_string(i)).c_str(),
+						  (float*)values[i],
+						  smallIncrement,
+						  largeIncrement,
+						  format.c_str());
+		ImGui::SameLine();
+	}
+
+	ImGui::Text(visibleLabel.c_str());
+
+	ImGui::PopItemWidth();
+}
+
+void UserInterface::InputFloatMultipleTopLableWithButtons(
+	std::string inputLabelBase,
+	const std::vector<std::string>& visibleLabel,
+	float smallIncrement,
+	float largeIncrement,
+	std::string format,
+	int width,
+	const std::vector<const float*>& values)
+{
+	ImGui::PushItemWidth(scaleSize(width));
+
+	for (int i = 0; i < values.size(); i++)
+	{
+		ImGui::BeginGroup();
+
+		const char* label;
+		if (i >= visibleLabel.size())
+		{
+			label = "";
+		}
+		else
+		{
+			label = visibleLabel[i].c_str();
+		}
+
+		ImGui::Text(label);
+
+		ImGui::InputFloat(("##" + inputLabelBase + std::to_string(i)).c_str(),
+						  (float*)values[i],
+						  smallIncrement,
+						  largeIncrement,
+						  format.c_str());
+
+		ImGui::EndGroup();
+
+		if (i < values.size() - 1)
+			ImGui::SameLine();
+	}
+
+	ImGui::PopItemWidth();
+}
+
+void UserInterface::BuildVRChatOSCSettings()
+
+{
+	ImGui::BeginChild(
+		"VRChatSettings", ImVec2(ImGui::GetContentRegionAvail().x * 1.f, 0), false, 0);
+
+	ImGui::SeparatorText("VRChat");
+
+	InputFloatMultipleSingleLableWithButtons("thumbRotationOffset",
+											 "Thumb rotation offset",
+											 0.1f,
+											 1.f,
+											 "%.1f",
+											 90,
+											 {&HOL::settings::ThumbAxisOffset[0],
+											  &HOL::settings::ThumbAxisOffset[1],
+											  &HOL::settings::ThumbAxisOffset[2]});
+
+	ImGui::SeparatorText("Curl Center");
+
+	InputFloatMultipleSingleLableWithButtons("commonFingerCurlCenter",
+											 "Common",
+											 0.1f,
+											 1.f,
+											 "%.1f",
+											 90,
+											 {&HOL::settings::CommonCurlCenter[0],
+											  &HOL::settings::CommonCurlCenter[1],
+											  &HOL::settings::CommonCurlCenter[2]});
+
+	InputFloatMultipleSingleLableWithButtons("thumbFingerCurlCenter",
+											 "Thumb",
+											 0.1f,
+											 1.f,
+											 "%.1f",
+											 90,
+											 {&HOL::settings::ThumbCurlCenter[0],
+											  &HOL::settings::ThumbCurlCenter[1],
+											  &HOL::settings::ThumbCurlCenter[2]});
+
+	ImGui::SeparatorText("Splay Center");
+
+	InputFloatMultipleTopLableWithButtons("fingerSplayCenter",
+										  {"Index", "Middle", "Ring", "Little", "Thumb"},
+										  0.1f,
+										  1.f,
+										  "%.1f",
+										  90,
+										  {&HOL::settings::FingerSplayCenter[0],
+										   &HOL::settings::FingerSplayCenter[1],
+										   &HOL::settings::FingerSplayCenter[2],
+										   &HOL::settings::FingerSplayCenter[3],
+										   &HOL::settings::FingerSplayCenter[4]});
+
+	ImGui::EndChild();
 }
 
 void UserInterface::buildMainInterface()
@@ -289,6 +401,21 @@ void UserInterface::buildMainInterface()
 	///////////////////
 
 	buildHandTransformDisplay();
+
+	///////////////////
+	// Right window
+	///////////////////
+
+	ImGui::EndChild();
+
+	ImGui::SameLine();
+	ImGui::BeginChild("RightMainWindow", ImVec2(scaleSize(500), 0), false, window_flags);
+
+	/////////////////
+	// VRChat
+	/////////////////
+
+	BuildVRChatOSCSettings();
 
 	ImGui::EndChild();
 	ImGui::End();

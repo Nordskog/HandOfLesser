@@ -15,7 +15,7 @@ namespace HOL::VRChat
 		static void init();
 		static int getParameterIndex(HOL::FingerType finger, HOL::FingerBendType joint);
 		static float computeParameterValue(float rawValue,
-										   HOL::HandSide,
+										   HOL::HandSide side,
 										   HOL::FingerType finger,
 										   HOL::FingerBendType joint);
 
@@ -36,11 +36,6 @@ namespace HOL::VRChat
 									 float second,
 									 float third,
 									 float splay);
-		static void setHumanRigCenter(HOL::FingerType finger,
-									  float first,
-									  float second,
-									  float third,
-									  float splay);
 		static std::string OSC_PARAMETER_NAMES[PARAMETER_COUNT];
 		static float OSC_OUTPUT[PARAMETER_COUNT];
 	};
