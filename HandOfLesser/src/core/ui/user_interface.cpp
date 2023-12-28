@@ -129,9 +129,9 @@ void UserInterface::initImgui()
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
 	// Setup Platform/Renderer backends
-	ImGui_ImplGlfw_InitForOpenGL(
-		this->mWindow, true
-	); // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+	ImGui_ImplGlfw_InitForOpenGL(this->mWindow,
+								 true); // Second param install_callback=true will install GLFW
+										// callbacks and chain to existing ones.
 	ImGui_ImplOpenGL3_Init();
 	std::cout << "Imgui init finished" << std::endl;
 }
@@ -232,7 +232,11 @@ void UserInterface::buildHandTransformDisplay()
 
 void UserInterface::buildMainInterface()
 {
-	ImGui::Begin("Controllers", NULL, ImGuiWindowFlags_MenuBar);
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+
+	ImGui::Begin("Controllers",
+				 NULL,
+				 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 	ImGuiWindowFlags window_flags = 0;
 
 	ImGui::BeginChild("LeftMainWindow", ImVec2(scaleSize(500), 0), false, window_flags);
@@ -257,12 +261,10 @@ void UserInterface::buildMainInterface()
 	/////////////////
 
 	window_flags = 0;
-	ImGui::BeginChild(
-		"TranslationInput",
-		ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, scaleSize(100)),
-		false,
-		window_flags
-	);
+	ImGui::BeginChild("TranslationInput",
+					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, scaleSize(100)),
+					  false,
+					  window_flags);
 
 	ImGui::SeparatorText("Translation");
 	ImGui::InputFloat("posX", &HOL::settings::PositionOffset.x(), 0.001f, 0.01f, "%.3f");
