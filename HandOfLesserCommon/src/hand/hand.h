@@ -5,10 +5,11 @@
 
 namespace HOL
 {
+	// Note that this does NOT match XrHandEXT, because it begins at 1 rather than 0.
+	// Use HOL::HandSide wherever possible, and only convert to XrHandEXT when necessary
 	enum HandSide
 	{
-		LeftHand = 1, // XrHandEXT::XR_HAND_LEFT_EXT,
-		RightHand = 2 // XrHandEXT::XR_HAND_RIGHT_EXT,
+		LeftHand, RightHand, HandSide_MAX
 	};
 
 	enum FingerType

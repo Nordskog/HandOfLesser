@@ -12,15 +12,15 @@
 
 using namespace HOL::OpenXR;
 
-OpenXRHand::OpenXRHand(xr::UniqueDynamicSession& session, XrHandEXT side)
+OpenXRHand::OpenXRHand(xr::UniqueDynamicSession& session, HOL::HandSide side)
 {
 	init(session, side);
 }
 
-void OpenXRHand::init(xr::UniqueDynamicSession& session, XrHandEXT side)
+void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 {
 	this->mSide = side;
-	HandTrackingInterface::createHandTracker(session, side, this->mHandTracker);
+	HandTrackingInterface::createHandTracker(session, toOpenXRHandSide(side), this->mHandTracker);
 }
 
 void OpenXRHand::calculateCurlSplay()
@@ -121,7 +121,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	Eigen::Vector3f mainRotationOffset = gripRotationOffset + HOL::settings::OrientationOffset;
 	Eigen::Vector3f mainTranslationOffset = gripTranslationOffset + HOL::settings::PositionOffset;
 
-	if (this->mSide == XR_HAND_LEFT_EXT)
+	if (this->mSide == HandSide::LeftHand)
 	{
 		// Base offsets are for the left hand
 	}

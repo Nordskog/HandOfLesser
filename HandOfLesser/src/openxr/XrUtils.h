@@ -7,6 +7,7 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <HandOfLesserCommon.h>
 
 namespace HOL::OpenXR
 {
@@ -49,4 +50,6 @@ namespace HOL::OpenXR
 	Eigen::Vector3f toEigenVector(const XrVector3f& xrVector);
 
 	Eigen::Quaternionf toEigenQuaternion(const XrQuaternionf& xrQuat);
+
+	XrHandEXT toOpenXRHandSide(HOL::HandSide side);
 }

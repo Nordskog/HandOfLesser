@@ -17,8 +17,8 @@ void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSe
 
 void HandTracking::initHands(xr::UniqueDynamicSession& session)
 {
-	this->mLeftHand = std::make_unique<OpenXRHand>(session, XrHandEXT::XR_HAND_LEFT_EXT);
-	this->mRightHand = std::make_unique<OpenXRHand>(session, XrHandEXT::XR_HAND_RIGHT_EXT);
+	this->mLeftHand = std::make_unique<OpenXRHand>(session, HOL::LeftHand);
+	this->mRightHand = std::make_unique<OpenXRHand>(session, HOL::RightHand);
 }
 
 void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time)

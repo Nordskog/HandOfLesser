@@ -37,4 +37,17 @@ namespace HOL::OpenXR
 		return Eigen::Quaternionf(xrQuat.w, xrQuat.x, xrQuat.y, xrQuat.z);
 	}
 
+	XrHandEXT toOpenXRHandSide(HOL::HandSide side)
+	{
+		switch (side)
+		{
+			case HOL::LeftHand:
+				return XrHandEXT::XR_HAND_LEFT_EXT;
+			case HOL::RightHand:
+				return XrHandEXT::XR_HAND_RIGHT_EXT;
+			default:
+				return XrHandEXT::XR_HAND_MAX_ENUM_EXT; // Just don't do this
+		}
+	}
+
 }
