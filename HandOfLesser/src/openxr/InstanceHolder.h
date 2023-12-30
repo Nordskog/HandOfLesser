@@ -4,6 +4,7 @@
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr.hpp>
 #include "XrEventsInterface.h"
+#include "openxr_state.h"
 
 #include <iostream>
 
@@ -17,6 +18,7 @@ public:
 	void endSession();
 	void setCallback(XrEventsInterface* callback);
 	XrTime getTime();
+	HOL::OpenXR::OpenXrState getState();
 
 	xr::UniqueDynamicInstance mInstance;
 	xr::UniqueDynamicSession mSession;
@@ -25,6 +27,7 @@ public:
 	xr::DispatchLoaderDynamic mDispatcher;
 
 private:
+	HOL::OpenXR::OpenXrState mState;
 	xr::SystemId mSystemId;
 
 	std::vector<xr::ExtensionProperties> mExtensions;
@@ -41,6 +44,8 @@ private:
 	void initSession();
 	void initSpaces();
 
+	void updateState(HOL::OpenXR::OpenXrState newState);
+
 	template <typename Dispatch> void pollEventInternal(xr::Instance instance, Dispatch&& d)
 	{
 		while (1)
@@ -53,7 +58,7 @@ private:
 			}
 			else if (result != xr::Result::Success)
 			{
-				std::cout << "Got error polling for events: " << to_string(result) << std::endl;
+				std::cerr << "Got error polling for events: " << to_string(result) << std::endl;
 				return;
 			}
 

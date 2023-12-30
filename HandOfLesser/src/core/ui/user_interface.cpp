@@ -353,6 +353,22 @@ void UserInterface::buildMainInterface()
 
 	ImGui::BeginChild("LeftMainWindow", ImVec2(scaleSize(500), 0), false, window_flags);
 
+	/////////////////////////
+	// State
+	///////////////////////
+
+	window_flags = 0;
+	ImGui::BeginChild("GeneralState",
+					  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, scaleSize(50)),
+					  false,
+					  window_flags);
+
+	ImGui::SeparatorText("State");
+
+	ImGui::Text("OpenXR Session state: %s", HOL::OpenXR::getOpenXrStateString(HOL::display::OpenXrInstanceState) );
+
+	ImGui::EndChild();
+
 	/////////////////
 	// General
 	/////////////////

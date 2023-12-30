@@ -3,23 +3,36 @@
 #include "src/oculus/oculus_hacks.h"
 #include "src/core/settings_global.h"
 
+using namespace HOL::OpenXR;
+
 void HandOfLesserCore::init(int serverPort)
 {
+
 	this->mInstanceHolder = std::make_unique<InstanceHolder>();
 	this->mInstanceHolder->init();
-	this->mInstanceHolder->beginSession();
 
-	this->mHandTracking = std::make_unique<HandTracking>();
-	this->mHandTracking->init(this->mInstanceHolder->mInstance, this->mInstanceHolder->mSession);
+	if (this->mInstanceHolder->getState() != OpenXrState::Failed)
+	{
+		this->mInstanceHolder->beginSession();
+
+		// Run everything else even if we don't have valid OpenXR so we
+		// can test UI and stuff
+		if (this->mInstanceHolder->getState() == OpenXrState::Running)
+		{
+			this->mHandTracking = std::make_unique<HandTracking>();
+			this->mHandTracking->init(this->mInstanceHolder->mInstance,
+									  this->mInstanceHolder->mSession);
+
+			// Only necessary if using Airlink runtime
+			// Doesn't hurt to run otherwise though.
+			HOL::hacks::fixOvrSessionStateRestriction();
+		}
+	}
 
 	this->mTransport.init(serverPort);
-
+	
 	this->mUserInterface = std::make_unique<UserInterface>();
 	this->mUserInterface.get()->init();
-
-	// Only necessary if using Airlink runtime
-	// Doesn't hurt to run otherwise though.
-	HOL::hacks::fixOvrSessionStateRestriction();
 }
 
 void HandOfLesserCore::start()
@@ -36,7 +49,10 @@ void HandOfLesserCore::mainLoop()
 {
 	while (1)
 	{
-		doOpenXRStuff();
+		if (this->mInstanceHolder->getState() == OpenXrState::Running)
+		{
+			doOpenXRStuff();
+		}
 
 		this->mUserInterface.get()->onFrame();
 		if (this->mUserInterface.get()->shouldClose())

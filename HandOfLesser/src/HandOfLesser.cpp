@@ -12,6 +12,6 @@ int main(int /* argc */, char* /* argv */[])
 	}
 	catch (std::exception exp)
 	{
-		std::cout << exp.what() << std::endl;
+		std::cerr << exp.what() << std::endl;
 	}
 }

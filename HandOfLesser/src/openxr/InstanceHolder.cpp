@@ -3,11 +3,13 @@
 #include <iostream>
 #include "XrUtils.h"
 #include <thread>
+#include "src/core/ui/display_global.h"
 
 using namespace HOL::OpenXR;
 
 InstanceHolder::InstanceHolder()
 {
+	this->mState = OpenXrState::Uninitialized;
 	this->mCallback = nullptr;
 }
 
@@ -15,13 +17,25 @@ void InstanceHolder::init()
 {
 	this->mDispatcher = xr::DispatchLoaderDynamic{};
 
-	this->enumerateLayers();
-	this->enumerateExtensions();
-	this->initExtensions();
+	try
+	{
+		this->enumerateLayers();
+		this->enumerateExtensions();
+		this->initExtensions();
 
-	this->initInstance();
-	this->initSession();
-	this->initSpaces();
+		this->initInstance();
+		this->initSession();
+		this->initSpaces();
+	}
+	catch (std::exception exp)
+	{
+		std::cerr << exp.what() << std::endl;
+		std::cerr << "Failed to initialize OpenXR" << std::endl;
+		this->updateState(OpenXrState::Failed);
+		return;
+	}
+
+	this->updateState(OpenXrState::Initialized);
 }
 
 void InstanceHolder::initInstance()
@@ -32,24 +46,21 @@ void InstanceHolder::initInstance()
 	this->mInstance = xr::createInstanceUnique(
 		xr::InstanceCreateInfo{
 			xr::InstanceCreateFlagBits::None,
-			xr::ApplicationInfo{
-				"HandOfLesser",
-				1, // app version
-				"",
-				0, // engine version
-				xr::Version::current()},
+			xr::ApplicationInfo{"HandOfLesser",
+								1, // app version
+								"",
+								0, // engine version
+								xr::Version::current()},
 			uint32_t(enabledLayers.size()),
 			enabledLayers.data(),
 			uint32_t(this->mEnabledExtensions.size()),
 			this->mEnabledExtensions.data(),
 		},
-		this->mDispatcher
-	);
+		this->mDispatcher);
 
 	// Update the dispatch now that we have an instance
-	this->mDispatcher = xr::DispatchLoaderDynamic::createFullyPopulated(
-		this->mInstance.get(), &::xrGetInstanceProcAddr
-	);
+	this->mDispatcher = xr::DispatchLoaderDynamic::createFullyPopulated(this->mInstance.get(),
+																		&::xrGetInstanceProcAddr);
 
 	pollEvent();
 }
@@ -57,8 +68,7 @@ void InstanceHolder::initInstance()
 void InstanceHolder::initSession()
 {
 	this->mSystemId = this->mInstance->getSystem(
-		xr::SystemGetInfo{xr::FormFactor::HeadMountedDisplay}, this->mDispatcher
-	);
+		xr::SystemGetInfo{xr::FormFactor::HeadMountedDisplay}, this->mDispatcher);
 
 	xr::SessionCreateInfo createInfo{xr::SessionCreateFlagBits::None, this->mSystemId};
 	xr::GraphicsBindingD3D11KHR D3D11Binding;
@@ -69,9 +79,16 @@ void InstanceHolder::initSession()
 	createInfo.next = get(D3D11Binding);
 
 	ID3D11Device* Device;
-	D3D11CreateDevice(
-		NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0x00, NULL, 0, D3D11_SDK_VERSION, &Device, NULL, NULL
-	);
+	D3D11CreateDevice(NULL,
+					  D3D_DRIVER_TYPE_HARDWARE,
+					  NULL,
+					  0x00,
+					  NULL,
+					  0,
+					  D3D11_SDK_VERSION,
+					  &Device,
+					  NULL,
+					  NULL);
 	D3D11Binding.device = Device;
 
 	createInfo.systemId = this->mSystemId;
@@ -84,12 +101,12 @@ void InstanceHolder::initSession()
 void InstanceHolder::initSpaces()
 {
 	this->mLocalSpace = this->mSession->createReferenceSpaceUnique(
-		xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Local, xr::Posef{}}, this->mDispatcher
-	);
+		xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Local, xr::Posef{}},
+		this->mDispatcher);
 
 	mStageSpace = this->mSession->createReferenceSpaceUnique(
-		xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Stage, xr::Posef{}}, this->mDispatcher
-	);
+		xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Stage, xr::Posef{}},
+		this->mDispatcher);
 }
 
 void InstanceHolder::pollEvent()
@@ -99,18 +116,33 @@ void InstanceHolder::pollEvent()
 
 void InstanceHolder::endSession()
 {
-	this->mSession->requestExitSession(this->mDispatcher);
-	this->mSession->endSession(this->mDispatcher);
+	if (mState == OpenXrState::Running)
+	{
+		this->mSession->requestExitSession(this->mDispatcher);
+		this->mSession->endSession(this->mDispatcher);
+		this->updateState(OpenXrState::Exited);
+	}
 }
 
 void InstanceHolder::beginSession()
 {
 	auto viewConfigType = xr::ViewConfigurationType::PrimaryStereo;
 
-	// Begin session
-	this->mSession->beginSession({viewConfigType}, this->mDispatcher);
+	try
+	{
+		// Begin session
+		this->mSession->beginSession({viewConfigType}, this->mDispatcher);
+	}
+	catch (std::exception exp)
+	{
+		std::cerr << exp.what() << std::endl;
+		std::cerr << "Failed to begin OpenXR session" << std::endl;
+		this->updateState(OpenXrState::Failed);
+		return;
+	}
 
 	this->pollEvent();
+	this->updateState(OpenXrState::Running);
 }
 
 void InstanceHolder::enumerateLayers()
@@ -161,4 +193,15 @@ void InstanceHolder::setCallback(XrEventsInterface* callback)
 XrTime InstanceHolder::getTime()
 {
 	return getXrTimeNow(this->mInstance.get(), this->mDispatcher).get();
+}
+
+void InstanceHolder::updateState(OpenXrState newState)
+{
+	this->mState = newState;
+	HOL::display::OpenXrInstanceState = newState;
+}
+
+OpenXrState InstanceHolder::getState()
+{
+	return this->mState;
 }
