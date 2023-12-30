@@ -14,6 +14,7 @@
 	src/oculus/oculus_hacks.cpp
 	src/vrchat/vrchat_osc.cpp
 	src/openxr/openxr_state.cpp
+	src/windows/windows_utils.cpp
 )
 
 find_package(OpenGL REQUIRED)

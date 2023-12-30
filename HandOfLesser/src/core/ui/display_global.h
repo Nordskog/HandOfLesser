@@ -19,5 +19,6 @@ namespace HOL
 	{
 		extern HandTransformDisplay HandTransform[2];
 		extern OpenXR::OpenXrState OpenXrInstanceState;
-	}
+		extern std::string OpenXrRuntimeName;
+	} // namespace display
 } // namespace HOL

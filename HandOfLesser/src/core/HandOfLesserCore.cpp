@@ -1,12 +1,18 @@
 #include "HandOfLesserCore.h"
 #include <thread>
 #include "src/oculus/oculus_hacks.h"
+#include "src/openxr/XrUtils.h"
 #include "src/core/settings_global.h"
+#include "src/core/ui/display_global.h"
 
 using namespace HOL::OpenXR;
 
 void HandOfLesserCore::init(int serverPort)
 {
+	std::string runtimePath = HOL::OpenXR::getActiveOpenXRRuntimePath(1);
+	std::string runtimeName = HOL::OpenXR::getActiveOpenXRRuntimeName(1);
+	std::cout << "Active OpenXR Runtime is: " << runtimePath << std::endl;
+	HOL::display::OpenXrRuntimeName = runtimeName;
 
 	this->mInstanceHolder = std::make_unique<InstanceHolder>();
 	this->mInstanceHolder->init();
@@ -30,7 +36,7 @@ void HandOfLesserCore::init(int serverPort)
 	}
 
 	this->mTransport.init(serverPort);
-	
+
 	this->mUserInterface = std::make_unique<UserInterface>();
 	this->mUserInterface.get()->init();
 }

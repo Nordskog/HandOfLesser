@@ -359,13 +359,16 @@ void UserInterface::buildMainInterface()
 
 	window_flags = 0;
 	ImGui::BeginChild("GeneralState",
-					  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, scaleSize(50)),
+					  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, scaleSize(75)),
 					  false,
 					  window_flags);
 
 	ImGui::SeparatorText("State");
 
-	ImGui::Text("OpenXR Session state: %s", HOL::OpenXR::getOpenXrStateString(HOL::display::OpenXrInstanceState) );
+	ImGui::Text("OpenXR Runtime: %s", HOL::display::OpenXrRuntimeName.c_str());
+
+	ImGui::Text("OpenXR Session state: %s",
+				HOL::OpenXR::getOpenXrStateString(HOL::display::OpenXrInstanceState));
 
 	ImGui::EndChild();
 

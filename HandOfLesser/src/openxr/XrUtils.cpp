@@ -1,4 +1,5 @@
 #include "XrUtils.h"
+#include <src/windows/windows_utils.h>
 
 namespace HOL::OpenXR
 {
@@ -50,4 +51,29 @@ namespace HOL::OpenXR
 		}
 	}
 
-}
+	std::string getActiveOpenXRRuntimePath(int majorApiVersion)
+	{
+		std::string runtimePath = "Unknown";
+		std::string path = "SOFTWARE\\Khronos\\OpenXR\\" + std::to_string(majorApiVersion);
+
+		RegGetString(HKEY_LOCAL_MACHINE, path, "ActiveRuntime", runtimePath);
+
+		return runtimePath;
+	}
+
+	std::string getActiveOpenXRRuntimeName(int majorApiVersion)
+	{
+		std::string runtimeName = getActiveOpenXRRuntimePath(majorApiVersion);
+
+		// In an ideal world we'd go read the json, but I am lazy
+		int lastSlash = runtimeName.find_last_of('\\');
+		if (lastSlash > 0)
+		{
+			// Just get filename from path
+			runtimeName = runtimeName.substr(lastSlash + 1);
+		}
+
+		return runtimeName;
+	}
+
+} // namespace HOL::OpenXR
