@@ -11,12 +11,18 @@ namespace HOL
 	{
 		Eigen::Vector3f finalTranslationOffset;
 		Eigen::Vector3f finalOrientationOffset; // In degrees
-		HOL::PoseLocation rawPose;
-		HOL::PoseLocation finalPose;
+		PoseLocation rawPose;
+		PoseLocation finalPose;
+	};
+
+	struct FingerTrackingDisplay
+	{
+		FingerBend rawBend[FingerType::FingerType_MAX];
 	};
 
 	namespace display
 	{
+		extern FingerTrackingDisplay FingerTracking[2];
 		extern HandTransformDisplay HandTransform[2];
 		extern OpenXR::OpenXrState OpenXrInstanceState;
 		extern std::string OpenXrRuntimeName;

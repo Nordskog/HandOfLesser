@@ -40,7 +40,9 @@ private:
 											   int width,
 											   const std::vector<const float*>& values);
 
+	void buildSingleFingerTrackingDisplay(HOL::HandSide side);
 	void buildSingleHandTransformDisplay(HOL::HandSide side);
 	void buildHandTransformDisplay();
+	void buildFingerTrackingDisplay();
 	void BuildVRChatOSCSettings();
 };

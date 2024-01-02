@@ -150,7 +150,15 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		= this->handPose.palmLocation.orientation * mainTranslationOffset;
 	this->handPose.palmLocation.position = rawPosition + rotationOffsetLocal;
 
+	this->calculateCurlSplay();
+
+	///////////////////////////
+	// Update display values
+	///////////////////////////
+
 	{
+		// Hand orientation
+
 		HOL::display::HandTransform[this->mSide].rawPose.position = rawPosition;
 		HOL::display::HandTransform[this->mSide].rawPose.orientation = rawOrientation;
 
@@ -161,7 +169,12 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 
 		HOL::display::HandTransform[this->mSide].finalTranslationOffset = mainTranslationOffset;
 		HOL::display::HandTransform[this->mSide].finalOrientationOffset = mainRotationOffset;
-	}
 
-	this->calculateCurlSplay();
+		// Finger curl
+		for (int i = 0; i < FingerType_MAX; i++)
+		{
+			// Turns out you cannot assign an array to an array
+			HOL::display::FingerTracking[this->mSide].rawBend[i] = this->handPose.fingers[i];
+		}
+	}
 }
