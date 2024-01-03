@@ -12,6 +12,7 @@ public:
 	void updateInputs();
 	HOL::HandTransformPacket getTransformPacket(HOL::HandSide side);
 	HOL::ControllerInputPacket getInputPacket(HOL::HandSide side);
+	HOL::HandPose* getHandPose(HOL::HandSide side);
 
 private:
 	void initHands(xr::UniqueDynamicSession& session);

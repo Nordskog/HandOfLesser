@@ -4,11 +4,15 @@
 #include "src/openxr/XrUtils.h"
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
+#include "src/vrchat/vrchat_osc.h"
 
+using namespace HOL;
 using namespace HOL::OpenXR;
 
 void HandOfLesserCore::init(int serverPort)
 {
+	VRChat::VRChatOSC::init();
+
 	std::string runtimePath = HOL::OpenXR::getActiveOpenXRRuntimePath(1);
 	std::string runtimeName = HOL::OpenXR::getActiveOpenXRRuntimeName(1);
 	std::cout << "Active OpenXR Runtime is: " << runtimePath << std::endl;
@@ -84,7 +88,17 @@ void HandOfLesserCore::doOpenXRStuff()
 
 	this->sendUpdate();
 
+	// OSC is less time critically and should probably happen after we send the controller packet
+	doOscStuff();
+
 	return;
+}
+
+void HandOfLesserCore::doOscStuff()
+{
+	// Just generates it for now, still need to send.
+	VRChat::VRChatOSC::generateOscOutput(this->mHandTracking->getHandPose(LeftHand),
+										 this->mHandTracking->getHandPose(RightHand));
 }
 
 void HandOfLesserCore::sendUpdate()

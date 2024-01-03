@@ -18,6 +18,8 @@ namespace HOL
 	struct FingerTrackingDisplay
 	{
 		FingerBend rawBend[FingerType::FingerType_MAX];
+		FingerBend humanoidBend[FingerType::FingerType_MAX];
+		FingerBend packedBend[FingerType::FingerType_MAX]; // reusing for int values
 	};
 
 	namespace display

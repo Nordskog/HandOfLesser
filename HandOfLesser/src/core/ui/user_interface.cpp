@@ -5,6 +5,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include <cmath>
 #include <iostream>
 #include <imgui_impl_win32.h>
 
@@ -158,8 +159,7 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	const char* windowName = (side == HOL::LeftHand ? "LeftChild" : "RightRight");
 	int width = (side == HOL::LeftHand ? ImGui::GetContentRegionAvail().x * 0.5f : 0);
 
-	ImGuiWindowFlags window_flags = 0;
-	ImGui::BeginChild(windowName, ImVec2(width, scaleSize(175)), false, window_flags);
+	ImGui::BeginChild(windowName, ImVec2(width, 0), ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText(sideName);
 	ImGui::SeparatorText("Position");
@@ -211,22 +211,17 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	ImGui::EndChild();
 }
 
-void UserInterface::buildHandTransformDisplay()
+void UserInterface::buildSingleFingerTrackingDisplay(
+	const char* windowLabel,
+	HOL::HandSide side,
+	HOL::FingerBend bendValues[HOL::FingerType_MAX],
+	bool treatAsInt,
+	bool treatAsRadians)
 {
-	buildSingleHandTransformDisplay(HOL::LeftHand);
-	ImGui::SameLine();
-	buildSingleHandTransformDisplay(HOL::RightHand);
-}
 
-void UserInterface::buildSingleFingerTrackingDisplay(HOL::HandSide side)
-{
-	const char* sideName = (side == HOL::LeftHand ? "Left" : "Right");
-	const char* windowName
-		= (side == HOL::LeftHand ? "FingertrackingLeftChild" : "FingertrackingRightChild");
 	int width = (side == HOL::LeftHand ? ImGui::GetContentRegionAvail().x * 0.5f : 0);
 
-	ImGuiWindowFlags window_flags = 0;
-	ImGui::BeginChild(windowName, ImVec2(width, scaleSize(200)), false, window_flags);
+	ImGui::BeginChild(windowLabel, ImVec2(width, 0), ImGuiChildFlags_AutoResizeY);
 
 	// ImGui::SeparatorText(sideName);
 
@@ -248,8 +243,23 @@ void UserInterface::buildSingleFingerTrackingDisplay(HOL::HandSide side)
 		{
 			// Pad positive values with a space so negative values stay aligned.
 			// There is a format thing to add a + for positive numbers, but not just a space.
-			float value = HOL::radiansToDegrees(displayValues->rawBend[i].bend[j]);
-			ImGui::Text(value >= 0 ? " %.2f" : "%.2f", value);
+
+			float value = bendValues[i].bend[j];
+			if (treatAsRadians)
+			{
+				value = HOL::radiansToDegrees(value);
+			}
+
+			if (treatAsInt)
+			{
+				value = value;
+				ImGui::Text(value >= 0 ? " %d" : "%d", (int)std::roundf(value));
+			}
+			else
+			{
+				value = value;
+				ImGui::Text(value >= 0 ? " %.2f" : "%.2f", value);
+			}
 
 			positionOffset += valueWidth;
 
@@ -261,14 +271,6 @@ void UserInterface::buildSingleFingerTrackingDisplay(HOL::HandSide side)
 	}
 
 	ImGui::EndChild();
-}
-
-void UserInterface::buildFingerTrackingDisplay()
-{
-	ImGui::SeparatorText("Raw bend");
-	buildSingleFingerTrackingDisplay(HOL::LeftHand);
-	ImGui::SameLine();
-	buildSingleFingerTrackingDisplay(HOL::RightHand);
 }
 
 void UserInterface::InputFloatMultipleSingleLableWithButtons(
@@ -342,8 +344,9 @@ void UserInterface::InputFloatMultipleTopLableWithButtons(
 void UserInterface::BuildVRChatOSCSettings()
 
 {
-	ImGui::BeginChild(
-		"VRChatSettings", ImVec2(ImGui::GetContentRegionAvail().x * 1.f, scaleSize(175)), false, 0);
+	ImGui::BeginChild("VRChatSettings",
+					  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, 0),
+					  ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("VRChat");
 
@@ -393,6 +396,48 @@ void UserInterface::BuildVRChatOSCSettings()
 										   &HOL::settings::FingerSplayCenter[3],
 										   &HOL::settings::FingerSplayCenter[4]});
 
+	// Raw
+	ImGui::SeparatorText("Raw bend");
+	buildSingleFingerTrackingDisplay("rawBendLeft",
+									 HOL::LeftHand,
+									 HOL::display::FingerTracking[HOL::LeftHand].rawBend,
+									 false,
+									 true);
+	ImGui::SameLine();
+	buildSingleFingerTrackingDisplay("rawBendRight",
+									 HOL::RightHand,
+									 HOL::display::FingerTracking[HOL::RightHand].rawBend,
+									 false,
+									 true);
+
+	// Humanoid
+	ImGui::SeparatorText("Humanoid bend");
+	buildSingleFingerTrackingDisplay("humanoidBendLeft",
+									 HOL::LeftHand,
+									 HOL::display::FingerTracking[HOL::LeftHand].humanoidBend,
+									 false,
+									 false);
+	ImGui::SameLine();
+	buildSingleFingerTrackingDisplay("humanoidBendRight",
+									 HOL::RightHand,
+									 HOL::display::FingerTracking[HOL::RightHand].humanoidBend,
+									 false,
+									 false);
+
+	// Encoded, 0-255 in left hand, -1 to +1 that we'll be sending to vrchat in right hand
+	ImGui::SeparatorText("Packed bend");
+	buildSingleFingerTrackingDisplay("packedBendBothHandsRaw",
+									 HOL::LeftHand,
+									 HOL::display::FingerTracking[HOL::LeftHand].packedBend,
+									 true,
+									 false);
+	ImGui::SameLine();
+	buildSingleFingerTrackingDisplay("packedBendBothHandsVrchat",
+									 HOL::RightHand,
+									 HOL::display::FingerTracking[HOL::RightHand].packedBend,
+									 false,
+									 false);
+
 	ImGui::EndChild();
 }
 
@@ -400,22 +445,13 @@ void UserInterface::buildMainInterface()
 {
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
 
-	ImGui::Begin("Controllers",
-				 NULL,
-				 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-	ImGuiWindowFlags window_flags = 0;
+	ImGui::Begin("Controllers", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
-	ImGui::BeginChild("LeftMainWindow", ImVec2(scaleSize(600), 0), false, window_flags);
+	ImGui::BeginChild("LeftMainWindow", ImVec2(scaleSize(600), 0), ImGuiChildFlags_AutoResizeY);
 
 	/////////////////////////
 	// State
 	///////////////////////
-
-	window_flags = 0;
-	ImGui::BeginChild("GeneralState",
-					  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, scaleSize(75)),
-					  false,
-					  window_flags);
 
 	ImGui::SeparatorText("State");
 
@@ -424,32 +460,20 @@ void UserInterface::buildMainInterface()
 	ImGui::Text("OpenXR Session state: %s",
 				HOL::OpenXR::getOpenXrStateString(HOL::display::OpenXrInstanceState));
 
-	ImGui::EndChild();
-
 	/////////////////
 	// General
 	/////////////////
 
-	window_flags = 0;
-	ImGui::BeginChild("GeneralSettings",
-					  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, scaleSize(50)),
-					  false,
-					  window_flags);
-
 	ImGui::SeparatorText("General");
 	ImGui::InputInt("Prediction (ms)", &HOL::settings::MotionPredictionMS);
-
-	ImGui::EndChild();
 
 	/////////////////
 	// Offset inputs
 	/////////////////
 
-	window_flags = 0;
 	ImGui::BeginChild("TranslationInput",
-					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, scaleSize(100)),
-					  false,
-					  window_flags);
+					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
+					  ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("Translation");
 	ImGui::InputFloat("posX", &HOL::settings::PositionOffset.x(), 0.001f, 0.01f, "%.3f");
@@ -459,8 +483,7 @@ void UserInterface::buildMainInterface()
 	ImGui::EndChild();
 	ImGui::SameLine();
 
-	window_flags = 0;
-	ImGui::BeginChild("OrientationInput", ImVec2(0, scaleSize(100)), false, window_flags);
+	ImGui::BeginChild("OrientationInput", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("Orientation");
 	ImGui::InputFloat("rotX", &HOL::settings::OrientationOffset.x(), 1.0f, 5.0f, "%.3f");
@@ -473,9 +496,10 @@ void UserInterface::buildMainInterface()
 	// Hand pose
 	///////////////////
 
-	buildHandTransformDisplay();
-
-	buildFingerTrackingDisplay();
+	// Hand transform
+	buildSingleHandTransformDisplay(HOL::LeftHand);
+	ImGui::SameLine();
+	buildSingleHandTransformDisplay(HOL::RightHand);
 
 	///////////////////
 	// Right window
@@ -484,7 +508,7 @@ void UserInterface::buildMainInterface()
 	ImGui::EndChild();
 
 	ImGui::SameLine();
-	ImGui::BeginChild("RightMainWindow", ImVec2(scaleSize(600), 0), false, window_flags);
+	ImGui::BeginChild("RightMainWindow", ImVec2(scaleSize(600), 0), ImGuiChildFlags_AutoResizeY);
 
 	/////////////////
 	// VRChat

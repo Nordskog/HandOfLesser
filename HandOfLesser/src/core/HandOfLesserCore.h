@@ -23,5 +23,6 @@ private:
 
 	void mainLoop();
 	void doOpenXRStuff();
+	void doOscStuff();
 	void sendUpdate();
 };

@@ -1,5 +1,6 @@
 #include "vrchat_osc.h"
 #include "src/core/settings_global.h"
+#include "src/core/ui/display_global.h"
 
 float HOL::VRChat::VRChatOSC::HUMAN_RIG_RANGE[PARAMETER_COUNT];
 float HOL::VRChat::VRChatOSC::HUMAN_RIG_CENTER[PARAMETER_COUNT];
@@ -218,13 +219,23 @@ void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose* leftHand, HOL::Han
 
 		for (int j = 0; j < FingerBendType_MAX; j++)
 		{
-			float leftHand = computeParameterValue(
+			float leftBend = computeParameterValue(
 				leftFinger->bend[j], HOL::LeftHand, (FingerType)i, (FingerBendType)j);
-			float rightHand = computeParameterValue(
+			float rightBend = computeParameterValue(
 				rightFinger->bend[j], HOL::RightHand, (FingerType)i, (FingerBendType)j);
 
+			HOL::display::FingerTracking[HandSide::LeftHand].humanoidBend[i].bend[j] = leftBend;
+			HOL::display::FingerTracking[HandSide::RightHand].humanoidBend[i].bend[j] = rightBend;
+
 			int index = getParameterIndex((FingerType)i, (FingerBendType)j);
-			OSC_OUTPUT[index] = encodePacked(leftHand, rightHand);
+			float packed = encodePacked(leftBend, rightBend);
+			OSC_OUTPUT[index] = packed;
+
+			// 0-255 values in left hand slot, -1 to +1 values in right hand slot
+			// We're recreating the 0-255 values from the -1 to +1 for display purposes
+			HOL::display::FingerTracking[HandSide::LeftHand].packedBend[i].bend[j]
+				= std::roundf(((packed + 1.f) * 0.5f) * 255.f);
+			HOL::display::FingerTracking[HandSide::RightHand].packedBend[i].bend[j] = packed;
 		}
 	}
 }

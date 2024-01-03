@@ -130,3 +130,9 @@ HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
 
 	return packet;
 }
+
+HOL::HandPose* HandTracking::getHandPose(HOL::HandSide side)
+{
+	OpenXRHand* hand = (side == HOL::LeftHand) ? this->mLeftHand.get() : this->mRightHand.get();
+	return &hand->handPose;
+}
