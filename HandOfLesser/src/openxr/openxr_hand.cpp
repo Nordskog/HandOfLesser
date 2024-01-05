@@ -51,17 +51,28 @@ void OpenXRHand::calculateCurlSplay()
 	{
 		XrHandJointEXT rootJoint = getRootOpenXRJointForFinger(finger); // METACARPAL
 
+		// openxr joints are hierarchical, so we can +1 until we reach the tip of the finger
+		for (int i = 0; i < 4; i++)
+		{
+			rawOrientationOut[i] = getJointOrientation((XrHandJointEXT)(rootJoint + i));
+		}
+
+		// The root bone for the thumb would be the bone before the metacarpal,
+		// which doesn't exist; the next bone is the wrist.
+		// Use wrist orientation, but offset by user input to calibrate correctly.
 		if (finger == FingerType::FingerThumb)
 		{
-			// TOOD
-		}
-		else
-		{
-			// openxr joints are hierarchical, so we can +1 until we reach the tip of the finger
-			for (int i = 0; i < 4; i++)
+			Eigen::Quaternionf wristOrientation = getJointOrientation(rootJoint);
+			Eigen::Vector3f thumbAxisOffset = HOL::settings::ThumbAxisOffset;
+			if (this->mSide == HandSide::RightHand)
 			{
-				rawOrientationOut[i] = getJointOrientation((XrHandJointEXT)(rootJoint + i));
+				// Input values are for left hand
+				thumbAxisOffset = flipHandRotation(thumbAxisOffset);
 			}
+			Eigen::Quaternionf thumbAxisOffsetRotation
+				= HOL::quaternionFromEulerAnglesDegrees(HOL::settings::ThumbAxisOffset);
+
+			rawOrientationOut[0] = wristOrientation * thumbAxisOffsetRotation;
 		}
 	};
 
