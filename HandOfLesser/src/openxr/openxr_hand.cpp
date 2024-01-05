@@ -146,9 +146,9 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	/////////////
 
 	Eigen::Vector3f rawPosition = toEigenVector(palmLocation.pose.position);
-	Eigen::Vector3f rotationOffsetLocal
+	Eigen::Vector3f positionOffsetLocal
 		= this->handPose.palmLocation.orientation * mainTranslationOffset;
-	this->handPose.palmLocation.position = rawPosition + rotationOffsetLocal;
+	this->handPose.palmLocation.position = rawPosition + positionOffsetLocal;
 
 	this->calculateCurlSplay();
 
