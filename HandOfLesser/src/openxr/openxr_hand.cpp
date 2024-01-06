@@ -12,11 +12,6 @@
 
 using namespace HOL::OpenXR;
 
-OpenXRHand::OpenXRHand(xr::UniqueDynamicSession& session, HOL::HandSide side)
-{
-	init(session, side);
-}
-
 void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 {
 	this->mSide = side;

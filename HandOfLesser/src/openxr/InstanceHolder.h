@@ -8,66 +8,69 @@
 
 #include <iostream>
 
-class InstanceHolder
+namespace HOL::OpenXR
 {
-public:
-	InstanceHolder();
-	void init();
-	void beginSession();
-	void pollEvent();
-	void endSession();
-	void setCallback(XrEventsInterface* callback);
-	XrTime getTime();
-	HOL::OpenXR::OpenXrState getState();
-
-	xr::UniqueDynamicInstance mInstance;
-	xr::UniqueDynamicSession mSession;
-	xr::UniqueDynamicSpace mLocalSpace;
-	xr::UniqueDynamicSpace mStageSpace;
-	xr::DispatchLoaderDynamic mDispatcher;
-
-private:
-	HOL::OpenXR::OpenXrState mState;
-	xr::SystemId mSystemId;
-
-	std::vector<xr::ExtensionProperties> mExtensions;
-	std::vector<xr::ApiLayerProperties> mLayers;
-	std::vector<const char*> mEnabledExtensions;
-
-	XrEventsInterface* mCallback;
-
-	void enumerateLayers();
-	void enumerateExtensions();
-	void initExtensions();
-
-	void initInstance();
-	void initSession();
-	void initSpaces();
-
-	void updateState(HOL::OpenXR::OpenXrState newState);
-
-	template <typename Dispatch> void pollEventInternal(xr::Instance instance, Dispatch&& d)
+	class InstanceHolder
 	{
-		while (1)
-		{
-			xr::EventDataBuffer event;
-			auto result = instance.pollEvent(event, d);
-			if (result == xr::Result::EventUnavailable)
-			{
-				return;
-			}
-			else if (result != xr::Result::Success)
-			{
-				std::cerr << "Got error polling for events: " << to_string(result) << std::endl;
-				return;
-			}
+	public:
+		InstanceHolder();
+		void init();
+		void beginSession();
+		void pollEvent();
+		void endSession();
+		void setCallback(XrEventsInterface* callback);
+		XrTime getTime();
+		HOL::OpenXR::OpenXrState getState();
 
-			std::cout << "Event: " << to_string_literal(event.type) << std::endl;
-			if (event.type == xr::StructureType::EventDataSessionStateChanged)
+		xr::UniqueDynamicInstance mInstance;
+		xr::UniqueDynamicSession mSession;
+		xr::UniqueDynamicSpace mLocalSpace;
+		xr::UniqueDynamicSpace mStageSpace;
+		xr::DispatchLoaderDynamic mDispatcher;
+
+	private:
+		HOL::OpenXR::OpenXrState mState;
+		xr::SystemId mSystemId;
+
+		std::vector<xr::ExtensionProperties> mExtensions;
+		std::vector<xr::ApiLayerProperties> mLayers;
+		std::vector<const char*> mEnabledExtensions;
+
+		XrEventsInterface* mCallback;
+
+		void enumerateLayers();
+		void enumerateExtensions();
+		void initExtensions();
+
+		void initInstance();
+		void initSession();
+		void initSpaces();
+
+		void updateState(HOL::OpenXR::OpenXrState newState);
+
+		template <typename Dispatch> void pollEventInternal(xr::Instance instance, Dispatch&& d)
+		{
+			while (1)
 			{
-				auto& change = reinterpret_cast<xr::EventDataSessionStateChanged&>(event);
-				std::cout << to_string(change.state) << std::endl;
+				xr::EventDataBuffer event;
+				auto result = instance.pollEvent(event, d);
+				if (result == xr::Result::EventUnavailable)
+				{
+					return;
+				}
+				else if (result != xr::Result::Success)
+				{
+					std::cerr << "Got error polling for events: " << to_string(result) << std::endl;
+					return;
+				}
+
+				std::cout << "Event: " << to_string_literal(event.type) << std::endl;
+				if (event.type == xr::StructureType::EventDataSessionStateChanged)
+				{
+					auto& change = reinterpret_cast<xr::EventDataSessionStateChanged&>(event);
+					std::cout << to_string(change.state) << std::endl;
+				}
 			}
 		}
-	}
-};
+	};
+} // namespace HOL::OpenXR

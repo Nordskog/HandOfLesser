@@ -16,20 +16,18 @@ void HandOfLesserCore::init(int serverPort)
 	std::cout << "Active OpenXR Runtime is: " << runtimePath << std::endl;
 	HOL::display::OpenXrRuntimeName = runtimeName;
 
-	this->mInstanceHolder = std::make_unique<InstanceHolder>();
-	this->mInstanceHolder->init();
+	this->mInstanceHolder.init();
 
-	if (this->mInstanceHolder->getState() != OpenXrState::Failed)
+	if (this->mInstanceHolder.getState() != OpenXrState::Failed)
 	{
-		this->mInstanceHolder->beginSession();
+		this->mInstanceHolder.beginSession();
 
 		// Run everything else even if we don't have valid OpenXR so we
 		// can test UI and stuff
-		if (this->mInstanceHolder->getState() == OpenXrState::Running)
+		if (this->mInstanceHolder.getState() == OpenXrState::Running)
 		{
-			this->mHandTracking = std::make_unique<HandTracking>();
-			this->mHandTracking->init(this->mInstanceHolder->mInstance,
-									  this->mInstanceHolder->mSession);
+			this->mHandTracking.init(this->mInstanceHolder.mInstance,
+									 this->mInstanceHolder.mSession);
 
 			// Only necessary if using Airlink runtime
 			// Doesn't hurt to run otherwise though.
@@ -38,8 +36,7 @@ void HandOfLesserCore::init(int serverPort)
 	}
 	this->mTransport.init(serverPort);
 
-	this->mUserInterface = std::make_unique<UserInterface>();
-	this->mUserInterface.get()->init();
+	this->mUserInterface.init();
 }
 
 void HandOfLesserCore::start()
@@ -56,13 +53,13 @@ void HandOfLesserCore::mainLoop()
 {
 	while (1)
 	{
-		if (this->mInstanceHolder->getState() == OpenXrState::Running)
+		if (this->mInstanceHolder.getState() == OpenXrState::Running)
 		{
 			doOpenXRStuff();
 		}
 
-		this->mUserInterface.get()->onFrame();
-		if (this->mUserInterface.get()->shouldClose())
+		this->mUserInterface.onFrame();
+		if (this->mUserInterface.shouldClose())
 		{
 			break;
 		}
@@ -75,13 +72,13 @@ void HandOfLesserCore::mainLoop()
 
 void HandOfLesserCore::doOpenXRStuff()
 {
-	XrTime time = this->mInstanceHolder.get()->getTime();
+	XrTime time = this->mInstanceHolder.getTime();
 	time += 1000000LL * (XrTime)HOL::settings::MotionPredictionMS;
 
-	this->mInstanceHolder.get()->pollEvent();
+	this->mInstanceHolder.pollEvent();
 
-	this->mHandTracking->updateHands(this->mInstanceHolder->mStageSpace, time);
-	this->mHandTracking->updateInputs();
+	this->mHandTracking.updateHands(this->mInstanceHolder.mStageSpace, time);
+	this->mHandTracking.updateInputs();
 
 	this->sendUpdate();
 
@@ -94,25 +91,25 @@ void HandOfLesserCore::doOpenXRStuff()
 void HandOfLesserCore::doOscStuff()
 {
 	// Just generates it for now, still need to send.
-	this->mVrchatOSC.generateOscOutput(this->mHandTracking->getHandPose(LeftHand),
-										 this->mHandTracking->getHandPose(RightHand));
+	this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(LeftHand),
+									   this->mHandTracking.getHandPose(RightHand));
 }
 
 void HandOfLesserCore::sendUpdate()
 {
 	{
-		HOL::HandTransformPacket packet = this->mHandTracking->getTransformPacket(HOL::LeftHand);
+		HOL::HandTransformPacket packet = this->mHandTracking.getTransformPacket(HOL::LeftHand);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::HandTransformPacket));
 
-		packet = this->mHandTracking->getTransformPacket(HOL::RightHand);
+		packet = this->mHandTracking.getTransformPacket(HOL::RightHand);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::HandTransformPacket));
 	}
 
 	{
-		HOL::ControllerInputPacket packet = this->mHandTracking->getInputPacket(HOL::LeftHand);
+		HOL::ControllerInputPacket packet = this->mHandTracking.getInputPacket(HOL::LeftHand);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
 
-		packet = this->mHandTracking->getInputPacket(HOL::RightHand);
+		packet = this->mHandTracking.getInputPacket(HOL::RightHand);
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
 	}
 }

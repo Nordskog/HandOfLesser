@@ -4,9 +4,10 @@
 
 int main(int /* argc */, char* /* argv */[])
 {
+	HOL::HandOfLesserCore app;
+
 	try
-	{
-		HandOfLesserCore app;
+	{	
 		app.init(9005);
 		app.start();
 	}

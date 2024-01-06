@@ -13,6 +13,8 @@
 #include "src/core/ui/display_global.h"
 #include <HandOfLesserCommon.h>
 
+using namespace HOL;
+
 UserInterface* UserInterface::mCurrent = nullptr;
 
 void UserInterface::init()

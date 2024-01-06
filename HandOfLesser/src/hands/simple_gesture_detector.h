@@ -5,8 +5,8 @@
 
 namespace HOL::SimpleGesture
 {
-	SimpleGestureState getGesture(SimpleGestureType type, OpenXRHand* hand);
+	SimpleGestureState getGesture(SimpleGestureType type, const OpenXRHand& hand);
 
-	void populateGestures(SimpleGestureState* stateArray, OpenXRHand* hand);
+	void populateGestures(SimpleGestureState* stateArray, const OpenXRHand& hand);
 
 } // namespace HOL::SimpleGesture

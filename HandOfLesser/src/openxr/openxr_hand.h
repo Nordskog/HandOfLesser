@@ -12,7 +12,7 @@ using namespace HOL;
 class OpenXRHand
 {
 public:
-	OpenXRHand(xr::UniqueDynamicSession& session, HOL::HandSide side);
+	void init(xr::UniqueDynamicSession& session, HOL::HandSide side);
 	void updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time);
 
 	HandPose handPose;
@@ -21,7 +21,6 @@ public:
 	XrHandTrackingAimStateFB mAimState{XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
 
 private:
-	void init(xr::UniqueDynamicSession& session, HOL::HandSide side);
 	void calculateCurlSplay();
 
 	HOL::HandSide mSide;

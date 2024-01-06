@@ -208,19 +208,19 @@ float HOL::VRChat::VRChatOSC::encodePacked(float left, float right)
 	return ((packed / 255.f) * 2.f) - 1.f;
 }
 
-void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose* leftHand, HOL::HandPose* rightHand)
+void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose& leftHand, HOL::HandPose& rightHand)
 {
 	for (int i = 0; i < FingerType::FingerType_MAX; i++)
 	{
-		FingerBend* leftFinger = &leftHand->fingers[i];
-		FingerBend* rightFinger = &rightHand->fingers[i];
+		FingerBend leftFinger = leftHand.fingers[i];
+		FingerBend rightFinger = rightHand.fingers[i];
 
 		for (int j = 0; j < FingerBendType_MAX; j++)
 		{
 			float leftBend = computeParameterValue(
-				leftFinger->bend[j], HOL::LeftHand, (FingerType)i, (FingerBendType)j);
+				leftFinger.bend[j], HOL::LeftHand, (FingerType)i, (FingerBendType)j);
 			float rightBend = computeParameterValue(
-				rightFinger->bend[j], HOL::RightHand, (FingerType)i, (FingerBendType)j);
+				rightFinger.bend[j], HOL::RightHand, (FingerType)i, (FingerBendType)j);
 
 			HOL::display::FingerTracking[HandSide::LeftHand].humanoidBend[i].bend[j] = leftBend;
 			HOL::display::FingerTracking[HandSide::RightHand].humanoidBend[i].bend[j] = rightBend;

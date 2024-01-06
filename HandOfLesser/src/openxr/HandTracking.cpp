@@ -7,6 +7,7 @@
 #include <iostream>
 
 using namespace HOL;
+using namespace HOL::OpenXR;
 using namespace HOL::SimpleGesture;
 
 void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session)
@@ -17,14 +18,14 @@ void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSe
 
 void HandTracking::initHands(xr::UniqueDynamicSession& session)
 {
-	this->mLeftHand = std::make_unique<OpenXRHand>(session, HOL::LeftHand);
-	this->mRightHand = std::make_unique<OpenXRHand>(session, HOL::RightHand);
+	this->mLeftHand.init(session, HOL::LeftHand);
+	this->mRightHand.init(session, HOL::RightHand);
 }
 
 void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time)
 {
-	this->mLeftHand->updateJointLocations(space, time);
-	this->mRightHand->updateJointLocations(space, time);
+	this->mLeftHand.updateJointLocations(space, time);
+	this->mRightHand.updateJointLocations(space, time);
 }
 
 void HandTracking::updateInputs()
@@ -34,34 +35,32 @@ void HandTracking::updateInputs()
 
 void HandTracking::updateSimpleGestures()
 {
-	HOL::SimpleGesture::populateGestures(this->mLeftHand.get()->simpleGestures,
-										 this->mLeftHand.get());
-	HOL::SimpleGesture::populateGestures(this->mRightHand.get()->simpleGestures,
-										 this->mRightHand.get());
+	HOL::SimpleGesture::populateGestures(this->mLeftHand.simpleGestures, this->mLeftHand);
+	HOL::SimpleGesture::populateGestures(this->mRightHand.simpleGestures, this->mRightHand);
 }
 
-OpenXRHand* HandTracking::getHand(HOL::HandSide side)
+OpenXRHand& HandTracking::getHand(HOL::HandSide side)
 {
 	if (side == HOL::HandSide::LeftHand)
 	{
-		return this->mLeftHand.get();
+		return this->mLeftHand;
 	}
 	else
 	{
-		return this->mRightHand.get();
+		return this->mRightHand;
 	}
 }
 
 HOL::HandTransformPacket HandTracking::getTransformPacket(HOL::HandSide side)
 {
-	OpenXRHand* hand = getHand(side);
+	OpenXRHand hand = getHand(side);
 
 	HOL::HandTransformPacket packet;
 
-	packet.valid = hand->handPose.poseValid;
+	packet.valid = hand.handPose.poseValid;
 	packet.side = (HOL::HandSide)side;
-	packet.location = hand->handPose.palmLocation;
-	packet.velocity = hand->handPose.palmVelocity;
+	packet.location = hand.handPose.palmLocation;
+	packet.velocity = hand.handPose.palmVelocity;
 
 	return packet;
 }
@@ -69,13 +68,13 @@ HOL::HandTransformPacket HandTracking::getTransformPacket(HOL::HandSide side)
 HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
 {
 	// todo we're replacing all of this
-	OpenXRHand* hand = getHand(side);
-	OpenXRHand* otherHand = getHand(side == HOL::HandSide::LeftHand ? HOL::HandSide::RightHand
-																	: HOL::HandSide::LeftHand);
+	OpenXRHand hand = getHand(side);
+	OpenXRHand otherHand = getHand(side == HOL::HandSide::LeftHand ? HOL::HandSide::RightHand
+																   : HOL::HandSide::LeftHand);
 
 	HOL::ControllerInputPacket packet;
 
-	packet.valid = hand->handPose.poseValid;
+	packet.valid = hand.handPose.poseValid;
 	packet.side = (HOL::HandSide)side;
 
 	// A temporary end to the accidentally opening menu madness. System gesture is terrible.
@@ -83,25 +82,25 @@ HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
 	{
 		// Require both hands to do the thing, only trigger on right hand
 		packet.systemClick
-			= hand->simpleGestures[SimpleGestureType::OpenHandFacingFace].click
-			  && otherHand->simpleGestures[SimpleGestureType::OpenHandFacingFace].click;
+			= hand.simpleGestures[SimpleGestureType::OpenHandFacingFace].click
+			  && otherHand.simpleGestures[SimpleGestureType::OpenHandFacingFace].click;
 	}
 	else
 	{
 		packet.systemClick = false;
 	}
 
-	packet.triggerClick = hand->simpleGestures[SimpleGestureType::IndexFingerPinch].click;
+	packet.triggerClick = hand.simpleGestures[SimpleGestureType::IndexFingerPinch].click;
 
 	//
 	packet.fingerCurlIndex
-		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerIndex].getCurlSum());
+		= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerIndex].getCurlSum());
 	packet.fingerCurlMiddle
-		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerMiddle].getCurlSum());
+		= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerMiddle].getCurlSum());
 	packet.fingerCurlRing
-		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerRing].getCurlSum());
+		= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerRing].getCurlSum());
 	packet.fingerCurlPinky
-		= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerLittle].getCurlSum());
+		= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerLittle].getCurlSum());
 
 	// map index curl to trigger touch and force
 	float triggerValueRange = 0.15f;
@@ -131,8 +130,8 @@ HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
 	return packet;
 }
 
-HOL::HandPose* HandTracking::getHandPose(HOL::HandSide side)
+HOL::HandPose& HandTracking::getHandPose(HOL::HandSide side)
 {
-	OpenXRHand* hand = (side == HOL::LeftHand) ? this->mLeftHand.get() : this->mRightHand.get();
-	return &hand->handPose;
+	OpenXRHand& hand = (side == HOL::LeftHand) ? this->mLeftHand : this->mRightHand;
+	return hand.handPose;
 }

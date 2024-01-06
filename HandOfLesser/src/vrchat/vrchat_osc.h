@@ -19,7 +19,7 @@ namespace HOL::VRChat
 										   HOL::FingerType finger,
 										   HOL::FingerBendType joint);
 
-		void generateOscOutput(HOL::HandPose* leftHand, HOL::HandPose* rightHand);
+		void generateOscOutput(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
 
 		static float encodePacked(float left, float right);
 
