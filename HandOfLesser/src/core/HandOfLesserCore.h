@@ -6,6 +6,7 @@
 #include "src/openxr/XrEventsInterface.h"
 #include <HandOfLesserCommon.h>
 #include "src/core/ui/user_interface.h"
+#include "src/vrchat/vrchat_osc.h"
 
 class HandOfLesserCore // : public XrEventsInterface
 {
@@ -19,6 +20,7 @@ private:
 	std::unique_ptr<InstanceHolder> mInstanceHolder;
 	std::unique_ptr<HandTracking> mHandTracking;
 	std::unique_ptr<UserInterface> mUserInterface;
+	HOL::VRChat::VRChatOSC mVrchatOSC;
 	HOL::NativeTransport mTransport;
 
 	void mainLoop();

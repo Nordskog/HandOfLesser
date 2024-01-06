@@ -11,8 +11,6 @@ using namespace HOL::OpenXR;
 
 void HandOfLesserCore::init(int serverPort)
 {
-	VRChat::VRChatOSC::init();
-
 	std::string runtimePath = HOL::OpenXR::getActiveOpenXRRuntimePath(1);
 	std::string runtimeName = HOL::OpenXR::getActiveOpenXRRuntimeName(1);
 	std::cout << "Active OpenXR Runtime is: " << runtimePath << std::endl;
@@ -38,7 +36,6 @@ void HandOfLesserCore::init(int serverPort)
 			HOL::hacks::fixOvrSessionStateRestriction();
 		}
 	}
-
 	this->mTransport.init(serverPort);
 
 	this->mUserInterface = std::make_unique<UserInterface>();
@@ -97,7 +94,7 @@ void HandOfLesserCore::doOpenXRStuff()
 void HandOfLesserCore::doOscStuff()
 {
 	// Just generates it for now, still need to send.
-	VRChat::VRChatOSC::generateOscOutput(this->mHandTracking->getHandPose(LeftHand),
+	this->mVrchatOSC.generateOscOutput(this->mHandTracking->getHandPose(LeftHand),
 										 this->mHandTracking->getHandPose(RightHand));
 }
 

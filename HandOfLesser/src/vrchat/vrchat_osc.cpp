@@ -4,12 +4,10 @@
 
 float HOL::VRChat::VRChatOSC::HUMAN_RIG_RANGE[PARAMETER_COUNT];
 float HOL::VRChat::VRChatOSC::HUMAN_RIG_CENTER[PARAMETER_COUNT];
-std::tuple<float, float> HOL::VRChat::VRChatOSC::RAW_RANGE[PARAMETER_COUNT];
 
 std::string HOL::VRChat::VRChatOSC::OSC_PARAMETER_NAMES[PARAMETER_COUNT];
-float HOL::VRChat::VRChatOSC::OSC_OUTPUT[PARAMETER_COUNT];
 
-void HOL::VRChat::VRChatOSC::init()
+HOL::VRChat::VRChatOSC::VRChatOSC()
 {
 	initParameters();
 	initParameterNames();
@@ -229,7 +227,7 @@ void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose* leftHand, HOL::Han
 
 			int index = getParameterIndex((FingerType)i, (FingerBendType)j);
 			float packed = encodePacked(leftBend, rightBend);
-			OSC_OUTPUT[index] = packed;
+			this->mPackedOscOutput[index] = packed;
 
 			// 0-255 values in left hand slot, -1 to +1 values in right hand slot
 			// We're recreating the 0-255 values from the -1 to +1 for display purposes
