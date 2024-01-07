@@ -27,6 +27,7 @@ target_link_libraries(HandOfLesser PRIVATE
 	imgui
 	openxr_loader
 	openxr-hpp
+	oscpp
 	${OPENGL_LIBRARY}
 	${OPENVR_LIBRARIES}
 )

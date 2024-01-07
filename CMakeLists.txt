@@ -28,6 +28,10 @@ include(GoogleTest)
 add_library(openxr-hpp INTERFACE)
 target_include_directories(openxr-hpp INTERFACE lib/openxr-hpp)
 
+# OSC lib
+add_library(oscpp INTERFACE)
+target_include_directories(oscpp INTERFACE lib/oscpp/include)
+
 # Eigen
 add_library(eigen INTERFACE)
 target_include_directories(eigen INTERFACE lib/eigen)
