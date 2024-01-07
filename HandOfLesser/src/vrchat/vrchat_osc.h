@@ -27,6 +27,10 @@ namespace HOL::VRChat
 		static float HUMAN_RIG_RANGE[PARAMETER_COUNT];
 		static float HUMAN_RIG_CENTER[PARAMETER_COUNT];
 
+		size_t generateOscBundle();
+
+		char* getPacketBuffer();
+
 	private:
 		static void initParameters();
 		static void initParameterNames();
@@ -37,6 +41,7 @@ namespace HOL::VRChat
 									 float splay);
 		static std::string OSC_PARAMETER_NAMES[PARAMETER_COUNT];
 		float mPackedOscOutput[PARAMETER_COUNT];
+		char mOscPacketBuffer[PARAMETER_COUNT * 128]; // 2560 Should be plenty
 	};
 
 } // namespace HOL::VRChat

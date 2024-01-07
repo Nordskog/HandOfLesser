@@ -93,6 +93,10 @@ void HandOfLesserCore::doOscStuff()
 	// Just generates it for now, still need to send.
 	this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(LeftHand),
 									   this->mHandTracking.getHandPose(RightHand));
+
+	size_t size = this->mVrchatOSC.generateOscBundle();
+	this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+
 }
 
 void HandOfLesserCore::sendUpdate()

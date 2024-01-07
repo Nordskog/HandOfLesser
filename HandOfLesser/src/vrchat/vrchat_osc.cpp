@@ -1,6 +1,7 @@
 #include "vrchat_osc.h"
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
+#include <oscpp/client.hpp>
 
 float HOL::VRChat::VRChatOSC::HUMAN_RIG_RANGE[PARAMETER_COUNT];
 float HOL::VRChat::VRChatOSC::HUMAN_RIG_CENTER[PARAMETER_COUNT];
@@ -42,6 +43,8 @@ void HOL::VRChat::VRChatOSC::initParameterNames()
 	std::string fingerParamName[5];
 	std::string bendParamName[4];
 
+	std::string prefix = std::string("/avatar/parameters/");
+
 	fingerParamName[FingerType::FingerIndex] = "index_";
 	fingerParamName[FingerType::FingerMiddle] = "middle_";
 	fingerParamName[FingerType::FingerRing] = "ring_";
@@ -58,7 +61,7 @@ void HOL::VRChat::VRChatOSC::initParameterNames()
 		for (int j = 0; j < FingerBendType::FingerBendType_MAX; j++)
 		{
 			int index = getParameterIndex((FingerType)i, (FingerBendType)j);
-			VRChatOSC::OSC_PARAMETER_NAMES[index] = fingerParamName[i] + bendParamName[j];
+			VRChatOSC::OSC_PARAMETER_NAMES[index] = prefix + fingerParamName[i] + bendParamName[j];
 		}
 	}
 }
@@ -222,6 +225,13 @@ void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose& leftHand, HOL::Han
 			float rightBend = computeParameterValue(
 				rightFinger.bend[j], HOL::RightHand, (FingerType)i, (FingerBendType)j);
 
+			// VRChat goes from 0 closed to 1 fully open, the reverse of what we have.
+			if (j != FingerBendType::Splay)
+			{
+				leftBend = 1.0f - leftBend;
+				rightBend = 1.0f - rightBend;
+			}
+
 			HOL::display::FingerTracking[HandSide::LeftHand].humanoidBend[i].bend[j] = leftBend;
 			HOL::display::FingerTracking[HandSide::RightHand].humanoidBend[i].bend[j] = rightBend;
 
@@ -236,4 +246,28 @@ void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose& leftHand, HOL::Han
 			HOL::display::FingerTracking[HandSide::RightHand].packedBend[i].bend[j] = packed;
 		}
 	}
+}
+
+size_t HOL::VRChat::VRChatOSC::generateOscBundle()
+{
+	// Size param is presumably buffer size
+	OSCPP::Client::Packet packet(this->mOscPacketBuffer, PARAMETER_COUNT * 128);
+
+	packet.openBundle(0);
+
+	for (int i = 0; i < PARAMETER_COUNT; i++)
+	{
+		packet.openMessage(VRChatOSC::OSC_PARAMETER_NAMES[i].c_str(), 1)
+			.float32(this->mPackedOscOutput[i])
+			.closeMessage();
+	}
+
+	packet.closeBundle();
+
+	return packet.size();
+}
+
+char* HOL::VRChat::VRChatOSC::getPacketBuffer()
+{
+	return this->mOscPacketBuffer;
 }
