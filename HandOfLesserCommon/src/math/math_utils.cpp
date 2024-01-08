@@ -31,6 +31,10 @@ namespace HOL
 	{
 		return radians * (180.0f / std::numbers::pi_v<float>);
 	}
+	float angleBetweenVectors(const Eigen::Vector3f& first, const Eigen::Vector3f& second)
+	{
+		return std::atan2(first.cross(second).norm(), first.dot(second));
+	}
 
 	Eigen::Vector3f flipHandRotation(Eigen::Vector3f& rot)
 	{

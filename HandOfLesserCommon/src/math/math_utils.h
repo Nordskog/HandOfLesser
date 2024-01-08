@@ -12,6 +12,7 @@ namespace HOL
 	Eigen::Quaternionf quaternionFromEulerAngles(float x, float y, float z);
 	float degreesToRadians(float degrees);
 	float radiansToDegrees(float radians);
+	float angleBetweenVectors(const Eigen::Vector3f& first, const Eigen::Vector3f& second);
 
 	Eigen::Vector3f flipHandRotation(Eigen::Vector3f& rot);
 	Eigen::Vector3f flipHandTranslation(Eigen::Vector3f& trans);
