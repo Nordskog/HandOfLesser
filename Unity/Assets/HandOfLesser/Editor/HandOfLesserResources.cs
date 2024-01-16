@@ -13,36 +13,16 @@ namespace HOL
     {
         private static readonly string HANDOFLESSER_PATH = "Assets/HandOfLesser";
 
-        public static string getPackedAnimationClipName(Finger finger, Joint? joint, int leftStep, int rightStep)
+        public static string getAnimationClipName(HandSide side, Finger finger, Joint? joint, AnimationClipPosition position)
         {
-            StringBuilder builder = new StringBuilder();
+            string clipName = getJointParameterName(side, finger, joint);
+            return clipName + "_" + position.propertyName();
+        }
 
-            // Splay if only finger provided, curl if joint also provided
-            if (joint.HasValue)
-            {
-                builder.Append("curl");
-            }
-            else
-            {
-                builder.Append("splay");
-            }
-
-            builder.Append("_");
-            builder.Append(finger.propertyName());
-            builder.Append("_");
-
-            // Only if curl
-            if (joint.HasValue)
-            {
-                builder.Append(joint.Value.propertyName());
-                builder.Append("_");
-            }
-
-            builder.Append(leftStep.ToString());
-            builder.Append("_");
-            builder.Append(rightStep.ToString());
-
-            return builder.ToString();
+        public static string getJointParameterName( HandSide side, Finger finger, Joint? joint)
+        {
+            // Shared osc name with the side tacked on
+            return side.propertyName() + "_" + getJointOSCName(finger, joint);
         }
 
         public static string getJointOSCName(Finger finger, Joint? joint)

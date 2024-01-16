@@ -64,7 +64,7 @@ void HandOfLesserCore::mainLoop()
 			break;
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(2));
+		std::this_thread::sleep_for(std::chrono::milliseconds(25));
 	}
 
 	std::cout << "Exiting loop" << std::endl;
@@ -90,11 +90,12 @@ void HandOfLesserCore::doOpenXRStuff()
 
 void HandOfLesserCore::doOscStuff()
 {
-	// Just generates it for now, still need to send.
-	this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(LeftHand),
-									   this->mHandTracking.getHandPose(RightHand));
+	HOL::HandSide side = this->mVrchatOSC.swapTransmitSide();
 
-	size_t size = this->mVrchatOSC.generateOscBundle();
+	// Just generates it for now, still need to send.
+	this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(side), side);
+
+	size_t size = this->mVrchatOSC.generateOscBundle(side);
 	this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
 
 }

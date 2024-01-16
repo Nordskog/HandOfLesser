@@ -10,6 +10,7 @@ std::string HOL::VRChat::VRChatOSC::OSC_PARAMETER_NAMES[PARAMETER_COUNT];
 
 HOL::VRChat::VRChatOSC::VRChatOSC()
 {
+	this->mNextNextTransmitSide = HandSide::LeftHand;
 	initParameters();
 	initParameterNames();
 }
@@ -101,6 +102,12 @@ float HOL::VRChat::VRChatOSC::computeParameterValue(float rawValue,
 	float rawRangeStart = 0; // Must be <= 0
 	float rawRangeEnd = 1;	 // Must be >= 0, but realistically >= 1
 
+	// Unity humanoid rig curl goes from -1 closed to 1 open.
+	// From the sake of simplicity, everything below is from 0 open to 1 closed.
+	// At the very end of the function this is flipped to make unity happy.
+	// Technically we could keep using 0-1, but generating the animations and blendtrees
+	// becomes a lot easier on the unity side if we just adhere to their standards.
+
 	// What the center of this range is we're just going to have to eyeball.
 	// This will likely also need some adjustment depending on the avatar.
 	// For curls this would be about 45 degrees, splays close to 0,
@@ -147,9 +154,6 @@ float HOL::VRChat::VRChatOSC::computeParameterValue(float rawValue,
 					break;
 			}
 		}
-
-		// rawRangeStart / End will probably need to be adjusted somehow
-		// if the are not chnaged by an equal amount. Problem for later.
 	}
 	else
 	{
@@ -183,72 +187,68 @@ float HOL::VRChat::VRChatOSC::computeParameterValue(float rawValue,
 	// Ratio of RawValue between rangeStart and rangeEnd
 	float outputCurl = (rawValue - rangeStart) / (rangeEnd - rangeStart);
 	// clamp between 0 and 1
-	return std::clamp(outputCurl, 0.f, 1.f);
+	outputCurl = std::clamp(outputCurl, 0.f, 1.f);
+
+	// Flip this so it matches unity's inverted open-closed values 
+	if (joint != HOL::FingerBendType::Splay)
+	{
+		outputCurl = 1.f - outputCurl;
+	}
+
+	// scale our 0-1 -> -1 to 1, as this is the range OSC and unity's rig support.
+	return (outputCurl * 2.f) - 1.f;
 }
 
-float HOL::VRChat::VRChatOSC::encodePacked(float left, float right)
-{
-	// Each joint has 16 steps. There are 256 animations.
-	// In the first 16, the left joint is at 0, and the right cycles through its 16 steps.
-	// Set the left joint to 1 and repeat for the next 16. Repeat.
-	// So the value of the left joint will be 0-1 scaled to 0-15, and multiplied by 16.
-	// Right will be 0-1 scaled to 0-15, added to the value we calculated for left.
-
-	// 0-1 to 0-15, multiply by 16 to get the first entry of the group of 16 where left is in the
-	// correct position, 0, 16, 32, 48, 64 ... 240
-	float leftEncoded = roundf((left * 15.f)) * 16.f;
-
-	// the same, except do not multiply by 16 because this is the index inside the group of 16
-	float rightEncoded = roundf((right * 15.f));
-
-	// Adding the two together, we get two separate 0-15 values encoded in a single 0-255 value.
-	// Left will be in the same position for values 0 to 15, 16 to 31, and so on.
-	float packed = leftEncoded + rightEncoded;
-
-	// 0 to 255, but we need this to be in the range -1 to 1 for vrchat and the blendtrees.
-	// vrchat will ultimately transmit the float value as an 8-bit float, so there will only
-	// be 256 steps between -1 and 1
-	return ((packed / 255.f) * 2.f) - 1.f;
-}
-
-void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose& leftHand, HOL::HandPose& rightHand)
+// Generates the values for one hand at the time
+void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose& hand, HOL::HandSide side)
 {
 	for (int i = 0; i < FingerType::FingerType_MAX; i++)
 	{
-		FingerBend leftFinger = leftHand.fingers[i];
-		FingerBend rightFinger = rightHand.fingers[i];
+		FingerBend finger = hand.fingers[i];
 
 		for (int j = 0; j < FingerBendType_MAX; j++)
 		{
-			float leftBend = computeParameterValue(
-				leftFinger.bend[j], HOL::LeftHand, (FingerType)i, (FingerBendType)j);
-			float rightBend = computeParameterValue(
-				rightFinger.bend[j], HOL::RightHand, (FingerType)i, (FingerBendType)j);
+			float bend
+				= computeParameterValue(finger.bend[j], side, (FingerType)i, (FingerBendType)j);
 
-			// VRChat goes from 0 closed to 1 fully open, the reverse of what we have.
-			if (j != FingerBendType::Splay)
+			
+			if (j == FingerBendType::Splay && i == FingerType::FingerLittle)
 			{
-				leftBend = 1.0f - leftBend;
-				rightBend = 1.0f - rightBend;
-			}
+				// Unity's humanoid rig does not model splaying properly.
+				// When your first is close, your fingers roll outwards to point the fingers
+				// inwards. This is the same rotation as when when full splayed outwards when
+				// the hand is open. Unity instead treats it as a left-right rotation in the
+				// direction the finger is pointing, which results in the fingers pointing
+				// outwards instead of in, in a very broken manner. Ultimately we will switch to
+				// using bone animations instead, but sticking with humanoid for testing
+				// purposes. Splay should blend to -1 as it approached a curl of 90 degrees, to
+				// make humanoid look vaugely reasonable.
+				float firstJointCurlAmount = computeParameterValue(finger.bend[FingerBendType::CurlFirst],
+											side,
+											(FingerType)i,
+											FingerBendType::CurlFirst);
 
-			HOL::display::FingerTracking[HandSide::LeftHand].humanoidBend[i].bend[j] = leftBend;
-			HOL::display::FingerTracking[HandSide::RightHand].humanoidBend[i].bend[j] = rightBend;
+				// Fip this so 1 is closed, -1 open
+				float offset = 0.25f;  // start from -.25
+				firstJointCurlAmount = -firstJointCurlAmount;
+
+				float ratio = firstJointCurlAmount + offset / 1.f + offset;
+				if (ratio < 0)
+					ratio = 0;
+
+				bend = (bend * (1.f - ratio)) + (ratio * -1.f);	
+			}
+			
+			HOL::display::FingerTracking[side].humanoidBend[i].bend[j] = bend;
 
 			int index = getParameterIndex((FingerType)i, (FingerBendType)j);
-			float packed = encodePacked(leftBend, rightBend);
-			this->mPackedOscOutput[index] = packed;
-
-			// 0-255 values in left hand slot, -1 to +1 values in right hand slot
-			// We're recreating the 0-255 values from the -1 to +1 for display purposes
-			HOL::display::FingerTracking[HandSide::LeftHand].packedBend[i].bend[j]
-				= std::roundf(((packed + 1.f) * 0.5f) * 255.f);
-			HOL::display::FingerTracking[HandSide::RightHand].packedBend[i].bend[j] = packed;
+			this->mOscOutput[index] = bend;
 		}
 	}
 }
 
-size_t HOL::VRChat::VRChatOSC::generateOscBundle()
+// includes a hand_side param denoting which hand the data is for
+size_t HOL::VRChat::VRChatOSC::generateOscBundle(HOL::HandSide side)
 {
 	// Size param is presumably buffer size
 	OSCPP::Client::Packet packet(this->mOscPacketBuffer, PARAMETER_COUNT * 128);
@@ -258,9 +258,11 @@ size_t HOL::VRChat::VRChatOSC::generateOscBundle()
 	for (int i = 0; i < PARAMETER_COUNT; i++)
 	{
 		packet.openMessage(VRChatOSC::OSC_PARAMETER_NAMES[i].c_str(), 1)
-			.float32(this->mPackedOscOutput[i])
+			.float32(this->mOscOutput[i])
 			.closeMessage();
 	}
+
+	packet.openMessage("/avatar/parameters/hand_side", 1).int32(side).closeMessage();
 
 	packet.closeBundle();
 
@@ -270,4 +272,14 @@ size_t HOL::VRChat::VRChatOSC::generateOscBundle()
 char* HOL::VRChat::VRChatOSC::getPacketBuffer()
 {
 	return this->mOscPacketBuffer;
+}
+
+HOL::HandSide HOL::VRChat::VRChatOSC::swapTransmitSide()
+{
+	// Swap side, return new side.
+	this->mNextNextTransmitSide = this->mNextNextTransmitSide == HandSide::LeftHand
+									  ? HandSide::RightHand
+									  : HandSide::LeftHand;
+
+	return this->mNextNextTransmitSide;
 }

@@ -112,9 +112,9 @@ namespace HOL
         {
             switch (pos)
             {
-                case AnimationClipPosition.negative: return "In";
+                case AnimationClipPosition.negative: return "Negative";
                 case AnimationClipPosition.neutral: return "Neutral";
-                case AnimationClipPosition.positive: return "Out";
+                case AnimationClipPosition.positive: return "Positive";
                 default: return "INVALID_ENUM";
             }
         }

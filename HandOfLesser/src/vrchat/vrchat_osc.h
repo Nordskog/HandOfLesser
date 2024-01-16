@@ -19,17 +19,17 @@ namespace HOL::VRChat
 										   HOL::FingerType finger,
 										   HOL::FingerBendType joint);
 
-		void generateOscOutput(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
-
-		static float encodePacked(float left, float right);
+		void generateOscOutput(HOL::HandPose& hand, HOL::HandSide side);
 
 		// these guys need to be easily configurable
 		static float HUMAN_RIG_RANGE[PARAMETER_COUNT];
 		static float HUMAN_RIG_CENTER[PARAMETER_COUNT];
 
-		size_t generateOscBundle();
+		size_t generateOscBundle(HOL::HandSide side);
 
 		char* getPacketBuffer();
+
+		HOL::HandSide swapTransmitSide();
 
 	private:
 		static void initParameters();
@@ -39,8 +39,9 @@ namespace HOL::VRChat
 									 float second,
 									 float third,
 									 float splay);
+		HOL::HandSide mNextNextTransmitSide;
 		static std::string OSC_PARAMETER_NAMES[PARAMETER_COUNT];
-		float mPackedOscOutput[PARAMETER_COUNT];
+		float mOscOutput[PARAMETER_COUNT];
 		char mOscPacketBuffer[PARAMETER_COUNT * 128]; // 2560 Should be plenty
 	};
 

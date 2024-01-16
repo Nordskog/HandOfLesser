@@ -354,7 +354,7 @@ void UserInterface::BuildVRChatOSCSettings()
 
 	InputFloatMultipleSingleLableWithButtons("thumbRotationOffset",
 											 "Thumb rotation offset",
-											 0.1f,
+											 1.f,
 											 1.f,
 											 "%.1f",
 											 90,
@@ -423,20 +423,6 @@ void UserInterface::BuildVRChatOSCSettings()
 	buildSingleFingerTrackingDisplay("humanoidBendRight",
 									 HOL::RightHand,
 									 HOL::display::FingerTracking[HOL::RightHand].humanoidBend,
-									 false,
-									 false);
-
-	// Encoded, 0-255 in left hand, -1 to +1 that we'll be sending to vrchat in right hand
-	ImGui::SeparatorText("Packed bend");
-	buildSingleFingerTrackingDisplay("packedBendBothHandsRaw",
-									 HOL::LeftHand,
-									 HOL::display::FingerTracking[HOL::LeftHand].packedBend,
-									 true,
-									 false);
-	ImGui::SameLine();
-	buildSingleFingerTrackingDisplay("packedBendBothHandsVrchat",
-									 HOL::RightHand,
-									 HOL::display::FingerTracking[HOL::RightHand].packedBend,
 									 false,
 									 false);
 
