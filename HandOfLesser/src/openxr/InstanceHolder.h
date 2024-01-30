@@ -21,6 +21,7 @@ namespace HOL::OpenXR
 		void setCallback(XrEventsInterface* callback);
 		XrTime getTime();
 		HOL::OpenXR::OpenXrState getState();
+		bool isHeadless();
 
 		xr::UniqueDynamicInstance mInstance;
 		xr::UniqueDynamicSession mSession;
@@ -29,6 +30,7 @@ namespace HOL::OpenXR
 		xr::DispatchLoaderDynamic mDispatcher;
 
 	private:
+		bool mHeadless;
 		HOL::OpenXR::OpenXrState mState;
 		xr::SystemId mSystemId;
 

@@ -71,25 +71,30 @@ void InstanceHolder::initSession()
 		xr::SystemGetInfo{xr::FormFactor::HeadMountedDisplay}, this->mDispatcher);
 
 	xr::SessionCreateInfo createInfo{xr::SessionCreateFlagBits::None, this->mSystemId};
-	xr::GraphicsBindingD3D11KHR D3D11Binding;
-	D3D11Binding.type = xr::StructureType::GraphicsBindingD3D11KHR;
 
-	auto requirements
-		= this->mInstance->getD3D11GraphicsRequirementsKHR(this->mSystemId, this->mDispatcher);
-	createInfo.next = get(D3D11Binding);
+	// Non-headless requires that we at least pretend we're going to display stuff
+	if (!this->isHeadless())
+	{
+		xr::GraphicsBindingD3D11KHR D3D11Binding;
+		D3D11Binding.type = xr::StructureType::GraphicsBindingD3D11KHR;
 
-	ID3D11Device* Device;
-	D3D11CreateDevice(NULL,
-					  D3D_DRIVER_TYPE_HARDWARE,
-					  NULL,
-					  0x00,
-					  NULL,
-					  0,
-					  D3D11_SDK_VERSION,
-					  &Device,
-					  NULL,
-					  NULL);
-	D3D11Binding.device = Device;
+		auto requirements
+			= this->mInstance->getD3D11GraphicsRequirementsKHR(this->mSystemId, this->mDispatcher);
+		createInfo.next = get(D3D11Binding);
+
+		ID3D11Device* Device;
+		D3D11CreateDevice(NULL,
+						  D3D_DRIVER_TYPE_HARDWARE,
+						  NULL,
+						  0x00,
+						  NULL,
+						  0,
+						  D3D11_SDK_VERSION,
+						  &Device,
+						  NULL,
+						  NULL);
+		D3D11Binding.device = Device;
+	}
 
 	createInfo.systemId = this->mSystemId;
 
@@ -126,6 +131,8 @@ void InstanceHolder::endSession()
 
 void InstanceHolder::beginSession()
 {
+
+	// Ignored if headless
 	auto viewConfigType = xr::ViewConfigurationType::PrimaryStereo;
 
 	try
@@ -176,6 +183,18 @@ void InstanceHolder::initExtensions()
 		XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME, // Used to get current time.
 		XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
 
+	if (hasExtension(this->mExtensions, XR_MND_HEADLESS_EXTENSION_NAME))
+	{
+		std::cout << "Runtime supports headless extension, running in headless mode" << std::endl;
+		this->mEnabledExtensions.push_back(XR_MND_HEADLESS_EXTENSION_NAME);
+		this->mHeadless = true;
+	}
+	else
+	{
+		std::cout << "Runtime does not support headless extension, running as foreground app" << std::endl;
+		this->mHeadless = false;
+	}
+
 	for (auto& extension : this->mEnabledExtensions)
 	{
 		if (!hasExtension(this->mExtensions, extension))
@@ -204,4 +223,9 @@ void InstanceHolder::updateState(OpenXrState newState)
 OpenXrState InstanceHolder::getState()
 {
 	return this->mState;
+}
+
+bool HOL::OpenXR::InstanceHolder::isHeadless()
+{
+	return this->mHeadless;
 }

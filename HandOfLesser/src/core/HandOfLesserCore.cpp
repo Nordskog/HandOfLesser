@@ -29,9 +29,12 @@ void HandOfLesserCore::init(int serverPort)
 			this->mHandTracking.init(this->mInstanceHolder.mInstance,
 									 this->mInstanceHolder.mSession);
 
-			// Only necessary if using Airlink runtime
-			// Doesn't hurt to run otherwise though.
-			HOL::hacks::fixOvrSessionStateRestriction();
+			// Airlink doesn't support headless and requires hax
+			// As of writing, the only other supported runtime is VDXR
+			if (!this->mInstanceHolder.isHeadless())
+			{
+				HOL::hacks::fixOvrSessionStateRestriction();
+			}
 		}
 	}
 	this->mTransport.init(serverPort);
