@@ -38,52 +38,25 @@ public class HandOfLesserAnimationGenerator : EditorWindow
     }
 
 
-    private float getValueForPose(JointMotionDirection direction, AnimationClipPosition clipPos)
+    private float getValueForPose(AnimationClipPosition clipPos)
     {
         // Make configurable? Simple -1 0 1 for now
         // Curl is -1 to 1, negative value curling.
-        
+
         // Splay Negative moves outwards ( palm facing down )
         // -3 to +3 seems reasonable for splay, need to calibrate later.
         // The leap OSC animations use -1 to 1 though. Maybe animation preview just looks wonky?
 
         // Will be different for individual joints too
 
-        switch( direction )
+        switch (clipPos)
         {
-            case JointMotionDirection.curl:
-            {
-                    switch (clipPos)
-                    {
-                        case AnimationClipPosition.negative: return -1;
-                        case AnimationClipPosition.neutral: return 0;
-                        case AnimationClipPosition.positive: return 1;
-                    }
-
-                    return 0;
-            }
-
-            case JointMotionDirection.splay:
-            {
-                switch (clipPos)
-                {
-                    case AnimationClipPosition.negative: return -1;
-                    case AnimationClipPosition.neutral: return 0;
-                    case AnimationClipPosition.positive: return 1;
-                }
-
-                return 0;
-            }
+            case AnimationClipPosition.negative: return -1;
+            case AnimationClipPosition.neutral: return 0;
+            case AnimationClipPosition.positive: return 1;
         }
 
         return 0;
-    }
-
-    private float getValueAtStep(float step, float stepCount, float startVal, float endVal)
-    {
-        // Steps 0-15, or 16 steps. Subtract 1 from count ot make the math work.
-        float ratio = step / (stepCount-1);
-        return (ratio * endVal) + ((1f - ratio) * startVal);
     }
 
     private void setClipProperty(ref AnimationClip clip, string property, float value)
@@ -104,13 +77,13 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         AssetDatabase.CreateAsset(clip, savePath);
     }
 
-    private void generateBendAnimation(HandSide side, Finger finger, Joint? joint, AnimationClipPosition position)
+    private void generateBendAnimation(HandSide side, Finger finger, Joint joint, AnimationClipPosition position)
     {
         AnimationClip clip = new AnimationClip();
         setClipProperty(
             ref clip,
                 HOL.Resources.getJointPropertyName(side, finger, joint),
-                getValueForPose(JointMotionDirection.curl, position) // Temporary direction
+                getValueForPose( position )
             );
 
         saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position)));
@@ -164,14 +137,6 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                     updateAnimationProgress(animationProcessed);
                 }
 
-                // Splay
-                // Splay will be really wierd once we get that far 
-                generateBendAnimation(HandSide.left, finger, null, AnimationClipPosition.negative);
-                generateBendAnimation(HandSide.left, finger, null, AnimationClipPosition.positive);
-
-                generateBendAnimation(HandSide.right, finger, null, AnimationClipPosition.negative);
-                generateBendAnimation(HandSide.right, finger, null, AnimationClipPosition.positive);
-
                 // And do the same for the splay, but only per finger
                 animationProcessed += 6;
                 updateAnimationProgress(animationProcessed);
@@ -197,7 +162,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
 
 
-    private int generateCurlBlendTree(AnimatorController controller, BlendTree rootTree, HandSide side, Finger finger, Joint? joint  )
+    private int generateCurlBlendTree(AnimatorController controller, BlendTree rootTree, HandSide side, Finger finger, Joint joint  )
     {
         controller.AddParameter(HOL.Resources.getJointOSCName(finger, joint), AnimatorControllerParameterType.Float);
 
@@ -278,18 +243,6 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 parameter.name = HOL.Resources.getJointParameterName(side, finger, joint);
                 parameter.source = HOL.Resources.getJointOSCName(finger, joint);
             }
-            {
-                // Splay. This is stupid, add splay enum instead later.
-                var parameter = new VRC.SDKBase.VRC_AvatarParameterDriver.Parameter();
-                driver.parameters.Add(parameter);
-                //parameter.source = HOL.Resources.getJointOSCName(finger, joint)
-                parameter.type = VRC.SDKBase.VRC_AvatarParameterDriver.ChangeType.Copy;
-
-                // Name is the parameter it will drive, source is the paremter that will drive it.
-                // Amazing naming convention you idiots
-                parameter.name = HOL.Resources.getJointParameterName(side, finger, null);
-                parameter.source = HOL.Resources.getJointOSCName(finger, null);
-            }   
         }
 
 
@@ -386,10 +339,6 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.left, finger, joint), AnimatorControllerParameterType.Float);
                 controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.right, finger, joint), AnimatorControllerParameterType.Float);
             }
-
-            // and splay, because I didn't make that an enum
-            controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.left, finger, null), AnimatorControllerParameterType.Float);
-            controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.right, finger, null), AnimatorControllerParameterType.Float);
         }
 
         AvatarMask bothHandsMask = HOL.Resources.getBothHandsMask();
@@ -448,10 +397,6 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 updateBlendtreeProgress(blendtreesProcessed);
             }
 
-            // Splay
-            blendtreesProcessed += generateCurlBlendTree(controller, rootBlendtree, HandSide.left, finger, null);
-            blendtreesProcessed += generateCurlBlendTree(controller, rootBlendtree, HandSide.right, finger, null);
-
             updateBlendtreeProgress(blendtreesProcessed);
         }
 
@@ -479,17 +424,6 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 // Curl
                 VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
                 newParam.name = HOL.Resources.getJointOSCName(finger, joint);
-                newParam.valueType = VRCExpressionParameters.ValueType.Float;
-                newParam.defaultValue = 0;
-
-                paramAsset.parameters[paramCounter] = newParam;
-                paramCounter++;
-            }
-
-            {
-                // Splay
-                VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
-                newParam.name = HOL.Resources.getJointOSCName(finger, null);
                 newParam.valueType = VRCExpressionParameters.ValueType.Float;
                 newParam.defaultValue = 0;
 

@@ -20,18 +20,13 @@ namespace HOL
         first,
         second,
         third,
+        splay
     }
 
     enum HandSide
     {
         left,
         right
-    }
-
-    enum JointMotionDirection
-    {
-        curl, 
-        splay
     }
 
     enum AnimationClipPosition
@@ -86,6 +81,7 @@ namespace HOL
                 case Joint.first: return "1";
                 case Joint.second: return "2";
                 case Joint.third: return "3";
+                case Joint.splay: return "splay";
                 default: return "INVALID_ENUM";
             }
         }
@@ -93,17 +89,16 @@ namespace HOL
         ///////////////////////////
         // JointMotionDirection
         ///////////////////////////
-
-        public static string propertyName(this JointMotionDirection finger)
+        /*
+        public static string propertyName(this Joint joint)
         {
-            switch (finger)
+            switch (joint)
             {
-                case JointMotionDirection.curl: return "Stretched";
-                case JointMotionDirection.splay: return "Spread";
-                default: return "INVALID_ENUM";
+                case Joint.splay: return "Spread";
+                default: return "Stretched";
             }
         }
-
+        */
         ///////////////////////////
         // AnimationClipPosition
         ///////////////////////////

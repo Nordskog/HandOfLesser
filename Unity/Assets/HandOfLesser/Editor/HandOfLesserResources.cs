@@ -13,42 +13,42 @@ namespace HOL
     {
         private static readonly string HANDOFLESSER_PATH = "Assets/HandOfLesser";
 
-        public static string getAnimationClipName(HandSide side, Finger finger, Joint? joint, AnimationClipPosition position)
+        public static string getAnimationClipName(HandSide side, Finger finger, Joint joint, AnimationClipPosition position)
         {
             string clipName = getJointParameterName(side, finger, joint);
             return clipName + "_" + position.propertyName();
         }
 
-        public static string getJointParameterName( HandSide side, Finger finger, Joint? joint)
+        public static string getJointParameterName( HandSide side, Finger finger, Joint joint)
         {
             // Shared osc name with the side tacked on
             return side.propertyName() + "_" + getJointOSCName(finger, joint);
         }
 
-        public static string getJointOSCName(Finger finger, Joint? joint)
+        public static string getJointOSCName(Finger finger, Joint joint)
         {
             StringBuilder builder = new StringBuilder();
 
             builder.Append(finger.propertyName());
 
-            if (joint.HasValue)
+            if (joint == Joint.splay)
             {
                 builder.Append("_");
-                builder.Append(joint.Value.propertyName());
-                builder.Append("_");
-                builder.Append("curl");
+                builder.Append("splay");
             }
             else
             {
                 builder.Append("_");
-                builder.Append("splay");
+                builder.Append(joint.propertyName());
+                builder.Append("_");
+                builder.Append("curl");
             }
 
             // This is what we'll be using for osc stuff, so keep it all lower case
             return builder.ToString().ToLower();
         }
 
-        public static string getJointPropertyName(HandSide? side, Finger finger, Joint? joint)
+        public static string getJointPropertyName(HandSide? side, Finger finger, Joint joint)
         {
             // Right Hand.Thumb.1 Stretched
             StringBuilder builder = new StringBuilder();
@@ -62,18 +62,19 @@ namespace HOL
 
             builder.Append(finger.propertyName());
 
-            if (joint.HasValue)
-            {
-                builder.Append(".");
-                builder.Append(joint.Value.propertyName());
-                builder.Append(" ");
-                builder.Append("Stretched");
-            }
-            else
+            if (joint == Joint.splay)
             {
                 builder.Append(".");
                 builder.Append("Spread");
             }
+            else
+            {
+                builder.Append(".");
+                builder.Append(joint.propertyName());
+                builder.Append(" ");
+                builder.Append("Stretched");
+            }
+
 
             return builder.ToString();
         }
