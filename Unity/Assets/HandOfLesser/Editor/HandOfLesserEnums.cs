@@ -29,6 +29,12 @@ namespace HOL
         right
     }
 
+    enum PropertyType
+    {
+        // Proxy will be the smoothed value
+        normal, proxy
+    }
+
     enum AnimationClipPosition
     {
         negative, neutral, positive

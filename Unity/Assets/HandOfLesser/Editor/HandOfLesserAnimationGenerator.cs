@@ -1,5 +1,6 @@
 ﻿using HOL;
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
@@ -12,6 +13,14 @@ public class HandOfLesserAnimationGenerator : EditorWindow
     public static readonly int BLENDTREE_COUNT = (5 * 4) * 2; // 3 curls, 1 splay, 5 fingers, 2 hands.
     public static readonly int ANIMATION_COUNT = BLENDTREE_COUNT * 2; // Open and close. Will be more once we get fancy with bones.
     public static readonly string HAND_SIDE_OSC_PARAMETER_NAME = "hand_side";
+    public static readonly string REMOTE_SMOOTHING_PARAMETER_NAME = "HOL_remote_smoothing";
+
+    public static readonly string ALWAYS_1_PARAMETER = "HOL_always_one";
+
+    // There are some animations that should set parameters to -1 or 1.
+    // Instead they set them to -40 or 10. I have no idea why.
+    // Until someone can explain this to me, we multiply the values by this ( 1 / 40 )
+    public static readonly float SHOULD_BE_ONE_BUT_ISNT= 0.025f;
 
     [MenuItem("Window/HandOfLesser")]
     public static void ShowWindow()
@@ -77,6 +86,24 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         AssetDatabase.CreateAsset(clip, savePath);
     }
 
+    private void generateSmoothingAnimation(HandSide side, Finger finger, Joint joint, AnimationClipPosition position)
+    {
+        // This just sets the proxy parameter to whatever position, and we blend between these to do the smoothing
+        // Note that these should always go from -1 to 1, which will not necessarily be the case of the normal finger animations
+        // Right now they all just use the AnimationClipPosition though
+        AnimationClip clip = new AnimationClip();
+        setClipProperty(
+            ref clip,
+                HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.proxy),
+                getValueForPose(position) * SHOULD_BE_ONE_BUT_ISNT // See definition
+            );
+
+        // SHOULD_BE_ONE_BUT_ISNT is used because when you have this animation output 1, it outputs 40 instead.
+        // I have no idea why, but account for the scaling ahead of time and it's fine. fucking unity.
+
+        saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position, PropertyType.proxy)));
+    }
+
     private void generateBendAnimation(HandSide side, Finger finger, Joint joint, AnimationClipPosition position)
     {
         AnimationClip clip = new AnimationClip();
@@ -86,7 +113,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 getValueForPose( position )
             );
 
-        saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position)));
+        saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position, PropertyType.normal)));
     }
 
     private void updateAnimationProgress(int processed)
@@ -112,6 +139,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
         Finger[] fingers = (Finger[])Enum.GetValues(typeof(Finger));
         Joint[] joints = (Joint[])Enum.GetValues(typeof(Joint));
+        HandSide[] sides = (HandSide[])Enum.GetValues(typeof(HandSide));
 
         // https://forum.unity.com/threads/createasset-is-super-slow.291667/#post-3853330
         // Makes createAsset not be super slow. Note the call to StopAssetEditing() below.
@@ -122,26 +150,30 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
         try
         {
-            foreach (Finger finger in fingers)
+
+            foreach (HandSide side in sides)
             {
-                foreach (Joint joint in joints)
+                foreach (Finger finger in fingers)
                 {
-                    // For each joint in each finger, generate 256 packed curl animations
-                    generateBendAnimation(HandSide.left, finger, joint, AnimationClipPosition.negative);
-                    generateBendAnimation(HandSide.left, finger, joint, AnimationClipPosition.positive);
+                    foreach (Joint joint in joints)
+                    {
+                        // These animatiosn drive the humanoid rig ( for now )
+                        generateBendAnimation(side, finger, joint, AnimationClipPosition.negative);
+                        generateBendAnimation(side, finger, joint, AnimationClipPosition.positive);
 
-                    generateBendAnimation(HandSide.right, finger, joint, AnimationClipPosition.negative);
-                    generateBendAnimation(HandSide.right, finger, joint, AnimationClipPosition.positive);
+                        // While these drive the proxy parameter used for smoothing that drives the above
+                        generateSmoothingAnimation(side, finger, joint, AnimationClipPosition.negative);
+                        generateSmoothingAnimation(side, finger, joint, AnimationClipPosition.positive);
 
-                    animationProcessed += 4;
+                        animationProcessed += 4;
+                        updateAnimationProgress(animationProcessed);
+                    }
+
+                    animationProcessed += 6;
                     updateAnimationProgress(animationProcessed);
                 }
-
-                // And do the same for the splay, but only per finger
-                animationProcessed += 6;
-                updateAnimationProgress(animationProcessed);
             }
-
+            
         }
         catch( Exception ex)
         {
@@ -162,25 +194,87 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
 
 
-    private int generateCurlBlendTree(AnimatorController controller, BlendTree rootTree, HandSide side, Finger finger, Joint joint  )
+    private int generateCurlBlendTree(BlendTree rootTree, List<ChildMotion> childTrees, HandSide side, Finger finger, Joint joint  )
     {
-        controller.AddParameter(HOL.Resources.getJointOSCName(finger, joint), AnimatorControllerParameterType.Float);
-
         BlendTree tree = new BlendTree();
         tree.blendType = BlendTreeType.Simple1D;
         tree.name = HOL.Resources.getJointPropertyName(side, finger, joint);
         tree.useAutomaticThresholds = false;    // Automatic probably would work fine
-        tree.blendParameter = HOL.Resources.getJointParameterName(side, finger, joint); // Note how we are not using the OSC params directly
+        tree.blendParameter = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.proxy); // Note that we're using the smoothed proxy here
 
-        rootTree.AddChild(tree);
+        // In order to see the DirectBlendParamter required for the parent Direct blendtree, we need to use a ChildMotion,.
+        // However, you cannot add a ChildMotion to a blendtree, and modifying it after adding it has no effect.
+        // For whatever reason, adding them to a list assigning that as an array directly to BlendTree.Children works.
+        childTrees.Add(new ChildMotion()
+        {
+            directBlendParameter = ALWAYS_1_PARAMETER,
+            motion = tree,
+            timeScale = 1,
+        });
 
         AnimationClip negativeAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-            HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative)));
+            HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative, PropertyType.normal)));
         AnimationClip positiveAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-            HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive)));
+            HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive, PropertyType.normal)));
 
         tree.AddChild(negativeAnimation, -1);
         tree.AddChild(positiveAnimation, 1);
+
+        return 1;
+    }
+
+    private BlendTree generatSmoothingBlendtreeInner( BlendTree rootTree, HandSide side, Finger finger, Joint joint, PropertyType propertType)
+    {
+        // generats blendtrees 1 and 2 for generateSmoothingBlendtree()
+        BlendTree tree = new BlendTree();
+        tree.blendType = BlendTreeType.Simple1D;
+        tree.name = HOL.Resources.getJointParameterName(side, finger, joint, propertType);
+        tree.useAutomaticThresholds = false;    // Automatic probably would work fine
+
+        // Blend either by original param or proxy param
+        tree.blendParameter = HOL.Resources.getJointParameterName(side, finger, joint, propertType);
+
+        // Property type is reused here, first .normal denoting the blendtree driven by the original value,
+        // and .proxy the one driven by the proxy.
+        // Both drive the animations setting the proxy
+        AnimationClip negativeAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
+            HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative, PropertyType.proxy)));
+        AnimationClip positiveAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
+            HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive, PropertyType.proxy)));
+
+        tree.AddChild(negativeAnimation, -1);
+        tree.AddChild(positiveAnimation, 1);
+
+        return tree;
+    }
+
+    private int generateSmoothingBlendtree(BlendTree rootTree, List<ChildMotion> childTrees, HandSide side, Finger finger, Joint joint)
+    {
+        // So we have 3 blend trees.
+        // 1. Takes the original input value and blends between animations setting the proxy value to -1 / 1
+        // 2. Takes the proxy value and does the same
+        // 3. Blends between 1 and 2 according to REMOTE_SMOOTHING_PARAMETER_NAME. There'll be a local one too eventually.
+
+        // #3
+        BlendTree tree = new BlendTree();
+        tree.blendType = BlendTreeType.Simple1D;
+        tree.name = HOL.Resources.getJointPropertyName(side, finger, joint);
+        tree.useAutomaticThresholds = false;    // Automatic probably would work fine
+        tree.blendParameter = REMOTE_SMOOTHING_PARAMETER_NAME;
+
+        // In order to see the DirectBlendParamter required for the parent Direct blendtree, we need to use a ChildMotion,.
+        // However, you cannot add a ChildMotion to a blendtree, and modifying it after adding it has no effect.
+        // For whatever reason, adding them to a list assigning that as an array directly to BlendTree.Children works.
+        childTrees.Add(new ChildMotion()
+        {
+            directBlendParameter = ALWAYS_1_PARAMETER,
+            motion = tree,
+            timeScale = 1,
+        });
+
+        // Generate #1 and #2
+        tree.AddChild(generatSmoothingBlendtreeInner(tree, side, finger, joint, PropertyType.normal), 0);
+        tree.AddChild(generatSmoothingBlendtreeInner(tree, side, finger, joint, PropertyType.proxy), 1);
 
         return 1;
     }
@@ -240,7 +334,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
                 // Name is the parameter it will drive, source is the paremter that will drive it.
                 // Amazing naming convention you idiots
-                parameter.name = HOL.Resources.getJointParameterName(side, finger, joint);
+                parameter.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.normal);
                 parameter.source = HOL.Resources.getJointOSCName(finger, joint);
             }
         }
@@ -307,10 +401,52 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         // they'll exit immediately.
         leftState.AddTransition( generateTransition(lefToRightState, layer.stateMachine, true ));
         rightState.AddTransition(generateTransition(rightToLeftState, layer.stateMachine, true));
+    }
 
+    private void populateSmoothingLayer(AnimatorController controller, AnimatorControllerLayer layer)
+    {
+        // State within this controller. TODO: attach to stuff
+        AnimatorState rootState = layer.stateMachine.AddState("HOLSmoothing");
+        rootState.writeDefaultValues = false; // I Think?
 
+        // Blendtree at the root of our state
+        BlendTree rootBlendtree = new BlendTree();
+        rootBlendtree.blendType = BlendTreeType.Direct;
+        rootBlendtree.name = "HandRoot";
+        rootBlendtree.useAutomaticThresholds = false;
+        rootBlendtree.blendParameter = ALWAYS_1_PARAMETER;
 
+        rootState.motion = rootBlendtree;
 
+        // Generate the blendtrees for our joints
+        Finger[] fingers = (Finger[])Enum.GetValues(typeof(Finger));
+        Joint[] joints = (Joint[])Enum.GetValues(typeof(Joint));
+        HandSide[] sides = (HandSide[])Enum.GetValues(typeof(HandSide));
+
+        int blendtreesProcessed = 0;
+        updateBlendtreeProgress(blendtreesProcessed);
+
+        // Cannot add directly to parent tree, see generateSmoothingBlendtree()
+        List<ChildMotion> childTrees = new List<ChildMotion>();
+        foreach (HandSide side in sides)
+        {
+            foreach (Finger finger in fingers)
+            {
+                foreach (Joint joint in joints)
+                {
+                    blendtreesProcessed += generateSmoothingBlendtree(rootBlendtree, childTrees, side, finger, joint);
+                    updateBlendtreeProgress(blendtreesProcessed);
+                }
+            }
+        }
+
+        // Cannot add directly to parent tree, see generateSmoothingBlendtree()
+        // Have to be added like this in order to set directblendparameter
+        rootBlendtree.children = childTrees.ToArray();
+
+        AssetDatabase.SaveAssets();
+
+        clearProgress();
     }
 
     private void generateAnimationController()
@@ -328,6 +464,20 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         Joint[] joints = (Joint[])Enum.GetValues(typeof(Joint));
         // Add all the parameters we'll be working with, they need to be present here to be driven
         controller.AddParameter(HAND_SIDE_OSC_PARAMETER_NAME, AnimatorControllerParameterType.Int); // left/right switch
+
+        controller.AddParameter(new AnimatorControllerParameter()
+        {
+            name = REMOTE_SMOOTHING_PARAMETER_NAME,
+            type = AnimatorControllerParameterType.Float,
+            defaultFloat = 0.7f  // whatever we set the smoothing to. Can we even edit via code afterwards? 
+        });
+
+        controller.AddParameter(new AnimatorControllerParameter(){
+            name = ALWAYS_1_PARAMETER,
+            type = AnimatorControllerParameterType.Float,
+            defaultFloat = 1
+        });
+
         foreach (Finger finger in fingers)
         {
             foreach (Joint joint in joints)
@@ -336,8 +486,12 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 controller.AddParameter( HOL.Resources.getJointOSCName(finger,joint), AnimatorControllerParameterType.Float);
 
                 // Output for left and right hand
-                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.left, finger, joint), AnimatorControllerParameterType.Float);
-                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.right, finger, joint), AnimatorControllerParameterType.Float);
+                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.left, finger, joint, PropertyType.normal), AnimatorControllerParameterType.Float);
+                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.right, finger, joint, PropertyType.normal), AnimatorControllerParameterType.Float);
+
+                // Smoothened proxy values
+                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.left, finger, joint, PropertyType.proxy), AnimatorControllerParameterType.Float);
+                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.right, finger, joint, PropertyType.proxy), AnimatorControllerParameterType.Float);
             }
         }
 
@@ -348,11 +502,14 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         controller.RemoveLayer(0);
         addAnimatorLayer(controller, "Base Layer", 1, bothHandsMask);
         addAnimatorLayer(controller, "hand_side_machine", 1, bothHandsMask);
+        addAnimatorLayer(controller, "joint_smoothing_machine", 1, bothHandsMask);
         addAnimatorLayer(controller, "finger_joints", 1, bothHandsMask);
 
         populateHandSwitchLayer(controller, controller.layers[1]);
 
-        populateFingerJointLayer(controller, controller.layers[2]);
+        populateSmoothingLayer(controller, controller.layers[2]);
+
+        populateFingerJointLayer(controller, controller.layers[3]);
 
         AssetDatabase.SaveAssets();
     }
@@ -364,11 +521,6 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         // Splay will be a bit special as it needs to rotate on a different axis depending on the curl of the joint.
         // Problem for future me. I guess the splay blendtree can just be separate?
 
-        // When we create the root blendtree, it will be populated with a dummy "Blend" parameter, which doesn't exist.
-        // Simply creating this parameter will not work, so we need to create a new one and use that as the param for the root blend tree.
-        // BlendTrees require floats, so everything needs to be floats.
-        controller.AddParameter("dummy", AnimatorControllerParameterType.Float);
-
         // State within this controller. TODO: attach to stuff
         AnimatorState rootState = layer.stateMachine.AddState("HandOfLesserHands");
         rootState.writeDefaultValues = false; // I Think?
@@ -378,27 +530,35 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         rootBlendtree.blendType = BlendTreeType.Simple1D;
         rootBlendtree.name = "HandRoot";
         rootBlendtree.useAutomaticThresholds = false;
-        rootBlendtree.blendParameter = "dummy";
+        rootBlendtree.blendParameter = ALWAYS_1_PARAMETER;
 
         rootState.motion = rootBlendtree;
 
         // Generate the blendtrees for our joints
         Finger[] fingers = (Finger[])Enum.GetValues(typeof(Finger));
         Joint[] joints = (Joint[])Enum.GetValues(typeof(Joint));
+        HandSide[] sides = (HandSide[])Enum.GetValues(typeof(HandSide));
 
         int blendtreesProcessed = 0;
         updateBlendtreeProgress(blendtreesProcessed);
-        foreach (Finger finger in fingers)
-        {
-            foreach (Joint joint in joints)
-            {
-                blendtreesProcessed += generateCurlBlendTree(controller, rootBlendtree, HandSide.left, finger, joint);
-                blendtreesProcessed += generateCurlBlendTree(controller, rootBlendtree, HandSide.right, finger, joint);
-                updateBlendtreeProgress(blendtreesProcessed);
-            }
 
-            updateBlendtreeProgress(blendtreesProcessed);
+        // Cannot add directly to parent tree, see generateSmoothingBlendtree()
+        List<ChildMotion> childTrees = new List<ChildMotion>();
+        foreach (HandSide side in sides)
+        {
+            foreach (Finger finger in fingers)
+            {
+                foreach (Joint joint in joints)
+                {
+                    blendtreesProcessed += generateCurlBlendTree(rootBlendtree, childTrees, side, finger, joint);
+                    updateBlendtreeProgress(blendtreesProcessed);
+                }
+            }
         }
+
+        // Cannot add directly to parent tree, see generateSmoothingBlendtree()
+        // Have to be added like this in order to set directblendparameter
+        rootBlendtree.children = childTrees.ToArray();
 
         AssetDatabase.SaveAssets();
 
@@ -410,9 +570,9 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         VRCExpressionParameters paramAsset = VRCExpressionParameters.CreateInstance<VRCExpressionParameters>();
 
         // Is null, populated with defaults on save if none provided
-        paramAsset.parameters = new VRCExpressionParameters.Parameter[BLENDTREE_COUNT + 1];
+        paramAsset.parameters = new VRCExpressionParameters.Parameter[BLENDTREE_COUNT / 2 + 1];
 
-        // Generate the blendtrees for our joints
+        // Generate the blendtrees for our joints   
         Finger[] fingers = (Finger[])Enum.GetValues(typeof(Finger));
         Joint[] joints = (Joint[])Enum.GetValues(typeof(Joint));
 

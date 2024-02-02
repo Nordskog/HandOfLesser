@@ -13,16 +13,31 @@ namespace HOL
     {
         private static readonly string HANDOFLESSER_PATH = "Assets/HandOfLesser";
 
-        public static string getAnimationClipName(HandSide side, Finger finger, Joint joint, AnimationClipPosition position)
+        public static string getAnimationClipName(HandSide side, Finger finger, Joint joint, AnimationClipPosition position, PropertyType propertyType)
         {
-            string clipName = getJointParameterName(side, finger, joint);
-            return clipName + "_" + position.propertyName();
+            // getJointParameterName() will add the proxy suffix
+            string clipName = getJointParameterName(side, finger, joint, propertyType);
+            clipName = clipName + "_" + position.propertyName();
+
+            return clipName;
         }
 
-        public static string getJointParameterName( HandSide side, Finger finger, Joint joint)
+        public static string getJointParameterName( HandSide side, Finger finger, Joint joint, PropertyType propertyType)
         {
             // Shared osc name with the side tacked on
-            return side.propertyName() + "_" + getJointOSCName(finger, joint);
+            // This is what will ultimately drive the finger animations, or rather the smoothened proxy that will
+            // be used to drive them.
+            // Basically OSC name -> (right/left state machine) -> Parameter Name -> Proxy name -> animations
+            string name = side.propertyName() + "_" + getJointOSCName(finger, joint);
+
+            // The only other place we will be generating anything for the proxy stuff is the animation clip name,
+            // which uses the value from this function, so this should be the only place we add it.
+            if (propertyType == PropertyType.proxy)
+            {
+                name = name + "_proxy";
+            }
+
+            return name;
         }
 
         public static string getJointOSCName(Finger finger, Joint joint)
