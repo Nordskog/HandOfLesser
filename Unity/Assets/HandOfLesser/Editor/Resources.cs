@@ -13,7 +13,7 @@ namespace HOL
     {
         private static readonly string HANDOFLESSER_PATH = "Assets/HandOfLesser";
 
-        public static string getAnimationClipName(HandSide side, Finger finger, Joint joint, AnimationClipPosition position, PropertyType propertyType)
+        public static string getAnimationClipName(HandSide side, FingerType finger, FingerBendType joint, AnimationClipPosition position, PropertyType propertyType)
         {
             // getJointParameterName() will add the proxy suffix
             string clipName = getJointParameterName(side, finger, joint, propertyType);
@@ -22,7 +22,7 @@ namespace HOL
             return clipName;
         }
 
-        public static string getJointParameterName( HandSide side, Finger finger, Joint joint, PropertyType propertyType)
+        public static string getJointParameterName( HandSide side, FingerType finger, FingerBendType joint, PropertyType propertyType)
         {
             // Shared osc name with the side tacked on
             // This is what will ultimately drive the finger animations, or rather the smoothened proxy that will
@@ -40,13 +40,13 @@ namespace HOL
             return name;
         }
 
-        public static string getJointOSCName(Finger finger, Joint joint)
+        public static string getJointOSCName(FingerType finger, FingerBendType joint)
         {
             StringBuilder builder = new StringBuilder();
 
             builder.Append(finger.propertyName());
 
-            if (joint == Joint.splay)
+            if (joint == FingerBendType.splay)
             {
                 builder.Append("_");
                 builder.Append("splay");
@@ -63,7 +63,7 @@ namespace HOL
             return builder.ToString().ToLower();
         }
 
-        public static string getJointPropertyName(HandSide? side, Finger finger, Joint joint)
+        public static string getJointPropertyName(HandSide? side, FingerType finger, FingerBendType joint)
         {
             // Right Hand.Thumb.1 Stretched
             StringBuilder builder = new StringBuilder();
@@ -77,7 +77,7 @@ namespace HOL
 
             builder.Append(finger.propertyName());
 
-            if (joint == Joint.splay)
+            if (joint == FingerBendType.splay)
             {
                 builder.Append(".");
                 builder.Append("Spread");

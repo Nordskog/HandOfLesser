@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HOL
 {
-    enum Finger
+    enum FingerType
     {
         index,
         middle,
@@ -15,7 +15,7 @@ namespace HOL
         thumb
     }
 
-    enum Joint
+    enum FingerBendType
     {
         first,
         second,
@@ -40,6 +40,11 @@ namespace HOL
         negative, neutral, positive
     }
 
+    enum TransmitType
+    {
+        full, alternating, packed
+    }
+
     static class HandOfLesserExtensions
     {
 
@@ -62,49 +67,35 @@ namespace HOL
         // Finger
         ///////////////////////////
 
-        public static string propertyName(this Finger finger)
+        public static string propertyName(this FingerType finger)
         {
             switch (finger)
             {
-                case Finger.index: return "Index";
-                case Finger.middle: return "Middle";
-                case Finger.ring: return "Ring";
-                case Finger.pinky: return "Little";
-                case Finger.thumb: return "Thumb";
+                case FingerType.index: return "Index";
+                case FingerType.middle: return "Middle";
+                case FingerType.ring: return "Ring";
+                case FingerType.pinky: return "Little";
+                case FingerType.thumb: return "Thumb";
                 default: return "INVALID_ENUM";
             }
-
         }
 
         ///////////////////////////
         // Joint
         ///////////////////////////
 
-        public static string propertyName(this Joint joint)
+        public static string propertyName(this FingerBendType joint)
         {
             switch (joint)
             {
-                case Joint.first: return "1";
-                case Joint.second: return "2";
-                case Joint.third: return "3";
-                case Joint.splay: return "splay";
+                case FingerBendType.first: return "1";
+                case FingerBendType.second: return "2";
+                case FingerBendType.third: return "3";
+                case FingerBendType.splay: return "splay";
                 default: return "INVALID_ENUM";
             }
         }
 
-        ///////////////////////////
-        // JointMotionDirection
-        ///////////////////////////
-        /*
-        public static string propertyName(this Joint joint)
-        {
-            switch (joint)
-            {
-                case Joint.splay: return "Spread";
-                default: return "Stretched";
-            }
-        }
-        */
         ///////////////////////////
         // AnimationClipPosition
         ///////////////////////////
@@ -119,7 +110,13 @@ namespace HOL
                 default: return "INVALID_ENUM";
             }
         }
+
+        public static List<Enum> Values(this Enum theEnum)
+        {
+            return Enum.GetValues(theEnum.GetType()).Cast<Enum>().ToList();
+        }
     }
+
 
 
 }
