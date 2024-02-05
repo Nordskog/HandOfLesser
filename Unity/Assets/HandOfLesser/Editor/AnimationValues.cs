@@ -8,12 +8,7 @@ namespace HOL
 {
     class AnimationValues
     {
-        //public static readonly int BLENDTREE_COUNT = (5 * 4) * 2; // 3 curls, 1 splay, 5 fingers, 2 hands.
-        //public static readonly int ANIMATION_COUNT = BLENDTREE_COUNT * 2; // Open and close. Will be more once we get fancy with bones.
-        public static readonly string HAND_SIDE_OSC_PARAMETER_NAME = "hand_side";
-        public static readonly string REMOTE_SMOOTHING_PARAMETER_NAME = "HOL_remote_smoothing";
 
-        public static readonly string ALWAYS_1_PARAMETER = "HOL_always_one";
 
         // There are some animations that should set parameters to -1 or 1.
         // Instead they set them to -40 or 10. I have no idea why.

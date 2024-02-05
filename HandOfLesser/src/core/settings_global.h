@@ -13,4 +13,8 @@ namespace HOL::settings
 	extern int MotionPredictionMS;
 	extern Eigen::Vector3f OrientationOffset;
 	extern Eigen::Vector3f PositionOffset;
+
+	extern bool sendFull;
+	extern bool sendAlternating;
+	extern bool sendPacked;
 } // namespace HOL::settings

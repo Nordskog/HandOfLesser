@@ -165,6 +165,8 @@ void InstanceHolder::enumerateLayers()
 
 void InstanceHolder::enumerateExtensions()
 {
+	// enumerateInstanceExtensionPropertiesToVector() may get stuck if the HMD is not connected properly
+	// Observed with airlink, probably means you've been booted back to the menu
 	this->mExtensions
 		= xr::enumerateInstanceExtensionPropertiesToVector(nullptr, this->mDispatcher);
 	std::cout << "Enumerating extensions:" << std::endl;

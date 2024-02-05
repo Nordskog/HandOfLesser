@@ -13,34 +13,80 @@ namespace HOL
     {
         private static readonly string HANDOFLESSER_PATH = "Assets/HandOfLesser";
 
+        public static readonly string NAMESPACE = "HOL";
+
+        public static readonly string HAND_SIDE_OSC_PARAMETER_NAME = addNamespacePrefix( 
+            PropertyType.OSC_Alternating.addPrefixNamespace("hand_side"));
+
+        public static readonly string REMOTE_SMOOTHING_PARAMETER_NAME = addNamespacePrefix("remote_smoothing");
+
+        public static readonly string ALWAYS_1_PARAMETER = addNamespacePrefix( "always_one");
+
+        private static string addNamespacePrefix(string param)
+        {
+            return NAMESPACE + "/" + param;
+        }
+
         public static string getAnimationClipName(HandSide side, FingerType finger, FingerBendType joint, AnimationClipPosition position, PropertyType propertyType)
         {
-            // getJointParameterName() will add the proxy suffix
             string clipName = getJointParameterName(side, finger, joint, propertyType);
             clipName = clipName + "_" + position.propertyName();
 
-            return clipName;
+            // Probably don't want slashes in filenames
+            return clipName.Replace('/', '_');
         }
 
-        public static string getJointParameterName( HandSide side, FingerType finger, FingerBendType joint, PropertyType propertyType)
+        public static string getJointParameterName( HandSide? side, FingerType finger, FingerBendType joint, PropertyType propertyType)
         {
-            // Shared osc name with the side tacked on
-            // This is what will ultimately drive the finger animations, or rather the smoothened proxy that will
-            // be used to drive them.
-            // Basically OSC name -> (right/left state machine) -> Parameter Name -> Proxy name -> animations
-            string name = side.propertyName() + "_" + getJointOSCName(finger, joint);
+            bool hasSide = true;
 
-            // The only other place we will be generating anything for the proxy stuff is the animation clip name,
-            // which uses the value from this function, so this should be the only place we add it.
-            if (propertyType == PropertyType.proxy)
+            switch(propertyType)
             {
-                name = name + "_proxy";
+                case PropertyType.OSC_Alternating:
+                case PropertyType.OSC_Packed:
+                {
+                    // the param may be supplied even when dealing with these.
+                    // This is easier than checking the enum over and over.
+                    hasSide = false;
+                    break;
+                }
+                default:
+                {
+                    if (!side.HasValue)
+                    {
+                        throw new ArgumentException("Side may only be null if the PropertType is OSC Alternating or Packed!");
+                    }
+                    break;
+                }
             }
 
-            return name;
+            if (propertyType == PropertyType.avatarRig)
+            {
+                // For now driving humanoid rig, will use our own animations for this in the future
+                return getHumanoidRigJointPropertyName(side.Value, finger, joint);
+            }
+
+            string name = getPlainJointParameterName(finger, joint);
+            if (hasSide)
+            {
+                // Some param that includes the hand side
+                name = side.Value.propertyName() + "_" + name;
+            }
+
+            name = propertyType.addPrefixNamespace(name);
+
+            // All parameters should be lower case, except for the HOL/ prefix.
+            // If you want to change this you will have to mess with the c++ side too.
+            // Note that getHumanoidRigJointPropertyName() returns above without
+            // converting to lowercase. This is because the humanoid rig paramenters 
+            // need to be a specific case, and the enum propertyNames reflect this.
+            name = name.ToLower();
+
+            return addNamespacePrefix(name);
         }
 
-        public static string getJointOSCName(FingerType finger, FingerBendType joint)
+        // Generic finger/joint parameter name with no qualifiers, including no left/right side
+        private static string getPlainJointParameterName(FingerType finger, FingerBendType joint)
         {
             StringBuilder builder = new StringBuilder();
 
@@ -59,11 +105,10 @@ namespace HOL
                 builder.Append("curl");
             }
 
-            // This is what we'll be using for osc stuff, so keep it all lower case
-            return builder.ToString().ToLower();
+            return builder.ToString();
         }
 
-        public static string getJointPropertyName(HandSide? side, FingerType finger, FingerBendType joint)
+        private static string getHumanoidRigJointPropertyName(HandSide? side, FingerType finger, FingerBendType joint)
         {
             // Right Hand.Thumb.1 Stretched
             StringBuilder builder = new StringBuilder();

@@ -72,16 +72,16 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         switch (transmitType)
         {
             case TransmitType.alternating:
-                addAnimatorLayer(controller, "hand_side_machine", 1, bothHandsMask);
+                addAnimatorLayer(controller, "HOL_alternating", 1, bothHandsMask);
                 break;
             case TransmitType.packed:
-                addAnimatorLayer(controller, "joint_unpacker", 1, bothHandsMask);
+                addAnimatorLayer(controller, "HOL_packed", 1, bothHandsMask);
                 break;
             default:
                 break;
         }
-        addAnimatorLayer(controller, "joint_smoothing_machine", 1, bothHandsMask);
-        addAnimatorLayer(controller, "finger_joints", 1, bothHandsMask);
+        addAnimatorLayer(controller, "HOL_smoothing", 1, bothHandsMask);
+        addAnimatorLayer(controller, "HOL_bend", 1, bothHandsMask);
     }
 
     private static void populateControllerLayers(AnimatorController controller, TransmitType transmitType)
@@ -108,37 +108,56 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         if (transmitType == TransmitType.alternating)
         {
             // Only if generating controller for alternating update
-            controller.AddParameter(AnimationValues.HAND_SIDE_OSC_PARAMETER_NAME, AnimatorControllerParameterType.Int); // left/right switch
+            controller.AddParameter(HOL.Resources.HAND_SIDE_OSC_PARAMETER_NAME, AnimatorControllerParameterType.Int); // left/right switch
         }
 
         controller.AddParameter(new AnimatorControllerParameter()
         {
-            name = AnimationValues.REMOTE_SMOOTHING_PARAMETER_NAME,
+            name = HOL.Resources.REMOTE_SMOOTHING_PARAMETER_NAME,
             type = AnimatorControllerParameterType.Float,
             defaultFloat = 0.7f  // whatever we set the smoothing to. Can we even edit via code afterwards? 
         });
 
         controller.AddParameter(new AnimatorControllerParameter()
         {
-            name = AnimationValues.ALWAYS_1_PARAMETER,
+            name = HOL.Resources.ALWAYS_1_PARAMETER,
             type = AnimatorControllerParameterType.Float,
             defaultFloat = 1
         });
 
-        foreach (FingerType finger in new FingerType().Values())
+        // FULL requires no unpacking or fancy stuff, and should directly to the Input parameters instead.
+        if (transmitType != TransmitType.full)
         {
-            foreach (FingerBendType joint in new FingerBendType().Values())
+            foreach (HandSide side in new HandSide().Values())
             {
-                // Input OSC
-                controller.AddParameter(HOL.Resources.getJointOSCName(finger, joint), AnimatorControllerParameterType.Float);
+                foreach (FingerType finger in new FingerType().Values())
+                {
+                    foreach (FingerBendType joint in new FingerBendType().Values())
+                    {
+                        controller.AddParameter(HOL.Resources.getJointParameterName(side, finger, joint, transmitType.toPropertyType()), AnimatorControllerParameterType.Float);
+                    }
+                }
 
-                // Output for left and right hand
-                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.left, finger, joint, PropertyType.normal), AnimatorControllerParameterType.Float);
-                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.right, finger, joint, PropertyType.normal), AnimatorControllerParameterType.Float);
+                // Full writes directly to input params, and Alternating / Packed share a single value for each hand
+                // If there's ever an additional OSC data form that requires creating blendtree parameters for both sides,
+                // adjust the logic here accordingly.
+                break;
+            }
+        }     
 
-                // Smoothened proxy values
-                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.left, finger, joint, PropertyType.proxy), AnimatorControllerParameterType.Float);
-                controller.AddParameter(HOL.Resources.getJointParameterName(HandSide.right, finger, joint, PropertyType.proxy), AnimatorControllerParameterType.Float);
+        // Input ( after decoding packed or alternating )
+        foreach (HandSide side in new HandSide().Values())
+        {
+            foreach (FingerType finger in new FingerType().Values())
+            {
+                foreach (FingerBendType joint in new FingerBendType().Values())
+                {
+                    // left and right hand joints
+                    controller.AddParameter(HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.input), AnimatorControllerParameterType.Float);
+
+                    // Smoothened proxy values
+                    controller.AddParameter(HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.smooth), AnimatorControllerParameterType.Float);
+                }
             }
         }
     }
@@ -193,36 +212,44 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         {
             VRCExpressionParameters paramAsset = VRCExpressionParameters.CreateInstance<VRCExpressionParameters>();
 
-            int parameterCount = AnimationValues.TOTAL_JOINT_COUNT;
-            switch (transmitType)
+            // Usually we'll need to add the parameters for full for local use,
+            // and alternating or packed for network.
+            // If this is the future and we have enough params to use full for both,
+            // we should only add full. Otherwise, full should be added but without sync.
+            List<PropertyType> propertyTypes = new List<PropertyType> { PropertyType.OSC_Full };
+            bool syncFull = true;
+            if (transmitType != TransmitType.full)
             {
-                case TransmitType.alternating:
-                    parameterCount = AnimationValues.TOTAL_JOINT_COUNT / 2; // only send one hand at the time
-                    parameterCount += 1; // For side param
-                    break;
-                case TransmitType.packed:
-                    parameterCount = AnimationValues.TOTAL_JOINT_COUNT / 2; // only send one hand at the time
-                    break;
-                default:
-                    break;
+                syncFull = false;   // Trnasmit type not full, do not sync full
+                propertyTypes.Add(transmitType.toPropertyType());
             }
 
-            // Is null, populated with defaults on save if none provided
-            paramAsset.parameters = new VRCExpressionParameters.Parameter[parameterCount];
+            List<VRCExpressionParameters.Parameter> parameters = new List<VRCExpressionParameters.Parameter>();
 
-            int paramCounter = 0;
-            foreach (FingerType finger in new FingerType().Values())
+            foreach (PropertyType propertyType in propertyTypes)
             {
-                foreach (FingerBendType joint in new FingerBendType().Values())
+                foreach(HandSide side in new HandSide().Values())
                 {
-                    // Curl
-                    VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
-                    newParam.name = HOL.Resources.getJointOSCName(finger, joint);
-                    newParam.valueType = VRCExpressionParameters.ValueType.Float;
-                    newParam.defaultValue = 0;
+                    foreach (FingerType finger in new FingerType().Values())
+                    {
+                        foreach (FingerBendType joint in new FingerBendType().Values())
+                        {
+                            // Curl
+                            VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
+                            newParam.name = HOL.Resources.getJointParameterName(side, finger, joint, propertyType);
+                            newParam.valueType = VRCExpressionParameters.ValueType.Float;
+                            newParam.defaultValue = 0;
+                            // Only sync if not full, or syncFull true because we will be using full for network sync too
+                            newParam.networkSynced = propertyType != PropertyType.OSC_Full || syncFull;
 
-                    paramAsset.parameters[paramCounter] = newParam;
-                    paramCounter++;
+                            parameters.Add(newParam);
+                        }
+                    }
+
+                    // As of writing, only Full has separate parameters for left/right hands
+                    // Alternating and Packed share a single one.
+                    if (propertyType != PropertyType.OSC_Full)
+                        break;
                 }
             }
 
@@ -230,12 +257,15 @@ public class HandOfLesserAnimationGenerator : EditorWindow
             {
                 // Hand side
                 VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
-                newParam.name = AnimationValues.HAND_SIDE_OSC_PARAMETER_NAME;
+                newParam.name = HOL.Resources.HAND_SIDE_OSC_PARAMETER_NAME;
                 newParam.valueType = VRCExpressionParameters.ValueType.Bool;
                 newParam.defaultValue = 0;
+                newParam.networkSynced = true;
 
-                paramAsset.parameters[paramCounter] = newParam;
+                parameters.Add(newParam);
             }
+
+            paramAsset.parameters = parameters.ToArray();
 
             AssetDatabase.CreateAsset(paramAsset, HOL.Resources.getParametersPath());
             AssetDatabase.SaveAssets();

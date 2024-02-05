@@ -93,14 +93,30 @@ void HandOfLesserCore::doOpenXRStuff()
 
 void HandOfLesserCore::doOscStuff()
 {
-	HOL::HandSide side = this->mVrchatOSC.swapTransmitSide();
+	// This will generate everything needed for all transmit types
+	this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(HandSide::LeftHand),
+									   this->mHandTracking.getHandPose(HandSide::RightHand));
 
-	// Just generates it for now, still need to send.
-	this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(side), side);
+	size_t size = 0;
 
-	size_t size = this->mVrchatOSC.generateOscBundle(side);
-	this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+	// Always send full, expect when testing remote stuff locally because it will break things
+	if (HOL::settings::sendFull)
+	{
+		size = this->mVrchatOSC.generateOscBundleFull();
+		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+	}
 
+	if (HOL::settings::sendAlternating)
+	{
+		size = this->mVrchatOSC.generateOscBundleAlternating();
+		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+	}
+
+	if (HOL::settings::sendPacked)
+	{
+		size = this->mVrchatOSC.generateOscBundlePacked();
+		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+	}
 }
 
 void HandOfLesserCore::sendUpdate()

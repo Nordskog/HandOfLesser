@@ -426,6 +426,20 @@ void UserInterface::BuildVRChatOSCSettings()
 									 false,
 									 false);
 
+	// Encoded, 0-255 in left hand, -1 to +1 that we'll be sending to vrchat in right hand
+	ImGui::SeparatorText("Packed bend");
+	buildSingleFingerTrackingDisplay("packedBendBothHandsRaw",
+									 HOL::LeftHand,
+									 HOL::display::FingerTracking[HOL::LeftHand].packedBend,
+									 true,
+									 false);
+	ImGui::SameLine();
+	buildSingleFingerTrackingDisplay("packedBendBothHandsVrchat",
+									 HOL::RightHand,
+									 HOL::display::FingerTracking[HOL::RightHand].packedBend,
+									 false,
+									 false);
+
 	ImGui::EndChild();
 }
 

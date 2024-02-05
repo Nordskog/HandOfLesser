@@ -31,8 +31,13 @@ namespace HOL
 
     enum PropertyType
     {
-        // Proxy will be the smoothed value
-        normal, proxy
+        OSC_Full,       // This should always be the same as input, as it required no processing
+        OSC_Alternating,      
+        OSC_Packed,     // We will use packed for network and full for local, so need to separate them
+
+        input,      // full joint path with left/right qualified
+        smooth,     // Output used for smoothing, used to drive avatarRig
+        avatarRig   // Humanoid rig parameters. In the future humanoid rig will not be used.
     }
 
     enum AnimationClipPosition
@@ -42,11 +47,29 @@ namespace HOL
 
     enum TransmitType
     {
-        full, alternating, packed
+        full,
+        alternating,
+        packed
     }
 
     static class HandOfLesserExtensions
     {
+        /////////////
+        // TransmitType
+        ////////////
+
+        public static PropertyType toPropertyType(this TransmitType transmitType)
+        {
+            // In the editor there is a space, but the actual attribute does not have one. Unity what the hell.
+            switch (transmitType)
+            {
+                case TransmitType.full: return PropertyType.OSC_Full;
+                case TransmitType.alternating: return PropertyType.OSC_Alternating;
+                case TransmitType.packed: return PropertyType.OSC_Packed;
+                default:
+                    return PropertyType.OSC_Full;
+            }
+        }
 
         ///////////////////////////
         // Hand
@@ -109,6 +132,29 @@ namespace HOL
                 case AnimationClipPosition.positive: return "Positive";
                 default: return "INVALID_ENUM";
             }
+        }
+
+        /////////////////////
+        // PropertyType
+        /////////////////////
+        public static string propertyName(this PropertyType prop)
+        {
+            switch (prop)
+            {
+                case PropertyType.OSC_Full: return "input"; // No processing required, so just treat as input
+                case PropertyType.OSC_Alternating: return "alternating";
+                case PropertyType.OSC_Packed: return "packed";
+                case PropertyType.input: return "input"; 
+                case PropertyType.smooth: return "smooth";
+                case PropertyType.avatarRig: return "avatarRig";
+                default:
+                    return "";
+            }
+        }
+
+        public static string addPrefixNamespace(this PropertyType prop, string str)
+        {
+            return prop.propertyName() + "/" + str;
         }
 
         public static List<Enum> Values(this Enum theEnum)

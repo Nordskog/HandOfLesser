@@ -23,14 +23,14 @@ namespace HOL
             AnimationClip clip = new AnimationClip();
             ClipTools.setClipProperty(
                 ref clip,
-                    HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.proxy),
+                    HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.smooth),
                     AnimationValues.getValueForPose(position) * AnimationValues.SHOULD_BE_ONE_BUT_ISNT // See definition
                 );
 
             // SHOULD_BE_ONE_BUT_ISNT is used because when you have this animation output 1, it outputs 40 instead.
             // I have no idea why, but account for the scaling ahead of time and it's fine. fucking unity.
 
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position, PropertyType.proxy)));
+            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position, PropertyType.smooth)));
 
             return 1;
         }
@@ -50,9 +50,9 @@ namespace HOL
             // and .proxy the one driven by the proxy.
             // Both drive the animations setting the proxy
             AnimationClip negativeAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative, PropertyType.proxy)));
+                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative, PropertyType.smooth)));
             AnimationClip positiveAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive, PropertyType.proxy)));
+                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive, PropertyType.smooth)));
 
             tree.AddChild(negativeAnimation, -1);
             tree.AddChild(positiveAnimation, 1);
@@ -71,23 +71,23 @@ namespace HOL
             // #3
             BlendTree tree = new BlendTree();
             tree.blendType = BlendTreeType.Simple1D;
-            tree.name = HOL.Resources.getJointPropertyName(side, finger, joint);
+            tree.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.input);
             tree.useAutomaticThresholds = false;    // Automatic probably would work fine
-            tree.blendParameter = AnimationValues.REMOTE_SMOOTHING_PARAMETER_NAME;
+            tree.blendParameter = HOL.Resources.REMOTE_SMOOTHING_PARAMETER_NAME;
 
             // In order to see the DirectBlendParamter required for the parent Direct blendtree, we need to use a ChildMotion,.
             // However, you cannot add a ChildMotion to a blendtree, and modifying it after adding it has no effect.
             // For whatever reason, adding them to a list assigning that as an array directly to BlendTree.Children works.
             childTrees.Add(new ChildMotion()
             {
-                directBlendParameter = AnimationValues.ALWAYS_1_PARAMETER,
+                directBlendParameter = HOL.Resources.ALWAYS_1_PARAMETER,
                 motion = tree,
                 timeScale = 1,
             });
 
             // Generate #1 and #2
-            tree.AddChild(generatSmoothingBlendtreeInner(tree, side, finger, joint, PropertyType.normal), 0);
-            tree.AddChild(generatSmoothingBlendtreeInner(tree, side, finger, joint, PropertyType.proxy), 1);
+            tree.AddChild(generatSmoothingBlendtreeInner(tree, side, finger, joint, PropertyType.input), 0);
+            tree.AddChild(generatSmoothingBlendtreeInner(tree, side, finger, joint, PropertyType.smooth), 1);
 
             return 1;
         }
@@ -103,7 +103,7 @@ namespace HOL
             rootBlendtree.blendType = BlendTreeType.Direct;
             rootBlendtree.name = "HandRoot";
             rootBlendtree.useAutomaticThresholds = false;
-            rootBlendtree.blendParameter = AnimationValues.ALWAYS_1_PARAMETER;
+            rootBlendtree.blendParameter = HOL.Resources.ALWAYS_1_PARAMETER;
 
             rootState.motion = rootBlendtree;
 

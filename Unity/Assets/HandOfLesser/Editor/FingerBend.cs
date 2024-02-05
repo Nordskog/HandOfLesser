@@ -20,11 +20,11 @@ namespace HOL
             AnimationClip clip = new AnimationClip();
             ClipTools.setClipProperty(
                 ref clip,
-                    HOL.Resources.getJointPropertyName(side, finger, joint),
+                    HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.avatarRig),
                     AnimationValues.getValueForPose(position)
-                );
+                ); ;
 
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position, PropertyType.normal)));
+            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position, PropertyType.avatarRig)));
 
             return 1;
         }
@@ -33,24 +33,24 @@ namespace HOL
         {
             BlendTree tree = new BlendTree();
             tree.blendType = BlendTreeType.Simple1D;
-            tree.name = HOL.Resources.getJointPropertyName(side, finger, joint);
+            tree.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.avatarRig);
             tree.useAutomaticThresholds = false;    // Automatic probably would work fine
-            tree.blendParameter = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.proxy); // Note that we're using the smoothed proxy here
+            tree.blendParameter = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.smooth); // Note that we're using the smoothed proxy here
 
             // In order to see the DirectBlendParamter required for the parent Direct blendtree, we need to use a ChildMotion,.
             // However, you cannot add a ChildMotion to a blendtree, and modifying it after adding it has no effect.
             // For whatever reason, adding them to a list assigning that as an array directly to BlendTree.Children works.
             childTrees.Add(new ChildMotion()
             {
-                directBlendParameter = AnimationValues.ALWAYS_1_PARAMETER,
+                directBlendParameter = HOL.Resources.ALWAYS_1_PARAMETER,
                 motion = tree,
                 timeScale = 1,
             });
 
             AnimationClip negativeAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative, PropertyType.normal)));
+                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative, PropertyType.avatarRig)));
             AnimationClip positiveAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive, PropertyType.normal)));
+                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive, PropertyType.avatarRig)));
 
             tree.AddChild(negativeAnimation, -1);
             tree.AddChild(positiveAnimation, 1);
@@ -74,7 +74,7 @@ namespace HOL
             rootBlendtree.blendType = BlendTreeType.Simple1D;
             rootBlendtree.name = "HandRoot";
             rootBlendtree.useAutomaticThresholds = false;
-            rootBlendtree.blendParameter = AnimationValues.ALWAYS_1_PARAMETER;
+            rootBlendtree.blendParameter = HOL.Resources.ALWAYS_1_PARAMETER;
 
             rootState.motion = rootBlendtree;
 

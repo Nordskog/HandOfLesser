@@ -40,8 +40,8 @@ namespace HOL
 
                     // Name is the parameter it will drive, source is the paremter that will drive it.
                     // Amazing naming convention you idiots
-                    parameter.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.normal);
-                    parameter.source = HOL.Resources.getJointOSCName(finger, joint);
+                    parameter.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.input);
+                    parameter.source = HOL.Resources.getJointParameterName(null, finger, joint, PropertyType.OSC_Alternating);
                 }
             }
 
@@ -94,12 +94,12 @@ namespace HOL
             AnimatorStateTransition transition;
             {
                 transition = generateTransition(leftState, layer.stateMachine);
-                transition.AddCondition(AnimatorConditionMode.Equals, 0, AnimationValues.HAND_SIDE_OSC_PARAMETER_NAME);
+                transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.HAND_SIDE_OSC_PARAMETER_NAME);
                 rightToLeftState.AddTransition(transition);
             }
             {
                 transition = generateTransition(rightState, layer.stateMachine);
-                transition.AddCondition(AnimatorConditionMode.Equals, 1, AnimationValues.HAND_SIDE_OSC_PARAMETER_NAME);
+                transition.AddCondition(AnimatorConditionMode.Equals, 1, HOL.Resources.HAND_SIDE_OSC_PARAMETER_NAME);
                 lefToRightState.AddTransition(transition);
             }
 
