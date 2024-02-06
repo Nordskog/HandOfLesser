@@ -16,7 +16,7 @@ namespace HOL
 		Eigen::Vector3f PositionOffset(0, 0, 0);
 
 		extern bool sendFull = false;
-		extern bool sendAlternating = true;
-		extern bool sendPacked = false;
+		extern bool sendAlternating = false;
+		extern bool sendPacked = true;
 	} // namespace settings
 } // namespace HOL

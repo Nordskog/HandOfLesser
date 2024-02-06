@@ -2,7 +2,6 @@
 
 #include <HandOfLesserCommon.h>
 #include "src/hands/hand_pose.h"
-#include "vrchat_transmit_type.h"
 
 namespace HOL::VRChat
 {

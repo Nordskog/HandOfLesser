@@ -410,10 +410,10 @@ namespace HOL::VRChat
 
 		packet.openBundle(0);
 
-		for (int i = 0; i < SINGLE_HAND_JOINT_COUNT * 2; i++)
+		for (int i = 0; i < SINGLE_HAND_JOINT_COUNT; i++)
 		{
-			packet.openMessage(VRChatOSC::OSC_PARAMETER_NAMES_FULL[i].c_str(), 1)
-				.float32(this->mOscOutput[i])
+			packet.openMessage(VRChatOSC::OSC_PARAMETER_NAMES_PACKED[i].c_str(), 1)
+				.float32(this->mOscOutputPacked[i])
 				.closeMessage();
 		}
 

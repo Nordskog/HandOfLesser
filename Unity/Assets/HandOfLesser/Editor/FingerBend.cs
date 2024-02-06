@@ -24,7 +24,7 @@ namespace HOL
                     AnimationValues.getValueForPose(position)
                 ); ;
 
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position, PropertyType.avatarRig)));
+            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, PropertyType.avatarRig, position)));
 
             return 1;
         }
@@ -48,9 +48,9 @@ namespace HOL
             });
 
             AnimationClip negativeAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative, PropertyType.avatarRig)));
+                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, PropertyType.avatarRig, AnimationClipPosition.negative)));
             AnimationClip positiveAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive, PropertyType.avatarRig)));
+                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, PropertyType.avatarRig, AnimationClipPosition.positive)));
 
             tree.AddChild(negativeAnimation, -1);
             tree.AddChild(positiveAnimation, 1);

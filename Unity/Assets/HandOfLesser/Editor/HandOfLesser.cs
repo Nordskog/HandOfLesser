@@ -9,7 +9,7 @@ using VRC.SDK3.Avatars.ScriptableObjects;
 
 public class HandOfLesserAnimationGenerator : EditorWindow
 {
-    static TransmitType sTransmitType = TransmitType.alternating;
+    static TransmitType sTransmitType = TransmitType.packed;
 
     [MenuItem("Window/HandOfLesser")]
     public static void ShowWindow()
@@ -92,7 +92,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 Alternating.populateHandSwitchLayer(controller, controller.layers[1]);
                 break;
             case TransmitType.packed:   // TODO generate unpacking layer
-                Alternating.populateHandSwitchLayer(controller, controller.layers[1]);
+                Packed.populatedPackedLayer(controller, controller.layers[1]);
                 break;
             default:
                 break;
@@ -190,7 +190,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
             {
                 case TransmitType.packed:
                     {
-                        // Generate packed
+                        Packed.generateAnimations();
                         break;
                     }
                 default:
@@ -212,11 +212,11 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         {
             VRCExpressionParameters paramAsset = VRCExpressionParameters.CreateInstance<VRCExpressionParameters>();
 
-            // Usually we'll need to add the parameters for full for local use,
-            // and alternating or packed for network.
-            // If this is the future and we have enough params to use full for both,
-            // we should only add full. Otherwise, full should be added but without sync.
-            List<PropertyType> propertyTypes = new List<PropertyType> { PropertyType.OSC_Full };
+        // Usually we'll need to add the parameters for full for local use,
+        // and alternating or packed for network.
+        // If this is the future and we have enough params to use full for both,
+        // we should only add full. Otherwise, full should be added but without sync.
+        List<PropertyType> propertyTypes = new List<PropertyType> { PropertyType.OSC_Full };
             bool syncFull = true;
             if (transmitType != TransmitType.full)
             {

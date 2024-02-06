@@ -30,7 +30,7 @@ namespace HOL
             // SHOULD_BE_ONE_BUT_ISNT is used because when you have this animation output 1, it outputs 40 instead.
             // I have no idea why, but account for the scaling ahead of time and it's fine. fucking unity.
 
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, position, PropertyType.smooth)));
+            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, PropertyType.smooth, position)));
 
             return 1;
         }
@@ -50,9 +50,9 @@ namespace HOL
             // and .proxy the one driven by the proxy.
             // Both drive the animations setting the proxy
             AnimationClip negativeAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.negative, PropertyType.smooth)));
+                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, PropertyType.smooth, AnimationClipPosition.negative)));
             AnimationClip positiveAnimation = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, AnimationClipPosition.positive, PropertyType.smooth)));
+                HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, PropertyType.smooth, AnimationClipPosition.positive)));
 
             tree.AddChild(negativeAnimation, -1);
             tree.AddChild(positiveAnimation, 1);

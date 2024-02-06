@@ -27,7 +27,23 @@ namespace HOL
             return NAMESPACE + "/" + param;
         }
 
-        public static string getAnimationClipName(HandSide side, FingerType finger, FingerBendType joint, AnimationClipPosition position, PropertyType propertyType)
+        public static string getPackedAnimationClipName(FingerType finger, FingerBendType joint, int leftStep, int rightStep)
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.Append("packed_");
+            builder.Append(finger.propertyName());
+            builder.Append("_");
+            builder.Append(joint.propertyName());
+            builder.Append("_");
+            builder.Append(leftStep.ToString());
+            builder.Append("_");
+            builder.Append(rightStep.ToString());
+
+            return builder.ToString();
+        }
+
+        public static string getAnimationClipName(HandSide side, FingerType finger, FingerBendType joint, PropertyType propertyType, AnimationClipPosition position = AnimationClipPosition.neutral)
         {
             string clipName = getJointParameterName(side, finger, joint, propertyType);
             clipName = clipName + "_" + position.propertyName();
