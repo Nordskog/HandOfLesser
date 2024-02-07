@@ -71,7 +71,7 @@ namespace HOL
 
             // Blendtree at the root of our state
             BlendTree rootBlendtree = new BlendTree();
-            rootBlendtree.blendType = BlendTreeType.Simple1D;
+            rootBlendtree.blendType = BlendTreeType.Direct;
             rootBlendtree.name = "HandRoot";
             rootBlendtree.useAutomaticThresholds = false;
             rootBlendtree.blendParameter = HOL.Resources.ALWAYS_1_PARAMETER;

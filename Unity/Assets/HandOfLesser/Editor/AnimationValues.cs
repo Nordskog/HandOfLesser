@@ -13,7 +13,9 @@ namespace HOL
         // There are some animations that should set parameters to -1 or 1.
         // Instead they set them to -40 or 10. I have no idea why.
         // Until someone can explain this to me, we multiply the values by this
-        public static readonly float SHOULD_BE_ONE_BUT_ISNT = 1f / 40f;
+        public static readonly float SHOULD_BE_ONE_BUT_ISNT_SMOOTHING = 1f / 40f;
+        // And here's one that sets 1600 instead! wTF
+        public static readonly float SHOULD_BE_ONE_BUT_ISNT_PACKED = 1f / 1600f;
 
         public static readonly int TOTAL_JOINT_COUNT = 4 * 5 * 2;
 

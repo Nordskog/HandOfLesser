@@ -27,7 +27,8 @@ namespace HOL
             return NAMESPACE + "/" + param;
         }
 
-        public static string getPackedAnimationClipName(FingerType finger, FingerBendType joint, int leftStep, int rightStep)
+        // Packed animations need separate 0-15 animations for the left hand only
+        public static string getPackedAnimationClipName(FingerType finger, FingerBendType joint, int leftStep)
         {
             StringBuilder builder = new StringBuilder();
 
@@ -37,13 +38,11 @@ namespace HOL
             builder.Append(joint.propertyName());
             builder.Append("_");
             builder.Append(leftStep.ToString());
-            builder.Append("_");
-            builder.Append(rightStep.ToString());
 
             return builder.ToString();
         }
 
-        public static string getAnimationClipName(HandSide side, FingerType finger, FingerBendType joint, PropertyType propertyType, AnimationClipPosition position = AnimationClipPosition.neutral)
+        public static string getAnimationClipName(HandSide? side, FingerType finger, FingerBendType joint, PropertyType propertyType, AnimationClipPosition position = AnimationClipPosition.neutral)
         {
             string clipName = getJointParameterName(side, finger, joint, propertyType);
             clipName = clipName + "_" + position.propertyName();
@@ -60,7 +59,8 @@ namespace HOL
             {
                 case PropertyType.OSC_Alternating:
                 case PropertyType.OSC_Packed:
-                {
+                case PropertyType.input_packed:
+                    {
                     // the param may be supplied even when dealing with these.
                     // This is easier than checking the enum over and over.
                     hasSide = false;

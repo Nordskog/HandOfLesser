@@ -24,7 +24,7 @@ namespace HOL
             ClipTools.setClipProperty(
                 ref clip,
                     HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.smooth),
-                    AnimationValues.getValueForPose(position) * AnimationValues.SHOULD_BE_ONE_BUT_ISNT // See definition
+                    AnimationValues.getValueForPose(position) * AnimationValues.SHOULD_BE_ONE_BUT_ISNT_SMOOTHING // See definition
                 );
 
             // SHOULD_BE_ONE_BUT_ISNT is used because when you have this animation output 1, it outputs 40 instead.

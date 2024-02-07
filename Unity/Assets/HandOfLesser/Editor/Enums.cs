@@ -35,6 +35,7 @@ namespace HOL
         OSC_Alternating,      
         OSC_Packed,     // We will use packed for network and full for local, so need to separate them
 
+        input_packed,   // used for animation name because we need to do non-standard values
         input,      // full joint path with left/right qualified
         smooth,     // Output used for smoothing, used to drive avatarRig
         avatarRig   // Humanoid rig parameters. In the future humanoid rig will not be used.
@@ -144,7 +145,8 @@ namespace HOL
                 case PropertyType.OSC_Full: return "input"; // No processing required, so just treat as input
                 case PropertyType.OSC_Alternating: return "alternating";
                 case PropertyType.OSC_Packed: return "packed";
-                case PropertyType.input: return "input"; 
+                case PropertyType.input: return "input";
+                case PropertyType.input_packed: return "input"; // only used for animation clip names, drive input
                 case PropertyType.smooth: return "smooth";
                 case PropertyType.avatarRig: return "avatarRig";
                 default:

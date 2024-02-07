@@ -11,16 +11,21 @@ namespace HOL
 {
     class Packed
     {
-        public static readonly int STEP_COUNT = 16; // 4 bits worth
-        public static readonly int PACKED_BLENDTREE_COUNT = AnimationValues.TOTAL_JOINT_COUNT / 2; // all joints but only for one hand
-        public static readonly int PACKED_ANIMATION_COUNT = PACKED_BLENDTREE_COUNT * 256; // 256 animations for each left/right pair of joints
+        private static readonly int STEP_COUNT = 16; // 4 bits worth
+        private static readonly int PACKED_BLENDTREE_COUNT = AnimationValues.TOTAL_JOINT_COUNT * 2; // all joints for both hands
 
-        private static int generateSingleBlendTree(BlendTree rootTree, List<ChildMotion> childTrees, FingerType finger, FingerBendType joint)
+        private static readonly int PACKED_ANIMATION_COUNT_RIGHT = AnimationValues.TOTAL_JOINT_COUNT / 2; // neg/pos for each joint on one hand
+        private static readonly int PACKED_ANIMATION_COUNT_LEFT = (AnimationValues.TOTAL_JOINT_COUNT / 2 ) * STEP_COUNT; // 16 steps for each joint on one hand
+
+        private static readonly int PACKED_ANIMATION_COUNT = PACKED_ANIMATION_COUNT_RIGHT + PACKED_ANIMATION_COUNT_LEFT;
+        private static readonly int PACKED_VALUE_COUNT = 256;    // Max an 8bit int can store
+
+        private static int generateSingleBlendTree(BlendTree rootTree, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
         {
             BlendTree tree = new BlendTree();
             tree.blendType = BlendTreeType.Simple1D;
             tree.name = HOL.Resources.getJointParameterName(null, finger, joint, PropertyType.OSC_Packed);
-            tree.useAutomaticThresholds = false;    // Automatic probably would work fine
+            tree.useAutomaticThresholds = false;    
             tree.blendParameter = HOL.Resources.getJointParameterName(null, finger, joint, PropertyType.OSC_Packed);
 
             childTrees.Add(new ChildMotion()
@@ -30,17 +35,64 @@ namespace HOL
                 timeScale = 1,
             });
 
-            // Turns out you can't use integers in a blendtree, so -1 to 1 it is
-            float threshold = -1;
-            for (int i = 0; i < STEP_COUNT; i++)
+            if (side == HandSide.left)
             {
-                for (int j = 0; j < STEP_COUNT; j++)
-                {
-                    string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, i, j));
-                    AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
+                // 0-15 -> 0
+                // 16-31 -> 1
+                // Repeat.
+                // Right denotes the left step animation that each section will paly.
+                // You only need to set the threshold at the beginning and the end,
+                // so 0 and 15 for the first step
 
-                    tree.AddChild(animation, threshold);
-                    threshold += (2.0f / 255f);
+                for (int i = 0; i < STEP_COUNT; i++)
+                {
+                    // Start
+                    {
+                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, i));
+                        AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
+
+                        float threshold = getValueAtStep(i*STEP_COUNT, PACKED_VALUE_COUNT, -1, 1);
+                        tree.AddChild(animation, threshold);
+                    }
+
+                    // End
+                    {
+                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, i));
+                        AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
+
+                        float threshold = getValueAtStep(i * STEP_COUNT + ( STEP_COUNT - 1 ), PACKED_VALUE_COUNT, -1, 1);
+                        tree.AddChild(animation, threshold);
+                    }
+                }
+            }
+            else
+            {
+                // 0 - negative 
+                // 15 - positive
+                // 16 - negative
+                // 31 - positive
+                // Repeat 16 times
+                // This extracts the interleaved values for the right hand
+
+                for (int i = 0; i < PACKED_VALUE_COUNT; i+=STEP_COUNT)
+                {
+                    // Negative
+                    {
+                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(null, finger, joint, PropertyType.input_packed, AnimationClipPosition.negative));
+                        AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
+
+                        float threshold = getValueAtStep(i, PACKED_VALUE_COUNT, -1, 1);
+                        tree.AddChild(animation, threshold);
+                    }
+
+                    // Positive
+                    {
+                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(null, finger, joint, PropertyType.input_packed, AnimationClipPosition.positive));
+                        AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
+
+                        float threshold = getValueAtStep(i+(STEP_COUNT-1), PACKED_VALUE_COUNT, -1, 1);
+                        tree.AddChild(animation, threshold);
+                    }
                 }
             }
 
@@ -71,7 +123,8 @@ namespace HOL
             {
                 foreach (FingerBendType joint in new FingerBendType().Values())
                 {
-                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, finger, joint);
+                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.left, finger, joint);
+                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.right, finger, joint);
                     ProgressDisplay.updateBlendtreeProgress(blendtreesProcessed, PACKED_BLENDTREE_COUNT);
                 }
             }
@@ -81,99 +134,76 @@ namespace HOL
             rootBlendtree.children = childTrees.ToArray();
         }
 
+        // 0 to 15
         private static float getValueAtStep(float step, float stepCount, float startVal, float endVal)
         {
+            // basically a re-range
             // Steps 0-15, or 16 steps. Subtract 1 from count to make the math work.
+            // Also works for 0-255 if stepCount is 256
             float ratio = step / (stepCount - 1);
             return (ratio * endVal) + ((1f - ratio) * startVal);
         }
 
-        private static void generatePackedAnimation(FingerType finger, FingerBendType joint, int leftStep, int rightStep)
+        private static void generatePackedAnimationLeft(FingerType finger, FingerBendType joint, int leftStep)
         {
-            // Animations driving HOL/Input params
+            // Animations for steps 0-15 of the left hand only
+            // drives input
             AnimationClip clip = new AnimationClip();
             ClipTools.setClipProperty(
                 ref clip,
                     HOL.Resources.getJointParameterName(HandSide.left, finger, joint, PropertyType.input),
-                    getValueAtStep(leftStep, STEP_COUNT, -1, 1)
+                    getValueAtStep(leftStep, STEP_COUNT, -1, 1) * AnimationValues.SHOULD_BE_ONE_BUT_ISNT_PACKED // See definition
                 );
 
+            // Note separate animation clip name getter
+            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, leftStep)));
+        }
+
+        public static int generatedPackedAnimationRight(FingerType finger, FingerBendType joint, AnimationClipPosition position)
+        {
+            // Basically just a negative and positive animation for each joint, with a multiplier because unity is a buggy mess
+            // Drives input
+            AnimationClip clip = new AnimationClip();
             ClipTools.setClipProperty(
                 ref clip,
                     HOL.Resources.getJointParameterName(HandSide.right, finger, joint, PropertyType.input),
-                    getValueAtStep(rightStep, STEP_COUNT, -1, 1)
+                    AnimationValues.getValueForPose(position) * AnimationValues.SHOULD_BE_ONE_BUT_ISNT_PACKED // See definition
                 );
 
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, leftStep, rightStep)));
-        }
-        
+            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(null, finger, joint, PropertyType.input_packed, position)));
 
-
-        private static int generateAnimationsForSingleJoint(FingerType finger, FingerBendType joint)
-        {
-            // For each set of joints ( left hand, right hand ),
-            // Generate 256 unique animations that cycle through all possible combinations of curl states for those two joints.
-            // For the first 16 animations, the left hand will be full negative ( -1 ), while the right joint cycles through 16 poses from -1 to 1.
-            // This repeats for the next 16 poses, with the left hand joint moving 1/16th of the distance between -1 and 1 for each set.
-
-            for (int i = 0; i < STEP_COUNT; i++)
-            {
-                for (int j = 0; j < STEP_COUNT; j++)
-                {
-                    generatePackedAnimation(
-                        finger,
-                        joint, 
-                        i,
-                        j);
-                }
-            }
-
-            // Return number of animations processed
-            return STEP_COUNT * STEP_COUNT;
+            return 1;
         }
 
         public static void generateAnimations()
         {
             HOL.Resources.createOutputDirectories();
 
-            // https://forum.unity.com/threads/createasset-is-super-slow.291667/#post-3853330
-            // Makes createAsset not be super slow. Note the call to StopAssetEditing() below.
-            AssetDatabase.StartAssetEditing(); // Yes, Start goes first.
-
             int animationProcessed = 0;
             ProgressDisplay.updateAnimationProgress(animationProcessed, PACKED_ANIMATION_COUNT);
 
-            try
+            foreach (FingerType finger in new FingerType().Values())
             {
-                foreach (FingerType finger in new FingerType().Values())
+                foreach (FingerBendType joint in new FingerBendType().Values())
                 {
-                    foreach (FingerBendType joint in new FingerBendType().Values())
+                    // We use two different methods for unpacking the data into left/right values.
+                    // See each generator method for details, and generateSingleBlendTree() for how they are used
+                    animationProcessed += generatedPackedAnimationRight( finger, joint, AnimationClipPosition.negative);
+                    animationProcessed += generatedPackedAnimationRight(finger, joint, AnimationClipPosition.positive);
+
+                    for(int i = 0; i < STEP_COUNT; i++)
                     {
-                        // For each joint in each finger, generate 256 packed curl animations
-                        animationProcessed += generateAnimationsForSingleJoint(finger, joint);
-                        ProgressDisplay.updateAnimationProgress(animationProcessed, PACKED_ANIMATION_COUNT);
+                        generatePackedAnimationLeft(finger, joint, i);
+                        animationProcessed++;
                     }
+
+                    ProgressDisplay.updateAnimationProgress(animationProcessed, PACKED_ANIMATION_COUNT);
                 }
-
             }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
-            }
-            finally
-            {
-                AssetDatabase.StopAssetEditing();
-            }
+            
 
 
-            // supposedly don't actually need these
-            //AssetDatabase.SaveAssets();
-            //AssetDatabase.Refresh();
-
-            ProgressDisplay.clearProgress();
         }
-
-
     }
 
 
