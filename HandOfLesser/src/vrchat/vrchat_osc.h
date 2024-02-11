@@ -7,6 +7,7 @@ namespace HOL::VRChat
 {
 	static const int SINGLE_HAND_JOINT_COUNT
 		= FingerType::FingerType_MAX * FingerBendType::FingerBendType_MAX;
+	static const int BOTH_HAND_JOINT_COUNT = SINGLE_HAND_JOINT_COUNT * 2;
 
 	static const int OSC_PACKET_BUFFER_SIZE = SINGLE_HAND_JOINT_COUNT * 2 * 128;
 
@@ -37,7 +38,6 @@ namespace HOL::VRChat
 
 		void generateOscOutput(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
 
-		float fixLittlefingerSplay(float originalBend, float firstCurlBend);
 		float encodePacked(float left, float right);
 
 		// these guys need to be easily configurable

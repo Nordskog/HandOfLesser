@@ -23,6 +23,11 @@ void OpenXRHand::calculateCurlSplay()
 	const auto getJointOrientation = [&](XrHandJointEXT joint)
 	{ return toEigenQuaternion(this->mJointLocations[joint].pose.orientation); };
 
+	const auto getJointPosition = [&](XrHandJointEXT joint)
+	{ return toEigenVector(this->mJointLocations[joint].pose.position); };
+
+	auto palmPose = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
+
 	const auto getRootOpenXRJointForFinger = [&](FingerType joint)
 	{
 		switch (joint)
@@ -37,6 +42,23 @@ void OpenXRHand::calculateCurlSplay()
 				return XrHandJointEXT::XR_HAND_JOINT_RING_METACARPAL_EXT;
 			case FingerType::FingerLittle:
 				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_METACARPAL_EXT;
+		}
+	};
+
+	const auto getFirstJoint = [&](FingerType joint)
+	{
+		switch (joint)
+		{
+			case FingerType::FingerThumb:
+				return XrHandJointEXT::XR_HAND_JOINT_THUMB_METACARPAL_EXT;
+			case FingerType::FingerIndex:
+				return XrHandJointEXT::XR_HAND_JOINT_INDEX_PROXIMAL_EXT;
+			case FingerType::FingerMiddle:
+				return XrHandJointEXT::XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT;
+			case FingerType::FingerRing:
+				return XrHandJointEXT::XR_HAND_JOINT_RING_PROXIMAL_EXT;
+			case FingerType::FingerLittle:
+				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_PROXIMAL_EXT;
 		}
 	};
 
@@ -69,6 +91,11 @@ void OpenXRHand::calculateCurlSplay()
 
 			rawOrientationOut[0] = wristOrientation * thumbAxisOffsetRotation;
 		}
+		else
+		{
+			// For the sake of the humanoid rig, using the palm as a reference is better
+			rawOrientationOut[0] = getJointOrientation(XrHandJointEXT::XR_HAND_JOINT_PALM_EXT);
+		}
 	};
 
 	// Reuse array to store raw orientations of joints
@@ -94,6 +121,18 @@ void OpenXRHand::calculateCurlSplay()
 
 		// Between metacarpal and proximal. No flipping this.
 		bend->bend[FingerBendType::Splay] = computeSplay(rawOrientation[0], rawOrientation[1]);
+
+		if (HOL::settings::useUnityHumanoidSplay)
+		{
+			// Special values for unity's broken humanoid rig
+			// Only splay is different
+			Eigen::Quaternionf palmRot
+				= getJointOrientation(XrHandJointEXT::XR_HAND_JOINT_PALM_EXT);
+			Eigen::Vector3f knucklePos = getJointPosition(getFirstJoint(finger));
+			Eigen::Vector3f tipPos = getJointPosition((XrHandJointEXT)(getFirstJoint(finger)+2));
+
+			bend->setSplay(computeHumanoidSplay(palmRot, knucklePos, tipPos));
+		}
 	}
 }
 

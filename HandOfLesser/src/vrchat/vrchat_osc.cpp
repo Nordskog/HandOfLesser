@@ -8,7 +8,7 @@ namespace HOL::VRChat
 	float VRChatOSC::HUMAN_RIG_RANGE[SINGLE_HAND_JOINT_COUNT];
 	float VRChatOSC::HUMAN_RIG_CENTER[SINGLE_HAND_JOINT_COUNT];
 
-	std::string VRChatOSC::OSC_PARAMETER_NAMES_FULL[VRChat::SINGLE_HAND_JOINT_COUNT * 2];
+	std::string VRChatOSC::OSC_PARAMETER_NAMES_FULL[VRChat::BOTH_HAND_JOINT_COUNT];
 	std::string VRChatOSC::OSC_PARAMETER_NAMES_ALTERNATING[VRChat::SINGLE_HAND_JOINT_COUNT];
 	std::string VRChatOSC::OSC_PARAMETER_NAMES_PACKED[VRChat::SINGLE_HAND_JOINT_COUNT];
 
@@ -230,12 +230,6 @@ namespace HOL::VRChat
 		// clamp between 0 and 1
 		outputCurl = std::clamp(outputCurl, 0.f, 1.f);
 
-		// Flip this so it matches unity's inverted open-closed values
-		if (joint != HOL::FingerBendType::Splay)
-		{
-			outputCurl = 1.f - outputCurl;
-		}
-
 		// scale our 0-1 -> -1 to 1, as this is the range OSC and unity's rig support.
 		return (outputCurl * 2.f) - 1.f;
 	}
@@ -317,16 +311,6 @@ namespace HOL::VRChat
 					float bend = computeParameterValue(
 						finger.bend[j], (HandSide)side, (FingerType)i, (FingerBendType)j);
 
-					if (j == FingerBendType::Splay && i == FingerType::FingerLittle)
-					{
-						bend = this->fixLittlefingerSplay(
-							bend,
-							computeParameterValue(finger.bend[FingerBendType::CurlFirst],
-												  (HandSide)side,
-												  FingerType::FingerLittle,
-												  FingerBendType::CurlFirst));
-					}
-
 					HOL::display::FingerTracking[side].humanoidBend[i].bend[j] = bend;
 
 					int index = getParameterIndex((HandSide)side, (FingerType)i, (FingerBendType)j);
@@ -342,35 +326,6 @@ namespace HOL::VRChat
 	{
 		generateOscOutputFull(leftHand, rightHand);
 		generateOscOutputPacked();
-	}
-
-	float HOL::VRChat::VRChatOSC::fixLittlefingerSplay(float originalBend, float firstCurlBend)
-	{
-		// Unity's humanoid rig does not model splaying properly.
-		// When your first is close, your fingers roll outwards to point the fingers
-		// inwards. This is the same rotation as when when full splayed outwards when
-		// the hand is open. Unity instead treats it as a left-right rotation in the
-		// direction the finger is pointing, which results in the fingers pointing
-		// outwards instead of in, in a very broken manner. Ultimately we will switch to
-		// using bone animations instead, but sticking with humanoid for testing
-		// purposes. Splay should blend to -1 as it approached a curl of 90 degrees, to
-		// make humanoid look vaugely reasonable.
-		//
-		// Fip this so 1 is closed, -1 open
-		float offset = 0.25f; // start from -.25
-		firstCurlBend = -firstCurlBend;
-
-		float ratio = firstCurlBend + offset / 1.f + offset;
-		if (ratio < 0)
-			ratio = 0;
-
-		ratio = (originalBend * (1.f - ratio)) + (ratio * -1.f);
-
-		// This is broken, clamp to -1/1 for now
-		if (ratio < -1)
-			ratio = -1;
-
-		return ratio;
 	}
 
 	// includes a hand_side param denoting which hand the data is for
@@ -429,10 +384,10 @@ namespace HOL::VRChat
 
 		packet.openBundle(0);
 
-		for (int i = 0; i < SINGLE_HAND_JOINT_COUNT; i++)
+		for (int i = 0; i < BOTH_HAND_JOINT_COUNT; i++)
 		{
-			packet.openMessage(VRChatOSC::OSC_PARAMETER_NAMES_PACKED[i].c_str(), 1)
-				.float32(this->mOscOutputPacked[i])
+			packet.openMessage(VRChatOSC::OSC_PARAMETER_NAMES_FULL[i].c_str(), 1)
+				.float32(this->mOscOutput[i])
 				.closeMessage();
 		}
 

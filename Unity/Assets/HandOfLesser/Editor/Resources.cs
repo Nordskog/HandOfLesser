@@ -42,10 +42,20 @@ namespace HOL
             return builder.ToString();
         }
 
-        public static string getAnimationClipName(HandSide? side, FingerType finger, FingerBendType joint, PropertyType propertyType, AnimationClipPosition position = AnimationClipPosition.neutral)
+        public static string getAnimationClipName(HandSide? side, FingerType finger, FingerBendType joint, PropertyType propertyType, AnimationClipPosition primaryPosition = AnimationClipPosition.neutral)
+        {
+            return getAnimationClipName(side, finger, joint, propertyType, primaryPosition, null);
+        }
+
+        public static string getAnimationClipName(HandSide? side, FingerType finger, FingerBendType joint, PropertyType propertyType, AnimationClipPosition primaryPosition, AnimationClipPosition? secondaryPosition )
         {
             string clipName = getJointParameterName(side, finger, joint, propertyType);
-            clipName = clipName + "_" + position.propertyName();
+            clipName = clipName + "_" + primaryPosition.propertyName();
+
+            if (secondaryPosition.HasValue)
+            {
+                clipName = clipName + "_" + secondaryPosition.Value.propertyName();
+            }
 
             // Probably don't want slashes in filenames
             return clipName.Replace('/', '_');

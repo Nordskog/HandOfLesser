@@ -78,6 +78,10 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 addAnimatorLayer(controller, "HOL_packed", 1, bothHandsMask);
                 break;
             default:
+                // Ultimately full should be used for local, and packed for network,
+                // but I haven't implemented that yet, so we need a filler to keep
+                // the layer indices the same if packed or alternating don't exist.
+                addAnimatorLayer(controller, "HOL_filler", 1, bothHandsMask);
                 break;
         }
         addAnimatorLayer(controller, "HOL_smoothing", 1, bothHandsMask);

@@ -4,6 +4,11 @@
 
 namespace HOL
 {
+	Eigen::Quaternionf quaternionFromEulerAngles(Eigen::Vector3f euler)
+	{
+		return quaternionFromEulerAngles(euler.x(), euler.y(), euler.z());
+	}
+
 	Eigen::Quaternionf quaternionFromEulerAngles(float x, float y, float z)
 	{
 		return Eigen::Quaternionf(Eigen::AngleAxisf(z, Eigen::Vector3f::UnitZ())

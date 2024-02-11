@@ -10,3 +10,8 @@ float HOL::FingerBend::getCurlSum()
 
 	return sum;
 }
+
+void HOL::FingerBend::setSplay(float humanoidSplay)
+{
+	this->bend[FingerBendType::Splay] = humanoidSplay;
+}

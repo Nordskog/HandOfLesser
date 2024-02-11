@@ -17,4 +17,6 @@ namespace HOL::settings
 	extern bool sendFull;
 	extern bool sendAlternating;
 	extern bool sendPacked;
+
+	extern bool useUnityHumanoidSplay;
 } // namespace HOL::settings

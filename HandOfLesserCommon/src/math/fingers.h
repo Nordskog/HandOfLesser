@@ -12,6 +12,9 @@ namespace HOL
 	float computeSplay(const Eigen::Quaternionf& previous, const Eigen::Quaternionf& next);
 	std::pair<float, float> computeCurlSplay(const Eigen::Quaternionf& previous,
 											 const Eigen::Quaternionf& next);
+	float computeHumanoidSplay(const Eigen::Quaternionf& previous,
+							   const Eigen::Vector3f& previousPosition,
+							   const Eigen::Vector3f& tipPosition);
 
 	float mapCurlToSteamVR(float curlInRadians, float maxCurlRadians = std::numbers::pi_v<float>);
 } // namespace HOL

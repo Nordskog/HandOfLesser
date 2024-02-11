@@ -38,7 +38,9 @@ namespace HOL
         input_packed,   // used for animation name because we need to do non-standard values
         input,      // full joint path with left/right qualified
         smooth,     // Output used for smoothing, used to drive avatarRig
-        avatarRig   // Humanoid rig parameters. In the future humanoid rig will not be used.
+        avatarRig,  // Humanoid rig parameters. In the future humanoid rig will not be used.
+        skeletal,   // bone transform animations instead of humanoid
+        avatarRigCombined   // Contains both curl and splay in a single animation
     }
 
     enum AnimationClipPosition
@@ -149,6 +151,8 @@ namespace HOL
                 case PropertyType.input_packed: return "input"; // only used for animation clip names, drive input
                 case PropertyType.smooth: return "smooth";
                 case PropertyType.avatarRig: return "avatarRig";
+                case PropertyType.avatarRigCombined: return "avatarRigCombined";
+                case PropertyType.skeletal: return "skeletal";
                 default:
                     return "";
             }
@@ -162,6 +166,16 @@ namespace HOL
         public static List<Enum> Values(this Enum theEnum)
         {
             return Enum.GetValues(theEnum.GetType()).Cast<Enum>().ToList();
+        }
+
+        public static AnimationClipPosition opposite(this AnimationClipPosition pos)
+        {
+            switch (pos)
+            {
+                case AnimationClipPosition.negative: return AnimationClipPosition.positive;
+                case AnimationClipPosition.positive: return AnimationClipPosition.neutral;
+                default: return AnimationClipPosition.neutral;
+            }
         }
     }
 
