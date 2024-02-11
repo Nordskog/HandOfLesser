@@ -20,13 +20,17 @@ void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 
 void OpenXRHand::calculateCurlSplay()
 {
+	if (!this->handPose.poseValid)
+	{
+		// Leave previous pose if hand not tracked
+		return;
+	}
+
 	const auto getJointOrientation = [&](XrHandJointEXT joint)
 	{ return toEigenQuaternion(this->mJointLocations[joint].pose.orientation); };
 
 	const auto getJointPosition = [&](XrHandJointEXT joint)
 	{ return toEigenVector(this->mJointLocations[joint].pose.position); };
-
-	auto palmPose = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 
 	const auto getRootOpenXRJointForFinger = [&](FingerType joint)
 	{
