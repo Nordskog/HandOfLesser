@@ -164,6 +164,11 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	ImGui::BeginChild(windowName, ImVec2(width, 0), ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText(sideName);
+
+	ImGui::Checkbox("Valid", &HOL::display::HandTransform[side].positionValid);
+	ImGui::SameLine();
+	ImGui::Checkbox("Tracked", &HOL::display::HandTransform[side].positionTracked);
+
 	ImGui::SeparatorText("Position");
 
 	ImGui::Text("Raw   : %.3f, %.3f, %.3f",

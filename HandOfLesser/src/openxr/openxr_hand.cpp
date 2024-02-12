@@ -158,6 +158,20 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	// Orientation is not going to be set without position for hand tracking.
 	this->handPose.poseValid = (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
 							   == XR_SPACE_LOCATION_POSITION_VALID_BIT;
+	this->handPose.poseTracked
+		= (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
+		  == XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
+
+	// VDXR lies and bits are always set to valid/tracked
+	if (palmLocation.pose.position.x == 0 &&
+		palmLocation.pose.position.y == 0 &&
+		palmLocation.pose.position.z == 0 )
+	{
+		// Normally you'd care about epsilon and all that,
+		// But when invalid they are perfectly zero
+		this->handPose.poseValid = false;
+		this->handPose.poseTracked = false;
+	}
 
 	this->handPose.palmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
 	this->handPose.palmVelocity.angularVelocity = toEigenVector(palmVelocity.angularVelocity);
@@ -206,6 +220,9 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	///////////////////////////
 
 	{
+		HOL::display::HandTransform[this->mSide].positionValid = this->handPose.poseValid;
+		HOL::display::HandTransform[this->mSide].positionTracked = this->handPose.poseTracked;
+
 		// Hand orientation
 
 		HOL::display::HandTransform[this->mSide].rawPose.position = rawPosition;

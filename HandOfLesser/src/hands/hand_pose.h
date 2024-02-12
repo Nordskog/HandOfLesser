@@ -11,6 +11,7 @@ namespace HOL
 		FingerBend fingers[FingerType::FingerType_MAX];
 
 		bool poseValid;
+		bool poseTracked;
 
 		// raw values
 		HOL::PoseLocation palmLocation;
