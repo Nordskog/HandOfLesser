@@ -14,9 +14,9 @@ namespace HOL
 		};
 
 		float ThumbCurlCenter[3] = {
-			22, 
-			22, 
-			22
+			18.8f, 
+			-4.2f, 
+			29.2f
 		};
 
 		float FingerSplayCenter[5] = {
@@ -24,7 +24,7 @@ namespace HOL
 			-3.6f,
 			12.9f, 
 			16.2f, 
-			0.f		// Thumb
+			-14.6f		// Thumb
 		};
 
 		// Range values must match unity!
@@ -34,9 +34,9 @@ namespace HOL
 			{-1, 1}
 		};
 		MotionRange ThumbCurlRange[3] = {
-			{-3, 1}, 
-			{-1, 1},
-			{-1, 1}
+			{-4.1f, 0.4	}, 
+			{-1.1, 1.7	},
+			{-1.7, 1.27	}
 		};
 
 		MotionRange FingersplayRange[5] = {
@@ -49,7 +49,7 @@ namespace HOL
 
 		// clang-format on
 
-		Eigen::Vector3f ThumbAxisOffset(0, 0, 0);
+		Eigen::Vector3f ThumbAxisOffset(0,0,-93);
 
 		int MotionPredictionMS = 15; // ms
 		Eigen::Vector3f OrientationOffset(0, 0, 0);

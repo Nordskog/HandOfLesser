@@ -84,16 +84,21 @@ void OpenXRHand::calculateCurlSplay()
 		if (finger == FingerType::FingerThumb)
 		{
 			Eigen::Quaternionf wristOrientation = getJointOrientation(rootJoint);
-			Eigen::Vector3f thumbAxisOffset = HOL::settings::ThumbAxisOffset;
+			Eigen::Vector3f rawOffset = HOL::settings::ThumbAxisOffset;
 			if (this->mSide == HandSide::RightHand)
 			{
 				// Input values are for left hand
-				thumbAxisOffset = flipHandRotation(thumbAxisOffset);
+				rawOffset = flipHandRotation(rawOffset);
 			}
-			Eigen::Quaternionf thumbAxisOffsetRotation
-				= HOL::quaternionFromEulerAnglesDegrees(HOL::settings::ThumbAxisOffset);
 
-			rawOrientationOut[0] = wristOrientation * thumbAxisOffsetRotation;
+
+			// Z axis is probably all you want to adjust
+			Eigen::Quaternionf baseOffset = HOL::quaternionFromEulerAnglesDegrees(
+				rawOffset.x(), 
+				rawOffset.y(), 
+				rawOffset.z());
+
+			rawOrientationOut[0] = wristOrientation * (baseOffset);
 		}
 		else
 		{

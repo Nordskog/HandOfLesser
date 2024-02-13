@@ -160,12 +160,13 @@ namespace HOL::VRChat
 			// I /think/ all we need to do is flip the input
 			if (side == HandSide::LeftHand)
 			{
-				// If so, index and middle flipped. Probably thumb too
+				// If so, index and middle flipped.
+				// Thumb splay moves in the opposite direction, so flip on right hand.
 				switch (finger)
 				{
 					case HOL::FingerIndex:
 					case HOL::FingerMiddle:
-					case HOL::FingerThumb: {
+					{
 						rawValue *= -1.f;
 						break;
 					}
@@ -179,7 +180,9 @@ namespace HOL::VRChat
 				switch (finger)
 				{
 					case HOL::FingerLittle:
-					case HOL::FingerRing: {
+					case HOL::FingerRing: 
+					case HOL::FingerThumb: 
+					{
 						rawValue *= -1.f;
 						break;
 					}
