@@ -41,7 +41,6 @@ namespace HOL
 							   const Eigen::Vector3f& knuclePosition,
 							   const Eigen::Vector3f& tipPosition)
 	{
-
 		Eigen::Vector3f tipLocal = palmOrientation.inverse() * (tipPosition - knuclePosition);
 		Eigen::Vector3f xPlane = Eigen::Vector3f(1, 0, 0); // Plane defined by x axis
 

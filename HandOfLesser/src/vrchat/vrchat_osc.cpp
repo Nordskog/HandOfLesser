@@ -140,32 +140,24 @@ namespace HOL::VRChat
 		int index = getParameterIndex(finger, joint);
 
 		// Hardcode for now, need to match stuff generated in unity
-		float rawRangeStart = 0; // Must be <= 0
-		float rawRangeEnd = 1;	 // Must be >= 0, but realistically >= 1
+		MotionRange jointRange;
 
 		// Unity humanoid rig curl goes from -1 closed to 1 open.
-		// From the sake of simplicity, everything below is from 0 open to 1 closed.
-		// At the very end of the function this is flipped to make unity happy.
-		// Technically we could keep using 0-1, but generating the animations and blendtrees
-		// becomes a lot easier on the unity side if we just adhere to their standards.
+		// The rotation between these two values is listed in VRChatOSC::HUMAN_RIG_RANGE.
+		// We need to rotate a bit more than this in some cases, so we can extend the range.
+		// The values used must be mirrored by the animations created in unity.
 
-		// What the center of this range is we're just going to have to eyeball.
-		// This will likely also need some adjustment depending on the avatar.
-		// For curls this would be about 45 degrees, splays close to 0,
-		// but the finger can bend backwawrds a bit too
 		float center;
 		if (joint == HOL::FingerBendType::Splay)
 		{
 			// Splay is always inwards towards the center of the hand,
-			// so it will be different for left/right hands. 0 in, 1 out.
-			// Thumb is 0: downwards ( towards palm ), 1: upwards.
+			// so it will be different for left/right hands. -1 in, 1 out.
+			// Thumb is -1: downwards ( towards palm ), 1: upwards.
 			center = HOL::settings::FingerSplayCenter[finger];
+			jointRange = HOL::settings::FingersplayRange[finger];
 
 			// Raw values are provided, so we do the conversion for unity here.
-			// I /think/ all we need to do is flip the input, but...
-			// These are probably going to be wrong for now, but just flip them if they are.
-			// What we know for sure now is that all the source values will be ortation in the same
-			// direction, probably left
+			// I /think/ all we need to do is flip the input
 			if (side == HandSide::LeftHand)
 			{
 				// If so, index and middle flipped. Probably thumb too
@@ -201,36 +193,40 @@ namespace HOL::VRChat
 			if (finger == FingerType::FingerThumb)
 			{
 				center = HOL::settings::ThumbCurlCenter[joint];
+				jointRange = HOL::settings::ThumbCurlRange[joint];
 			}
 			else
 			{
 				center = HOL::settings::CommonCurlCenter[joint];
+				jointRange = HOL::settings::CommonCurlRange[joint];
 			}
 		}
 
+		// For whatever reason these offsets all want to be negative.
+		// Since they don't really mean anything to anyone, invert them
+		// so the users doesn't need to config negative values.
+		center = -center;
+
 		// Any user inputs, such as settings, will be in degrees rather than radians
 		center = HOL::degreesToRadians(center);
+		// I guess we can just add the center as an offset and it'll work
+		// Makes the math a lot simpler
+		rawValue += center; 
 
-		float range = VRChatOSC::HUMAN_RIG_RANGE[index];
+		// Stock range being the rotation between -1 and 1
+		float halfStockRange = VRChatOSC::HUMAN_RIG_RANGE[index] * 0.5f;
 
-		float halfRange = VRChatOSC::HUMAN_RIG_RANGE[index] * 0.5f;
-
-		// rangeStart is where the unity curl value should be 0, and rangeEnd 1.
-		// Adjust rawRangeStart and end to extend range of joint, but animations
-		// in unity must be generated to match this value.
-		// human rig range/center assume an unmodified unity humanoid rig, and should not be
-		// modified.
-		float rangeStart
-			= (center - halfRange) + (rawRangeStart * range); // raw curl equivalent to unity 0
-		float rangeEnd = (center + halfRange)
-						 + ((1.f - rawRangeEnd) * range); // raw curl equivalent to unity 1
+		// if both raw ranges are the same, this will span from -range to +range
+		// values are in radians.
+		float startRange = halfStockRange * jointRange.start;
+		float endRange = halfStockRange * jointRange.end;
 
 		// Ratio of RawValue between rangeStart and rangeEnd
-		float outputCurl = (rawValue - rangeStart) / (rangeEnd - rangeStart);
+		float outputCurl = (rawValue - startRange) / (endRange - startRange);
 		// clamp between 0 and 1
 		outputCurl = std::clamp(outputCurl, 0.f, 1.f);
 
-		// scale our 0-1 -> -1 to 1, as this is the range OSC and unity's rig support.
+		// scale our 0-1 -> -1 to 1
 		return (outputCurl * 2.f) - 1.f;
 	}
 

@@ -21,7 +21,7 @@ namespace HOL
             ClipTools.setClipProperty(
                 ref clip,
                     HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.avatarRig),
-                    AnimationValues.getValueForPose(position)
+                    AnimationValues.getHumanoidValue(finger, joint, position)
                 ); ;
 
             ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, PropertyType.avatarRig, position)));
@@ -35,13 +35,13 @@ namespace HOL
             ClipTools.setClipProperty(
                 ref clip,
                     HOL.Resources.getJointParameterName(side, finger, FingerBendType.first, PropertyType.avatarRig),
-                    AnimationValues.getValueForPose(curlPosition)
+                    AnimationValues.getHumanoidValue(finger, FingerBendType.first, curlPosition)
                 );
 
             ClipTools.setClipProperty(
             ref clip,
                 HOL.Resources.getJointParameterName(side, finger, FingerBendType.splay, PropertyType.avatarRig),
-                AnimationValues.getValueForPose(splayPosition)
+                AnimationValues.getHumanoidValue(finger, FingerBendType.splay, splayPosition)
             );
 
             ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, FingerBendType.first, PropertyType.avatarRigCombined, curlPosition, splayPosition)));

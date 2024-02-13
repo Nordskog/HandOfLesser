@@ -37,5 +37,37 @@ namespace HOL
 
             return 0;
         }
+
+        public static float getHumanoidValue( FingerType finger, FingerBendType joint,  AnimationClipPosition clipPos)
+        {
+            // Same as getValueForPose(), but returns our configured values
+            // instead of -1 to +1, as that doesn't cover the full range of motion.
+            // Remember that the app side must be using the same range values.
+            MotionRange range;
+
+            if (joint == FingerBendType.splay)
+            {
+                range = HOL.Config.FingersplayRange[(int)finger];
+            }
+            else
+            {
+                if (finger == FingerType.thumb)
+                {
+                    range = HOL.Config.ThumbCurlRange[(int)joint];
+                }
+                else
+                {
+                    range = HOL.Config.CommonCurlRange[(int)joint];
+                }
+            }
+
+            switch (clipPos)
+            {
+                case AnimationClipPosition.negative: return range.start;
+                case AnimationClipPosition.neutral: return 0;   // Don't use this
+                case AnimationClipPosition.positive: return range.end;
+            }
+            return 0;
+        }
     }
 }

@@ -43,4 +43,19 @@ namespace HOL
 		Eigen::Vector3f angularVelocity;
 	};
 
+	struct MotionRange
+	{
+		// units may be humanoid range values, or radians
+		float start;
+		float end;
+
+		MotionRange(){};
+
+		MotionRange(float start, float end)
+		{
+			this->start = start;
+			this->end = end;
+		}
+	};
+
 } // namespace HOL

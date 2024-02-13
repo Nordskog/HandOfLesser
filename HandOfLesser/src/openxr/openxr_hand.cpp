@@ -130,10 +130,15 @@ void OpenXRHand::calculateCurlSplay()
 		{
 			// Special values for unity's broken humanoid rig
 			// Only splay is different
-			Eigen::Quaternionf palmRot
-				= getJointOrientation(XrHandJointEXT::XR_HAND_JOINT_PALM_EXT);
+			Eigen::Quaternionf palmRot = getJointOrientation(XrHandJointEXT::XR_HAND_JOINT_PALM_EXT);
+
+			if (finger == FingerType::FingerThumb)
+			{
+				palmRot = rawOrientation[0];
+			}
+
 			Eigen::Vector3f knucklePos = getJointPosition(getFirstJoint(finger));
-			Eigen::Vector3f tipPos = getJointPosition((XrHandJointEXT)(getFirstJoint(finger)+2));
+			Eigen::Vector3f tipPos = getJointPosition((XrHandJointEXT)(getFirstJoint(finger)+1));
 
 			bend->setSplay(computeHumanoidSplay(palmRot, knucklePos, tipPos));
 		}
