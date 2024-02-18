@@ -50,23 +50,40 @@ namespace HOL::hacks
 			currentProcess, _T("\LibOVRRT64_1.dll")
 		); // dll loaded into this memory address
 
-		const BYTE targetInstruction[]
-			= {0x75, 0xFF}; // First byte we're modifying. 0xFF is the next value in the pattern.
-		const BYTE replacementInstruction = 0x74; // Byte we're replacing it with
-
 		// Pattern of bytes surrounding the instructions we are looking for,.
 		// 0xFF denotes a wildcard
 		BYTE targetBytes[] = {
 
-			0x48, 0x8b, 0x05, 0xFF, 0xFF, 0xFF, 0xFF, // mov
-			0x48, 0x85, 0xc0,						  // test
-			0x75, 0x05,								  // jnz
-			0xe8, 0xFF, 0xFF, 0xFF, 0xFF,			  // call
-
-			0x80, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // cmp
-			0x75, 0xFF,								  // jnz	Target!
+			0x80, 0xBE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // cmp
+			0x75, 0xFF,								  // jnz
+			0x80, 0xB8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // cmp
+			0x75, 0xFF,								  // jnz	// Target!
+			0xC7, 0x45, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // mov
+			0x33, 0xFF,								  // xor
+			0xE9, 0xFF, 0xFF, 0xFF, 0xFF			  // jmp
 
 		};
+
+		// First byte we're modifying.
+		// Easier to copy-paste than keep counting the offset when I change things.
+		const BYTE targetInstruction[] = {0x75,
+										  0xFF,
+										  0xC7,
+										  0x45,
+										  0xFF,
+										  0xFF,
+										  0xFF,
+										  0xFF,
+										  0xFF,
+										  0x33,
+										  0xFF,
+										  0xE9,
+										  0xFF,
+										  0xFF,
+										  0xFF,
+										  0xFF};
+
+		const BYTE replacementInstruction = 0x74; // Byte we're replacing it with
 
 		// Location of target byte relative to first byte of search pattern
 		int targetOffset = 0;
@@ -202,12 +219,21 @@ namespace HOL::hacks
 				// Modify instruction
 				*targetAddress = replacementInstruction;
 
+				if (FlushInstructionCache(currentProcess, baseAddress, moduleSize))
+				{
+					std::cout << _T("Flushed instruction cache successfully") << std::endl;
+				}
+				else
+				{
+					std::cerr << "Failed to flush instruction cache!" << std::endl;
+				}
+
 				// Restore the original protection
 				VirtualProtect(
 					static_cast<LPVOID>(targetAddress), sizeof(char), oldProtect, &oldProtect
 				);
 
-				std::cout << _T("Instruction modified successfully!") << std::endl;
+				std::cout << _T("Instruction modified successfully") << std::endl;
 			}
 			else
 			{
