@@ -16,6 +16,12 @@ void HandOfLesserCore::init(int serverPort)
 	std::cout << "Active OpenXR Runtime is: " << runtimePath << std::endl;
 	HOL::display::OpenXrRuntimeName = runtimeName;
 
+	if (runtimeName.find("vdxr") != std::string::npos)
+	{
+		HOL::display::IsVDXR = true;
+		std::cout << "Runtime is VDXR, will expect being fed lies" << std::endl; 
+	}
+
 	this->mInstanceHolder.init();
 
 	if (this->mInstanceHolder.getState() != OpenXrState::Failed)

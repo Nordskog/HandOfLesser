@@ -28,7 +28,9 @@ namespace HOL
 	{
 		extern FingerTrackingDisplay FingerTracking[2];
 		extern HandTransformDisplay HandTransform[2];
+
 		extern OpenXR::OpenXrState OpenXrInstanceState;
 		extern std::string OpenXrRuntimeName;
+		extern bool IsVDXR;
 	} // namespace display
 } // namespace HOL

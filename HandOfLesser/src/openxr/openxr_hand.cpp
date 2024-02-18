@@ -172,15 +172,18 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		= (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 		  == XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
 
-	// VDXR lies and bits are always set to valid/tracked
-	if (palmLocation.pose.position.x == 0 &&
-		palmLocation.pose.position.y == 0 &&
-		palmLocation.pose.position.z == 0 )
+
+	if (HOL::display::IsVDXR)
 	{
-		// Normally you'd care about epsilon and all that,
-		// But when invalid they are perfectly zero
-		this->handPose.poseValid = false;
-		this->handPose.poseTracked = false;
+		// VDXR lies and bits are always set to valid/tracked
+		if (palmLocation.pose.position.x == 0 && palmLocation.pose.position.y == 0
+			&& palmLocation.pose.position.z == 0)
+		{
+			// Normally you'd care about epsilon and all that,
+			// But when invalid they are perfectly zero
+			this->handPose.poseValid = false;
+			this->handPose.poseTracked = false;
+		}
 	}
 
 	this->handPose.palmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
