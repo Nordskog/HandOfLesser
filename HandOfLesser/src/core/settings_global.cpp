@@ -51,7 +51,7 @@ namespace HOL
 
 		Eigen::Vector3f ThumbAxisOffset(0,0,-93);
 
-		int MotionPredictionMS = 15; // ms
+		int MotionPredictionMS = 0; // ms
 		Eigen::Vector3f OrientationOffset(0, 0, 0);
 		Eigen::Vector3f PositionOffset(0, 0, 0);
 
