@@ -17,6 +17,7 @@ namespace HOL::settings
 	extern MotionRange FingersplayRange[5];
 
 	extern int MotionPredictionMS;
+	extern int UpdateIntervalMS;
 	extern Eigen::Vector3f OrientationOffset;
 	extern Eigen::Vector3f PositionOffset;
 

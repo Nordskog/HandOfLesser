@@ -52,6 +52,7 @@ namespace HOL
 		Eigen::Vector3f ThumbAxisOffset(0,0,-93);
 
 		int MotionPredictionMS = 0; // ms
+		int UpdateIntervalMS = 5;
 		Eigen::Vector3f OrientationOffset(0, 0, 0);
 		Eigen::Vector3f PositionOffset(0, 0, 0);
 

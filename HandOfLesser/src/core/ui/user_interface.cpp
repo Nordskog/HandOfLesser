@@ -473,6 +473,15 @@ void UserInterface::buildMainInterface()
 
 	ImGui::SeparatorText("General");
 	ImGui::InputInt("Prediction (ms)", &HOL::settings::MotionPredictionMS);
+	if (ImGui::InputInt("Update Interval (ms)", &HOL::settings::UpdateIntervalMS))
+	{
+		// We probably shouldn't sleep for less than 1ms, and sleeping for
+		// negative time is probably undefined behavior.
+		if (HOL::settings::UpdateIntervalMS < 1)
+		{
+			HOL::settings::UpdateIntervalMS = 1;
+		}
+	}
 
 	/////////////////
 	// Offset inputs
