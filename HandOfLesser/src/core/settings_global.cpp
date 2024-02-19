@@ -57,10 +57,8 @@ namespace HOL
 		Eigen::Vector3f PositionOffset(0, 0, 0);
 
 		bool sendFull = false;
-		bool sendFull = true;
 		bool sendAlternating = false;
 		bool sendPacked = true;
-		bool sendPacked = false;
 
 		// Modify splay to work with humanoid rig
 		bool useUnityHumanoidSplay = true;
