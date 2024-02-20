@@ -5,7 +5,8 @@ add_library(HandOfLesserCommon STATIC
 	src/transport/udptransport.cpp
 	src/math/fingers.cpp
 	src/math/math_utils.cpp
-	"src/hand/finger_bend.cpp"
+	src/hand/finger_bend.cpp
+	src/controller/controller.cpp
 )
 
 target_link_libraries(HandOfLesserCommon PUBLIC

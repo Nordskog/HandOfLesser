@@ -6,3 +6,4 @@
 #include "src//hand/finger_bend.h"
 #include "src/math/fingers.h"
 #include "src/math/math_utils.h"
+#include "src/controller/controller.h"

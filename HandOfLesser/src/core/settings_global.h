@@ -26,4 +26,7 @@ namespace HOL::settings
 	extern bool sendPacked;
 
 	extern bool useUnityHumanoidSplay;
+
+	void restoreDefaultControllerOffset(ControllerType type);
+
 } // namespace HOL::settings

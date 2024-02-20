@@ -1,6 +1,7 @@
 #pragma once
 
 #include "settings_global.h"
+#include <HandOfLesserCommon.h>
 
 namespace HOL
 {
@@ -53,8 +54,9 @@ namespace HOL
 
 		int MotionPredictionMS = 0; // ms
 		int UpdateIntervalMS = 5;
-		Eigen::Vector3f OrientationOffset(0, 0, 0);
+
 		Eigen::Vector3f PositionOffset(0, 0, 0);
+		Eigen::Vector3f OrientationOffset(0, 0, 0);
 
 		bool sendFull = false;
 		bool sendAlternating = false;
@@ -62,5 +64,14 @@ namespace HOL
 
 		// Modify splay to work with humanoid rig
 		bool useUnityHumanoidSplay = true;
+
+		void restoreDefaultControllerOffset(ControllerType type)
+		{
+			PoseLocationEuler def = HOL::getDefaultControllerOffset(type);
+
+			PositionOffset = def.position;
+			OrientationOffset = def.orientation;
+		}
+
 	} // namespace settings
 } // namespace HOL

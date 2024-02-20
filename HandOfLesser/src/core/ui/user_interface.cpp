@@ -487,6 +487,20 @@ void UserInterface::buildMainInterface()
 	// Offset inputs
 	/////////////////
 
+	ImGui::SeparatorText("Presets");
+
+	if (ImGui::Button("Touch") )
+	{
+		HOL::settings::restoreDefaultControllerOffset(ControllerType::OculusTouch);
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Knuckles"))
+	{
+		HOL::settings::restoreDefaultControllerOffset(ControllerType::ValveIndexKnuckles);
+	}
+
 	ImGui::BeginChild("TranslationInput",
 					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
 					  ImGuiChildFlags_AutoResizeY);

@@ -31,6 +31,12 @@ namespace HOL
 		FingerBendType_MAX
 	};
 
+	struct PoseLocationEuler
+	{
+		Eigen::Vector3f position;
+		Eigen::Vector3f orientation;
+	};
+
 	struct PoseLocation
 	{
 		Eigen::Vector3f position;
