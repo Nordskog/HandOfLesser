@@ -27,6 +27,7 @@ target_link_libraries(${DRIVER_NAME} PRIVATE
     util_driverlog
     util_vrmath
     eigen
+    minhook
     HandOfLesserCommon
 )
 

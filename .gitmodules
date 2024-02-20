@@ -19,3 +19,6 @@
 [submodule "lib/oscpp"]
 	path = lib/oscpp
 	url = https://github.com/kaoskorobase/oscpp.git
+[submodule "lib/minhook"]
+	path = lib/minhook
+	url = https://github.com/TsudaKageyu/minhook.git
