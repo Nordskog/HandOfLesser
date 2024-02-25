@@ -21,7 +21,7 @@ void HandOfLesserCore::init(int serverPort)
 	std::cout << "Active OpenXR Runtime is: " << runtimePath << std::endl;
 	HOL::display::OpenXrRuntimeName = runtimeName;
 
-	if (runtimeName.find("vdxr") != std::string::npos)
+	if (runtimeName.find("virtualdesktop") != std::string::npos)
 	{
 		HOL::display::IsVDXR = true;
 		std::cout << "Runtime is VDXR, will expect being fed lies" << std::endl; 
