@@ -9,15 +9,15 @@ namespace HOL
 	{
 		// clang-format off
 		float CommonCurlCenter[3] = {
-			35.7f, 
+			38.6f, 
 			45.f,
 			25.f
 		};
 
 		float ThumbCurlCenter[3] = {
 			18.8f, 
-			-4.2f, 
-			29.2f
+			2.0f, 
+			47.6f
 		};
 
 		float FingerSplayCenter[5] = {
@@ -25,7 +25,7 @@ namespace HOL
 			-3.6f,
 			12.9f, 
 			16.2f, 
-			-14.6f		// Thumb
+			-24.0f		// Thumb
 		};
 
 		// Range values must match unity!
@@ -50,7 +50,7 @@ namespace HOL
 
 		// clang-format on
 
-		Eigen::Vector3f ThumbAxisOffset(0,0,-93);
+		Eigen::Vector3f ThumbAxisOffset(0,0,-77);
 
 		int MotionPredictionMS = 0; // ms
 		int UpdateIntervalMS = 5;
