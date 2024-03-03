@@ -3,9 +3,9 @@
 
 #include <memory>
 
-#include "controller_device_driver.h"
 #include "openvr_driver.h"
 #include <HandOfLesserCommon.h>
+#include "hand_of_lesser.h"
 
 // make sure your class is publicly inheriting vr::IServerTrackedDeviceProvider!
 class MyDeviceProvider : public vr::IServerTrackedDeviceProvider
@@ -15,7 +15,6 @@ public:
 	const char* const* GetInterfaceVersions() override;
 
 	void RunFrame() override;
-	void ReceiveDataThread();
 
 	bool ShouldBlockStandbyMode() override;
 	void EnterStandby() override;
@@ -24,9 +23,8 @@ public:
 	void Cleanup() override;
 
 private:
-	std::unique_ptr<ControllerDeviceDriver> my_left_controller_device_;
-	std::unique_ptr<ControllerDeviceDriver> my_right_controller_device_;
-	std::thread my_pose_update_thread_;
-	HOL::NativeTransport mTransport;
+
+	HOL::HandOfLesser mHandOfLesser;
+
 	bool mActive = true; // Just so we can make the loop exit. Fix later.
 };

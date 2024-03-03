@@ -8,8 +8,11 @@ project(${TARGET_NAME})
 add_library(${DRIVER_NAME} SHARED
     src/hmd_driver_factory.cpp
     src/device_provider.cpp
-    src/controller_device_driver.cpp
+    src/emulated_controller_driver.cpp
     src/hand_simulation.cpp
+    src/hooked_controller.cpp
+    src/hand_of_lesser.cpp
+    src/controller_common.cpp
 )
 
 message( "\${CMAKE_RUNTIME_OUTPUT_DIRECTORY}: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" )
