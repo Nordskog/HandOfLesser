@@ -8,7 +8,7 @@
 #include <HandOfLesserCommon.h>
 #include <atomic>
 #include <thread>
-#include "hand_simulation.h"
+#include "src/hand_simulation.h"
 #include "generic_control_interface.h"+
 
 enum InputHandleType

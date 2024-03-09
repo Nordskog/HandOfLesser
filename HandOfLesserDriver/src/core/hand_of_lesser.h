@@ -1,8 +1,8 @@
 #pragma once
 #include <thread>
 #include <HandOfLesserCommon.h>
-#include "emulated_controller_driver.h"
-#include "hooked_controller.h"
+#include "src/controller/emulated_controller_driver.h"
+#include "src/controller/hooked_controller.h"
 
 namespace HOL
 {

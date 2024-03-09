@@ -12,7 +12,7 @@ namespace HOL
 		void UpdateInput(HOL::ControllerInputPacket* packet) override;
 		void SubmitPose() override;
 
-		private:
+	private:
 		vr::DriverPose_t mLastPose;
 
 		HOL::HandTransformPacket mLastTransformPacket;

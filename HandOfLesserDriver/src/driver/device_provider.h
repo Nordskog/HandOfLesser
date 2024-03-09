@@ -5,7 +5,7 @@
 
 #include "openvr_driver.h"
 #include <HandOfLesserCommon.h>
-#include "hand_of_lesser.h"
+#include "src/core/hand_of_lesser.h"
 
 // make sure your class is publicly inheriting vr::IServerTrackedDeviceProvider!
 class MyDeviceProvider : public vr::IServerTrackedDeviceProvider
