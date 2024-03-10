@@ -1,11 +1,11 @@
-set(TARGET_NAME handoflesser)
+set(TARGET_NAME 00handoflesser)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../output/drivers")
 add_definitions(-D_WIN32)
 set(ARCH_TARGET "win64") # This is where Steam looks for drivers on windows
 
 # This is the name of the driver according to SteamVR
-set(DRIVER_NAME "driver_handoflesser")
+set(DRIVER_NAME "driver_${TARGET_NAME}")
 
 add_library(${DRIVER_NAME} SHARED
     src/driver/hmd_driver_factory.cpp

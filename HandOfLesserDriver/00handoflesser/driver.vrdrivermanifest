@@ -1,6 +1,6 @@
 {
 	"alwaysActivate": true,
-	"driver_name": "Hand Of Lesser",
+	"driver_name": "00Hand Of Lesser",
 	"driver_desc": "OpenXR hand tracking",
 	"directory" : "",
 	"resourceOnly" : false,

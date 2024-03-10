@@ -4,10 +4,10 @@
 	"compatibility_mode_controller_type": "knuckles",
 	"input_bindingui_mode": "controller_handed",
 	"input_bindingui_left": {
-		"image": "{handoflesser}/icons/sample_controller.svg"
+		"image": "{00handoflesser}/icons/sample_controller.svg"
 	},
 	"input_bindingui_right": {
-		"image": "{handoflesser}/icons/sample_controller.svg"
+		"image": "{00handoflesser}/icons/sample_controller.svg"
 	},
 	"input_source": {
 		"/input/system": {
