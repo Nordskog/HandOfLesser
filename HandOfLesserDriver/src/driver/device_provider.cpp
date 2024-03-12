@@ -2,6 +2,7 @@
 #include "device_provider.h"
 
 #include "driverlog.h"
+#include "src/hooking/hooks.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: This is called by vrserver after it receives a pointer back from HmdDriverFactory.
@@ -17,6 +18,7 @@ vr::EVRInitError MyDeviceProvider::Init(vr::IVRDriverContext* pDriverContext)
 	// For now we'll be defaulting to hooking existing controllers instead. 
 	// Lots of TODOs
 	this->mHandOfLesser.init();
+	HOL::hooks::InjectHooks(pDriverContext, &this->mHandOfLesser);
 
 	return vr::VRInitError_None;
 }

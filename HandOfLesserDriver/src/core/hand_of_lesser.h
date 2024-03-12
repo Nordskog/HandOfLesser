@@ -15,14 +15,16 @@ namespace HOL
 	{
 	public:
 		void init();
-
 		void cleanup();
+		void addHookedController(uint32_t id, HandSide side, vr::ITrackedDeviceServerDriver* driver);
 	private:
 
 
 		void ReceiveDataThread();
 
 		void addControllers();
+
+
 
 		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
 		HookedController* getHookedController(HOL::HandSide side);

@@ -15,7 +15,8 @@ add_library(${DRIVER_NAME} SHARED
     src/controller/hooked_controller.cpp
     src/core/hand_of_lesser.cpp
     src/controller/controller_common.cpp
-)
+    src/hooking/Hooking.cpp
+    src/hooking/hooks.cpp)
 
 message( "\${CMAKE_RUNTIME_OUTPUT_DIRECTORY}: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" )
 message( "\${TARGET_NAME}: ${TARGET_NAME}" )

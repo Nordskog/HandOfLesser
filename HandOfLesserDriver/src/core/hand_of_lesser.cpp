@@ -94,6 +94,21 @@ namespace HOL
 		}
 	}
 
+	void HandOfLesser::addHookedController(uint32_t id,
+										   HandSide side,
+										   vr::ITrackedDeviceServerDriver* driver)
+	{
+		// I geuss they can be activated multiple times and we should deal with that
+		if (this->mHookedControllers[side] != nullptr)
+		{
+			DriverLog("Tried to add hooked %s controller but already added!", (side == HandSide::LeftHand ? "left" : "right"));
+			return;
+		}
+
+		this->mHookedControllers[side]
+			= std::make_unique<HookedController>(id, side, driver);
+	}
+
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)
 	{
 		return this->mEmulatedControllers[(int)side].get();
