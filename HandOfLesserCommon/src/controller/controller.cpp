@@ -8,8 +8,8 @@ namespace HOL
 			case ControllerType::OculusTouch: {
 				return 
 				{
-					Eigen::Vector3f(0.021, 0, -0.114), 
-					Eigen::Vector3f(63, 0, -99)
+					Eigen::Vector3f(0.011, -0.015, -0.013), 
+					Eigen::Vector3f(-12, 0, 0)
 				};
 			}
 
@@ -17,8 +17,8 @@ namespace HOL
 			{
 				return 
 				{
-					Eigen::Vector3f(0.021, 0, -0.114), 
-					Eigen::Vector3f(63, 0, -99)
+					Eigen::Vector3f(0.011, -0.015, -0.013), 
+					Eigen::Vector3f(-12, 0, 0)
 				};
 			}
 		}
