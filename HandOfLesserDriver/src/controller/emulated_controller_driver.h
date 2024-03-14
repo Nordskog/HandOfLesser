@@ -9,7 +9,7 @@
 #include <atomic>
 #include <thread>
 #include "src/hand_simulation.h"
-#include "generic_control_interface.h"+
+#include "generic_control_interface.h"
 
 enum InputHandleType
 {
