@@ -16,23 +16,29 @@ namespace HOL
 	public:
 		void init();
 		void cleanup();
-		void addHookedController(uint32_t id, HandSide side, vr::ITrackedDeviceServerDriver* driver);
+		void addControllers();
+		void addHookedController(uint32_t id,
+								 HandSide side,
+								 vr::IVRServerDriverHost* host, vr::ITrackedDeviceServerDriver* driver);
+		bool shouldPossess(uint32_t deviceId);
+		bool shouldEmulateControllers();
+		bool hookedControllersFound();
+		static HandOfLesser* Current;	// Time to commit sins
 	private:
 
 
 		void ReceiveDataThread();
 
-		void addControllers();
-
-
-
 		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
 		HookedController* getHookedController(HOL::HandSide side);
+		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
 		GenericControllerInterface* GetActiveController(HOL::HandSide side);
 
 		void runFrame();
 
 		bool mActive;
+
+		bool mLastPoseValid[2];
 
 		ControllerMode mControllerMode;
 		std::thread my_pose_update_thread_;

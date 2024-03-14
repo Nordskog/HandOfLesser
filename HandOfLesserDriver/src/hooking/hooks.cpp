@@ -4,8 +4,6 @@
 
 namespace HOL::hooks
 {
-	HOL::HandOfLesser* HandOfLesserInstance;
-
 	namespace TrackedDeviceActivate
 	{
 		Hook<TrackedDeviceActivate::Signature> FunctionHook("ITrackedDeviceServerDriver::Activate");
@@ -31,13 +29,13 @@ namespace HOL::hooks
 			if (role == vr::ETrackedControllerRole::TrackedControllerRole_LeftHand
 				|| role == vr::ETrackedControllerRole::TrackedControllerRole_RightHand)
 			{
+				// TODO: vive wands will probably swap sides after activating
 				HandSide side = role == vr::ETrackedControllerRole::TrackedControllerRole_LeftHand
 							   ? HandSide::LeftHand
 							   : HandSide::RightHand;
 
 				DriverLog("Got controller, side: %s", side == HandSide::LeftHand ? "Left" : "Right");
-				HandOfLesserInstance->addHookedController(unWhichDevice, side, _this);
-
+				HOL::HandOfLesser::Current->addHookedController(unWhichDevice, side, HOL::hooks::mLastDeviceDriverHost, _this);
 			}
 
 			return ret;
@@ -67,6 +65,12 @@ namespace HOL::hooks
 			if (eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
 			{
 				DriverLog("Controller added!");
+
+				// TODO: We only have access to the driverHost here, but don't know the ID
+				// or the role of the controller yet. Activate() should be called
+				// immediately afterwards, so the only concern is when devices are 
+				// deactivated and re-activated again. Think about that later.
+				HOL::hooks::mLastDeviceDriverHost = _this;
 			}
 			else
 			{
@@ -77,6 +81,29 @@ namespace HOL::hooks
 				_this, pchDeviceSerialNumber, eDeviceClass, pDriver);
 		};
 	}
+
+	namespace TrackedDevicePoseUpdated
+	{
+		Hook<TrackedDevicePoseUpdated::Signature>
+			FunctionHook("IVRServerDriverHost006::TrackedDevicePoseUpdated");
+
+		static void Detour(vr::IVRServerDriverHost* _this,
+						   uint32_t unWhichDevice,
+						   const vr::DriverPose_t& newPose,
+						   uint32_t unPoseStructSize)
+		{
+			// Just do nothing if we are possessing controllers
+			if (!HOL::HandOfLesser::Current->shouldPossess(unWhichDevice))
+			{
+				return TrackedDevicePoseUpdated::FunctionHook.originalFunc(
+					_this, unWhichDevice, newPose, unPoseStructSize);
+			}
+			else
+			{
+				// Nothing!
+			}
+		};
+	} // namespace TrackedDevicePoseUpdated
 
 	namespace GetGenericInterface
 	{
@@ -102,15 +129,25 @@ namespace HOL::hooks
 						originalInterface, 0, &TrackedDeviceAdded006::Detour);
 					IHook::Register(&TrackedDeviceAdded006::FunctionHook);
 				}
+
+				if (!IHook::Exists(TrackedDevicePoseUpdated::FunctionHook.name))
+				{
+					DriverLog("Adding poseupdated hook");
+
+					TrackedDevicePoseUpdated::FunctionHook.CreateHookInObjectVTable(
+						originalInterface, 1, &TrackedDevicePoseUpdated::Detour);
+					IHook::Register(&TrackedDevicePoseUpdated::FunctionHook);
+				}
 			}
 
 			return originalInterface;
 		};
 	} // namespace GetGenericInterface
 
-	void InjectHooks(vr::IVRDriverContext* pDriverContext, HOL::HandOfLesser* hol)
+	vr::IVRServerDriverHost* mLastDeviceDriverHost = nullptr;
+
+	void InjectHooks(vr::IVRDriverContext* pDriverContext)
 	{
-		HOL::hooks::HandOfLesserInstance = hol;
 		auto err = MH_Initialize();
 		if (err == MH_OK)
 		{

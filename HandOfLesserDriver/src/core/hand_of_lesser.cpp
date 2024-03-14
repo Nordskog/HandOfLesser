@@ -3,8 +3,15 @@
 
 namespace HOL
 {
+
+	HandOfLesser* HandOfLesser::Current = nullptr;
+
 	void HandOfLesser::init()
 	{
+		this->mActive = true;
+		HandOfLesser::Current = this;
+		this->mLastPoseValid[HandSide::LeftHand] = false;
+		this->mLastPoseValid[HandSide::RightHand] = false;
 		this->mControllerMode = ControllerMode::HookedControllerMode;
 		this->mTransport.init(9006); // Hardcoded for now, needs to be negotaited somehow
 		my_pose_update_thread_ = std::thread(&HandOfLesser::ReceiveDataThread, this);
@@ -12,6 +19,7 @@ namespace HOL
 
 	void HandOfLesser::ReceiveDataThread()
 	{
+		DriverLog("ReceiveDataThread() start, active: %s", this->mActive ? "true" : "false");
 		while (this->mActive)
 		{
 			HOL::NativePacket* rawPacket = this->mTransport.receive();
@@ -23,6 +31,8 @@ namespace HOL
 			{
 				case HOL::NativePacketType::HandTransform: {
 					HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*)rawPacket;
+
+					this->mLastPoseValid[packet->side] = packet->valid;
 
 					if (packet->valid)
 					{
@@ -96,17 +106,68 @@ namespace HOL
 
 	void HandOfLesser::addHookedController(uint32_t id,
 										   HandSide side,
+										   vr::IVRServerDriverHost* host,
 										   vr::ITrackedDeviceServerDriver* driver)
 	{
-		// I geuss they can be activated multiple times and we should deal with that
+		// TODO: I geuss they can be activated multiple times and we should deal with that
 		if (this->mHookedControllers[side] != nullptr)
 		{
 			DriverLog("Tried to add hooked %s controller but already added!", (side == HandSide::LeftHand ? "left" : "right"));
 			return;
 		}
 
-		this->mHookedControllers[side]
-			= std::make_unique<HookedController>(id, side, driver);
+		this->mHookedControllers[side] = std::make_unique<HookedController>(id, side, host, driver);
+	}
+	
+	static bool lastPossessState = false;
+
+	bool HandOfLesser::shouldPossess(uint32_t deviceId)
+	{
+		bool shouldPos = false;
+		// How we decide on whether or not to take control will depend on 
+		// the user's setup. With Quest1/2/pro we can assume the controllers 
+		// will not be active any time we have valid handtracking data
+		// This holds true even if VD is emulating controllers.
+		// 
+		// The Quest3 can do controller and hand-tracking simultaneously,
+		// and its upper-body-tracking stuff means the data will probably be valid
+		// but not activately tracked at all times. VD does not provide the true 
+		// valid/tracked bits, so we have no way of telling. Problem for later.
+		// 
+		// Other lighthouse devices will pr obably always remain active, so I guess we just
+		// wait for the controllers to be completely still while the user is holding up their
+		// hands for a few seconds. Also a problem for later.
+		if (this->mControllerMode == ControllerMode::HookedControllerMode)
+		{
+			// Only possess the controllers we are hooking
+			if (getHookedControllerByDeviceId(deviceId) != nullptr)
+			{
+				// Only covers Quest 1/2/Pro
+				shouldPos = this->mLastPoseValid[HandSide::LeftHand]
+							|| this->mLastPoseValid[HandSide::RightHand];
+
+				// Only print this for hooked controllers
+				if (lastPossessState != shouldPos)
+				{
+					DriverLog("ShouldPossess: %s", shouldPos ? "true " : "false");
+				}
+
+				lastPossessState = shouldPos;
+			}
+		}
+
+
+		return shouldPos;
+	}
+
+	bool HandOfLesser::shouldEmulateControllers()
+	{
+		return this->mControllerMode == ControllerMode::EmulateControllerMode;
+	}
+
+	bool HandOfLesser::hookedControllersFound()
+	{
+		return this->mHookedControllers[HandSide::LeftHand] != nullptr && this->mHookedControllers[HandSide::RightHand] != nullptr;
 	}
 
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)
@@ -119,6 +180,24 @@ namespace HOL
 		return this->mHookedControllers[(int)side].get();
 	}
 
+	HookedController* HandOfLesser::getHookedControllerByDeviceId(uint32_t deviceId)
+	{
+		for (int i = 0; i < HandSide::HandSide_MAX; i++)
+		{
+			HookedController* controller = this->getHookedController((HandSide)i);
+			if (controller != nullptr)
+			{
+				if (controller->getDeviceId() == deviceId)
+				{
+					return controller;
+				}
+			}
+		}
+
+		return nullptr;
+
+	}
+
 	GenericControllerInterface* HandOfLesser::GetActiveController(HOL::HandSide side)
 	{
 		switch (this->mControllerMode)
@@ -129,7 +208,7 @@ namespace HOL
 			}
 			case ControllerMode::HookedControllerMode: 
 			{
-				return getEmulatedController(side);
+				return getHookedController(side);
 			}
 			default:
 			{

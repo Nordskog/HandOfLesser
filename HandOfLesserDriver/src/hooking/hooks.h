@@ -28,10 +28,18 @@ namespace HOL::hooks
 		using Signature = vr::EVRInitError (*)(vr::ITrackedDeviceServerDriver*, uint32_t);
 
 		extern Hook<Signature> FunctionHook;
-
 	}
 
-	extern HOL::HandOfLesser* HandOfLesserInstance;
-	extern void InjectHooks(vr::IVRDriverContext* pDriverContext, HOL::HandOfLesser* hol);
+	namespace TrackedDevicePoseUpdated
+	{
+		using Signature = void (*)(vr::IVRServerDriverHost*, uint32_t, const vr::DriverPose_t&, uint32_t);
+
+		extern Hook<TrackedDevicePoseUpdated::Signature> FunctionHook;
+	}
+
+	// Set in TrackedDeviceAdded006(), should be directly before the corresponding device is
+	// activated. If you get the wrong driverHost we won't be able to update the pose.
+	extern vr::IVRServerDriverHost* mLastDeviceDriverHost;
+	extern void InjectHooks(vr::IVRDriverContext* pDriverContext);
 	extern void DisableHooks();
 }

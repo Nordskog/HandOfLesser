@@ -13,7 +13,7 @@ namespace HOL::ControllerCommon
 		vr::DriverPose_t pose = {0};
 
 		// However, we can also get a predicted pose directly from openxr.
-		pose.poseTimeOffset = -0.032f;
+		pose.poseTimeOffset = -0.032f;	// With no velocity this does nothing I guess
 		// pose.poseTimeOffset = -0.008f;
 		// pose.poseTimeOffset = 0;
 		// pose.poseTimeOffset = 0.016f;	// read 16ms in the future from openxr, submit

@@ -18,7 +18,15 @@ vr::EVRInitError MyDeviceProvider::Init(vr::IVRDriverContext* pDriverContext)
 	// For now we'll be defaulting to hooking existing controllers instead. 
 	// Lots of TODOs
 	this->mHandOfLesser.init();
-	HOL::hooks::InjectHooks(pDriverContext, &this->mHandOfLesser);
+
+	// Should wait for some kind of config init sync from the app first,
+	// But it's all hardcoded for now.
+	if (this->mHandOfLesser.shouldEmulateControllers())
+	{
+		this->mHandOfLesser.addControllers();
+	}
+
+	HOL::hooks::InjectHooks(pDriverContext);
 
 	return vr::VRInitError_None;
 }
