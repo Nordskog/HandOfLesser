@@ -9,8 +9,12 @@
 using namespace HOL;
 using namespace HOL::OpenXR;
 
+HandOfLesserCore* HandOfLesserCore::Current = nullptr;
+
 void HandOfLesserCore::init(int serverPort)
 {
+	this->Current = this;
+
 	// The offsets and stuff we should should depend on other settings,
 	// but for the time being taking control over existing touch controllers
 	// will be the goal, so default to that for now.

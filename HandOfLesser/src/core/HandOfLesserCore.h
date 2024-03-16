@@ -19,6 +19,7 @@ namespace HOL
 	public:
 		void init(int serverPort);
 		void start();
+		static HandOfLesserCore* Current; // Time to commit sinss
 
 		virtual std::vector<const char*> getRequiredExtensions();
 
