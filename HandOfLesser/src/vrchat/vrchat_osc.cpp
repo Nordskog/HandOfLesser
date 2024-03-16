@@ -153,8 +153,8 @@ namespace HOL::VRChat
 			// Splay is always inwards towards the center of the hand,
 			// so it will be different for left/right hands. -1 in, 1 out.
 			// Thumb is -1: downwards ( towards palm ), 1: upwards.
-			center = HOL::settings::FingerSplayCenter[finger];
-			jointRange = HOL::settings::FingersplayRange[finger];
+			center = Config.fingerBend.FingerSplayCenter[finger];
+			jointRange = Config.fingerBend.FingersplayRange[finger];
 
 			// Raw values are provided, so we do the conversion for unity here.
 			// I /think/ all we need to do is flip the input
@@ -195,13 +195,13 @@ namespace HOL::VRChat
 		{
 			if (finger == FingerType::FingerThumb)
 			{
-				center = HOL::settings::ThumbCurlCenter[joint];
-				jointRange = HOL::settings::ThumbCurlRange[joint];
+				center = Config.fingerBend.ThumbCurlCenter[joint];
+				jointRange = Config.fingerBend.ThumbCurlRange[joint];
 			}
 			else
 			{
-				center = HOL::settings::CommonCurlCenter[joint];
-				jointRange = HOL::settings::CommonCurlRange[joint];
+				center = Config.fingerBend.CommonCurlCenter[joint];
+				jointRange = Config.fingerBend.CommonCurlRange[joint];
 			}
 		}
 

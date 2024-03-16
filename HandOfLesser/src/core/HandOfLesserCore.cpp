@@ -82,7 +82,7 @@ void HandOfLesserCore::mainLoop()
 			break;
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(HOL::settings::UpdateIntervalMS));
+		std::this_thread::sleep_for(std::chrono::milliseconds(Config.general.UpdateIntervalMS));
 	}
 
 	std::cout << "Exiting loop" << std::endl;
@@ -91,7 +91,7 @@ void HandOfLesserCore::mainLoop()
 void HandOfLesserCore::doOpenXRStuff()
 {
 	XrTime time = this->mInstanceHolder.getTime();
-	time += 1000000LL * (XrTime)HOL::settings::MotionPredictionMS;
+	time += 1000000LL * (XrTime)Config.general.MotionPredictionMS;
 
 	this->mInstanceHolder.pollEvent();
 
@@ -115,19 +115,19 @@ void HandOfLesserCore::doOscStuff()
 	size_t size = 0;
 
 	// Always send full, expect when testing remote stuff locally because it will break things
-	if (HOL::settings::sendFull)
+	if (Config.vrchat.sendFull)
 	{
 		size = this->mVrchatOSC.generateOscBundleFull();
 		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
 	}
 
-	if (HOL::settings::sendAlternating)
+	if (Config.vrchat.sendAlternating)
 	{
 		size = this->mVrchatOSC.generateOscBundleAlternating();
 		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
 	}
 
-	if (HOL::settings::sendPacked)
+	if (Config.vrchat.sendPacked)
 	{
 		size = this->mVrchatOSC.generateOscBundlePacked();
 		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);

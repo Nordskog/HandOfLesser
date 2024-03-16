@@ -4,29 +4,16 @@
 #include <Eigen/Geometry>
 #include <HandOfLesserCommon.h>
 
-namespace HOL::settings
+
+
+
+namespace HOL
 {
-	extern float CommonCurlCenter[3];  // Curl for 4 main fingers
-	extern float ThumbCurlCenter[3];   // Curl for thumb
-	extern float FingerSplayCenter[5]; // Splay for each finger
-	extern Eigen::Vector3f ThumbAxisOffset;
+	namespace settings
+	{
+		void restoreDefaultControllerOffset(ControllerType type);
+	}
 
-	extern MotionRange CommonCurlRange[3];
-	extern MotionRange ThumbCurlRange[3];
-
-	extern MotionRange FingersplayRange[5];
-
-	extern int MotionPredictionMS;
-	extern int UpdateIntervalMS;
-	extern Eigen::Vector3f OrientationOffset;
-	extern Eigen::Vector3f PositionOffset;
-
-	extern bool sendFull;
-	extern bool sendAlternating;
-	extern bool sendPacked;
-
-	extern bool useUnityHumanoidSplay;
-
-	void restoreDefaultControllerOffset(ControllerType type);
+	extern HOL::settings::HandOfLesserSettings Config;
 
 } // namespace HOL::settings

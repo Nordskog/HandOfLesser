@@ -10,7 +10,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+using namespace HOL;
 using namespace HOL::OpenXR;
+
 
 void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 {
@@ -84,7 +86,7 @@ void OpenXRHand::calculateCurlSplay()
 		if (finger == FingerType::FingerThumb)
 		{
 			Eigen::Quaternionf wristOrientation = getJointOrientation(rootJoint);
-			Eigen::Vector3f rawOffset = HOL::settings::ThumbAxisOffset;
+			Eigen::Vector3f rawOffset = Config.fingerBend.ThumbAxisOffset;
 			if (this->mSide == HandSide::RightHand)
 			{
 				// Input values are for left hand
@@ -131,7 +133,7 @@ void OpenXRHand::calculateCurlSplay()
 		// Between metacarpal and proximal. No flipping this.
 		bend->bend[FingerBendType::Splay] = computeSplay(rawOrientation[0], rawOrientation[1]);
 
-		if (HOL::settings::useUnityHumanoidSplay)
+		if (Config.vrchat.useUnityHumanoidSplay)
 		{
 			// Special values for unity's broken humanoid rig
 			// Only splay is different
@@ -194,8 +196,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	Eigen::Vector3f gripTranslationOffset = Eigen::Vector3f(0.021, 0, -0.114);
 
 	// Add configurable offset
-	Eigen::Vector3f mainRotationOffset = gripRotationOffset + HOL::settings::OrientationOffset;
-	Eigen::Vector3f mainTranslationOffset = gripTranslationOffset + HOL::settings::PositionOffset;
+	Eigen::Vector3f mainRotationOffset = gripRotationOffset + Config.handPose.OrientationOffset;
+	Eigen::Vector3f mainTranslationOffset = gripTranslationOffset + Config.handPose.PositionOffset;
 
 	if (this->mSide == HandSide::LeftHand)
 	{

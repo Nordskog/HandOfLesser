@@ -363,9 +363,9 @@ void UserInterface::BuildVRChatOSCSettings()
 											 1.f,
 											 "%.1f",
 											 90,
-											 {&HOL::settings::ThumbAxisOffset[0],
-											  &HOL::settings::ThumbAxisOffset[1],
-											  &HOL::settings::ThumbAxisOffset[2]});
+											 {&Config.fingerBend.ThumbAxisOffset[0],
+											  &Config.fingerBend.ThumbAxisOffset[1],
+											  &Config.fingerBend.ThumbAxisOffset[2]});
 
 	ImGui::SeparatorText("Curl Center");
 
@@ -375,9 +375,9 @@ void UserInterface::BuildVRChatOSCSettings()
 											 1.f,
 											 "%.1f",
 											 90,
-											 {&HOL::settings::CommonCurlCenter[0],
-											  &HOL::settings::CommonCurlCenter[1],
-											  &HOL::settings::CommonCurlCenter[2]});
+											 {&Config.fingerBend.CommonCurlCenter[0],
+											  &Config.fingerBend.CommonCurlCenter[1],
+											  &Config.fingerBend.CommonCurlCenter[2]});
 
 	InputFloatMultipleSingleLableWithButtons("thumbFingerCurlCenter",
 											 "Thumb",
@@ -385,9 +385,9 @@ void UserInterface::BuildVRChatOSCSettings()
 											 1.f,
 											 "%.1f",
 											 90,
-											 {&HOL::settings::ThumbCurlCenter[0],
-											  &HOL::settings::ThumbCurlCenter[1],
-											  &HOL::settings::ThumbCurlCenter[2]});
+											 {&Config.fingerBend.ThumbCurlCenter[0],
+											  &Config.fingerBend.ThumbCurlCenter[1],
+											  &Config.fingerBend.ThumbCurlCenter[2]});
 
 	ImGui::SeparatorText("Splay Center");
 
@@ -397,11 +397,11 @@ void UserInterface::BuildVRChatOSCSettings()
 										  1.f,
 										  "%.1f",
 										  90,
-										  {&HOL::settings::FingerSplayCenter[0],
-										   &HOL::settings::FingerSplayCenter[1],
-										   &HOL::settings::FingerSplayCenter[2],
-										   &HOL::settings::FingerSplayCenter[3],
-										   &HOL::settings::FingerSplayCenter[4]});
+										  {&Config.fingerBend.FingerSplayCenter[0],
+										   &Config.fingerBend.FingerSplayCenter[1],
+										   &Config.fingerBend.FingerSplayCenter[2],
+										   &Config.fingerBend.FingerSplayCenter[3],
+										   &Config.fingerBend.FingerSplayCenter[4]});
 
 	// Raw
 	ImGui::SeparatorText("Raw bend");
@@ -472,14 +472,14 @@ void UserInterface::buildMainInterface()
 	/////////////////
 
 	ImGui::SeparatorText("General");
-	ImGui::InputInt("Prediction (ms)", &HOL::settings::MotionPredictionMS);
-	if (ImGui::InputInt("Update Interval (ms)", &HOL::settings::UpdateIntervalMS))
+	ImGui::InputInt("Prediction (ms)", &Config.general.MotionPredictionMS);
+	if (ImGui::InputInt("Update Interval (ms)", &Config.general.UpdateIntervalMS))
 	{
 		// We probably shouldn't sleep for less than 1ms, and sleeping for
 		// negative time is probably undefined behavior.
-		if (HOL::settings::UpdateIntervalMS < 1)
+		if (Config.general.UpdateIntervalMS < 1)
 		{
-			HOL::settings::UpdateIntervalMS = 1;
+			Config.general.UpdateIntervalMS = 1;
 		}
 	}
 
@@ -506,9 +506,9 @@ void UserInterface::buildMainInterface()
 					  ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("Translation");
-	ImGui::InputFloat("posX", &HOL::settings::PositionOffset.x(), 0.001f, 0.01f, "%.3f");
-	ImGui::InputFloat("posY", &HOL::settings::PositionOffset.y(), 0.001f, 0.01f, "%.3f");
-	ImGui::InputFloat("posZ", &HOL::settings::PositionOffset.z(), 0.001f, 0.01f, "%.3f");
+	ImGui::InputFloat("posX", &Config.handPose.PositionOffset.x(), 0.001f, 0.01f, "%.3f");
+	ImGui::InputFloat("posY", &Config.handPose.PositionOffset.y(), 0.001f, 0.01f, "%.3f");
+	ImGui::InputFloat("posZ", &Config.handPose.PositionOffset.z(), 0.001f, 0.01f, "%.3f");
 
 	ImGui::EndChild();
 	ImGui::SameLine();
@@ -516,9 +516,9 @@ void UserInterface::buildMainInterface()
 	ImGui::BeginChild("OrientationInput", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("Orientation");
-	ImGui::InputFloat("rotX", &HOL::settings::OrientationOffset.x(), 1.0f, 5.0f, "%.3f");
-	ImGui::InputFloat("rotY", &HOL::settings::OrientationOffset.y(), 1.0f, 5.0f, "%.3f");
-	ImGui::InputFloat("rotZ", &HOL::settings::OrientationOffset.z(), 1.0f, 5.0f, "%.3f");
+	ImGui::InputFloat("rotX", &Config.handPose.OrientationOffset.x(), 1.0f, 5.0f, "%.3f");
+	ImGui::InputFloat("rotY", &Config.handPose.OrientationOffset.y(), 1.0f, 5.0f, "%.3f");
+	ImGui::InputFloat("rotZ", &Config.handPose.OrientationOffset.z(), 1.0f, 5.0f, "%.3f");
 
 	ImGui::EndChild();
 
