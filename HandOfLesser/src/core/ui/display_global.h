@@ -9,6 +9,7 @@ namespace HOL
 {
 	struct HandTransformDisplay
 	{
+		bool active;
 		bool positionValid;
 		bool positionTracked;
 		Eigen::Vector3f finalTranslationOffset;

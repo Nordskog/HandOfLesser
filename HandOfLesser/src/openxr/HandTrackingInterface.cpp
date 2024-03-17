@@ -55,7 +55,7 @@ void HandTrackingInterface::createHandTracker(
 	);
 }
 
-void HandTrackingInterface::locateHandJoints(
+bool HandTrackingInterface::locateHandJoints(
 	XrHandTrackerEXT& handTracker,
 	xr::UniqueDynamicSpace& space,
 	XrTime time,
@@ -85,6 +85,8 @@ void HandTrackingInterface::locateHandJoints(
 	handleXR(
 		"xrLocateHandJointsEXT_ call", xrLocateHandJointsEXT_(handTracker, &locateInfo, &locations)
 	);
+
+	return locations.isActive;
 }
 
 void HandTrackingInterface::destroyHandTracker()

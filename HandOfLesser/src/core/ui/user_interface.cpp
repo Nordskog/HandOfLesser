@@ -165,6 +165,8 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 
 	ImGui::SeparatorText(sideName);
 
+	ImGui::Checkbox("Active", &HOL::display::HandTransform[side].active);
+	ImGui::SameLine();
 	ImGui::Checkbox("Valid", &HOL::display::HandTransform[side].positionValid);
 	ImGui::SameLine();
 	ImGui::Checkbox("Tracked", &HOL::display::HandTransform[side].positionTracked);

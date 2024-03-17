@@ -20,7 +20,10 @@ namespace HOL
 		void addHookedController(uint32_t id,
 								 HandSide side,
 								 vr::IVRServerDriverHost* host, vr::ITrackedDeviceServerDriver* driver);
+
 		bool shouldPossess(uint32_t deviceId);
+		bool shouldPossess(HookedController* controller);
+
 		bool shouldEmulateControllers();
 		bool hookedControllersFound();
 		static HandOfLesser* Current;	// Time to commit sins

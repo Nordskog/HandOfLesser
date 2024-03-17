@@ -33,7 +33,7 @@ namespace HOL
 	}
 	void HookedController::SubmitPose()
 	{
-		if (HOL::HandOfLesser::Current->shouldPossess(this->mDeviceId))
+		if (HOL::HandOfLesser::Current->shouldPossess(this) && this->poseValid())
 		{
 			// In this state we prevent the original hooked call from running,
 			// and call the original function with our pose instead.
@@ -42,6 +42,33 @@ namespace HOL
 
 		}
 	}
+
+	// Can, not should.
+	bool HookedController::canPossess()
+	{
+		// Active: indicating if the hand tracker is actively tracking.
+		// On Quest2 this is false as soon as the hand is lost.
+		// On Quest3 you might expect it to remain active at all times
+		// because of arm tracking and stuff. See HookedController::poseValid()
+
+		// As of writing broken in VD because VDXR broken. Works with Airlink.
+		// Airlink should potentially check controller state instead.
+		// Other controllers ( Lighthouse anything ) will need some system to tell 
+		// when controllers are placed aside and the user wants to use handtracking instead.
+		return this->mLastTransformPacket.active;
+	}
+
+	bool HookedController::poseValid()
+	{
+		// In addition to active, we also have valid and tracked bits.
+		// When active, either of these may be false.
+		// Quest3 may have a valid but untracked position for the palm.
+		// If active is false, valid and tracked will always be false too.
+		return this->mLastTransformPacket.valid;
+	}
+
+
+
 	uint32_t HookedController::getDeviceId()
 	{
 		return this->mDeviceId;

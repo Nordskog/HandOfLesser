@@ -10,6 +10,7 @@ namespace HOL
 	public:
 		FingerBend fingers[FingerType::FingerType_MAX];
 
+		bool active;
 		bool poseValid;
 		bool poseTracked;
 

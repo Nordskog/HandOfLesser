@@ -123,41 +123,37 @@ namespace HOL
 
 	bool HandOfLesser::shouldPossess(uint32_t deviceId)
 	{
-		bool shouldPos = false;
-		// How we decide on whether or not to take control will depend on 
-		// the user's setup. With Quest1/2/pro we can assume the controllers 
+		if (this->mControllerMode == ControllerMode::HookedControllerMode)
+		{
+			return shouldPossess(getHookedControllerByDeviceId(deviceId));
+		}
+
+		return false;
+	}
+
+	bool HandOfLesser::shouldPossess(HookedController* controller)
+	{
+		// How we decide on whether or not to take control will depend on
+		// the user's setup. With Quest1/2/pro we can assume the controllers
 		// will not be active any time we have valid handtracking data
 		// This holds true even if VD is emulating controllers.
-		// 
+		//
 		// The Quest3 can do controller and hand-tracking simultaneously,
-		// and its upper-body-tracking stuff means the data will probably be valid
-		// but not activately tracked at all times. VD does not provide the true 
-		// valid/tracked bits, so we have no way of telling. Problem for later.
-		// 
+		// and its upper-body-tracking stuff means the data will probably be valid.
+		//
 		// Other lighthouse devices will pr obably always remain active, so I guess we just
 		// wait for the controllers to be completely still while the user is holding up their
 		// hands for a few seconds. Also a problem for later.
 		if (this->mControllerMode == ControllerMode::HookedControllerMode)
 		{
 			// Only possess the controllers we are hooking
-			if (getHookedControllerByDeviceId(deviceId) != nullptr)
+			if (controller != nullptr)
 			{
-				// Only covers Quest 1/2/Pro
-				shouldPos = this->mLastPoseValid[HandSide::LeftHand]
-							|| this->mLastPoseValid[HandSide::RightHand];
-
-				// Only print this for hooked controllers
-				if (lastPossessState != shouldPos)
-				{
-					DriverLog("ShouldPossess: %s", shouldPos ? "true " : "false");
-				}
-
-				lastPossessState = shouldPos;
+				return controller->canPossess();
 			}
 		}
 
-
-		return shouldPos;
+		return false;
 	}
 
 	bool HandOfLesser::shouldEmulateControllers()

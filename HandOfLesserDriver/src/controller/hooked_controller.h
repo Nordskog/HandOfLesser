@@ -15,6 +15,10 @@ namespace HOL
 		void UpdatePose(HOL::HandTransformPacket* packet) override;
 		void UpdateInput(HOL::ControllerInputPacket* packet) override;
 		void SubmitPose() override;
+
+		bool canPossess();
+		bool poseValid();
+
 		uint32_t getDeviceId();
 
 	private:

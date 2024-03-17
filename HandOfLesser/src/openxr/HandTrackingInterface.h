@@ -12,7 +12,7 @@ public:
 	static void createHandTracker(
 		xr::UniqueDynamicSession& session, XrHandEXT side, XrHandTrackerEXT& handTrackerOut
 	);
-	static void locateHandJoints(
+	static bool locateHandJoints(
 		XrHandTrackerEXT& handTracker,
 		xr::UniqueDynamicSpace& space,
 		XrTime time,

@@ -44,6 +44,7 @@ namespace HOL
 	struct HandTransformPacket
 	{
 		NativePacketType packetType = NativePacketType::HandTransform;
+		bool active = false;
 		bool valid = false;
 		HOL::HandSide side;
 		HOL::PoseLocation location;

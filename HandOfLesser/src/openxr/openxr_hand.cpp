@@ -22,7 +22,7 @@ void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 
 void OpenXRHand::calculateCurlSplay()
 {
-	if (!this->handPose.poseValid)
+	if (!this->handPose.poseTracked)
 	{
 		// Leave previous pose if hand not tracked
 		return;
@@ -154,7 +154,7 @@ void OpenXRHand::calculateCurlSplay()
 
 void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time)
 {
-	HandTrackingInterface::locateHandJoints(this->mHandTracker,
+	this->handPose.active = HandTrackingInterface::locateHandJoints(this->mHandTracker,
 											space,
 											time,
 											this->mJointLocations,
@@ -173,20 +173,6 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	this->handPose.poseTracked
 		= (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 		  == XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
-
-
-	if (HOL::display::IsVDXR)
-	{
-		// VDXR lies and bits are always set to valid/tracked
-		if (palmLocation.pose.position.x == 0 && palmLocation.pose.position.y == 0
-			&& palmLocation.pose.position.z == 0)
-		{
-			// Normally you'd care about epsilon and all that,
-			// But when invalid they are perfectly zero
-			this->handPose.poseValid = false;
-			this->handPose.poseTracked = false;
-		}
-	}
 
 	this->handPose.palmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
 	this->handPose.palmVelocity.angularVelocity = toEigenVector(palmVelocity.angularVelocity);
@@ -235,6 +221,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	///////////////////////////
 
 	{
+		HOL::display::HandTransform[this->mSide].active = this->handPose.active;
 		HOL::display::HandTransform[this->mSide].positionValid = this->handPose.poseValid;
 		HOL::display::HandTransform[this->mSide].positionTracked = this->handPose.poseTracked;
 
