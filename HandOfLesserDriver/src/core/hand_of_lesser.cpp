@@ -10,8 +10,6 @@ namespace HOL
 	{
 		this->mActive = true;
 		HandOfLesser::Current = this;
-		this->mLastPoseValid[HandSide::LeftHand] = false;
-		this->mLastPoseValid[HandSide::RightHand] = false;
 		this->mControllerMode = ControllerMode::HookedControllerMode;
 		this->mTransport.init(9006); // Hardcoded for now, needs to be negotaited somehow
 		my_pose_update_thread_ = std::thread(&HandOfLesser::ReceiveDataThread, this);
@@ -32,17 +30,13 @@ namespace HOL
 				case HOL::NativePacketType::HandTransform: {
 					HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*)rawPacket;
 
-					this->mLastPoseValid[packet->side] = packet->valid;
-
-					if (packet->valid)
+					GenericControllerInterface* controller = this->GetActiveController(packet->side);
+					if (controller != nullptr)
 					{
-						GenericControllerInterface* controller = this->GetActiveController(packet->side);
-						if (controller != nullptr)
-						{
-							controller->UpdatePose(packet);
-							controller->SubmitPose();
-						}
+						controller->UpdatePose(packet);
+						controller->SubmitPose();
 					}
+					
 
 					break;
 				}

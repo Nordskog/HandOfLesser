@@ -41,8 +41,6 @@ namespace HOL
 
 		bool mActive;
 
-		bool mLastPoseValid[2];
-
 		ControllerMode mControllerMode;
 		std::thread my_pose_update_thread_;
 		HOL::NativeTransport mTransport;
