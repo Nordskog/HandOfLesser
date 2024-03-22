@@ -491,9 +491,14 @@ void UserInterface::buildMainInterface()
 
 	ImGui::SeparatorText("Presets");
 
-	if (ImGui::Button("Touch") )
+	if (ImGui::Button("Touch Airlink") )
 	{
-		HOL::settings::restoreDefaultControllerOffset(ControllerType::OculusTouch);
+		HOL::settings::restoreDefaultControllerOffset(ControllerType::OculusTouch_Airlink);
+	}
+
+		if (ImGui::Button("Touch VDXR"))
+	{
+		HOL::settings::restoreDefaultControllerOffset(ControllerType::OculusTouch_VDXR);
 	}
 
 	ImGui::SameLine();
