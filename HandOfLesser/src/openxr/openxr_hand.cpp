@@ -162,10 +162,6 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 											&this->mAimState);
 
 	auto palmLocation = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
-	auto palmVelocity = this->mJointVelocities[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
-
-	this->handPose.palmLocation.position = toEigenVector(palmLocation.pose.position);
-	this->handPose.palmLocation.orientation = toEigenQuaternion(palmLocation.pose.orientation);
 
 	// Orientation is not going to be set without position for hand tracking.
 	this->handPose.poseValid = (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
@@ -174,47 +170,85 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		= (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 		  == XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
 
-	this->handPose.palmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
-	this->handPose.palmVelocity.angularVelocity = toEigenVector(palmVelocity.angularVelocity);
-
-	// Transform palm ( not actually same as grip ) to index controller tracker position
-	Eigen::Vector3f gripRotationOffset = Eigen::Vector3f(63, 0, -99);
-	Eigen::Vector3f gripTranslationOffset = Eigen::Vector3f(0.021, 0, -0.114);
-
-	// Add configurable offset
-	Eigen::Vector3f mainRotationOffset = gripRotationOffset + Config.handPose.OrientationOffset;
-	Eigen::Vector3f mainTranslationOffset = gripTranslationOffset + Config.handPose.PositionOffset;
-
-	if (this->mSide == HandSide::LeftHand)
+	if (this->handPose.poseValid)
 	{
-		// Base offsets are for the left hand
+		this->handPose.palmLocation.position = toEigenVector(palmLocation.pose.position);
+		this->handPose.palmLocation.orientation = toEigenQuaternion(palmLocation.pose.orientation);
+
+		auto palmVelocity = this->mJointVelocities[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
+
+		this->handPose.palmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
+		this->handPose.palmVelocity.angularVelocity = toEigenVector(palmVelocity.angularVelocity);
+
+		// Transform palm ( not actually same as grip ) to index controller tracker position
+		Eigen::Vector3f gripRotationOffset = Eigen::Vector3f(63, 0, -99);
+		Eigen::Vector3f gripTranslationOffset = Eigen::Vector3f(0.021, 0, -0.114);
+
+		// Add configurable offset
+		Eigen::Vector3f mainRotationOffset = gripRotationOffset + Config.handPose.OrientationOffset;
+		Eigen::Vector3f mainTranslationOffset
+			= gripTranslationOffset + Config.handPose.PositionOffset;
+
+		if (this->mSide == HandSide::LeftHand)
+		{
+			// Base offsets are for the left hand
+		}
+		else
+		{
+			mainRotationOffset = flipHandRotation(mainRotationOffset);
+			mainTranslationOffset = flipHandTranslation(mainTranslationOffset);
+		}
+
+		////////////
+		// Rot
+		///////////
+
+		Eigen::Quaternionf rawOrientation = toEigenQuaternion(palmLocation.pose.orientation);
+		Eigen::Quaternionf rotationOffsetQuat
+			= HOL::quaternionFromEulerAnglesDegrees(mainRotationOffset);
+
+		this->handPose.palmLocation.orientation = rawOrientation * rotationOffsetQuat;
+
+		//////////////
+		// Trans
+		/////////////
+
+		Eigen::Vector3f rawPosition = toEigenVector(palmLocation.pose.position);
+		Eigen::Vector3f positionOffsetLocal
+			= this->handPose.palmLocation.orientation * mainTranslationOffset;
+		this->handPose.palmLocation.position = rawPosition + positionOffsetLocal;
+
+		this->calculateCurlSplay();
+
+		///////////////////////////
+		// Update display values
+		///////////////////////////
+		{
+			HOL::display::HandTransform[this->mSide].active = this->handPose.active;
+			HOL::display::HandTransform[this->mSide].positionValid = this->handPose.poseValid;
+			HOL::display::HandTransform[this->mSide].positionTracked = this->handPose.poseTracked;
+
+			// Hand orientation
+
+			HOL::display::HandTransform[this->mSide].rawPose.position = rawPosition;
+			HOL::display::HandTransform[this->mSide].rawPose.orientation = rawOrientation;
+
+			HOL::display::HandTransform[this->mSide].finalPose.position
+				= this->handPose.palmLocation.position;
+			HOL::display::HandTransform[this->mSide].finalPose.orientation
+				= this->handPose.palmLocation.orientation;
+
+			HOL::display::HandTransform[this->mSide].finalTranslationOffset = mainTranslationOffset;
+			HOL::display::HandTransform[this->mSide].finalOrientationOffset = mainRotationOffset;
+
+			// Finger curl
+			for (int i = 0; i < FingerType_MAX; i++)
+			{
+				// Turns out you cannot assign an array to an array
+				HOL::display::FingerTracking[this->mSide].rawBend[i] = this->handPose.fingers[i];
+			}
+		}
 	}
-	else
-	{
-		mainRotationOffset = flipHandRotation(mainRotationOffset);
-		mainTranslationOffset = flipHandTranslation(mainTranslationOffset);
-	}
-
-	////////////
-	// Rot
-	///////////
-
-	Eigen::Quaternionf rawOrientation = toEigenQuaternion(palmLocation.pose.orientation);
-	Eigen::Quaternionf rotationOffsetQuat
-		= HOL::quaternionFromEulerAnglesDegrees(mainRotationOffset);
-
-	this->handPose.palmLocation.orientation = rawOrientation * rotationOffsetQuat;
-
-	//////////////
-	// Trans
-	/////////////
-
-	Eigen::Vector3f rawPosition = toEigenVector(palmLocation.pose.position);
-	Eigen::Vector3f positionOffsetLocal
-		= this->handPose.palmLocation.orientation * mainTranslationOffset;
-	this->handPose.palmLocation.position = rawPosition + positionOffsetLocal;
-
-	this->calculateCurlSplay();
 
 	///////////////////////////
 	// Update display values
@@ -224,25 +258,5 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		HOL::display::HandTransform[this->mSide].active = this->handPose.active;
 		HOL::display::HandTransform[this->mSide].positionValid = this->handPose.poseValid;
 		HOL::display::HandTransform[this->mSide].positionTracked = this->handPose.poseTracked;
-
-		// Hand orientation
-
-		HOL::display::HandTransform[this->mSide].rawPose.position = rawPosition;
-		HOL::display::HandTransform[this->mSide].rawPose.orientation = rawOrientation;
-
-		HOL::display::HandTransform[this->mSide].finalPose.position
-			= this->handPose.palmLocation.position;
-		HOL::display::HandTransform[this->mSide].finalPose.orientation
-			= this->handPose.palmLocation.orientation;
-
-		HOL::display::HandTransform[this->mSide].finalTranslationOffset = mainTranslationOffset;
-		HOL::display::HandTransform[this->mSide].finalOrientationOffset = mainRotationOffset;
-
-		// Finger curl
-		for (int i = 0; i < FingerType_MAX; i++)
-		{
-			// Turns out you cannot assign an array to an array
-			HOL::display::FingerTracking[this->mSide].rawBend[i] = this->handPose.fingers[i];
-		}
 	}
 }

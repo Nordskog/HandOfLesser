@@ -143,7 +143,7 @@ namespace HOL
 			// Only possess the controllers we are hooking
 			if (controller != nullptr)
 			{
-				return controller->canPossess();
+				return controller->shouldPossess();
 			}
 		}
 

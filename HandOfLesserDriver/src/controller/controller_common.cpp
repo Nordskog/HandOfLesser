@@ -12,12 +12,10 @@ namespace HOL::ControllerCommon
 		// updated our pose.
 		vr::DriverPose_t pose = {0};
 
-		// However, we can also get a predicted pose directly from openxr.
-		pose.poseTimeOffset = -0.032f;	// With no velocity this does nothing I guess
-		// pose.poseTimeOffset = -0.008f;
-		// pose.poseTimeOffset = 0;
-		// pose.poseTimeOffset = 0.016f;	// read 16ms in the future from openxr, submit
-		// acordingly
+		// We can request a prediction from openXR as well
+		// At the moment using steam for anything does not end well, 
+		// especially because velocities are mostly bogus.
+		pose.poseTimeOffset = 0;
 
 		// These need to be set to be valid quaternions. The device won't appear otherwise.
 		pose.qWorldFromDriverRotation.w = 1.f;

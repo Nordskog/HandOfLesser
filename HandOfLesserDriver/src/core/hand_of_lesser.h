@@ -27,15 +27,16 @@ namespace HOL
 		bool shouldEmulateControllers();
 		bool hookedControllersFound();
 		static HandOfLesser* Current;	// Time to commit sins
-	private:
-
-
-		void ReceiveDataThread();
 
 		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
 		HookedController* getHookedController(HOL::HandSide side);
 		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
 		GenericControllerInterface* GetActiveController(HOL::HandSide side);
+
+	private:
+
+
+		void ReceiveDataThread();
 
 		void runFrame();
 

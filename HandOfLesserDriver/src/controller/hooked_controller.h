@@ -17,7 +17,9 @@ namespace HOL
 		void SubmitPose() override;
 
 		bool canPossess();
-		bool poseValid();
+		bool shouldPossess();
+
+		void setLastOriginalPoseState(bool valid);
 
 		uint32_t getDeviceId();
 
@@ -26,6 +28,9 @@ namespace HOL
 
 		HOL::HandTransformPacket mLastTransformPacket;
 		HOL::ControllerInputPacket mLastInputPacket;
+
+		bool mLastOriginalPoseValid;
+		bool mValidWhileOriginalInvalid;
 
 		HandSide mSide;
 		vr::IVRServerDriverHost* mHookedHost;

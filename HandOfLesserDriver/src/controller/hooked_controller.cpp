@@ -24,8 +24,12 @@ namespace HOL
 		// so make a copy now.
 		this->mLastTransformPacket = *packet;
 
-		// Store the pose somewhere
-		this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPacket, true);
+		// Do not update pose if invalid, because we want to continue submitting 
+		// the last valid one. Is this necessary? is there some kind of timeout?
+		if (this->mLastTransformPacket.valid)
+		{
+			this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPacket, true);
+		}
 	}
 	void HookedController::UpdateInput(HOL::ControllerInputPacket* packet)
 	{
@@ -33,7 +37,7 @@ namespace HOL
 	}
 	void HookedController::SubmitPose()
 	{
-		if (HOL::HandOfLesser::Current->shouldPossess(this) && this->poseValid())
+		if (HOL::HandOfLesser::Current->shouldPossess(this))
 		{
 			// In this state we prevent the original hooked call from running,
 			// and call the original function with our pose instead.
@@ -46,28 +50,45 @@ namespace HOL
 	// Can, not should.
 	bool HookedController::canPossess()
 	{
-		// Active: indicating if the hand tracker is actively tracking.
-		// On Quest2 this is false as soon as the hand is lost.
-		// On Quest3 you might expect it to remain active at all times
-		// because of arm tracking and stuff. See HookedController::poseValid()
-
-		// As of writing broken in VD because VDXR broken. Works with Airlink.
-		// Airlink should potentially check controller state instead.
-		// Other controllers ( Lighthouse anything ) will need some system to tell 
-		// when controllers are placed aside and the user wants to use handtracking instead.
-		return this->mLastTransformPacket.active;
-	}
-
-	bool HookedController::poseValid()
-	{
-		// In addition to active, we also have valid and tracked bits.
-		// When active, either of these may be false.
-		// Quest3 may have a valid but untracked position for the palm.
-		// If active is false, valid and tracked will always be false too.
+		// Whether or not the pose is valid pretty much.
 		return this->mLastTransformPacket.valid;
 	}
 
+	// Assuming other external conditions also say it should.
+	bool HookedController::shouldPossess()
+	{
+		// Ideally we should only posses if the controllers are not 
+		// being held by the user, but this is difficult to detect.
+		// Quest2 using Airlink will diconnect, probably Quest3 too.
+		// With VD? Impossible at the moment.
+		// Lighthouse? I guess we check if the 
+		// Until I have actual other hardware to test with, possesss
+		// anytime handtracking is valid. If using Airlink, we continue
+		// possessing until real controllers come back online.
 
+		bool canPoss = canPossess();
+		if (!mLastOriginalPoseValid && canPoss)
+		{
+			// We want to continue possessing while the real controllers
+			// are inactive, so it doesn't immediatley jump to their pose instead.
+			// This is of course meaningless for VD, since the controllers are always active.
+			this->mValidWhileOriginalInvalid = true;
+		}
+
+		if (mLastOriginalPoseValid)
+		{
+			// Only keep posessing while handtracking invalid
+			// until original pose becomes valid. 
+			mValidWhileOriginalInvalid = false;
+		}
+
+		return canPoss || this->mValidWhileOriginalInvalid;
+	}
+
+	void HookedController::setLastOriginalPoseState(bool valid)
+	{
+		this->mLastOriginalPoseValid = valid;
+	}
 
 	uint32_t HookedController::getDeviceId()
 	{

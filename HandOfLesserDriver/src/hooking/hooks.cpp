@@ -92,8 +92,21 @@ namespace HOL::hooks
 						   const vr::DriverPose_t& newPose,
 						   uint32_t unPoseStructSize)
 		{
+
+
+
+			//mLastOriginalPoseValid
+			HookedController* controller
+				= HOL::HandOfLesser::Current->getHookedControllerByDeviceId(unWhichDevice);
+
+			if (controller != nullptr)
+			{
+				controller->setLastOriginalPoseState(newPose.deviceIsConnected
+													 && newPose.poseIsValid);
+			}
+
 			// Just do nothing if we are possessing controllers
-			if (!HOL::HandOfLesser::Current->shouldPossess(unWhichDevice))
+			if (!HOL::HandOfLesser::Current->shouldPossess(controller))
 			{
 				return TrackedDevicePoseUpdated::FunctionHook.originalFunc(
 					_this, unWhichDevice, newPose, unPoseStructSize);
