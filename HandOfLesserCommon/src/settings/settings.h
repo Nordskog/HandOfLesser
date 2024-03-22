@@ -18,9 +18,9 @@ namespace HOL
 			};
 
 			float ThumbCurlCenter[3] = {
-				18.8f, 
-				2.0f, 
-				47.6f
+				20.1f, 
+				-14.5f, 
+				45.7f
 			};
 
 			float FingerSplayCenter[5] = {
@@ -28,7 +28,7 @@ namespace HOL
 				-3.6f,
 				12.9f, 
 				16.2f, 
-				-24.0f		// Thumb
+				-24.3f		// Thumb
 			};
 
 			// Range values must match unity!
@@ -53,7 +53,7 @@ namespace HOL
 
 			// clang-format on
 
-			Eigen::Vector3f ThumbAxisOffset = Eigen::Vector3f(0, 0, -77);
+			Eigen::Vector3f ThumbAxisOffset = Eigen::Vector3f(0, 0, -89);
 		};
 
 		struct GeneralSettings
