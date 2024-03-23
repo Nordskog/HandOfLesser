@@ -41,8 +41,16 @@ namespace HOL
 		{
 			// In this state we prevent the original hooked call from running,
 			// and call the original function with our pose instead.
+
+			// If we are submitting a stale pose to lock it in place, we must jitter it
+			// because vrchat is stupid and ignores all the status information steamvr provides.
+			const auto& pose = (this->mLastTransformPacket.valid)
+							? this->mLastPose
+							: HOL::ControllerCommon::addJitter(this->mLastPose);
+			
 			HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
-				this->mHookedHost, this->mDeviceId, this->mLastPose, sizeof(vr::DriverPose_t));		
+				this->mHookedHost, this->mDeviceId, pose, sizeof(vr::DriverPose_t));	
+	
 
 		}
 	}

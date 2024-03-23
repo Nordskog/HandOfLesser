@@ -1,9 +1,14 @@
 #pragma once
 
 #include "controller_common.h"
+#include <chrono>
 
 namespace HOL::ControllerCommon
 {
+	static std::default_random_engine JitterGenerator = std::default_random_engine(0);
+	static std::uniform_real_distribution<float> JitterDistribution
+		= std::uniform_real_distribution<float>(0, 0.0001);
+
 	vr::DriverPose_t generatePose(HOL::HandTransformPacket* packet, bool deviceConnected)
 	{
 		// Let's retrieve the Hmd pose to base our controller pose off.
@@ -70,6 +75,21 @@ namespace HOL::ControllerCommon
 			= deviceConnected ? vr::TrackingResult_Running_OK : vr::TrackingResult_Uninitialized;
 
 		return pose;
+	}
+
+	vr::DriverPose_t addJitter(const vr::DriverPose_t& existingPose)
+	{
+		// VRChat is stupid and ignores all status values passed to it by SteamVR 
+		// in favor is checking whether position values change. If they remain completely 
+		// static for a short period of time it decides tracking has been lost and moves
+		// your arms to the sides. Idiots.
+		vr::DriverPose_t jitteredPose = existingPose;
+
+		jitteredPose.vecPosition[0] += JitterDistribution(JitterGenerator);
+		jitteredPose.vecPosition[1] += JitterDistribution(JitterGenerator);
+		jitteredPose.vecPosition[2] += JitterDistribution(JitterGenerator);
+
+		return jitteredPose;
 	}
 
 
