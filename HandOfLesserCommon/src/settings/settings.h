@@ -2,7 +2,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <HandOfLesserCommon.h>
 
 namespace HOL
 {
@@ -58,8 +57,8 @@ namespace HOL
 
 		struct GeneralSettings
 		{
-			int MotionPredictionMS = 0; // ms
-			int UpdateIntervalMS = 5;
+			int MotionPredictionMS = 15; // ms
+			int UpdateIntervalMS = 1;
 			float steamPoseTimeOffset = .0f;
 		};
 
