@@ -13,7 +13,6 @@
 using namespace HOL;
 using namespace HOL::OpenXR;
 
-
 void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 {
 	this->mSide = side;
@@ -93,12 +92,9 @@ void OpenXRHand::calculateCurlSplay()
 				rawOffset = flipHandRotation(rawOffset);
 			}
 
-
 			// Z axis is probably all you want to adjust
 			Eigen::Quaternionf baseOffset = HOL::quaternionFromEulerAnglesDegrees(
-				rawOffset.x(), 
-				rawOffset.y(), 
-				rawOffset.z());
+				rawOffset.x(), rawOffset.y(), rawOffset.z());
 
 			rawOrientationOut[0] = wristOrientation * (baseOffset);
 		}
@@ -137,7 +133,8 @@ void OpenXRHand::calculateCurlSplay()
 		{
 			// Special values for unity's broken humanoid rig
 			// Only splay is different
-			Eigen::Quaternionf palmRot = getJointOrientation(XrHandJointEXT::XR_HAND_JOINT_PALM_EXT);
+			Eigen::Quaternionf palmRot
+				= getJointOrientation(XrHandJointEXT::XR_HAND_JOINT_PALM_EXT);
 
 			if (finger == FingerType::FingerThumb)
 			{
@@ -145,7 +142,7 @@ void OpenXRHand::calculateCurlSplay()
 			}
 
 			Eigen::Vector3f knucklePos = getJointPosition(getFirstJoint(finger));
-			Eigen::Vector3f tipPos = getJointPosition((XrHandJointEXT)(getFirstJoint(finger)+1));
+			Eigen::Vector3f tipPos = getJointPosition((XrHandJointEXT)(getFirstJoint(finger) + 1));
 
 			bend->setSplay(computeHumanoidSplay(palmRot, knucklePos, tipPos));
 		}
@@ -155,11 +152,11 @@ void OpenXRHand::calculateCurlSplay()
 void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time)
 {
 	this->handPose.active = HandTrackingInterface::locateHandJoints(this->mHandTracker,
-											space,
-											time,
-											this->mJointLocations,
-											this->mJointVelocities,
-											&this->mAimState);
+																	space,
+																	time,
+																	this->mJointLocations,
+																	this->mJointVelocities,
+																	&this->mAimState);
 
 	auto palmLocation = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 

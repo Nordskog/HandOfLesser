@@ -82,8 +82,8 @@ namespace HOL::ControllerCommon
 
 	vr::DriverPose_t addJitter(const vr::DriverPose_t& existingPose)
 	{
-		// VRChat is stupid and ignores all status values passed to it by SteamVR 
-		// in favor is checking whether position values change. If they remain completely 
+		// VRChat is stupid and ignores all status values passed to it by SteamVR
+		// in favor is checking whether position values change. If they remain completely
 		// static for a short period of time it decides tracking has been lost and moves
 		// your arms to the sides. Idiots.
 		vr::DriverPose_t jitteredPose = existingPose;
@@ -95,6 +95,4 @@ namespace HOL::ControllerCommon
 		return jitteredPose;
 	}
 
-
-
-}
+} // namespace HOL::ControllerCommon

@@ -28,7 +28,7 @@ void HandOfLesserCore::init(int serverPort)
 	if (runtimeName.find("virtualdesktop") != std::string::npos)
 	{
 		HOL::display::IsVDXR = true;
-		std::cout << "Runtime is VDXR, will expect being fed lies" << std::endl; 
+		std::cout << "Runtime is VDXR, will expect being fed lies" << std::endl;
 	}
 
 	this->mInstanceHolder.init();
