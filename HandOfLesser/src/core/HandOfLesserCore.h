@@ -7,6 +7,7 @@
 #include <HandOfLesserCommon.h>
 #include "src/core/ui/user_interface.h"
 #include "src/vrchat/vrchat_osc.h"
+#include <thread>
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -31,6 +32,9 @@ namespace HOL
 		UserInterface mUserInterface;
 		VRChatOSC mVrchatOSC;
 		NativeTransport mTransport;
+
+		std::thread mUserInterfaceThread;
+		void userInterfaceLoop();
 
 		void mainLoop();
 		void doOpenXRStuff();

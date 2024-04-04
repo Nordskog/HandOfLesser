@@ -41,13 +41,15 @@ void UserInterface::terminate()
 	glfwTerminate();
 }
 
-bool UserInterface::shouldClose()
+bool UserInterface::shouldCloseWindow()
 {
 	return glfwWindowShouldClose(this->mWindow);
 }
 
 void UserInterface::onFrame()
 {
+	this->mShouldTerminate = this->shouldCloseWindow();
+
 	glfwPollEvents();
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -572,4 +574,9 @@ void UserInterface::buildMainInterface()
 
 	ImGui::EndChild();
 	ImGui::End();
+}
+
+bool HOL::UserInterface::shouldTerminate()
+{
+	return mShouldTerminate;
 }

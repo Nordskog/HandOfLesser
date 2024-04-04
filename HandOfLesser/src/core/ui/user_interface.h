@@ -10,9 +10,9 @@ namespace HOL
 	public:
 		void init();
 		void terminate();
-		bool shouldClose();
 		void onFrame();
 		void buildMainInterface();
+		bool shouldTerminate();
 
 	private:
 		GLFWwindow* mWindow = nullptr;
@@ -23,6 +23,8 @@ namespace HOL
 		static void error_callback(int error, const char* description);
 		static void windows_scale_callback(GLFWwindow* window, float xscale, float yscale);
 		float scaleSize(float size);
+		bool mShouldTerminate = false;
+		bool shouldCloseWindow();
 
 		void updateStyles(float scale);
 

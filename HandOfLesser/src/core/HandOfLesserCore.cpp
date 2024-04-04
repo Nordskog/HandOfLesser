@@ -53,12 +53,11 @@ void HandOfLesserCore::init(int serverPort)
 		}
 	}
 	this->mTransport.init(serverPort);
-
-	this->mUserInterface.init();
 }
 
 void HandOfLesserCore::start()
 {
+	this->mUserInterfaceThread = std::thread(&HandOfLesserCore::userInterfaceLoop, this);
 	this->mainLoop();
 }
 
@@ -67,25 +66,44 @@ std::vector<const char*> HandOfLesserCore::getRequiredExtensions()
 	return std::vector<const char*>();
 }
 
+void HOL::HandOfLesserCore::userInterfaceLoop()
+{
+	this->mUserInterface.init();
+
+	while (1)
+	{
+		// This vsyncs so no need to sleep manually
+		this->mUserInterface.onFrame();
+		if (this->mUserInterface.shouldTerminate())
+		{
+			break;
+		}
+	}
+
+	this->mUserInterface.terminate();
+}
+
 void HandOfLesserCore::mainLoop()
 {
 	while (1)
 	{
+		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+
+		if (this->mUserInterface.shouldTerminate())
+		{
+			break;
+		}
+
 		if (this->mInstanceHolder.getState() == OpenXrState::Running)
 		{
 			doOpenXRStuff();
-		}
-
-		this->mUserInterface.onFrame();
-		if (this->mUserInterface.shouldClose())
-		{
-			break;
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(Config.general.UpdateIntervalMS));
 	}
 
 	std::cout << "Exiting loop" << std::endl;
+	this->mUserInterfaceThread.join();
 }
 
 void HandOfLesserCore::doOpenXRStuff()
