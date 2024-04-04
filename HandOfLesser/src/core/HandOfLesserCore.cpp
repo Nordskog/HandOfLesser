@@ -152,3 +152,10 @@ void HandOfLesserCore::sendUpdate()
 		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::ControllerInputPacket));
 	}
 }
+
+void HOL::HandOfLesserCore::syncSettings()
+{
+	HOL::SettingsPacket packet;
+	packet.config = HOL::Config;
+	this->mTransport.send(9006, (char*)&packet, sizeof(HOL::SettingsPacket));
+}

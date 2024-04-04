@@ -12,6 +12,7 @@
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
 #include <HandOfLesserCommon.h>
+#include "src/core/HandOfLesserCore.h"
 
 using namespace HOL;
 
@@ -485,6 +486,10 @@ void UserInterface::buildMainInterface()
 		}
 	}
 
+	if (ImGui::InputFloat("Steam Pose offset", &Config.general.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f"))
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
 	/////////////////
 	// Offset inputs
 	/////////////////

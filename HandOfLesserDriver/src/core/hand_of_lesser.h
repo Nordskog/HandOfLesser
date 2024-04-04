@@ -27,6 +27,7 @@ namespace HOL
 		bool shouldEmulateControllers();
 		bool hookedControllersFound();
 		static HandOfLesser* Current;	// Time to commit sins
+		static HOL::settings::HandOfLesserSettings Config;
 
 		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
 		HookedController* getHookedController(HOL::HandSide side);

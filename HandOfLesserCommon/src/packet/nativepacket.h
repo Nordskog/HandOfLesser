@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/hand/hand.h"
+#include <src/settings/settings.h>
 
 namespace HOL
 {
@@ -9,6 +10,7 @@ namespace HOL
 		InvalidPacket = 100,
 		HandTransform = 500,
 		ControllerInput = 600,
+		Settings = 700
 	};
 
 	struct NativePacket
@@ -36,6 +38,12 @@ namespace HOL
 		float fingerCurlMiddle = 0.0f;
 		float fingerCurlRing = 0.0f;
 		float fingerCurlPinky = 0.0f;
+	};
+
+	struct SettingsPacket
+	{
+		NativePacketType packetType = NativePacketType::Settings;
+		HOL::settings::HandOfLesserSettings config;
 	};
 
 	// Mimics vr::DriverPose_t, but only contains the bits we care about.

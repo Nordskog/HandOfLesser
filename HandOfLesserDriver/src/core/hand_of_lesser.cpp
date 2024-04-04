@@ -5,6 +5,7 @@ namespace HOL
 {
 
 	HandOfLesser* HandOfLesser::Current = nullptr;
+	HOL::settings::HandOfLesserSettings HandOfLesser::Config;
 
 	void HandOfLesser::init()
 	{
@@ -52,6 +53,14 @@ namespace HOL
 							controller->UpdateInput(packet);
 						}
 					}
+
+					break;
+				}
+
+				case HOL::NativePacketType::Settings: {
+					HOL::SettingsPacket* packet = (HOL::SettingsPacket*)rawPacket;
+					
+					HandOfLesser::Config = packet->config;
 
 					break;
 				}

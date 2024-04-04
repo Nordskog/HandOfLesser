@@ -1,6 +1,7 @@
 #pragma once
 
 #include "controller_common.h"
+#include "src/core/hand_of_lesser.h"
 #include <chrono>
 
 namespace HOL::ControllerCommon
@@ -20,7 +21,7 @@ namespace HOL::ControllerCommon
 		// We can request a prediction from openXR as well
 		// At the moment using steam for anything does not end well, 
 		// especially because velocities are mostly bogus.
-		pose.poseTimeOffset = 0;
+		pose.poseTimeOffset = HandOfLesser::Config.general.steamPoseTimeOffset;
 
 		// These need to be set to be valid quaternions. The device won't appear otherwise.
 		pose.qWorldFromDriverRotation.w = 1.f;
