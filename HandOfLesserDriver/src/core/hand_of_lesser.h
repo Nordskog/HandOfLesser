@@ -16,6 +16,7 @@ namespace HOL
 	public:
 		void init();
 		void cleanup();
+		void runFrame();
 		void addControllers();
 		void addHookedController(uint32_t id,
 								 HandSide side,
@@ -38,8 +39,6 @@ namespace HOL
 
 
 		void ReceiveDataThread();
-
-		void runFrame();
 
 		bool mActive;
 

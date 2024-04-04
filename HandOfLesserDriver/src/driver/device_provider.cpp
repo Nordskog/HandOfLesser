@@ -56,7 +56,7 @@ bool MyDeviceProvider::ShouldBlockStandbyMode()
 //-----------------------------------------------------------------------------
 void MyDeviceProvider::RunFrame()
 {
-
+	this->mHandOfLesser.runFrame();
 
 }
 

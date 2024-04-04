@@ -245,6 +245,21 @@ namespace HOL
 				}
 			}
 		}
+		else if(this->mControllerMode == ControllerMode::HookedControllerMode)
+		{
+			// TODO: only run if using index controller
+			HookedController* leftController
+				= this->getHookedController(HandSide::LeftHand);
+			HookedController* rightController = this->getHookedController(HandSide::RightHand);
+
+			// We always create both
+			if (leftController != nullptr && rightController != nullptr)
+			{
+				// We don't actually have anything to do for these
+			}
+
+
+		}
 	}
 
 	void HandOfLesser::cleanup()
