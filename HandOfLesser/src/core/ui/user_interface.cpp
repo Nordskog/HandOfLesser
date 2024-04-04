@@ -504,6 +504,9 @@ void UserInterface::buildMainInterface()
 	{
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}
+
+	ImGui::Checkbox("Force inactive", &Config.general.forceInactive);
+
 	/////////////////
 	// Offset inputs
 	/////////////////

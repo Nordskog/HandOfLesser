@@ -62,6 +62,7 @@ namespace HOL
 			float steamPoseTimeOffset = .0f;
 			float linearVelocityMultiplier = 0.f;
 			float angularVelocityMultiplier = 0.f;
+			bool forceInactive = false;
 		};
 
 		struct HandPoseSettings

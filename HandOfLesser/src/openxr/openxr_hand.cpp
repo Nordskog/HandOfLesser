@@ -173,6 +173,12 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	// Never stale if invalid?
 	this->handPose.poseStale = false;
 
+	if (HOL::Config.general.forceInactive)
+	{
+		this->handPose.poseValid = false;
+		this->handPose.active = false;
+		this->handPose.poseTracked = false;
+	}
 
 	if (this->handPose.poseValid)
 	{
