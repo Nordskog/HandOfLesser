@@ -59,6 +59,7 @@ HOL::HandTransformPacket HandTracking::getTransformPacket(HOL::HandSide side)
 
 	packet.active = hand.handPose.active;
 	packet.valid = hand.handPose.poseValid;
+	packet.stale = hand.handPose.poseStale;
 	packet.side = (HOL::HandSide)side;
 	packet.location = hand.handPose.palmLocation;
 	packet.velocity = hand.handPose.palmVelocity;

@@ -60,6 +60,8 @@ namespace HOL
 			int MotionPredictionMS = 15; // ms
 			int UpdateIntervalMS = 1;
 			float steamPoseTimeOffset = .0f;
+			float linearVelocityMultiplier = 0.f;
+			float angularVelocityMultiplier = 0.f;
 		};
 
 		struct HandPoseSettings

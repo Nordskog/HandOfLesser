@@ -54,6 +54,7 @@ namespace HOL
 		NativePacketType packetType = NativePacketType::HandTransform;
 		bool active = false;
 		bool valid = false;
+		bool stale = false;
 		HOL::HandSide side;
 		HOL::PoseLocation location;
 		HOL::PoseVelocity velocity;

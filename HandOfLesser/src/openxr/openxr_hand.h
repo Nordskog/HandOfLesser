@@ -28,4 +28,6 @@ private:
 	XrPath mInputSourcePath;
 	XrHandJointLocationEXT mJointLocations[XR_HAND_JOINT_COUNT_EXT];
 	XrHandJointVelocityEXT mJointVelocities[XR_HAND_JOINT_COUNT_EXT];
+
+	HOL::PoseLocation mPrevRawPose;
 };

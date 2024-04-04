@@ -486,8 +486,19 @@ void UserInterface::buildMainInterface()
 		}
 	}
 
-	if (ImGui::InputFloat("Steam Pose offset", &Config.general.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f"))
-	if (ImGui::InputFloat("Steam Pose offset (s)", &Config.general.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f"))
+	ImGui::InputFloat("Linear Velocity multiplier",
+					  &Config.general.linearVelocityMultiplier,
+					  0.05f,
+					  0.1f,
+					  "%.3f");
+	ImGui::InputFloat("Angular Velocity multiplier",
+					  &Config.general.angularVelocityMultiplier,
+					  0.05f,
+					  0.1f,
+					  "%.3f");
+
+	if (ImGui::InputFloat(
+			"Steam Pose offset (s)", &Config.general.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f"))
 	{
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}

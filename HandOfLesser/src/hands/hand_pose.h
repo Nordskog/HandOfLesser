@@ -13,6 +13,7 @@ namespace HOL
 		bool active;
 		bool poseValid;
 		bool poseTracked;
+		bool poseStale;
 
 		// raw values
 		HOL::PoseLocation palmLocation;
