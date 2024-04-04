@@ -487,6 +487,7 @@ void UserInterface::buildMainInterface()
 	}
 
 	if (ImGui::InputFloat("Steam Pose offset", &Config.general.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f"))
+	if (ImGui::InputFloat("Steam Pose offset (s)", &Config.general.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f"))
 	{
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}

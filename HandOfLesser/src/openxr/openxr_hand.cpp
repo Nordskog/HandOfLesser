@@ -208,6 +208,10 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 			= HOL::quaternionFromEulerAnglesDegrees(mainRotationOffset);
 
 		this->handPose.palmLocation.orientation = rawOrientation * rotationOffsetQuat;
+			this->handPose.palmVelocity.linearVelocity
+				*= HOL::Config.general.linearVelocityMultiplier;
+			this->handPose.palmVelocity.angularVelocity
+				*= HOL::Config.general.angularVelocityMultiplier;
 
 		//////////////
 		// Trans

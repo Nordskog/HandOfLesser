@@ -19,7 +19,7 @@ namespace HOL::ControllerCommon
 		vr::DriverPose_t pose = {0};
 
 		// We can request a prediction from openXR as well
-		// At the moment using steam for anything does not end well, 
+		// At the moment using steam for anything does not end well,
 		// especially because velocities are mostly bogus.
 		pose.poseTimeOffset = HandOfLesser::Config.general.steamPoseTimeOffset;
 
@@ -39,17 +39,19 @@ namespace HOL::ControllerCommon
 		pose.qRotation.y = packet->location.orientation.y();
 		pose.qRotation.z = packet->location.orientation.z();
 
-		// I can't test this properly. We're already using other predictions
-		float velocityMultiplier = 0.0f;
+		// Ideally we would supply velocities with our poses so SteamVR can
+		// do extra prediction and make up for low samples (I .e.g VDXR ).
+		// Unfortunately the velocity values are too noisy, and if we supply them
+		// everything goes to shit. Use OpenXR predicition instead where it works.
+
 		// Controllers will vanish if velocities are invalid? not initialized?
-		// Velocity numbers are bogus on the quest1 ( pure noise ), but fine on quest3?
-		pose.vecVelocity[0] = packet->velocity.linearVelocity.x() * velocityMultiplier;
-		pose.vecVelocity[1] = packet->velocity.linearVelocity.y() * velocityMultiplier;
-		pose.vecVelocity[2] = packet->velocity.linearVelocity.z() * velocityMultiplier;
+		pose.vecVelocity[0] = packet->velocity.linearVelocity.x();
+		pose.vecVelocity[1] = packet->velocity.linearVelocity.y();
+		pose.vecVelocity[2] = packet->velocity.linearVelocity.z();
 		//
-		pose.vecAngularVelocity[0] = packet->velocity.angularVelocity.x() * velocityMultiplier;
-		pose.vecAngularVelocity[1] = packet->velocity.angularVelocity.y() * velocityMultiplier;
-		pose.vecAngularVelocity[2] = packet->velocity.angularVelocity.z() * velocityMultiplier;
+		pose.vecAngularVelocity[0] = packet->velocity.angularVelocity.x();
+		pose.vecAngularVelocity[1] = packet->velocity.angularVelocity.y();
+		pose.vecAngularVelocity[2] = packet->velocity.angularVelocity.z();
 
 		// Acceleration being wrong can make controllers not appear
 		pose.vecAcceleration[0] = 0;
