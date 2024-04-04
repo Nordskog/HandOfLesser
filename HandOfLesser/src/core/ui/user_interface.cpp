@@ -112,7 +112,7 @@ void UserInterface::initGLFW()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	this->mWindow = glfwCreateWindow(640 * 4, 480 * 4, "Hand of Lesser", NULL, NULL);
+	this->mWindow = glfwCreateWindow(640 * 3, 480 * 1.5, "Hand of Lesser", NULL, NULL);
 	if (!this->mWindow)
 	{
 		std::cerr << "glfw windows creation failed!" << std::endl;
