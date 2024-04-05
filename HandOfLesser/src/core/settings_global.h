@@ -11,7 +11,7 @@ namespace HOL
 {
 	namespace settings
 	{
-		void restoreDefaultControllerOffset(ControllerType type);
+		void restoreDefaultControllerOffset(ControllerOffsetPreset type);
 	}
 
 	extern HOL::settings::HandOfLesserSettings Config;

@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <src/controller/controller.h>
 
 namespace HOL
 {
@@ -67,6 +68,7 @@ namespace HOL
 
 		struct HandPoseSettings
 		{
+			HOL::ControllerType mControllerType = HOL::ControllerType::OculusTouch_VDXR;
 			Eigen::Vector3f OrientationOffset = Eigen::Vector3f(0, 0, 0);
 			Eigen::Vector3f PositionOffset = Eigen::Vector3f(0, 0, 0);
 		};

@@ -9,9 +9,9 @@ namespace HOL
 
 	namespace settings
 	{
-		void restoreDefaultControllerOffset(ControllerType type)
+		void restoreDefaultControllerOffset(HOL::ControllerOffsetPreset type)
 		{
-			PoseLocationEuler def = HOL::getDefaultControllerOffset(type);
+			PoseLocationEuler def = HOL::getControllerOffsetPreset(type);
 
 			Config.handPose.PositionOffset = def.position;
 			Config.handPose.OrientationOffset = def.orientation;

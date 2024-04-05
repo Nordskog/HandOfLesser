@@ -10,10 +10,18 @@ namespace HOL
 	{
 		OculusTouch_Airlink,
 		OculusTouch_VDXR, 
-		ValveIndexKnuckles,
 		ControllerType_MAX
 	};
 
-	PoseLocationEuler getDefaultControllerOffset(ControllerType type);
+	// TODO: need to be able to save these
+	enum ControllerOffsetPreset
+	{
+		ZERO,
+		RoughyVRChatHand,
+		ControllerOffsetPreset_MAX
+	};
 
+	PoseLocationEuler getControllerBaseOffset(ControllerType type);
+
+	PoseLocationEuler getControllerOffsetPreset(ControllerOffsetPreset type);
 }

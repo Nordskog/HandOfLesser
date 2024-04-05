@@ -511,24 +511,35 @@ void UserInterface::buildMainInterface()
 	// Offset inputs
 	/////////////////
 
-	ImGui::SeparatorText("Presets");
+	ImGui::SeparatorText("Controller type");
 
 	if (ImGui::Button("Touch Airlink"))
 	{
-		HOL::settings::restoreDefaultControllerOffset(ControllerType::OculusTouch_Airlink);
-	}
-
-	if (ImGui::Button("Touch VDXR"))
-	{
-		HOL::settings::restoreDefaultControllerOffset(ControllerType::OculusTouch_VDXR);
+		Config.handPose.mControllerType = ControllerType::OculusTouch_Airlink;
 	}
 
 	ImGui::SameLine();
 
-	if (ImGui::Button("Knuckles"))
+
+	if (ImGui::Button("Touch VDXR"))
 	{
-		HOL::settings::restoreDefaultControllerOffset(ControllerType::ValveIndexKnuckles);
+		Config.handPose.mControllerType = ControllerType::OculusTouch_VDXR;
 	}
+
+	ImGui::SeparatorText("Offset preset");
+
+	if (ImGui::Button("Zero"))
+	{
+		HOL::settings::restoreDefaultControllerOffset(HOL::ZERO);
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Roughy VRC"))
+	{
+		HOL::settings::restoreDefaultControllerOffset(HOL::RoughyVRChatHand);
+	}
+
 
 	ImGui::BeginChild("TranslationInput",
 					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),

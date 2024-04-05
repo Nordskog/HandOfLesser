@@ -214,15 +214,15 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 			// Offsets
 			/////////////
 
-			// Transform palm ( not actually same as grip ) to index controller tracker position
-			Eigen::Vector3f gripRotationOffset = Eigen::Vector3f(63, 0, -99);
-			Eigen::Vector3f gripTranslationOffset = Eigen::Vector3f(0.021, 0, -0.114);
+			// We have a base offset for each controller type, which for the time being
+			// has been configured to match what VD handtracking gives you.
+			// The user-configurable offset is applied in addition to this.
+			auto controllerOffset = HOL::getControllerBaseOffset(Config.handPose.mControllerType);
 
-			// Add configurable offset
 			Eigen::Vector3f mainRotationOffset
-				= gripRotationOffset + Config.handPose.OrientationOffset;
+				= controllerOffset.orientation + Config.handPose.OrientationOffset;
 			Eigen::Vector3f mainTranslationOffset
-				= gripTranslationOffset + Config.handPose.PositionOffset;
+				= controllerOffset.position + Config.handPose.PositionOffset;
 
 			if (this->mSide == HandSide::LeftHand)
 			{
@@ -238,20 +238,18 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 			// Rot
 			///////////
 
-			Eigen::Quaternionf rawOrientation = this->handPose.palmLocation.orientation;
-			Eigen::Quaternionf rotationOffsetQuat
-				= HOL::quaternionFromEulerAnglesDegrees(mainRotationOffset);
-
-			this->handPose.palmLocation.orientation = rawOrientation * rotationOffsetQuat;
+			this->handPose.palmLocation.orientation
+				= HOL::rotateLocal(this->handPose.palmLocation.orientation,
+								   HOL::quaternionFromEulerAnglesDegrees(mainRotationOffset));
 
 			//////////////
 			// Trans
 			/////////////
 
-			Eigen::Vector3f rawPosition = this->handPose.palmLocation.position;
-			Eigen::Vector3f positionOffsetLocal
-				= this->handPose.palmLocation.orientation * mainTranslationOffset;
-			this->handPose.palmLocation.position = rawPosition + positionOffsetLocal;
+			this->handPose.palmLocation.position
+				= HOL::translateLocal(this->handPose.palmLocation.position,
+									  this->handPose.palmLocation.orientation,
+									  mainTranslationOffset);
 
 			this->calculateCurlSplay();
 
@@ -269,8 +267,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 			{
 				// Hand orientation
 
-				HOL::display::HandTransform[this->mSide].rawPose.position = rawPosition;
-				HOL::display::HandTransform[this->mSide].rawPose.orientation = rawOrientation;
+				HOL::display::HandTransform[this->mSide].rawPose.position = newPalmPosition;
+				HOL::display::HandTransform[this->mSide].rawPose.orientation = newPalmOrientation;
 
 				HOL::display::HandTransform[this->mSide].finalPose.position
 					= this->handPose.palmLocation.position;

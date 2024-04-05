@@ -53,4 +53,15 @@ namespace HOL
 		return Eigen::Vector3f(-trans.x(), trans.y(), trans.z());
 	}
 
+	Eigen::Vector3f translateLocal(Eigen::Vector3f position, Eigen::Quaternionf axis, Eigen::Vector3f offset)
+	{
+		Eigen::Vector3f positionOffsetLocal = axis * offset;
+		return position + positionOffsetLocal;
+	}
+
+	Eigen::Quaternionf rotateLocal(Eigen::Quaternionf axis, Eigen::Quaternionf offset)
+	{
+		return axis * offset;
+	}
+
 } // namespace HOL

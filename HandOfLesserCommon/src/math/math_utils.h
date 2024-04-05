@@ -17,4 +17,8 @@ namespace HOL
 	Eigen::Vector3f flipHandRotation(Eigen::Vector3f& rot);
 	Eigen::Vector3f flipHandTranslation(Eigen::Vector3f& trans);
 
+	Eigen::Vector3f
+	translateLocal(Eigen::Vector3f position, Eigen::Quaternionf axis, Eigen::Vector3f offset);
+	Eigen::Quaternionf rotateLocal(Eigen::Quaternionf axis, Eigen::Quaternionf offset);
+
 } // namespace HOL
