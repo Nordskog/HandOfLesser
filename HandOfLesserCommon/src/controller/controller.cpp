@@ -6,11 +6,11 @@ namespace HOL
 		switch (type)
 		{
 			case ControllerType::OculusTouch_Airlink: {
-				return {Eigen::Vector3f(0.044, -0.009, -0.132), Eigen::Vector3f(40, 1, -91)};
+				return {Eigen::Vector3f(0.076, -0.043, -0.107), Eigen::Vector3f(39.5f, 1, -91)};
 			}
 
 			case ControllerType::OculusTouch_VDXR: {
-				return {Eigen::Vector3f(0.044, -0.009, -0.132), Eigen::Vector3f(40, 1, -91)};
+				return {Eigen::Vector3f(0.076, -0.043, -0.107), Eigen::Vector3f(39.5f, 1, -91)};
 			}
 		}
 	}
@@ -20,7 +20,7 @@ namespace HOL
 		switch (type)
 		{
 			case ControllerOffsetPreset::RoughyVRChatHand: {
-				return {Eigen::Vector3f(-0.011, -0.004, 0.007), Eigen::Vector3f(8, 0, 0)};
+				return {Eigen::Vector3f(0, 0.016, 0.002), Eigen::Vector3f(9, 0, 0)};
 			}
 
 			case ControllerOffsetPreset::ZERO: {

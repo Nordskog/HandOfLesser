@@ -19,6 +19,8 @@ namespace HOL
 		bool canPossess();
 		bool shouldPossess();
 
+		HandSide getSide();
+
 		void setLastOriginalPoseState(bool valid);
 
 		uint32_t getDeviceId();

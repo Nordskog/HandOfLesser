@@ -93,6 +93,11 @@ namespace HOL
 		return canPoss || this->mValidWhileOriginalInvalid;
 	}
 
+	HandSide HookedController::getSide()
+	{
+		return mSide;
+	}
+
 	void HookedController::setLastOriginalPoseState(bool valid)
 	{
 		this->mLastOriginalPoseValid = valid;

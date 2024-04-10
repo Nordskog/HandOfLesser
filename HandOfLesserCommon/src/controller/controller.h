@@ -9,7 +9,7 @@ namespace HOL
 	enum ControllerType
 	{
 		OculusTouch_Airlink,
-		OculusTouch_VDXR, 
+		OculusTouch_VDXR,
 		ControllerType_MAX
 	};
 
@@ -21,7 +21,16 @@ namespace HOL
 		ControllerOffsetPreset_MAX
 	};
 
+	enum ControllerMode
+	{
+		NoControllerMode,
+		EmulateControllerMode,
+		HookedControllerMode,
+		OffsetControllerMode,
+		ControllerMode_MAX
+	};
+
 	PoseLocationEuler getControllerBaseOffset(ControllerType type);
 
 	PoseLocationEuler getControllerOffsetPreset(ControllerOffsetPreset type);
-}
+} // namespace HOL

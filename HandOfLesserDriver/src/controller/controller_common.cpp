@@ -3,6 +3,7 @@
 #include "controller_common.h"
 #include "src/core/hand_of_lesser.h"
 #include <chrono>
+#include <driverlog.h>
 
 namespace HOL::ControllerCommon
 {
@@ -93,6 +94,94 @@ namespace HOL::ControllerCommon
 		jitteredPose.vecPosition[2] += JitterDistribution(JitterGenerator);
 
 		return jitteredPose;
+	}
+
+	void offsetPose(vr::DriverPose_t& existingPose,
+					HOL::HandSide side,
+					Eigen::Vector3f translationOffset,
+					Eigen::Vector3f rotationOffset)
+	{
+
+		if (side == HandSide::LeftHand)
+		{
+			// Base offsets are for the left hand
+		}
+		else
+		{
+			rotationOffset = flipHandRotation(rotationOffset);
+			translationOffset = flipHandTranslation(translationOffset);
+		}
+
+		/////////////////////
+		// Existing values
+		////////////////////
+
+		Eigen::Quaternionf poseRotation = Eigen::Quaternionf(existingPose.qRotation.w,
+															 existingPose.qRotation.x,
+															 existingPose.qRotation.y,
+															 existingPose.qRotation.z);
+
+		Eigen::Vector3f poseTranslation = Eigen::Vector3f(
+			existingPose.vecPosition[0], existingPose.vecPosition[1], existingPose.vecPosition[2]);
+
+		///////////////////////////
+		// Apply driver offsets
+		///////////////////////////
+
+		// Apply the DriverFromHead offset, rather than letting OVR do it.
+		// This allows us to apply the same offset to both possess and offset modes.
+		// SteamVR wants the original sensor position for applying velocities and stuff,
+		// but as of writing there is no hand-tracking solution that provides useful
+		// velocities anyway, so we just supply the final pose.
+		// In theory you could apply the driver offset, apply our offsets, then
+		// apply the inverse of the driver offset. Do that if we ever need velocities.
+
+		// offsets are expected to be applied translation, then rotation.
+		// we should try to adhere to this with all our offsets too.
+
+		Eigen::Vector3f vecDriverFromHead
+			= Eigen::Vector3f(existingPose.vecDriverFromHeadTranslation[0],
+							  existingPose.vecDriverFromHeadTranslation[1],
+							  existingPose.vecDriverFromHeadTranslation[2]);
+		Eigen::Quaternionf qDriverFromHead
+			= Eigen::Quaternionf(existingPose.qDriverFromHeadRotation.w,
+								 existingPose.qDriverFromHeadRotation.x,
+								 existingPose.qDriverFromHeadRotation.y,
+								 existingPose.qDriverFromHeadRotation.z);
+
+		poseTranslation = HOL::translateLocal(poseTranslation, poseRotation, vecDriverFromHead);
+		poseRotation = poseRotation * qDriverFromHead;
+
+		// Clear in pose
+		existingPose.vecDriverFromHeadTranslation[0] = 0;
+		existingPose.vecDriverFromHeadTranslation[1] = 0;
+		existingPose.vecDriverFromHeadTranslation[2] = 0;
+
+		existingPose.qDriverFromHeadRotation.w = 1;
+		existingPose.qDriverFromHeadRotation.x = 0;
+		existingPose.qDriverFromHeadRotation.y = 0;
+		existingPose.qDriverFromHeadRotation.z = 0;
+
+		////////////////////
+		// Apply our offets
+		////////////////////
+
+		poseTranslation = HOL::translateLocal(poseTranslation, poseRotation, translationOffset);
+		poseRotation
+			= HOL::rotateLocal(poseRotation, HOL::quaternionFromEulerAnglesDegrees(rotationOffset));
+
+		//////////
+		// Assign
+		//////////
+
+		existingPose.vecPosition[0] = poseTranslation.x();
+		existingPose.vecPosition[1] = poseTranslation.y();
+		existingPose.vecPosition[2] = poseTranslation.z();
+
+		existingPose.qRotation.w = poseRotation.w();
+		existingPose.qRotation.x = poseRotation.x();
+		existingPose.qRotation.y = poseRotation.y();
+		existingPose.qRotation.z = poseRotation.z();
 	}
 
 } // namespace HOL::ControllerCommon

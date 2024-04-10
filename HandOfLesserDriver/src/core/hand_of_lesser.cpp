@@ -1,4 +1,5 @@
 #include "hand_of_lesser.h"
+#include "HandOfLesserCommon.h"
 #include <driverlog.h>
 
 namespace HOL
@@ -11,7 +12,6 @@ namespace HOL
 	{
 		this->mActive = true;
 		HandOfLesser::Current = this;
-		this->mControllerMode = ControllerMode::HookedControllerMode;
 		this->mTransport.init(9006); // Hardcoded for now, needs to be negotaited somehow
 		my_pose_update_thread_ = std::thread(&HandOfLesser::ReceiveDataThread, this);
 	}
@@ -31,13 +31,13 @@ namespace HOL
 				case HOL::NativePacketType::HandTransform: {
 					HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*)rawPacket;
 
-					GenericControllerInterface* controller = this->GetActiveController(packet->side);
+					GenericControllerInterface* controller
+						= this->GetActiveController(packet->side);
 					if (controller != nullptr)
 					{
 						controller->UpdatePose(packet);
 						controller->SubmitPose();
 					}
-					
 
 					break;
 				}
@@ -47,7 +47,8 @@ namespace HOL
 
 					if (packet->valid)
 					{
-						GenericControllerInterface* controller = this->GetActiveController(packet->side);
+						GenericControllerInterface* controller
+							= this->GetActiveController(packet->side);
 						if (controller != nullptr)
 						{
 							controller->UpdateInput(packet);
@@ -59,7 +60,7 @@ namespace HOL
 
 				case HOL::NativePacketType::Settings: {
 					HOL::SettingsPacket* packet = (HOL::SettingsPacket*)rawPacket;
-					
+
 					HandOfLesser::Config = packet->config;
 
 					break;
@@ -102,7 +103,7 @@ namespace HOL
 					vr::TrackedDeviceClass_Controller,
 					controller))
 			{
-				DriverLog("Failed to create %s controller device!", (i == 0 ? "left" : "right") );
+				DriverLog("Failed to create %s controller device!", (i == 0 ? "left" : "right"));
 			}
 		}
 	}
@@ -115,18 +116,20 @@ namespace HOL
 		// TODO: I geuss they can be activated multiple times and we should deal with that
 		if (this->mHookedControllers[side] != nullptr)
 		{
-			DriverLog("Tried to add hooked %s controller but already added!", (side == HandSide::LeftHand ? "left" : "right"));
+			DriverLog("Tried to add hooked %s controller but already added!",
+					  (side == HandSide::LeftHand ? "left" : "right"));
 			return;
 		}
 
 		this->mHookedControllers[side] = std::make_unique<HookedController>(id, side, host, driver);
 	}
-	
+
 	static bool lastPossessState = false;
 
 	bool HandOfLesser::shouldPossess(uint32_t deviceId)
 	{
-		if (this->mControllerMode == ControllerMode::HookedControllerMode)
+		if (HandOfLesser::Current->Config.handPose.mControllerMode
+			== ControllerMode::HookedControllerMode)
 		{
 			return shouldPossess(getHookedControllerByDeviceId(deviceId));
 		}
@@ -147,7 +150,8 @@ namespace HOL
 		// Other lighthouse devices will pr obably always remain active, so I guess we just
 		// wait for the controllers to be completely still while the user is holding up their
 		// hands for a few seconds. Also a problem for later.
-		if (this->mControllerMode == ControllerMode::HookedControllerMode)
+		if (HandOfLesser::Current->Config.handPose.mControllerMode
+			== ControllerMode::HookedControllerMode)
 		{
 			// Only possess the controllers we are hooking
 			if (controller != nullptr)
@@ -161,12 +165,14 @@ namespace HOL
 
 	bool HandOfLesser::shouldEmulateControllers()
 	{
-		return this->mControllerMode == ControllerMode::EmulateControllerMode;
+		return HandOfLesser::Current->Config.handPose.mControllerMode
+			   == ControllerMode::EmulateControllerMode;
 	}
 
 	bool HandOfLesser::hookedControllersFound()
 	{
-		return this->mHookedControllers[HandSide::LeftHand] != nullptr && this->mHookedControllers[HandSide::RightHand] != nullptr;
+		return this->mHookedControllers[HandSide::LeftHand] != nullptr
+			   && this->mHookedControllers[HandSide::RightHand] != nullptr;
 	}
 
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)
@@ -194,23 +200,19 @@ namespace HOL
 		}
 
 		return nullptr;
-
 	}
 
 	GenericControllerInterface* HandOfLesser::GetActiveController(HOL::HandSide side)
 	{
-		switch (this->mControllerMode)
+		switch (HandOfLesser::Current->Config.handPose.mControllerMode)
 		{
-			case ControllerMode::EmulateControllerMode:
-			{
+			case ControllerMode::EmulateControllerMode: {
 				return getEmulatedController(side);
 			}
-			case ControllerMode::HookedControllerMode: 
-			{
+			case ControllerMode::HookedControllerMode: {
 				return getHookedController(side);
 			}
-			default:
-			{
+			default: {
 				return nullptr;
 			}
 		}
@@ -219,7 +221,8 @@ namespace HOL
 	void HandOfLesser::runFrame()
 	{
 		// As of writing only emulated controllers need to do anything here
-		if (this->mControllerMode == ControllerMode::EmulateControllerMode)
+		if (HandOfLesser::Current->Config.handPose.mControllerMode
+			== ControllerMode::EmulateControllerMode)
 		{
 			// TODO: only run if using index controller
 			EmulatedControllerDriver* leftController
@@ -245,11 +248,11 @@ namespace HOL
 				}
 			}
 		}
-		else if(this->mControllerMode == ControllerMode::HookedControllerMode)
+		else if (HandOfLesser::Current->Config.handPose.mControllerMode
+				 == ControllerMode::HookedControllerMode)
 		{
 			// TODO: only run if using index controller
-			HookedController* leftController
-				= this->getHookedController(HandSide::LeftHand);
+			HookedController* leftController = this->getHookedController(HandSide::LeftHand);
 			HookedController* rightController = this->getHookedController(HandSide::RightHand);
 
 			// We always create both
@@ -257,8 +260,6 @@ namespace HOL
 			{
 				// We don't actually have anything to do for these
 			}
-
-
 		}
 	}
 
@@ -277,4 +278,4 @@ namespace HOL
 		this->mEmulatedControllers[HandSide::LeftHand].reset();
 		this->mEmulatedControllers[HandSide::RightHand].reset();
 	}
-}
+} // namespace HOL

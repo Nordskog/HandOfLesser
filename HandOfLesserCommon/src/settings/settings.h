@@ -28,7 +28,7 @@ namespace HOL
 				-3.6f,
 				12.9f, 
 				16.2f, 
-				-24.3f		// Thumb
+				-18.2f		// Thumb
 			};
 
 			// Range values must match unity!
@@ -68,6 +68,7 @@ namespace HOL
 
 		struct HandPoseSettings
 		{
+			HOL::ControllerMode mControllerMode = HOL::ControllerMode::HookedControllerMode;
 			HOL::ControllerType mControllerType = HOL::ControllerType::OculusTouch_VDXR;
 			Eigen::Vector3f OrientationOffset = Eigen::Vector3f(0, 0, 0);
 			Eigen::Vector3f PositionOffset = Eigen::Vector3f(0, 0, 0);
@@ -83,12 +84,18 @@ namespace HOL
 			bool useUnityHumanoidSplay = true;
 		};
 
+		struct DebugSettings
+		{
+	
+		};
+
 		struct HandOfLesserSettings
 		{
 			GeneralSettings general;
 			FingerBendSettings fingerBend;
 			HandPoseSettings handPose;
 			VRChatSettings vrchat;
+			DebugSettings debug;
 		};
 	}
 } // namespace HOL::settings

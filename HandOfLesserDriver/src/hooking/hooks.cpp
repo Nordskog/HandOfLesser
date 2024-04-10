@@ -1,5 +1,6 @@
 #include "driverlog.h"
 #include "hooks.h"
+#include "src/controller/controller_common.h"
 
 
 namespace HOL::hooks
@@ -92,29 +93,45 @@ namespace HOL::hooks
 						   const vr::DriverPose_t& newPose,
 						   uint32_t unPoseStructSize)
 		{
+			auto& config = HOL::HandOfLesser::Current->Config;
 
-
-
-			//mLastOriginalPoseValid
-			HookedController* controller
-				= HOL::HandOfLesser::Current->getHookedControllerByDeviceId(unWhichDevice);
-
-			if (controller != nullptr)
+			auto controllerMode = config.handPose.mControllerMode;
+			if (controllerMode == ControllerMode::HookedControllerMode
+				|| controllerMode == ControllerMode::OffsetControllerMode)
 			{
-				controller->setLastOriginalPoseState(newPose.deviceIsConnected
-													 && newPose.poseIsValid);
+				HookedController* controller
+					= HOL::HandOfLesser::Current->getHookedControllerByDeviceId(unWhichDevice);
+
+				if (controller != nullptr)
+				{
+					controller->setLastOriginalPoseState(newPose.deviceIsConnected
+														 && newPose.poseIsValid);
+
+					if (controllerMode == ControllerMode::HookedControllerMode)
+					{
+						// Just do nothing if we are possessing controllers
+						if (HOL::HandOfLesser::Current->shouldPossess(controller))
+						{
+							// Prevent original function from being called
+							return;
+						}
+					}
+					else if (controllerMode == ControllerMode::OffsetControllerMode)
+					{
+						// Modify pose by offset
+						// Casting to non-cast maybe bad, but don't want to create new one constantly.
+						HOL::ControllerCommon::offsetPose((vr::DriverPose_t&)newPose,
+														  controller->getSide(),
+														  config.handPose.PositionOffset,
+														  config.handPose.OrientationOffset);
+					}
+				}
 			}
 
-			// Just do nothing if we are possessing controllers
-			if (!HOL::HandOfLesser::Current->shouldPossess(controller))
-			{
-				return TrackedDevicePoseUpdated::FunctionHook.originalFunc(
-					_this, unWhichDevice, newPose, unPoseStructSize);
-			}
-			else
-			{
-				// Nothing!
-			}
+			// Make sure to return early if we don't want to call the original function
+			return TrackedDevicePoseUpdated::FunctionHook.originalFunc(
+				_this, unWhichDevice, newPose, unPoseStructSize);
+
 		};
 	} // namespace TrackedDevicePoseUpdated
 

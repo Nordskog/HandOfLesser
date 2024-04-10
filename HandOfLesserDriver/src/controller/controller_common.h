@@ -10,4 +10,9 @@ namespace HOL::ControllerCommon
 
 	extern vr::DriverPose_t addJitter(const vr::DriverPose_t& existingPose);
 
+	extern void offsetPose(vr::DriverPose_t& existingPose,
+						   HOL::HandSide side,
+						   Eigen::Vector3f translationOffset,
+						   Eigen::Vector3f rotationOffset);
+
 }

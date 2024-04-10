@@ -5,6 +5,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include <vector>
 #include <cmath>
 #include <iostream>
 #include <imgui_impl_win32.h>
@@ -472,6 +473,36 @@ void UserInterface::buildMainInterface()
 	ImGui::Text("OpenXR Session state: %s",
 				HOL::OpenXR::getOpenXrStateString(HOL::display::OpenXrInstanceState));
 
+	//////////////////
+	// Mode
+	////////////////////
+
+	ImGui::SeparatorText("Driver mode");
+
+	std::vector<std::tuple<std::string, HOL::ControllerMode>> modeRadioButtons
+		= {{"None", HOL::ControllerMode::NoControllerMode},
+		   {"Emulate", HOL::ControllerMode::EmulateControllerMode},
+		   {"Possess", HOL::ControllerMode::HookedControllerMode},
+		   {"Offset", HOL::ControllerMode::OffsetControllerMode}};
+
+	bool isFirstIteration = true;
+	for (const auto& buttonContent : modeRadioButtons)
+	{
+		if (!isFirstIteration)
+		{
+			ImGui::SameLine();
+		}
+
+		if (ImGui::RadioButton(std::get<0>(buttonContent).c_str(),
+							   (int*)&HOL::Config.handPose.mControllerMode,
+							   std::get<1>(buttonContent)))
+		{
+			HOL::HandOfLesserCore::Current->syncSettings();
+		}
+
+		isFirstIteration = false;
+	}
+
 	/////////////////
 	// General
 	/////////////////
@@ -520,7 +551,6 @@ void UserInterface::buildMainInterface()
 
 	ImGui::SameLine();
 
-
 	if (ImGui::Button("Touch VDXR"))
 	{
 		Config.handPose.mControllerType = ControllerType::OculusTouch_VDXR;
@@ -531,6 +561,7 @@ void UserInterface::buildMainInterface()
 	if (ImGui::Button("Zero"))
 	{
 		HOL::settings::restoreDefaultControllerOffset(HOL::ZERO);
+		HOL::HandOfLesserCore::Current->syncSettings();
 	}
 
 	ImGui::SameLine();
@@ -538,17 +569,20 @@ void UserInterface::buildMainInterface()
 	if (ImGui::Button("Roughy VRC"))
 	{
 		HOL::settings::restoreDefaultControllerOffset(HOL::RoughyVRChatHand);
+		HOL::HandOfLesserCore::Current->syncSettings();
 	}
-
 
 	ImGui::BeginChild("TranslationInput",
 					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
 					  ImGuiChildFlags_AutoResizeY);
 
+	bool offsetChanged = false;
 	ImGui::SeparatorText("Translation");
-	ImGui::InputFloat("posX", &Config.handPose.PositionOffset.x(), 0.001f, 0.01f, "%.3f");
-	ImGui::InputFloat("posY", &Config.handPose.PositionOffset.y(), 0.001f, 0.01f, "%.3f");
-	ImGui::InputFloat("posZ", &Config.handPose.PositionOffset.z(), 0.001f, 0.01f, "%.3f");
+
+	auto& positionOffset = Config.handPose.PositionOffset;
+	offsetChanged |= ImGui::InputFloat("posX", &positionOffset.x(), 0.001f, 0.01f, "%.3f");
+	offsetChanged |= ImGui::InputFloat("posY", &positionOffset.y(), 0.001f, 0.01f, "%.3f");
+	offsetChanged |= ImGui::InputFloat("posZ", &positionOffset.z(), 0.001f, 0.01f, "%.3f");
 
 	ImGui::EndChild();
 	ImGui::SameLine();
@@ -556,11 +590,18 @@ void UserInterface::buildMainInterface()
 	ImGui::BeginChild("OrientationInput", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("Orientation");
-	ImGui::InputFloat("rotX", &Config.handPose.OrientationOffset.x(), 1.0f, 5.0f, "%.3f");
-	ImGui::InputFloat("rotY", &Config.handPose.OrientationOffset.y(), 1.0f, 5.0f, "%.3f");
-	ImGui::InputFloat("rotZ", &Config.handPose.OrientationOffset.z(), 1.0f, 5.0f, "%.3f");
+
+	auto& orientationOffset = Config.handPose.OrientationOffset;
+	offsetChanged |= ImGui::InputFloat("rotX", &orientationOffset.x(), 1.0f, 5.0f, "%.3f");
+	offsetChanged |= ImGui::InputFloat("rotY", &orientationOffset.y(), 1.0f, 5.0f, "%.3f");
+	offsetChanged |= ImGui::InputFloat("rotZ", &orientationOffset.z(), 1.0f, 5.0f, "%.3f");
 
 	ImGui::EndChild();
+
+	if (offsetChanged)
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
 
 	///////////////////
 	// Hand pose
