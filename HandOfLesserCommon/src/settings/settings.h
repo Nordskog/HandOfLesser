@@ -12,15 +12,15 @@ namespace HOL
 		{
 			// clang-format off
 			float CommonCurlCenter[3] = {
-				38.6f, 
-				45.f,
-				25.f
+				50.3f, 
+				44.7f,
+				27.0f
 			};
 
 			float ThumbCurlCenter[3] = {
 				20.1f, 
-				-14.5f, 
-				45.7f
+				-39.1f, 
+				50.2f
 			};
 
 			float FingerSplayCenter[5] = {
@@ -39,15 +39,15 @@ namespace HOL
 			};
 			MotionRange ThumbCurlRange[3] = {
 				{-4.1f, 0.4	}, 
-				{-1.1, 1.7	},
-				{-1.7, 1.27	}
+				{-0.5, 2.5	},
+				{-2, 1.27	}
 			};
 
 			MotionRange FingersplayRange[5] = {
-				{-1.5,	1	},	// Index
-				{-2,	1	},		
-				{-3,	1	}, 
-				{-3,	1	},
+				{-2,	1	},	// Index
+				{-2,	1	},	// middle	
+				{-3,	1	},	// ring
+				{-3,	1.5f},	// little
 				{-2,	1.5f}	// thumb
 			};
 
