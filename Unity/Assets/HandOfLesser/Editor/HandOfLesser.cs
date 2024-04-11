@@ -11,6 +11,9 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 {
     static TransmitType sTransmitType = TransmitType.packed;
 
+    // This depends on framerate, so we need to figure out something for that.
+    static float sRemoteSmoothing = 0.7f;
+
     [MenuItem("Window/HandOfLesser")]
     public static void ShowWindow()
     {
@@ -19,6 +22,8 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
     private void OnGUI()
     {
+        sRemoteSmoothing = EditorGUILayout.FloatField("Remote smoothing:", sRemoteSmoothing);
+
         if (GUILayout.Button("Generate Animations"))
         {
             generateAnimations(sTransmitType);
@@ -119,7 +124,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         {
             name = HOL.Resources.REMOTE_SMOOTHING_PARAMETER_NAME,
             type = AnimatorControllerParameterType.Float,
-            defaultFloat = 0.7f  // whatever we set the smoothing to. Can we even edit via code afterwards? 
+            defaultFloat = sRemoteSmoothing  // whatever we set the smoothing to. Can we even edit via code afterwards? 
         });
 
         controller.AddParameter(new AnimatorControllerParameter()
