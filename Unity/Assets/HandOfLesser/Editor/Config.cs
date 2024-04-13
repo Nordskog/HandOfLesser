@@ -22,7 +22,7 @@ namespace HOL
     {
         // Range values must match app!
         public static MotionRange[] CommonCurlRange = new MotionRange[3] {
-			new MotionRange(-1.2f,  1    ),
+			new MotionRange(-1.3f,  1    ),
             new MotionRange(-1.0f,  1    ),
             new MotionRange(-1.0f,  1    ),
         };

@@ -377,7 +377,7 @@ void UserInterface::BuildVRChatOSCSettings()
 
 	InputFloatMultipleSingleLableWithButtons("commonFingerCurlCenter",
 											 "Common",
-											 0.1f,
+											 0.5f,
 											 1.f,
 											 "%.1f",
 											 90,
@@ -387,7 +387,7 @@ void UserInterface::BuildVRChatOSCSettings()
 
 	InputFloatMultipleSingleLableWithButtons("thumbFingerCurlCenter",
 											 "Thumb",
-											 0.1f,
+											 0.5f,
 											 1.f,
 											 "%.1f",
 											 90,
@@ -399,7 +399,7 @@ void UserInterface::BuildVRChatOSCSettings()
 
 	InputFloatMultipleTopLableWithButtons("fingerSplayCenter",
 										  {"Index", "Middle", "Ring", "Little", "Thumb"},
-										  0.1f,
+										  0.5f,
 										  1.f,
 										  "%.1f",
 										  90,
