@@ -209,6 +209,7 @@ namespace HOL
 			case ControllerMode::EmulateControllerMode: {
 				return getEmulatedController(side);
 			}
+			case ControllerMode::OffsetControllerMode:
 			case ControllerMode::HookedControllerMode: {
 				return getHookedController(side);
 			}
