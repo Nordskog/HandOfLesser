@@ -4,8 +4,9 @@ add_library(HandOfLesserCommon STATIC
 	src/transport/transportutil.cpp
 	src/transport/udptransport.cpp
 	src/math/fingers.cpp
-	src/math/utils.cpp
-	src/finger_bend.cpp
+	src/math/math_utils.cpp
+	src/hand/finger_bend.cpp
+	src/controller/controller.cpp
 )
 
 target_link_libraries(HandOfLesserCommon PUBLIC
@@ -18,6 +19,9 @@ target_include_directories(HandOfLesserCommon
 	INTERFACE include
 	PRIVATE ${OPENVR_INCLUDE_DIR}
 )
+
+# Allow us to include from src dir path instead of using relative paths
+target_include_directories(HandOfLesserCommon PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(HandOfLesserCommon.Tests
 	tests/test_example.cpp

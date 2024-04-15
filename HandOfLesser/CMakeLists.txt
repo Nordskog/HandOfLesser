@@ -1,17 +1,20 @@
 ﻿add_executable(HandOfLesser
-	src/display_global.cpp
+	src/core/ui/display_global.cpp
 	src/HandOfLesser.cpp
-	src/HandOfLesserCore.cpp
-	src/HandTracking.cpp
-	src/HandTrackingInterface.cpp
-	src/InstanceHolder.cpp
-	src/math_utils.cpp
-	src/settings_global.cpp
-	src/simple_gesture_detector.cpp
-	src/openxr_hand.cpp
-	src/user_interface.cpp
-	src/XrUtils.cpp
-	src/openxr_hacks.cpp
+	src/core/HandOfLesserCore.cpp
+	src/openxr/HandTracking.cpp
+	src/openxr/HandTrackingInterface.cpp
+	src/openxr/InstanceHolder.cpp
+
+	src/core/settings_global.cpp
+	src/hands/simple_gesture_detector.cpp
+	src/openxr/openxr_hand.cpp
+	src/core/ui/user_interface.cpp
+	src/openxr/XrUtils.cpp
+	src/oculus/oculus_hacks.cpp
+	src/vrchat/vrchat_osc.cpp
+	src/openxr/openxr_state.cpp
+	src/windows/windows_utils.cpp
 )
 
 find_package(OpenGL REQUIRED)
@@ -24,11 +27,15 @@ target_link_libraries(HandOfLesser PRIVATE
 	imgui
 	openxr_loader
 	openxr-hpp
+	oscpp
 	${OPENGL_LIBRARY}
 	${OPENVR_LIBRARIES}
 )
 
 target_include_directories(HandOfLesser PRIVATE ${OPENVR_INCLUDE_DIR})
+
+# Allow us to include from src dir path instead of using relative paths
+target_include_directories(HandOfLesser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_definitions(HandOfLesser PUBLIC
 	NOMINMAX

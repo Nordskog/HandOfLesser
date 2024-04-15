@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../hand.h"
+#include "src/hand/hand.h"
+#include <src/settings/settings.h>
 
 namespace HOL
 {
@@ -9,6 +10,7 @@ namespace HOL
 		InvalidPacket = 100,
 		HandTransform = 500,
 		ControllerInput = 600,
+		Settings = 700
 	};
 
 	struct NativePacket
@@ -38,13 +40,21 @@ namespace HOL
 		float fingerCurlPinky = 0.0f;
 	};
 
+	struct SettingsPacket
+	{
+		NativePacketType packetType = NativePacketType::Settings;
+		HOL::settings::HandOfLesserSettings config;
+	};
+
 	// Mimics vr::DriverPose_t, but only contains the bits we care about.
 	// Subject to change.
 	// include packet type in packet itself so we can just memcpy the whole thing
 	struct HandTransformPacket
 	{
 		NativePacketType packetType = NativePacketType::HandTransform;
-		bool valid;
+		bool active = false;
+		bool valid = false;
+		bool stale = false;
 		HOL::HandSide side;
 		HOL::PoseLocation location;
 		HOL::PoseVelocity velocity;

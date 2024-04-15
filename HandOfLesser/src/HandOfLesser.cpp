@@ -1,17 +1,18 @@
 ﻿#include "HandOfLesser.h"
-#include "HandOfLesserCore.h"
+#include "core/HandOfLesserCore.h"
 #include <HandOfLesserCommon.h>
 
 int main(int /* argc */, char* /* argv */[])
 {
+	HOL::HandOfLesserCore app;
+
 	try
 	{
-		HandOfLesserCore app;
 		app.init(9005);
 		app.start();
 	}
 	catch (std::exception exp)
 	{
-		std::cout << exp.what() << std::endl;
+		std::cerr << exp.what() << std::endl;
 	}
 }
