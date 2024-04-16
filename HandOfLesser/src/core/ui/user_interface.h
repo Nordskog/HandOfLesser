@@ -11,7 +11,7 @@ namespace HOL
 		void init();
 		void terminate();
 		void onFrame();
-		void buildMainInterface();
+		void buildInterface();
 		bool shouldTerminate();
 
 	private:
@@ -50,7 +50,10 @@ namespace HOL
 											  bool treatAsRadians = false,
 											  bool treatAsInt = false);
 		void buildSingleHandTransformDisplay(HOL::HandSide side);
-		void BuildVRChatOSCSettings();
+
+		void buildMain();
+		void buildVRChatOSCSettings();
+		void buildInput();
 	};
 }
 

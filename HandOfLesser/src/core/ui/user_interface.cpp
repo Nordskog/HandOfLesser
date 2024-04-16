@@ -17,6 +17,8 @@
 
 using namespace HOL;
 
+static const int PANEL_WIDTH = 600;
+
 UserInterface* UserInterface::mCurrent = nullptr;
 
 void UserInterface::init()
@@ -58,7 +60,7 @@ void UserInterface::onFrame()
 	glClear(GL_COLOR_BUFFER_BIT); // Whendo we clear?
 	// ImGui::ShowDemoWindow(); // Show demo window! :)
 
-	buildMainInterface();
+	buildInterface();
 
 	// Do stuff
 
@@ -113,7 +115,9 @@ void UserInterface::initGLFW()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	this->mWindow = glfwCreateWindow(640 * 3, 480 * 1.5, "Hand of Lesser", NULL, NULL);
+	// TODO: Fix window sizing
+	this->mWindow
+		= glfwCreateWindow(PANEL_WIDTH * 1.5, PANEL_WIDTH * 1.5, "Hand of Lesser", NULL, NULL);
 	if (!this->mWindow)
 	{
 		std::cerr << "glfw windows creation failed!" << std::endl;
@@ -354,113 +358,10 @@ void UserInterface::InputFloatMultipleTopLableWithButtons(
 	ImGui::PopItemWidth();
 }
 
-void UserInterface::BuildVRChatOSCSettings()
-
+void HOL::UserInterface::buildMain()
 {
-	ImGui::BeginChild("VRChatSettings",
-					  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, 0),
-					  ImGuiChildFlags_AutoResizeY);
-
-	ImGui::SeparatorText("VRChat");
-
-	InputFloatMultipleSingleLableWithButtons("thumbRotationOffset",
-											 "Thumb rotation offset",
-											 1.f,
-											 1.f,
-											 "%.1f",
-											 90,
-											 {&Config.fingerBend.ThumbAxisOffset[0],
-											  &Config.fingerBend.ThumbAxisOffset[1],
-											  &Config.fingerBend.ThumbAxisOffset[2]});
-
-	ImGui::SeparatorText("Curl Center");
-
-	InputFloatMultipleSingleLableWithButtons("commonFingerCurlCenter",
-											 "Common",
-											 0.5f,
-											 1.f,
-											 "%.1f",
-											 90,
-											 {&Config.fingerBend.CommonCurlCenter[0],
-											  &Config.fingerBend.CommonCurlCenter[1],
-											  &Config.fingerBend.CommonCurlCenter[2]});
-
-	InputFloatMultipleSingleLableWithButtons("thumbFingerCurlCenter",
-											 "Thumb",
-											 0.5f,
-											 1.f,
-											 "%.1f",
-											 90,
-											 {&Config.fingerBend.ThumbCurlCenter[0],
-											  &Config.fingerBend.ThumbCurlCenter[1],
-											  &Config.fingerBend.ThumbCurlCenter[2]});
-
-	ImGui::SeparatorText("Splay Center");
-
-	InputFloatMultipleTopLableWithButtons("fingerSplayCenter",
-										  {"Index", "Middle", "Ring", "Little", "Thumb"},
-										  0.5f,
-										  1.f,
-										  "%.1f",
-										  90,
-										  {&Config.fingerBend.FingerSplayCenter[0],
-										   &Config.fingerBend.FingerSplayCenter[1],
-										   &Config.fingerBend.FingerSplayCenter[2],
-										   &Config.fingerBend.FingerSplayCenter[3],
-										   &Config.fingerBend.FingerSplayCenter[4]});
-
-	// Raw
-	ImGui::SeparatorText("Raw bend");
-	buildSingleFingerTrackingDisplay("rawBendLeft",
-									 HOL::LeftHand,
-									 HOL::display::FingerTracking[HOL::LeftHand].rawBend,
-									 false,
-									 true);
-	ImGui::SameLine();
-	buildSingleFingerTrackingDisplay("rawBendRight",
-									 HOL::RightHand,
-									 HOL::display::FingerTracking[HOL::RightHand].rawBend,
-									 false,
-									 true);
-
-	// Humanoid
-	ImGui::SeparatorText("Humanoid bend");
-	buildSingleFingerTrackingDisplay("humanoidBendLeft",
-									 HOL::LeftHand,
-									 HOL::display::FingerTracking[HOL::LeftHand].humanoidBend,
-									 false,
-									 false);
-	ImGui::SameLine();
-	buildSingleFingerTrackingDisplay("humanoidBendRight",
-									 HOL::RightHand,
-									 HOL::display::FingerTracking[HOL::RightHand].humanoidBend,
-									 false,
-									 false);
-
-	// Encoded, 0-255 in left hand, -1 to +1 that we'll be sending to vrchat in right hand
-	ImGui::SeparatorText("Packed bend");
-	buildSingleFingerTrackingDisplay("packedBendBothHandsRaw",
-									 HOL::LeftHand,
-									 HOL::display::FingerTracking[HOL::LeftHand].packedBend,
-									 true,
-									 false);
-	ImGui::SameLine();
-	buildSingleFingerTrackingDisplay("packedBendBothHandsVrchat",
-									 HOL::RightHand,
-									 HOL::display::FingerTracking[HOL::RightHand].packedBend,
-									 false,
-									 false);
-
-	ImGui::EndChild();
-}
-
-void UserInterface::buildMainInterface()
-{
-	ImGui::SetNextWindowPos(ImVec2(0, 0));
-
-	ImGui::Begin("Controllers", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-
-	ImGui::BeginChild("LeftMainWindow", ImVec2(scaleSize(600), 0), ImGuiChildFlags_AutoResizeY);
+	ImGui::BeginChild(
+		"LeftMainWindow", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
 
 	/////////////////////////
 	// State
@@ -617,17 +518,139 @@ void UserInterface::buildMainInterface()
 	///////////////////
 
 	ImGui::EndChild();
+}
 
+void UserInterface::buildVRChatOSCSettings()
+
+{
+	// ImGui::BeginChild("VRChatSettings",
+	//				  ImVec2(ImGui::GetContentRegionAvail().x * 1.f, 0),
+	//				  ImGuiChildFlags_AutoResizeY);
+
+	ImGui::BeginChild(
+		"VRChatSettings", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
+
+	ImGui::SeparatorText("VRChat");
+
+	InputFloatMultipleSingleLableWithButtons("thumbRotationOffset",
+											 "Thumb rotation offset",
+											 1.f,
+											 1.f,
+											 "%.1f",
+											 90,
+											 {&Config.fingerBend.ThumbAxisOffset[0],
+											  &Config.fingerBend.ThumbAxisOffset[1],
+											  &Config.fingerBend.ThumbAxisOffset[2]});
+
+	ImGui::SeparatorText("Curl Center");
+
+	InputFloatMultipleSingleLableWithButtons("commonFingerCurlCenter",
+											 "Common",
+											 0.5f,
+											 1.f,
+											 "%.1f",
+											 90,
+											 {&Config.fingerBend.CommonCurlCenter[0],
+											  &Config.fingerBend.CommonCurlCenter[1],
+											  &Config.fingerBend.CommonCurlCenter[2]});
+
+	InputFloatMultipleSingleLableWithButtons("thumbFingerCurlCenter",
+											 "Thumb",
+											 0.5f,
+											 1.f,
+											 "%.1f",
+											 90,
+											 {&Config.fingerBend.ThumbCurlCenter[0],
+											  &Config.fingerBend.ThumbCurlCenter[1],
+											  &Config.fingerBend.ThumbCurlCenter[2]});
+
+	ImGui::SeparatorText("Splay Center");
+
+	InputFloatMultipleTopLableWithButtons("fingerSplayCenter",
+										  {"Index", "Middle", "Ring", "Little", "Thumb"},
+										  0.5f,
+										  1.f,
+										  "%.1f",
+										  90,
+										  {&Config.fingerBend.FingerSplayCenter[0],
+										   &Config.fingerBend.FingerSplayCenter[1],
+										   &Config.fingerBend.FingerSplayCenter[2],
+										   &Config.fingerBend.FingerSplayCenter[3],
+										   &Config.fingerBend.FingerSplayCenter[4]});
+
+	// Raw
+	ImGui::SeparatorText("Raw bend");
+	buildSingleFingerTrackingDisplay("rawBendLeft",
+									 HOL::LeftHand,
+									 HOL::display::FingerTracking[HOL::LeftHand].rawBend,
+									 false,
+									 true);
 	ImGui::SameLine();
-	ImGui::BeginChild("RightMainWindow", ImVec2(scaleSize(600), 0), ImGuiChildFlags_AutoResizeY);
+	buildSingleFingerTrackingDisplay("rawBendRight",
+									 HOL::RightHand,
+									 HOL::display::FingerTracking[HOL::RightHand].rawBend,
+									 false,
+									 true);
 
-	/////////////////
-	// VRChat
-	/////////////////
+	// Humanoid
+	ImGui::SeparatorText("Humanoid bend");
+	buildSingleFingerTrackingDisplay("humanoidBendLeft",
+									 HOL::LeftHand,
+									 HOL::display::FingerTracking[HOL::LeftHand].humanoidBend,
+									 false,
+									 false);
+	ImGui::SameLine();
+	buildSingleFingerTrackingDisplay("humanoidBendRight",
+									 HOL::RightHand,
+									 HOL::display::FingerTracking[HOL::RightHand].humanoidBend,
+									 false,
+									 false);
 
-	BuildVRChatOSCSettings();
+	// Encoded, 0-255 in left hand, -1 to +1 that we'll be sending to vrchat in right hand
+	ImGui::SeparatorText("Packed bend");
+	buildSingleFingerTrackingDisplay("packedBendBothHandsRaw",
+									 HOL::LeftHand,
+									 HOL::display::FingerTracking[HOL::LeftHand].packedBend,
+									 true,
+									 false);
+	ImGui::SameLine();
+	buildSingleFingerTrackingDisplay("packedBendBothHandsVrchat",
+									 HOL::RightHand,
+									 HOL::display::FingerTracking[HOL::RightHand].packedBend,
+									 false,
+									 false);
 
 	ImGui::EndChild();
+}
+
+void UserInterface::buildInterface()
+{
+	ImGui::SetNextWindowPos(ImVec2(0, 0));
+
+	auto io = ImGui::GetIO();
+	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y));
+
+
+	ImGui::Begin("HandOfLesser",
+				 NULL,
+				 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+
+	ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+	if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
+	{
+		if (ImGui::BeginTabItem("Main"))
+		{
+			buildMain();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("VRChat"))
+		{
+			buildVRChatOSCSettings();
+			ImGui::EndTabItem();
+		}
+		ImGui::EndTabBar();
+	}
+
 	ImGui::End();
 }
 
