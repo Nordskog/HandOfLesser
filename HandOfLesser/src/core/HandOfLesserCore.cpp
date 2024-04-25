@@ -78,6 +78,9 @@ void HOL::HandOfLesserCore::userInterfaceLoop()
 		{
 			break;
 		}
+
+		// Apparently it doesn't vsync anymore?
+		std::this_thread::sleep_for(std::chrono::milliseconds(15));
 	}
 
 	this->mUserInterface.terminate();
