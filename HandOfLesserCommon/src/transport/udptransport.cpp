@@ -28,6 +28,12 @@ bool UdpTransport::init(int port)
 		return false;
 	}
 
+	// Stuff so we can use select() with a timeout
+	this->mTimeout.tv_sec = 1;	 // Timeout in seconds
+	this->mTimeout.tv_usec = 0; // Microseconds
+	FD_ZERO(&this->mFdSet);
+	FD_SET(this->mSocket, &mFdSet);
+
 	return true;
 }
 
@@ -53,10 +59,18 @@ sockaddr_in UdpTransport::getAddress(int port)
 
 size_t UdpTransport::receivePacket(char* buffer, size_t maxlength)
 {
-	size_t received = recv(this->mSocket, buffer, maxlength, 0);
-	if (received == SOCKET_ERROR)
+	size_t res = select(0, &this->mFdSet, nullptr, nullptr, &this->mTimeout);
+	if (res == SOCKET_ERROR)
 	{
 		printWSAError("Socket read failed");
 		return 0;
+	}
+	else if (res == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		return recv(this->mSocket, buffer, maxlength, 0);
 	}
 }

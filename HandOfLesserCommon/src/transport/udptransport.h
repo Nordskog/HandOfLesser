@@ -14,5 +14,7 @@ public:
 
 private:
 	SOCKET mSocket;
+	fd_set mFdSet;
+	timeval mTimeout;
 };
 } // namespace HOL
