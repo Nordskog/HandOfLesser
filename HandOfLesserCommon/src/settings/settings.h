@@ -84,6 +84,12 @@ namespace HOL
 			bool useUnityHumanoidSplay = true;
 		};
 
+		struct VisualizerSettings
+		{
+			bool followLeftHand;
+			bool followRightHand;
+		};
+
 		struct DebugSettings
 		{
 	
@@ -96,6 +102,7 @@ namespace HOL
 			HandPoseSettings handPose;
 			VRChatSettings vrchat;
 			DebugSettings debug;
+			VisualizerSettings visualizer;
 		};
 	}
 } // namespace HOL::settings

@@ -19,11 +19,20 @@ using namespace HOL;
 
 static const int PANEL_WIDTH = 600;
 
-UserInterface* UserInterface::mCurrent = nullptr;
+UserInterface* UserInterface::Current = nullptr;
+
+ImVec2 operator+(const ImVec2& v1, const ImVec2& v2)
+{
+	return ImVec2(v1.x + v2.x, v1.y + v2.y);
+}
+
+HOL::UserInterface::UserInterface()
+{
+	UserInterface::Current = this;
+}
 
 void UserInterface::init()
 {
-	UserInterface::mCurrent = this;
 	initGLFW();
 	initImgui();
 
@@ -155,7 +164,7 @@ void UserInterface::error_callback(int error, const char* description)
 void UserInterface::windows_scale_callback(GLFWwindow* window, float xscale, float yscale)
 {
 	std::cout << "New scale: " << xscale << std::endl;
-	UserInterface::mCurrent->updateStyles(xscale); // xy should be the same?
+	UserInterface::Current->updateStyles(xscale); // xy should be the same?
 }
 
 float UserInterface::scaleSize(float size)
@@ -356,6 +365,11 @@ void UserInterface::InputFloatMultipleTopLableWithButtons(
 	}
 
 	ImGui::PopItemWidth();
+}
+
+void HOL::UserInterface::buildVisual()
+{
+	mVisualizer.drawVisualizer();
 }
 
 void HOL::UserInterface::buildMain()
@@ -630,10 +644,7 @@ void UserInterface::buildInterface()
 	auto io = ImGui::GetIO();
 	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y));
 
-
-	ImGui::Begin("HandOfLesser",
-				 NULL,
-				 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	ImGui::Begin("HandOfLesser", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
 	ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 	if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
@@ -648,6 +659,12 @@ void UserInterface::buildInterface()
 			buildVRChatOSCSettings();
 			ImGui::EndTabItem();
 		}
+		if (ImGui::BeginTabItem("Input"))
+		if (ImGui::BeginTabItem("Visual"))
+		{
+			buildVisual();
+			ImGui::EndTabItem();
+		}
 		ImGui::EndTabBar();
 	}
 
@@ -657,4 +674,9 @@ void UserInterface::buildInterface()
 bool HOL::UserInterface::shouldTerminate()
 {
 	return mShouldTerminate;
+}
+
+Visualizer* HOL::UserInterface::getVisualizer()
+{
+	return &this->mVisualizer;
 }

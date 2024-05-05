@@ -15,6 +15,7 @@ namespace HOL::OpenXR
 		HOL::HandTransformPacket getTransformPacket(HOL::HandSide side);
 		HOL::ControllerInputPacket getInputPacket(HOL::HandSide side);
 		HOL::HandPose& getHandPose(HOL::HandSide side);
+		void drawHands();
 
 	private:
 		void initHands(xr::UniqueDynamicSession& session);

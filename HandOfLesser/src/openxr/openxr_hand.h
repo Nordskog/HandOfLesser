@@ -19,6 +19,7 @@ public:
 	SimpleGesture::SimpleGestureState
 		simpleGestures[SimpleGesture::SimpleGestureType::SIMPLE_GESTURE_MAX];
 	XrHandTrackingAimStateFB mAimState{XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
+	XrHandJointLocationEXT* getLastJointLocations();
 
 private:
 	void calculateCurlSplay();

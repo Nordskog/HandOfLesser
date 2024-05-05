@@ -72,7 +72,7 @@ void HOL::HandOfLesserCore::userInterfaceLoop()
 
 	while (1)
 	{
-		// This vsyncs so no need to sleep manually
+		this->mHandTracking.drawHands();
 		this->mUserInterface.onFrame();
 		if (this->mUserInterface.shouldTerminate())
 		{
@@ -101,6 +101,11 @@ void HandOfLesserCore::mainLoop()
 		{
 			doOpenXRStuff();
 		}
+
+		// UI thread is vsynced, so we need to manage any draw calls
+		// that are manually submitted.
+		this->mUserInterface.Current->getVisualizer()->swapDrawQueue();
+		this->mUserInterface.Current->getVisualizer()->clearDrawQueue();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(Config.general.UpdateIntervalMS));
 	}

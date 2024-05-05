@@ -1,5 +1,6 @@
 #include "openxr_hand.h"
 #include "XrUtils.h"
+#include "xr_hand_utils.h"
 #include <HandOfLesserCommon.h>
 #include "HandTrackingInterface.h"
 #include "src/core/settings_global.h"
@@ -19,6 +20,11 @@ void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 	HandTrackingInterface::createHandTracker(session, toOpenXRHandSide(side), this->mHandTracker);
 }
 
+XrHandJointLocationEXT* OpenXRHand::getLastJointLocations()
+{
+	return this->mJointLocations;
+}
+
 void OpenXRHand::calculateCurlSplay()
 {
 	if (!this->handPose.poseTracked)
@@ -33,45 +39,11 @@ void OpenXRHand::calculateCurlSplay()
 	const auto getJointPosition = [&](XrHandJointEXT joint)
 	{ return toEigenVector(this->mJointLocations[joint].pose.position); };
 
-	const auto getRootOpenXRJointForFinger = [&](FingerType joint)
-	{
-		switch (joint)
-		{
-			case FingerType::FingerThumb:
-				return XrHandJointEXT::XR_HAND_JOINT_WRIST_EXT; // Thumb joint calculated from wrist
-			case FingerType::FingerIndex:
-				return XrHandJointEXT::XR_HAND_JOINT_INDEX_METACARPAL_EXT;
-			case FingerType::FingerMiddle:
-				return XrHandJointEXT::XR_HAND_JOINT_MIDDLE_METACARPAL_EXT;
-			case FingerType::FingerRing:
-				return XrHandJointEXT::XR_HAND_JOINT_RING_METACARPAL_EXT;
-			case FingerType::FingerLittle:
-				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_METACARPAL_EXT;
-		}
-	};
-
-	const auto getFirstJoint = [&](FingerType joint)
-	{
-		switch (joint)
-		{
-			case FingerType::FingerThumb:
-				return XrHandJointEXT::XR_HAND_JOINT_THUMB_METACARPAL_EXT;
-			case FingerType::FingerIndex:
-				return XrHandJointEXT::XR_HAND_JOINT_INDEX_PROXIMAL_EXT;
-			case FingerType::FingerMiddle:
-				return XrHandJointEXT::XR_HAND_JOINT_MIDDLE_PROXIMAL_EXT;
-			case FingerType::FingerRing:
-				return XrHandJointEXT::XR_HAND_JOINT_RING_PROXIMAL_EXT;
-			case FingerType::FingerLittle:
-				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_PROXIMAL_EXT;
-		}
-	};
-
 	// Get the orientation of the 4 relevant joints for each finger
 	// the thumb has a special case
 	const auto getRawOrientation = [&](FingerType finger, Eigen::Quaternionf rawOrientationOut[])
 	{
-		XrHandJointEXT rootJoint = getRootOpenXRJointForFinger(finger); // METACARPAL
+		XrHandJointEXT rootJoint = OpenXR::getRootJoint(finger); // METACARPAL or wrist ( thumb )
 
 		// openxr joints are hierarchical, so we can +1 until we reach the tip of the finger
 		for (int i = 0; i < 4; i++)
@@ -141,10 +113,11 @@ void OpenXRHand::calculateCurlSplay()
 				palmRot = rawOrientation[0];
 			}
 
-			Eigen::Vector3f knucklePos = getJointPosition(getFirstJoint(finger));
-			Eigen::Vector3f tipPos = getJointPosition((XrHandJointEXT)(getFirstJoint(finger) + 1));
+			Eigen::Vector3f knucklePos = getJointPosition(OpenXR::getFirstFingerJoint(finger));
+			Eigen::Vector3f splayRefPos
+				= getJointPosition((XrHandJointEXT)(OpenXR::getFirstFingerJoint(finger) + 1));
 
-			bend->setSplay(computeHumanoidSplay(palmRot, knucklePos, tipPos));
+			bend->setSplay(computeHumanoidSplay(palmRot, knucklePos, splayRefPos));
 		}
 	}
 }

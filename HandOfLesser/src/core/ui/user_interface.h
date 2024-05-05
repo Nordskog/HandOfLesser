@@ -2,21 +2,25 @@
 
 #include <HandOfLesserCommon.h>
 #include <GLFW/glfw3.h>
+#include "visualizer.h"
 
 namespace HOL
 {
 	class UserInterface
 	{
 	public:
+		UserInterface();
 		void init();
 		void terminate();
 		void onFrame();
 		void buildInterface();
 		bool shouldTerminate();
+		static UserInterface* Current; // We only have a single window for now
+		Visualizer* getVisualizer();
 
 	private:
 		GLFWwindow* mWindow = nullptr;
-		static UserInterface* mCurrent; // We only have a single window for now
+
 		void initGLFW();
 		void initImgui();
 		float mScale = 1.f;
@@ -25,6 +29,8 @@ namespace HOL
 		float scaleSize(float size);
 		bool mShouldTerminate = false;
 		bool shouldCloseWindow();
+
+		Visualizer mVisualizer;
 
 		void updateStyles(float scale);
 
@@ -54,6 +60,6 @@ namespace HOL
 		void buildMain();
 		void buildVRChatOSCSettings();
 		void buildInput();
+		void buildVisual();
 	};
-}
-
+} // namespace HOL

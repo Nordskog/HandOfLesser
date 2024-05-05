@@ -5,6 +5,10 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
+#include "src/core/ui/user_interface.h"
+#include "XrUtils.h"
+#include "src/core/settings_global.h"
+#include "xr_hand_utils.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -136,4 +140,53 @@ HOL::HandPose& HandTracking::getHandPose(HOL::HandSide side)
 {
 	OpenXRHand& hand = (side == HOL::LeftHand) ? this->mLeftHand : this->mRightHand;
 	return hand.handPose;
+}
+
+void HOL::OpenXR::HandTracking::drawHands()
+{
+	auto colorGrey = IM_COL32(155, 155, 155, 255);
+	auto colorWhite = IM_COL32(255, 255, 255, 255);
+	auto vis = HOL::UserInterface::Current->getVisualizer();
+
+	for (int i = 0; i < HandSide::HandSide_MAX; i++)
+	{
+		XrHandJointLocationEXT* jointLocations = this->getHand((HandSide)i).getLastJointLocations();
+
+		for (int j = 0; j < XR_HAND_JOINT_COUNT_EXT; j++)
+		{
+			XrHandJointLocationEXT& joint = jointLocations[j];
+
+			// WIll replace this later anyway so nevermind wasteful conversion
+			vis->submitPoint(OpenXR::toEigenVector(joint.pose.position), colorGrey, 5);
+		}
+
+		// Also draw some white skeleton lines
+		{
+			for (int finger = 0; finger < FingerType_MAX; finger++)
+			{
+				XrHandJointEXT rootJoint = OpenXR::getRootJoint((FingerType)finger);
+				for (int j = 0; j < 4; j++)
+				{
+					XrHandJointLocationEXT& joint = jointLocations[rootJoint + j];
+					XrHandJointLocationEXT& nextJoint = jointLocations[rootJoint + j + 1];
+					vis->submitLine(OpenXR::toEigenVector(joint.pose.position),
+									OpenXR::toEigenVector(nextJoint.pose.position),
+									colorWhite,
+									2);
+				}
+			}
+		}
+
+		XrHandJointLocationEXT& palm = jointLocations[XR_HAND_JOINT_PALM_EXT];
+
+		// This doesn't super go here but it's a good place for it.
+		if (i == HandSide::LeftHand && HOL::Config.visualizer.followLeftHand)
+		{
+			vis->centerTo(OpenXR::toEigenVector(palm.pose.position));
+		}
+		else if (i == HandSide::RightHand && HOL::Config.visualizer.followRightHand)
+		{
+			vis->centerTo(OpenXR::toEigenVector(palm.pose.position));
+		}
+	}
 }
