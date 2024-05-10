@@ -25,6 +25,8 @@ namespace HOL::hacks
 						hProcess, hMods[i], szModName, sizeof(szModName) / sizeof(TCHAR)
 					))
 				{
+					std::cout << "Checking dll: " << szModName << std::endl;
+
 					if (_tcsstr(szModName, moduleName) != NULL)
 					{
 						std::cout << "Found OVR dll: " << szModName << std::endl;
@@ -47,7 +49,7 @@ namespace HOL::hacks
 	{
 		HANDLE currentProcess = GetCurrentProcess();
 		HMODULE hModule = getModule(
-			currentProcess, _T("\LibOVRRT64_1.dll")
+			currentProcess, _T("\LibOVRRTImpl64_1.dll")
 		); // dll loaded into this memory address
 
 		// Pattern of bytes surrounding the instructions we are looking for,.
