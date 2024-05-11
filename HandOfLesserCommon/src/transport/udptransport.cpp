@@ -31,8 +31,6 @@ bool UdpTransport::init(int port)
 	// Stuff so we can use select() with a timeout
 	this->mTimeout.tv_sec = 1;	 // Timeout in seconds
 	this->mTimeout.tv_usec = 0; // Microseconds
-	FD_ZERO(&this->mFdSet);
-	FD_SET(this->mSocket, &mFdSet);
 
 	return true;
 }
@@ -59,7 +57,14 @@ sockaddr_in UdpTransport::getAddress(int port)
 
 size_t UdpTransport::receivePacket(char* buffer, size_t maxlength)
 {
+	// Must be done before every call to select()
+	// If you only do this once, you'll observe a network-wide lag spike
+	// every 5 seconds or so, with a timeout of 1s. Increasing it reduces the symptoms.
+	FD_ZERO(&this->mFdSet);
+	FD_SET(this->mSocket, &mFdSet);
+
 	size_t res = select(0, &this->mFdSet, nullptr, nullptr, &this->mTimeout);
+
 	if (res == SOCKET_ERROR)
 	{
 		printWSAError("Socket read failed");
