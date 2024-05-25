@@ -41,15 +41,20 @@ namespace HOL
 						float width);
 
 		Visualizer();
+		void init(); // Call on UI thread!!
 
 		void centerTo(Eigen::Vector3f center);
 
-		void swapDrawQueue(); // At end of main loop frame
-		void clearDrawQueue();
+		void swapOuterDrawQueue(); // At end of main loop frame
+		void clearDrawQueue();	// before drawing ( frame start )
 
 	private:
 		void drawPoints();
 		void drawLines();
+		void swapInnerDrawQueue(); // before drawing
+		void clearInternalDrawQueue(); // before drawing
+
+		DrawQueue* getDrawQueueForSubmit();
 
 		void handleInput(ImVec2 excludeBounds);
 
@@ -72,20 +77,20 @@ namespace HOL
 		Eigen::Matrix4Xf mViewMatrix;
 		Eigen::Matrix4Xf mProjectionMatrix;
 
-		void swapActiveQueue();	// Immediately before drawing
-
 		std::mutex mDrawSwapLock;
 
-		// draw directly into draw queue 
-		bool mInternalDraw = false;
+		std::thread::id mUiThreadId; // Different queues for different threads
 
-		DrawQueue* mActiveDrawQueue;	// Draw this
-		DrawQueue* mSwapQueue;			// Both swap with this
-		DrawQueue* mDrawQueue;			// Drawn into this
+		DrawQueue* mActiveDrawQueue; // Draw this
+		DrawQueue* mSwapQueue;		 // Swap both with this
+		DrawQueue* mDrawQueue;		 // Drawn into this
 
+		DrawQueue mInternalDrawQueue;	// For drawing internal stuff outside of main loop
+		DrawQueue mDrawSwap0;
 		DrawQueue mDrawSwap1;
 		DrawQueue mDrawSwap2;
-		DrawQueue mDrawSwap3;
+
+
 
 		float mFov = 90;
 	};

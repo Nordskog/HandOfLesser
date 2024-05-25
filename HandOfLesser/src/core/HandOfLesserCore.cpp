@@ -73,6 +73,10 @@ void HOL::HandOfLesserCore::userInterfaceLoop()
 	while (1)
 	{
 		this->mHandTracking.drawHands();
+		if (this->mInstanceHolder.getState() == OpenXrState::Running)
+		{
+			this->mHandTracking.drawHands();
+		}
 		this->mUserInterface.onFrame();
 		if (this->mUserInterface.shouldTerminate())
 		{
@@ -91,6 +95,7 @@ void HandOfLesserCore::mainLoop()
 	while (1)
 	{
 		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+		this->mUserInterface.Current->getVisualizer()->clearDrawQueue();
 
 		if (this->mUserInterface.shouldTerminate())
 		{
@@ -106,6 +111,8 @@ void HandOfLesserCore::mainLoop()
 		// that are manually submitted.
 		this->mUserInterface.Current->getVisualizer()->swapDrawQueue();
 		this->mUserInterface.Current->getVisualizer()->clearDrawQueue();
+		// draw queue swapping because UI and main loop are not in sync
+		this->mUserInterface.Current->getVisualizer()->swapOuterDrawQueue();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(Config.general.UpdateIntervalMS));
 	}

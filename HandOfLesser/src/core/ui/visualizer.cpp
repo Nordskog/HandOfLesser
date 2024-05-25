@@ -19,9 +19,15 @@ namespace HOL
 		this->mViewMatrix = Eigen::Matrix4f::Identity();
 		this->mProjectionMatrix = Eigen::Matrix4f::Identity();
 
-		this->mActiveDrawQueue = &this->mDrawSwap1;
-		this->mSwapQueue = &this->mDrawSwap2;
-		this->mDrawQueue = &this->mDrawSwap3;
+		this->mActiveDrawQueue = &this->mDrawSwap0;
+		this->mSwapQueue = &this->mDrawSwap1;
+		this->mDrawQueue = &this->mDrawSwap2;
+	}
+
+	void Visualizer::init()
+	{
+		// Must be called on UI thread!
+		this->mUiThreadId = std::this_thread::get_id();
 	}
 
 	void Visualizer::centerTo(Eigen::Vector3f center)
@@ -32,21 +38,21 @@ namespace HOL
 		this->mCameraPosition += move;
 	}
 
-	void Visualizer::swapDrawQueue()
+	void Visualizer::swapOuterDrawQueue()
 	{
 		// Swap swap and draw
 		mDrawSwapLock.lock();
-		std::swap(this->mDrawQueue, this->mSwapQueue);
+		std::swap(this->mActiveDrawQueue, this->mDrawQueue);
 		mDrawSwapLock.unlock();
 	}
 
-	void Visualizer::swapActiveQueue()
+	void Visualizer::swapInnerDrawQueue()
 	{
-		// Swap active and swap
+		// Swap swap and draw
 		mDrawSwapLock.lock();
-		std::swap(this->mActiveDrawQueue, this->mSwapQueue);
+		std::swap(this->mActiveDrawQueue, this->mDrawQueue);
 		mDrawSwapLock.unlock();
-	};
+	}
 
 	void Visualizer::clearDrawQueue()
 	{
@@ -56,11 +62,7 @@ namespace HOL
 
 	void Visualizer::drawVisualizer()
 	{
-		this->swapActiveQueue();
-
-		// Set to draw directly into active queue
-		// Use for duration of this call
-		this->mInternalDraw = true;
+		this->swapInnerDrawQueue();
 
 		drawAxis();
 
@@ -89,7 +91,7 @@ namespace HOL
 		calculateProjectionMatrix();
 		drawLines();
 		drawPoints();
-		clearDraw();
+		this->clearInternalDrawQueue(); // Leave clean slate for next frame
 
 		// handle input and draw widgets after drawing scene,
 		// so we know the area we don't want to be interactable
@@ -124,32 +126,53 @@ namespace HOL
 			IM_COL32(23, 139, 255, 255)); // Green dot
 
 		ImGui::EndChild();
-		this->mInternalDraw = false;
 	}
 
 	void Visualizer::drawPoints()
 	{
-		for (auto& point : this->mActiveDrawQueue->points)
+		auto queues = {this->mActiveDrawQueue, &this->mInternalDrawQueue};
+
+		for (auto queue : queues)
 		{
+			for (auto& point : queue->points)
+			{
 
-			auto projected = projectToScreen(point.position);
+				auto projected = projectToScreen(point.position);
 
-			ImGui::GetWindowDrawList()->AddCircleFilled(
-				projected, point.size, point.color); // Red dot
+				ImGui::GetWindowDrawList()->AddCircleFilled(
+					projected, point.size, point.color); // Red dot
+			}
 		}
 	}
 
 	void Visualizer::drawLines()
 	{
-		for (auto& line : this->mActiveDrawQueue->lines)
-		{
-			ImGui::GetWindowDrawList()->AddLine(projectToScreen(line.start),
-												projectToScreen(line.end),
-												line.color,
-												line.width); // Red dot
+		auto queues = {this->mActiveDrawQueue, &this->mInternalDrawQueue};
 
-			auto screenLine = projectToScreen(line.start);
+		for (auto queue : queues)
+		{
+			for (auto& line : queue->lines)
+			{
+				ImGui::GetWindowDrawList()->AddLine(projectToScreen(line.start),
+													projectToScreen(line.end),
+													line.color,
+													line.width); // Red dot
+			}
 		}
+	}
+
+	void Visualizer::clearInternalDrawQueue()
+	{
+		this->mInternalDrawQueue.points.clear();
+		this->mInternalDrawQueue.lines.clear();
+	}
+
+	DrawQueue* Visualizer::getDrawQueueForSubmit()
+	{
+		// Internal queue if on UI thread, otherwise draw queue.
+		return std::this_thread::get_id() == this->mUiThreadId
+							   ? &this->mInternalDrawQueue
+							   : this->mDrawQueue;
 	}
 
 	void Visualizer::handleInput(ImVec2 excludeBounds)
@@ -423,7 +446,7 @@ namespace HOL
 
 	void Visualizer::submitPoint(const Eigen::Vector3f& position, ImU32 color, float size)
 	{
-		DrawQueue* queue = this->mInternalDraw ? this->mActiveDrawQueue : this->mDrawQueue;
+		DrawQueue* queue = getDrawQueueForSubmit();
 
 		queue->points.push_back({position, color, size});
 	}
@@ -433,7 +456,7 @@ namespace HOL
 								ImU32 color,
 								float width)
 	{
-		DrawQueue* queue = this->mInternalDraw ? this->mActiveDrawQueue : this->mDrawQueue;
+		DrawQueue* queue = getDrawQueueForSubmit();
 
 		queue->lines.push_back({start, end, color, width});
 	}

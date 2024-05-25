@@ -35,6 +35,7 @@ void UserInterface::init()
 {
 	initGLFW();
 	initImgui();
+	this->mVisualizer.init();
 
 	float xscale, yscale = 0;
 	glfwGetWindowContentScale(this->mWindow, &xscale, &yscale);
