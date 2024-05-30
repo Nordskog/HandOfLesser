@@ -80,6 +80,8 @@ namespace HOL
 			bool sendAlternating = false;
 			bool sendPacked = true;
 
+			bool sendOscInput = true;
+
 			// Modify splay to work with humanoid rig
 			bool useUnityHumanoidSplay = true;
 		};

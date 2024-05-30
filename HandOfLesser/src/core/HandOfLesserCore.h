@@ -8,6 +8,7 @@
 #include "src/core/ui/user_interface.h"
 #include "src/vrchat/vrchat_osc.h"
 #include <thread>
+#include "src/vrchat/vrchat_input.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -31,6 +32,7 @@ namespace HOL
 		HandTracking mHandTracking;
 		UserInterface mUserInterface;
 		VRChatOSC mVrchatOSC;
+		VRChatInput mVrchatInput;
 		NativeTransport mTransport;
 
 		std::thread mUserInterfaceThread;

@@ -17,6 +17,20 @@
 	src/windows/windows_utils.cpp
 	src/core/ui/visualizer.cpp
 	src/openxr/xr_hand_utils.cpp
+	src/hands/gesture/base_gesture.cpp
+	src/hands/gesture/proximity_gesture.cpp
+	src/hands/gesture/above_below_curl_plane_gesture.cpp
+	src/hands/gesture/open_hand_pinch_gesture.cpp
+	src/hands/action/base_action.cpp
+	src/hands/input/base_input.cpp
+	src/hands/action/hand_drag_action.cpp
+	src/hands/input/osc_axis_input.cpp
+	src/vrchat/vrchat_input.cpp
+	src/hands/gesture/chain_gesture.cpp
+	src/util/hol_utils.cpp
+	src/hands/input/settings_toggle_input.cpp
+	src/hands/action/button_action.h
+	src/hands/action/button_action.cpp
 )
 
 find_package(OpenGL REQUIRED)

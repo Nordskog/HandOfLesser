@@ -160,6 +160,15 @@ void HandOfLesserCore::doOscStuff()
 		size = this->mVrchatOSC.generateOscBundlePacked();
 		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
 	}
+
+	// VRChat input goes here for now
+	// Finalizing also resets the input packet, which will otherwise overflow.
+	// Better to control here than having every input check the setting.
+	auto [packetPointer, packetSize] = this->mVrchatInput.finalizeInputBundle();
+	if (Config.vrchat.sendOscInput)
+	{
+		this->mTransport.send(9000, packetPointer, packetSize);
+	}
 }
 
 void HandOfLesserCore::sendUpdate()

@@ -547,6 +547,18 @@ void UserInterface::buildVRChatOSCSettings()
 
 	ImGui::SeparatorText("VRChat");
 
+	ImGui::Checkbox("Send full", &Config.vrchat.sendFull);
+	ImGui::SameLine();
+	ImGui::Checkbox("Send Packed", &Config.vrchat.sendPacked);
+	ImGui::SameLine();
+	ImGui::Checkbox("Send Alternating", &Config.vrchat.sendAlternating);
+
+	ImGui::Checkbox("Send OSC Input", &Config.vrchat.sendOscInput);
+	ImGui::SameLine();
+	ImGui::Checkbox("Use Unity Humanoid Splay", &Config.vrchat.useUnityHumanoidSplay);
+
+	ImGui::SeparatorText("Offsets");
+
 	InputFloatMultipleSingleLableWithButtons("thumbRotationOffset",
 											 "Thumb rotation offset",
 											 1.f,
@@ -661,6 +673,10 @@ void UserInterface::buildInterface()
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Input"))
+		{
+			ImGui::Text("This is the Broccoli tab!\nblah blah blah blah blah");
+			ImGui::EndTabItem();
+		}
 		if (ImGui::BeginTabItem("Visual"))
 		{
 			buildVisual();

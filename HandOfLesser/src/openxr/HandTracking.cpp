@@ -10,20 +10,76 @@
 #include "src/core/settings_global.h"
 #include "xr_hand_utils.h"
 
+#include "src/hands/input/osc_axis_input.h"
+#include "src/hands/input/settings_toggle_input.h"
+#include "src/hands/action/button_action.h"
+#include "src/hands/gesture/chain_gesture.h"
+
 using namespace HOL;
 using namespace HOL::OpenXR;
 using namespace HOL::SimpleGesture;
+using namespace std::chrono_literals;
 
 void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session)
 {
 	HandTrackingInterface::init(instance);
 	this->initHands(session);
+	initGestures();
 }
 
 void HandTracking::initHands(xr::UniqueDynamicSession& session)
 {
 	this->mLeftHand.init(session, HOL::LeftHand);
 	this->mRightHand.init(session, HOL::RightHand);
+}
+
+void HOL::OpenXR::HandTracking::initGestures()
+{
+	{
+		auto handDragAction = HandDragAction::Create(HandSide::LeftHand,
+													 XrHandJointEXT::XR_HAND_JOINT_THUMB_TIP_EXT);
+
+		auto triggerGesture = OpenHandPinchGesture::Create();
+		triggerGesture->setup(FingerType::FingerMiddle, HandSide::LeftHand);
+
+		auto holdGesture = ProximityGesture::Create();
+		holdGesture->setup(FingerType::FingerMiddle, HandSide::LeftHand);
+
+		ActionParameters actionParams = handDragAction->getParameters();
+
+		handDragAction->setTriggerGesture(triggerGesture);
+		handDragAction->setHoldGesture(holdGesture);
+		handDragAction->setSink(OscAxisInput::Create());
+
+		this->mActions.push_back(handDragAction);
+	}
+
+	{
+		auto chainGesture = ChainGesture::Create();
+
+		std::vector<HOL::FingerType> allPinchFingers = {FingerType::FingerIndex,
+														FingerType::FingerMiddle,
+														FingerType::FingerRing,
+														FingerType::FingerLittle};
+		std::reverse(allPinchFingers.begin(),
+					 allPinchFingers.end()); // Let's do from pinky to index
+
+		for (auto otherFinger : allPinchFingers)
+		{
+			auto triggerGesture = OpenHandPinchGesture::Create();
+			triggerGesture->setup(otherFinger, HandSide::RightHand);
+			chainGesture->addGesture(triggerGesture);
+		}
+
+		auto settingsToggleInput = SettingsToggleInput::Create();
+		settingsToggleInput->setup(HolSetting::SendOscInput);
+
+		auto buttonAction = ButtonAction::Create();
+		buttonAction->setTriggerGesture(chainGesture);
+		buttonAction->setSink(settingsToggleInput);
+
+		this->mActions.push_back(buttonAction);
+	}
 }
 
 void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time)
@@ -35,12 +91,30 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time)
 void HandTracking::updateInputs()
 {
 	updateSimpleGestures();
+	updateGestures();
 }
 
 void HandTracking::updateSimpleGestures()
 {
 	HOL::SimpleGesture::populateGestures(this->mLeftHand.simpleGestures, this->mLeftHand);
 	HOL::SimpleGesture::populateGestures(this->mRightHand.simpleGestures, this->mRightHand);
+}
+
+static bool firstRun = true;
+
+void HOL::OpenXR::HandTracking::updateGestures()
+{
+	// printf("################\n");
+
+	HOL::GestureData data;
+	data.joints[0] = this->mLeftHand.getLastJointLocations();
+	data.joints[1] = this->mRightHand.getLastJointLocations();
+	// TODO: HMD pose
+
+	for (auto& action : this->mActions)
+	{
+		action->evaluate(data);
+	}
 }
 
 OpenXRHand& HandTracking::getHand(HOL::HandSide side)
