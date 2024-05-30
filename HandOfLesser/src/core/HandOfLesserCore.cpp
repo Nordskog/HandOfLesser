@@ -72,7 +72,6 @@ void HOL::HandOfLesserCore::userInterfaceLoop()
 
 	while (1)
 	{
-		this->mHandTracking.drawHands();
 		if (this->mInstanceHolder.getState() == OpenXrState::Running)
 		{
 			this->mHandTracking.drawHands();
@@ -107,10 +106,6 @@ void HandOfLesserCore::mainLoop()
 			doOpenXRStuff();
 		}
 
-		// UI thread is vsynced, so we need to manage any draw calls
-		// that are manually submitted.
-		this->mUserInterface.Current->getVisualizer()->swapDrawQueue();
-		this->mUserInterface.Current->getVisualizer()->clearDrawQueue();
 		// draw queue swapping because UI and main loop are not in sync
 		this->mUserInterface.Current->getVisualizer()->swapOuterDrawQueue();
 
