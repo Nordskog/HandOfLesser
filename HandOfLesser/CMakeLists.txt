@@ -31,6 +31,7 @@
 	src/hands/input/settings_toggle_input.cpp
 	src/hands/action/button_action.h
 	src/hands/action/button_action.cpp
+	src/hands/gesture/aim_state_gesture.cpp
 )
 
 find_package(OpenGL REQUIRED)

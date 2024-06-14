@@ -11,7 +11,7 @@ using namespace HOL::OpenXR;
 
 float HOL::OpenHandPinchGesture::evaluateInternal(GestureData data)
 {
-	float proximity = this->mProximityGesture->evaluate(data);
+	float proximity = this->mAimStateGesture->evaluate(data);
 
 	// In this case, all the other fingers need to be above the plane.
 	bool above = true;
@@ -44,12 +44,11 @@ void HOL::OpenHandPinchGesture::setup(HOL::FingerType pinchFinger, HOL::HandSide
 	// Pinch proximity
 	////////////////////
 
-	this->mProximityGesture = ProximityGesture::Create();
+	this->mAimStateGesture = AimStateGesture::Create();
 
-	this->mProximityGesture->setup(
-		getFingerTip(mPinchFinger), side, getFingerTip(FingerType::FingerThumb), side);
+	this->mAimStateGesture->setup(pinchFinger, side);
 
-	this->mSubGestures.push_back(this->mProximityGesture);
+	this->mSubGestures.push_back(this->mAimStateGesture);
 
 	/////////////////////////////////////
 	// Other fingers above pinch plane

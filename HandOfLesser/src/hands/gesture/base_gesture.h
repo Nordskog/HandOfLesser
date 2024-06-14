@@ -13,6 +13,7 @@ namespace HOL
 	struct GestureData
 	{
 		XrHandJointLocationEXT* joints[HandSide::HandSide_MAX];
+		XrHandTrackingAimStateFB* aimState[HandSide::HandSide_MAX];
 		XrPosef HMDPose;
 	};
 

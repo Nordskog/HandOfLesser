@@ -3,7 +3,7 @@
 #include "base_gesture.h"
 #include <HandOfLesserCommon.h>
 #include <vector>
-#include "proximity_gesture.h"
+#include "aim_state_gesture.h"
 #include "above_below_curl_plane_gesture.h"
 
 namespace HOL
@@ -25,7 +25,7 @@ namespace HOL
 		HOL::HandSide mSide;
 
 		std::vector<std::shared_ptr<AboveBelowCurlPlaneGesture>> mCurlPlaneGestures;
-		std::shared_ptr<ProximityGesture> mProximityGesture;
+		std::shared_ptr<AimStateGesture> mAimStateGesture;
 
 	protected:
 		float evaluateInternal(GestureData data) override;

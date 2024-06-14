@@ -42,7 +42,7 @@ void HOL::OpenXR::HandTracking::initGestures()
 		auto triggerGesture = OpenHandPinchGesture::Create();
 		triggerGesture->setup(FingerType::FingerMiddle, HandSide::LeftHand);
 
-		auto holdGesture = ProximityGesture::Create();
+		auto holdGesture = AimStateGesture::Create();
 		holdGesture->setup(FingerType::FingerMiddle, HandSide::LeftHand);
 
 		ActionParameters actionParams = handDragAction->getParameters();
@@ -107,6 +107,8 @@ void HOL::OpenXR::HandTracking::updateGestures()
 	// printf("################\n");
 
 	HOL::GestureData data;
+	data.aimState[0] = &this->mLeftHand.mAimState;
+	data.aimState[1] = &this->mRightHand.mAimState;
 	data.joints[0] = this->mLeftHand.getLastJointLocations();
 	data.joints[1] = this->mRightHand.getLastJointLocations();
 	// TODO: HMD pose
