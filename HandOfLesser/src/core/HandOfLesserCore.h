@@ -9,6 +9,7 @@
 #include "src/vrchat/vrchat_osc.h"
 #include <thread>
 #include "src/vrchat/vrchat_input.h"
+#include "src/steamvr/steamvr_input.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -33,6 +34,7 @@ namespace HOL
 		UserInterface mUserInterface;
 		VRChatOSC mVrchatOSC;
 		VRChatInput mVrchatInput;
+		SteamVR::SteamVRInput mSteamVRInput;
 		NativeTransport mTransport;
 
 		std::thread mUserInterfaceThread;

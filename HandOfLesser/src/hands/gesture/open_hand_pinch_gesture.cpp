@@ -9,70 +9,73 @@
 using namespace HOL;
 using namespace HOL::OpenXR;
 
-float HOL::OpenHandPinchGesture::evaluateInternal(GestureData data)
+namespace HOL::Gesture::OpenHandPinchGesture
 {
-	float proximity = this->mAimStateGesture->evaluate(data);
-
-	// In this case, all the other fingers need to be above the plane.
-	bool above = true;
-	for (auto& planeGesture : this->mCurlPlaneGestures)
+	float Gesture::evaluateInternal(GestureData data)
 	{
-		above = above && (planeGesture->evaluate(data) > 0);
+		float proximity = this->mProxGesture->evaluate(data);
+
+		// In this case, all the other fingers need to be above the plane.
+		bool above = true;
+		for (auto& planeGesture : this->mCurlPlaneGestures)
+		{
+			above = above && (planeGesture->evaluate(data) > 0);
+		}
+
+		// printf("Prox: %.3f, above: %s\n", proximity, (above ? "true" : "false"));
+
+		if (above)
+		{
+			return proximity;
+		}
+		else
+		{
+			return 0;
+		}
 	}
 
-	// printf("Prox: %.3f, above: %s\n", proximity, (above ? "true" : "false"));
+	void Gesture::setup()
+	{
+		this->name = "OpenHandPinchGesture";
+		this->mSubGestures.clear();
 
-	if (above)
-	{
-		return proximity;
-	}
-	else
-	{
-		return 0;
+		////////////////////
+		// Pinch proximity
+		////////////////////
+
+		this->mProxGesture = ProximityGesture::Create();
+
+		this->mProxGesture->setup(this->parameters.pinchFinger, this->parameters.side);
+
+		this->mSubGestures.push_back(this->mProxGesture);
+
+		/////////////////////////////////////
+		// Other fingers above pinch plane
+		/////////////////////////////////////
+
+		std::vector<HOL::FingerType> allPinchFingers = {FingerType::FingerIndex,
+														FingerType::FingerMiddle,
+														FingerType::FingerRing,
+														FingerType::FingerLittle};
+
+		for (auto otherFinger : allPinchFingers)
+		{
+			// Don't check the finger we are pinching
+			if (otherFinger == this->parameters.pinchFinger)
+				continue;
+
+			auto gesture = AboveBelowCurlPlaneGesture::Gesture::Create();
+			gesture->parameters.otherFinger = otherFinger;
+			gesture->parameters.planeFinger = this->parameters.pinchFinger;
+			gesture->parameters.side = this->parameters.side;
+
+			this->mCurlPlaneGestures.push_back(gesture);
+		}
+
+		for (auto& gesture : this->mCurlPlaneGestures)
+		{
+			this->mSubGestures.push_back(gesture);
+		}
 	}
 }
 
-void HOL::OpenHandPinchGesture::setup(HOL::FingerType pinchFinger, HOL::HandSide side)
-{
-	this->mPinchFinger = pinchFinger;
-	this->mSide = side;
-
-	this->name = "OpenHandPinchGesture";
-	this->mSubGestures.clear();
-
-	////////////////////
-	// Pinch proximity
-	////////////////////
-
-	this->mAimStateGesture = AimStateGesture::Create();
-
-	this->mAimStateGesture->setup(pinchFinger, side);
-
-	this->mSubGestures.push_back(this->mAimStateGesture);
-
-	/////////////////////////////////////
-	// Other fingers above pinch plane
-	/////////////////////////////////////
-
-	std::vector<HOL::FingerType> allPinchFingers = {FingerType::FingerIndex,
-													FingerType::FingerMiddle,
-													FingerType::FingerRing,
-													FingerType::FingerLittle};
-
-	for (auto otherFinger : allPinchFingers)
-	{
-		// Don't check the finger we are pinching
-		if (otherFinger == pinchFinger)
-			continue;
-
-		auto gesture = AboveBelowCurlPlaneGesture::Create();
-		gesture.get()->setup(mPinchFinger, otherFinger, side);
-
-		this->mCurlPlaneGestures.push_back(gesture);
-	}
-
-	for (auto& gesture : this->mCurlPlaneGestures)
-	{
-		this->mSubGestures.push_back(gesture);
-	}
-}

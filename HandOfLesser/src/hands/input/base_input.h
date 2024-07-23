@@ -5,6 +5,10 @@
 
 namespace HOL
 {
+	enum InputType
+	{
+		Touch, Button, Trigger, XAxis, YAxis, ZAxis, InputType_MAX
+	};
 
 	template <typename T> class BaseInput
 	{

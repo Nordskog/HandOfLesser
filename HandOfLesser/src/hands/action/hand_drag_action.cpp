@@ -2,10 +2,11 @@
 
 namespace HOL
 {
-	HandDragAction::HandDragAction(HandSide side, XrHandJointEXT joint)
+	std::shared_ptr<HandDragAction> HandDragAction::setup(HandSide side, XrHandJointEXT joint)
 	{
 		this->mHandSide = side;
 		this->mTargetJoint = joint;
+		return shared_from_this();
 	}
 
 	void HandDragAction::onEvaluate(GestureData gestureData, ActionData actionData)
@@ -31,18 +32,27 @@ namespace HOL
 
 				diff = currentOrientation.inverse() * diff;
 
+				// rotate a bit more so forward is kinda forward
+				// Will use HMD position eventually
+				diff = HOL::quaternionFromEulerAnglesDegrees(0, -35, 0) * diff;
+
+
 				diff.z() = -diff.z();
 				diff *= mMultiplier;
 				diff.x() = std::clamp(diff.x(), -1.0f, 1.0f);
 				diff.z() = std::clamp(diff.z(), -1.0f, 1.0f);
 
-				// TODO deadzone, senstivity, vertical axis
-				this->mInputSink->submit(Eigen::Vector2f(diff.x(), diff.z()));
+				// Joystick requires touch to be recognized
+				this->submitInput(InputType::Touch, true);
+				this->submitInput(InputType::XAxis, diff.x());
+				this->submitInput(InputType::ZAxis, diff.z());
 			}
 		}
 		else if (actionData.onUp)
 		{
-			this->mInputSink->submit(Eigen::Vector2f::Zero());
+			this->submitInput(InputType::Touch, false);
+			this->submitInput(InputType::XAxis, 0);
+			this->submitInput(InputType::ZAxis, 0);
 		}
 	}
 } // namespace HOL

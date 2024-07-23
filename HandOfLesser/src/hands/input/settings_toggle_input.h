@@ -13,10 +13,12 @@ namespace HOL
 	{
 		Default,
 		SendOscInput,
+		SendSteamVRInput,
 		HolSetting_MAX,
 	};
 
-	class SettingsToggleInput : public BaseInput<bool>
+	class SettingsToggleInput : public BaseInput<float>,
+								public std::enable_shared_from_this<SettingsToggleInput>
 	{
 	public:
 		static std::shared_ptr<SettingsToggleInput> Create()
@@ -24,9 +26,9 @@ namespace HOL
 			return std::make_shared<SettingsToggleInput>();
 		}
 
-		void setup(HolSetting targetSetting);
+		std::shared_ptr<SettingsToggleInput> setup(HolSetting targetSetting);
 
-		void submit(bool inputData) override;
+		void submit(float inputData) override;
 
 	private:
 		HolSetting mTargetSetting = HolSetting::Default;

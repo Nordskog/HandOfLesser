@@ -66,6 +66,28 @@ namespace HOL
 					break;
 				}
 
+				case HOL::NativePacketType::FloatInput: {
+					HOL::FloatInputPacket* packet = (HOL::FloatInputPacket*)rawPacket;
+					auto controller = this->GetActiveController(packet->side);
+					if (controller != nullptr)
+					{
+						controller->UpdateFloatInput(packet->inputName, packet->value);
+					}
+
+					break;
+				}
+
+				case HOL::NativePacketType::BoolInput:  {
+					HOL::BoolInputPacket* packet = (HOL::BoolInputPacket*)rawPacket;
+					auto controller = this->GetActiveController(packet->side);
+					if (controller != nullptr)
+					{
+						controller->UpdateBoolInput(packet->inputName, packet->value);
+					}
+
+					break;
+				}
+
 				default: {
 					// Invalid packet type!
 				}
@@ -90,6 +112,7 @@ namespace HOL
 		// the function with MyGetSerialNumber(). Let's add the left hand controller first (there
 		// isn't a specific order). make sure we actually managed to create the device.
 		// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
+		// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
 
 		// Make sure we actually managed to create the device.
 		// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
@@ -108,20 +131,25 @@ namespace HOL
 		}
 	}
 
-	void HandOfLesser::addHookedController(uint32_t id,
-										   HandSide side,
-										   vr::IVRServerDriverHost* host,
-										   vr::ITrackedDeviceServerDriver* driver)
+	HookedController* HandOfLesser::addHookedController(uint32_t id,
+														vr::IVRServerDriverHost* host,
+														vr::ITrackedDeviceServerDriver* driver,
+														std::string serial)
 	{
 		// TODO: I geuss they can be activated multiple times and we should deal with that
-		if (this->mHookedControllers[side] != nullptr)
+		// We assign the side later now so uhhhh
+		// if (this->mHookedControllers[side] != nullptr)
+		/*
 		{
 			DriverLog("Tried to add hooked %s controller but already added!",
 					  (side == HandSide::LeftHand ? "left" : "right"));
 			return;
-		}
+		}*/
 
-		this->mHookedControllers[side] = std::make_unique<HookedController>(id, side, host, driver);
+		this->mHookedControllers.push_back(
+			std::make_unique<HookedController>(id, HandSide::HandSide_MAX, host, driver, serial));
+
+		return this->mHookedControllers.back().get();
 	}
 
 	static bool lastPossessState = false;
@@ -169,30 +197,65 @@ namespace HOL
 			   == ControllerMode::EmulateControllerMode;
 	}
 
-	bool HandOfLesser::hookedControllersFound()
-	{
-		return this->mHookedControllers[HandSide::LeftHand] != nullptr
-			   && this->mHookedControllers[HandSide::RightHand] != nullptr;
-	}
-
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)
 	{
 		return this->mEmulatedControllers[(int)side].get();
 	}
 
+	// Only works if a side has been assigned
+	// usually is, just not right after being activated.
 	HookedController* HandOfLesser::getHookedController(HOL::HandSide side)
 	{
-		return this->mHookedControllers[(int)side].get();
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			HookedController* controller = controllerContainer.get();
+			if (controller->getSide() == side)
+			{
+				return controller;
+			}
+		}
+
+		return nullptr;
 	}
 
 	HookedController* HandOfLesser::getHookedControllerByDeviceId(uint32_t deviceId)
 	{
-		for (int i = 0; i < HandSide::HandSide_MAX; i++)
+		for (auto& controllerContainer : mHookedControllers)
 		{
-			HookedController* controller = this->getHookedController((HandSide)i);
-			if (controller != nullptr)
+			HookedController* controller = controllerContainer.get();
+			if (controller->getDeviceId() == deviceId)
 			{
-				if (controller->getDeviceId() == deviceId)
+				return controller;
+			}
+		}
+
+		return nullptr;
+	}
+
+	HookedController* HandOfLesser::getHookedControllerBySerial(std::string serial)
+	{
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			HookedController* controller = controllerContainer.get();
+			{
+				if (controller->serial == serial)
+				{
+					return controller;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	HookedController*
+	HandOfLesser::getHookedControllerByInputHandle(vr::VRInputComponentHandle_t inputHandle)
+	{
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			HookedController* controller = controllerContainer.get();
+			{
+				if (controller->inputHandles.contains(inputHandle))
 				{
 					return controller;
 				}

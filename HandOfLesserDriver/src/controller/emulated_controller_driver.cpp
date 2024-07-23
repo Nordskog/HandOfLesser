@@ -285,6 +285,14 @@ namespace HOL
 		this->mLastInputPacket = *packet;
 	}
 
+	void EmulatedControllerDriver::UpdateBoolInput(const std::string& input, bool value)
+	{
+	}
+
+	void EmulatedControllerDriver::UpdateFloatInput(const std::string& input, float value)
+	{
+	}
+
 	void EmulatedControllerDriver::SubmitPose()
 	{
 		if (this->is_active_)

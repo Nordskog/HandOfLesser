@@ -4,6 +4,8 @@
 #include "src/hands/input/base_input.h"
 #include <chrono>
 
+using namespace HOL::Gesture;
+
 namespace HOL
 {
 	struct ActionData
@@ -12,8 +14,9 @@ namespace HOL
 		bool onDown = false;
 		bool isDown = false;
 		bool onUp = false;
+		bool isTouch = false;
 	};
-
+	
 	struct ActionParameters
 	{
 		std::chrono::milliseconds minDownTime;	  // Configurable long-press basically
@@ -24,156 +27,46 @@ namespace HOL
 		// Iterate if down occurs within mMaxDoubleTapTime of up
 		int minTapCount = 1; // taps required to trigger. 1 is single press.
 		int tapCount = 0;
+		float touchThreshold = 0.5;
+		float releaseThreshold = 1;
 	};
 
-	// BaseAction extends from this, because we cannot store generics in vectors otherwise.
-	// ProtoAction can always be
-	class ProtoAction
+	class BaseAction
 	{
 
 	public:
-		ProtoAction(){};
+		BaseAction(std::initializer_list<InputType> inputs);
 
-		void evaluate(GestureData data)
-		{
-			float triggerGesture = this->mTriggerGesture->evaluate(data);
-			float holdGesture = triggerGesture;
-			if (this->mUseHoldGesture)
-			{
-				holdGesture = this->mTriggerGesture->evaluate(data);
-			}
+		void evaluate(GestureData data);
 
-			// Down if trigger down or already down and hold down.
-			if (triggerGesture >= 1 || (holdGesture >= 1 && this->mActionData.isDown))
-			{
-				// Can't be up when you're down
-				mDelayedUp = false;
+		void setTriggerGesture(std::shared_ptr<BaseGesture::Gesture> gesture);
 
-				// If not already down, update down time
-				if (!mDelayedDown && !this->mActionData.isDown)
-				{
-					// We count taps from the first down
-					if (this->timeSinceDown() < this->mParameters.maxTapTime
-						&& this->timeSinceDown() > this->mParameters.minTapTime)
-					{
-						this->mTapCount++;
-					}
-					else
-					{
-						this->mTapCount = 1;
-					}
+		void setTapGesture(std::shared_ptr<BaseGesture::Gesture> gesture);
 
-					mDelayedDown = true;
-					this->mDownTime = std::chrono::steady_clock::now();
-				}
+		void setHoldGesture(std::shared_ptr<BaseGesture::Gesture> gesture);
 
-				// Block state update until min time
-				if (this->timeSinceDown() > this->mParameters.minDownTime
-					&& mTapCount >= this->mParameters.minTapCount)
-				{
-					mDelayedDown = false;
-					// On down only true on first frame of down
-					this->mActionData.onDown = !this->mActionData.isDown;
-					this->mActionData.isDown = true;
-					this->mActionData.onUp = false;
-				}
-			}
-			else
-			{
-				if (this->mActionData.isDown || mDelayedDown)
-				{
-					// If not already down, update down time
-					if (!mDelayedUp)
-					{
-						mDelayedUp = this->mActionData.isDown; // Only if fully down
-						this->mUpTime = std::chrono::steady_clock::now();
-					}
+		void setParameters(ActionParameters params);
 
-					// Block state update until min time
-					if (this->timeSinceUp() > this->mParameters.minReleaseTime)
-					{
-						mDelayedUp = false;
-
-						// onUp for one frame after exit
-						// But only we we were fully down
-						this->mActionData.onUp = this->mActionData.isDown;
-
-						// On up after being fully down, reset tap counter
-						if (this->mActionData.isDown)
-						{
-							this->mTapCount = 0;
-						}
-
-						this->mActionData.onDown = false;
-						this->mActionData.isDown = false;
-					}
-				}
-				else
-				{
-					mDelayedUp = false;
-					this->mActionData.onUp = false;
-					this->mActionData.onDown = false;
-					this->mActionData.isDown = false;
-				}
-
-				// Can't be down when we're up
-				// But do late so we can still tell if we were down
-				mDelayedDown = false;
-			}
-
-			this->onEvaluate(data, this->mActionData);
-		}
-
-		void setTriggerGesture(std::shared_ptr<BaseGesture> gesture)
-		{
-			this->mTriggerGesture = gesture;
-		}
-
-		void setTapGesture(std::shared_ptr<BaseGesture> gesture)
-		{
-			this->mTapGesture = gesture;
-		}
-
-		void setHoldGesture(std::shared_ptr<BaseGesture> gesture)
-		{
-			this->mHoldGesture = gesture;
-			this->mUseHoldGesture = false;
-		}
-
-		void setParameters(ActionParameters params)
-		{
-			this->mParameters = params;
-		}
+		void addSink(InputType type, std::shared_ptr<BaseInput<float>> input);
 
 		// Editable!
-		ActionParameters& getParameters()
-		{
-			return this->mParameters;
-		}
+		ActionParameters& getParameters();
 
-		std::chrono::milliseconds timeSinceDown()
-		{
-			auto currentTime = std::chrono::steady_clock::now();
-			return std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - mDownTime);
-		}
+		std::chrono::milliseconds timeSinceDown();
 
-		std::chrono::milliseconds timeSinceUp()
-		{
-			auto currentTime = std::chrono::steady_clock::now();
-			return std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - mUpTime);
-		}
+		std::chrono::milliseconds timeSinceUp();
 
 	private:
 		// Must be 1 to enter action, equivalent to a button press
-		std::shared_ptr<BaseGesture> mTriggerGesture;
+		std::shared_ptr<BaseGesture::Gesture> mTriggerGesture;
 
 		// Once activated, a separate gesture my be used to hold the action
 		// if mUseHoldGesture the state of mTriggerGesture is used instead
-		std::shared_ptr<BaseGesture> mHoldGesture;
+		std::shared_ptr<BaseGesture::Gesture> mHoldGesture;
 
 		// Tap will not be increment unless this is <1 since previous tap
 		// e.g. fingers must be moved apart fully for a double tap to register
-		std::shared_ptr<BaseGesture> mTapGesture;
+		std::shared_ptr<BaseGesture::Gesture> mTapGesture;
 
 		// in MS
 		std::chrono::steady_clock::time_point mDownTime;
@@ -191,23 +84,18 @@ namespace HOL
 
 		ActionParameters mParameters;
 
+		std::vector<std::shared_ptr<BaseInput<float>>> mInputs[InputType::InputType_MAX];
+
 	protected:
+		// These should be populated by the action
+		// Name is used to determine the number of slots, and what values they receive.
+		std::vector<InputType> mSupportedInputs;
+
+		void submitInput(InputType type, float value);
+
 		virtual void onEvaluate(GestureData gestureData, ActionData actionData)
 		{
 			return;
-		}
-	};
-
-	// ProtoAction exists so we can store actions without specifying the generic component
-	template <typename T> class BaseAction : public ProtoAction
-	{
-	protected:
-		std::shared_ptr<BaseInput<T>> mInputSink;
-
-	public:
-		void setSink(std::shared_ptr<BaseInput<T>> sink)
-		{
-			this->mInputSink = sink;
 		}
 	};
 

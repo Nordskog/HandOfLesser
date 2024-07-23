@@ -10,12 +10,31 @@ namespace HOL
 		InvalidPacket = 100,
 		HandTransform = 500,
 		ControllerInput = 600,
+		FloatInput = 601,
+		BoolInput = 602,
 		Settings = 700
 	};
 
 	struct NativePacket
 	{
 		NativePacketType packetType = NativePacketType::InvalidPacket;
+	};
+
+	// these'll ultimately handle all controller inputs
+	struct FloatInputPacket
+	{
+		NativePacketType packetType = NativePacketType::FloatInput;
+		HOL::HandSide side = HOL::HandSide::LeftHand;
+		char inputName[64];
+		float value = 0;
+	};
+
+	struct BoolInputPacket
+	{
+		NativePacketType packetType = NativePacketType::BoolInput;
+		HOL::HandSide side = HOL::HandSide::LeftHand;
+		char inputName[64];
+		bool value = 0;
 	};
 
 	struct ControllerInputPacket

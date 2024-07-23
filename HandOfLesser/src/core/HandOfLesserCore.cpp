@@ -165,7 +165,7 @@ void HandOfLesserCore::doOscStuff()
 	// Finalizing also resets the input packet, which will otherwise overflow.
 	// Better to control here than having every input check the setting.
 	auto [packetPointer, packetSize] = this->mVrchatInput.finalizeInputBundle();
-	if (Config.vrchat.sendOscInput)
+	if (Config.input.sendOscInput)
 	{
 		this->mTransport.send(9000, packetPointer, packetSize);
 	}
@@ -184,11 +184,29 @@ void HandOfLesserCore::sendUpdate()
 				= this->mHandTracking.getTransformPacket((HandSide)i);
 			this->mTransport.send(9006, (char*)&transPacket, sizeof(HOL::HandTransformPacket));
 
+			/*
 			HOL::ControllerInputPacket inputPacket
 				= this->mHandTracking.getInputPacket((HandSide)i);
 			this->mTransport.send(9006, (char*)&inputPacket, sizeof(HOL::ControllerInputPacket));
+			*/
 		}
 	}
+
+
+	if (Config.input.sendSteamVRInput)
+	{
+		// SteamVR inputs are submitted to a global
+		for (auto& packet : SteamVR::SteamVRInput::Current->floatInputs)
+		{
+			this->mTransport.send(9006, (char*)&packet, sizeof(HOL::FloatInputPacket));
+		}
+		for (auto& packet : SteamVR::SteamVRInput::Current->boolInputs)
+		{
+			this->mTransport.send(9006, (char*)&packet, sizeof(HOL::BoolInputPacket));
+		}
+	}
+
+	SteamVR::SteamVRInput::Current->clear();
 }
 
 void HOL::HandOfLesserCore::syncSettings()

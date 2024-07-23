@@ -6,24 +6,32 @@
 
 using namespace std::chrono_literals;
 
-namespace HOL
+namespace HOL::Gesture::ChainGesture
 {
-	class ChainGesture : public BaseGesture
+	struct Parameters
+	{
+		std::chrono::milliseconds maxDelay;
+	};
+
+	class Gesture : public BaseGesture::Gesture
 	{
 
 	public:
-		ChainGesture() : BaseGesture(){};
-		static std::shared_ptr<ChainGesture> Create()
+		Gesture() : BaseGesture::Gesture()
 		{
-			return std::make_shared<ChainGesture>();
+			this->name = "ChainGesture";
+		};
+		static std::shared_ptr<Gesture> Create()
+		{
+			return std::make_shared<Gesture>();
 		}
 
-		void setup(std::chrono::milliseconds maxDelay);
+		void addGesture(std::shared_ptr<BaseGesture::Gesture> gesture);
 
-		void addGesture(std::shared_ptr<BaseGesture> gesture);
+		ChainGesture::Parameters parameters;
 
 	private:
-		std::vector<std::shared_ptr<BaseGesture>> mChainedGestures;
+		std::vector<std::shared_ptr<BaseGesture::Gesture>> mChainedGestures;
 		std::chrono::milliseconds mMaxDelay = 500ms;
 		std::chrono::steady_clock::time_point mLastActivation;
 		int mCurrentGestureIndex = 0; // Iterate as each gesture is activated

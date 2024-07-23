@@ -129,7 +129,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 																	time,
 																	this->mJointLocations,
 																	this->mJointVelocities,
-																	&this->mAimState);
+																	&this->aimState);
 
 	auto palmLocation = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 

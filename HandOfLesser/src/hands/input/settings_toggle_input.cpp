@@ -4,13 +4,11 @@
 
 namespace HOL
 {
-	void SettingsToggleInput::submit(bool inputData)
+	void SettingsToggleInput::submit(float inputData)
 	{
 		// Expect to receive false/true on every frame, so deal with toggle ourselves
-		if (!mLastValue && inputData)
+		if (inputData != mLastValue && inputData >= 1)
 		{
-			printf("Button triggered!\n");
-
 			// Changed from false to true, do the toggle.
 			switch (this->mTargetSetting)
 			{
@@ -19,7 +17,12 @@ namespace HOL
 				}
 
 				case HolSetting::SendOscInput: {
-					Config.vrchat.sendOscInput = !Config.vrchat.sendOscInput;
+					Config.input.sendOscInput = !Config.input.sendOscInput;
+					break;
+				}
+
+				case HolSetting::SendSteamVRInput: {
+					Config.input.sendSteamVRInput = !Config.input.sendSteamVRInput;
 					break;
 				}
 			}
@@ -28,9 +31,10 @@ namespace HOL
 		mLastValue = inputData;
 	}
 
-	void SettingsToggleInput::setup(HolSetting targetSetting)
+	std::shared_ptr<SettingsToggleInput> SettingsToggleInput::setup(HolSetting targetSetting)
 	{
 		this->mTargetSetting = targetSetting;
+		return shared_from_this();
 	}
 
 } // namespace HOL

@@ -33,7 +33,7 @@ namespace HOL::VRChat
 			this->mPacketOpen = true;
 		}
 
-		this->mPacket.openMessage((VRChat::OSC_INPUT_PREFIX + inputName).c_str(), 1)
+		this->mPacket.openMessage(inputName.c_str(), 1)
 			.float32(value)
 			.closeMessage();
 	}

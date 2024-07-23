@@ -8,10 +8,10 @@
 
 namespace HOL
 {
-	class ButtonAction : public BaseAction<bool>
+	class ButtonAction : public BaseAction
 	{
 	public:
-		ButtonAction(){};
+		ButtonAction() : BaseAction({InputType::Button}){};
 		static std::shared_ptr<ButtonAction> Create()
 		{
 			return std::make_shared<ButtonAction>();

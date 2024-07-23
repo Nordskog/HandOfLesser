@@ -8,6 +8,8 @@
 
 #include "src/vrchat/vrchat_input.h";
 
+#include "src/hands/gesture/combo_gesture.h"
+
 namespace HOL::OpenXR
 {
 	class HandTracking
@@ -30,6 +32,6 @@ namespace HOL::OpenXR
 		OpenXRHand mLeftHand;
 		OpenXRHand mRightHand;
 
-		std::vector<std::shared_ptr<ProtoAction>> mActions;
+		std::vector<std::shared_ptr<BaseAction>> mActions;
 	};
 } // namespace HOL::OpenXR

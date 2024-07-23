@@ -2,7 +2,6 @@
 #include "hooks.h"
 #include "src/controller/controller_common.h"
 
-
 namespace HOL::hooks
 {
 	namespace TrackedDeviceActivate
@@ -15,28 +14,52 @@ namespace HOL::hooks
 			DriverLog("TrackedDeviceActivate!");
 			DriverLog("Device ID: %lld", (long long)unWhichDevice);
 
-			// Let original function run before we do anything
-			auto ret = TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
-
 			// Get the role
 			auto props = vr::VRProperties();
 			vr::PropertyContainerHandle_t container
 				= props->TrackedDeviceToPropertyContainer(unWhichDevice);
 
-			vr::ETrackedControllerRole role
-				= (vr::ETrackedControllerRole)props->GetInt32Property(container, vr::Prop_ControllerRoleHint_Int32);
+			std::string serial = props->GetStringProperty(
+				container, vr::Prop_SerialNumber_String);
 
-			// Take note of any controllers
-			if (role == vr::ETrackedControllerRole::TrackedControllerRole_LeftHand
-				|| role == vr::ETrackedControllerRole::TrackedControllerRole_RightHand)
+			// Add controller, get a pointer so we can set side later.
+			HookedController* controller = HOL::HandOfLesser::Current->addHookedController(
+				unWhichDevice, HOL::hooks::mLastDeviceDriverHost, _this, serial);
+			
+			// Let original function run. This will add all the inputs, which is why
+			// we need to add the controller first.
+			auto ret = TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
+
+			// Now we can get the role ( except for vive wands maybe )
+			vr::ETrackedControllerRole role = (vr::ETrackedControllerRole)props->GetInt32Property(
+				container, vr::Prop_ControllerRoleHint_Int32);
+
+			// TODO: vive wands will probably swap sides after activating
+			HandSide side = HandSide::HandSide_MAX;
+			switch (role)
 			{
-				// TODO: vive wands will probably swap sides after activating
-				HandSide side = role == vr::ETrackedControllerRole::TrackedControllerRole_LeftHand
-							   ? HandSide::LeftHand
-							   : HandSide::RightHand;
+				case vr::ETrackedControllerRole::TrackedControllerRole_LeftHand:
+					side = HandSide::LeftHand;
+					break;
+				case vr::ETrackedControllerRole::TrackedControllerRole_RightHand:
+					side = HandSide::RightHand;
+					break;
+				default:
+					side = HandSide::HandSide_MAX;
+			}
 
-				DriverLog("Got controller, side: %s", side == HandSide::LeftHand ? "Left" : "Right");
-				HOL::HandOfLesser::Current->addHookedController(unWhichDevice, side, HOL::hooks::mLastDeviceDriverHost, _this);
+			if (side == HandSide_MAX)
+			{
+				// Not a controller. I think ViveWands are assigned a side,
+				// it just may swap them dynamically.
+				// We should probably remove these.
+				DriverLog("Got controller but no side assigned");
+			}
+			else
+			{
+				DriverLog("Got controller, side: %s",
+						  side == HandSide::LeftHand ? "Left" : "Right");
+				controller->setSide(side);
 			}
 
 			return ret;
@@ -45,12 +68,13 @@ namespace HOL::hooks
 
 	namespace TrackedDeviceAdded006
 	{
-		Hook<TrackedDeviceAdded006::Signature> FunctionHook("IVRServerDriverHost006::TrackedDeviceAdded");
+		Hook<TrackedDeviceAdded006::Signature>
+			FunctionHook("IVRServerDriverHost006::TrackedDeviceAdded");
 
-		static void Detour(	vr::IVRServerDriverHost* _this,
-							const char* pchDeviceSerialNumber,
-							vr::ETrackedDeviceClass eDeviceClass,
-							vr::ITrackedDeviceServerDriver* pDriver)
+		static void Detour(vr::IVRServerDriverHost* _this,
+						   const char* pchDeviceSerialNumber,
+						   vr::ETrackedDeviceClass eDeviceClass,
+						   vr::ITrackedDeviceServerDriver* pDriver)
 		{
 			DriverLog("TrackedDeviceAdded006!");
 
@@ -69,7 +93,7 @@ namespace HOL::hooks
 
 				// TODO: We only have access to the driverHost here, but don't know the ID
 				// or the role of the controller yet. Activate() should be called
-				// immediately afterwards, so the only concern is when devices are 
+				// immediately afterwards, so the only concern is when devices are
 				// deactivated and re-activated again. Think about that later.
 				HOL::hooks::mLastDeviceDriverHost = _this;
 			}
@@ -81,7 +105,7 @@ namespace HOL::hooks
 			return TrackedDeviceAdded006::FunctionHook.originalFunc(
 				_this, pchDeviceSerialNumber, eDeviceClass, pDriver);
 		};
-	}
+	} // namespace TrackedDeviceAdded006
 
 	namespace TrackedDevicePoseUpdated
 	{
@@ -116,10 +140,12 @@ namespace HOL::hooks
 							return;
 						}
 					}
-					else if (controllerMode == ControllerMode::OffsetControllerMode)
+					else if (controllerMode == ControllerMode::OffsetControllerMode
+							 && controller->canPossess())
 					{
-						// Modify pose by offset
-						// Casting to non-cast maybe bad, but don't want to create new one constantly.
+						// Modify pose by offset, if we are hand-tracking.
+						// Casting to non-cast maybe bad, but don't want to create new one
+						// constantly.
 						HOL::ControllerCommon::offsetPose((vr::DriverPose_t&)newPose,
 														  controller->getSide(),
 														  config.handPose.PositionOffset,
@@ -131,9 +157,199 @@ namespace HOL::hooks
 			// Make sure to return early if we don't want to call the original function
 			return TrackedDevicePoseUpdated::FunctionHook.originalFunc(
 				_this, unWhichDevice, newPose, unPoseStructSize);
-
 		};
 	} // namespace TrackedDevicePoseUpdated
+
+	namespace CreateBooleanComponent
+	{
+		Hook<CreateBooleanComponent::Signature>
+			FunctionHook("IVRDriverInput003::CreateBooleanComponent");
+
+		static vr::EVRInputError Detour(vr::IVRDriverInput* _this,
+										vr::PropertyContainerHandle_t ulContainer,
+										const char* pchName,
+										vr::VRInputComponentHandle_t* pHandle)
+		{
+			// pHandle is populated by this function, so let it run first.
+			auto ret = CreateBooleanComponent::FunctionHook.originalFunc(
+				_this, ulContainer, pchName, pHandle);
+
+			// Get the controller by serial
+			auto props = vr::VRProperties();
+			std::string serial
+				= props->GetStringProperty(ulContainer, vr::Prop_SerialNumber_String);
+
+			// We hook this to get a reference to the IVRDriverInput for each controller.
+			// We can identify the controller by the PropertyContainer, because it is unique
+			// to each controller.
+			HOL::HookedController* controller
+				= HOL::HandOfLesser::Current->getHookedControllerBySerial(serial);
+			if (controller != nullptr)
+			{
+				controller->driverInput = _this;
+
+				// Also store the path and handle of each input
+				ControllerInputHandle input = {
+					.inputPath = pchName, .type = ControllerInputType::Boolean, .handle = *pHandle};
+				uint64_t key = *pHandle; // Something is fucked
+				controller->inputHandles[key] = input;
+				controller->inputHandlesByName[pchName] = *pHandle;
+			}
+
+			return ret;
+		};
+	} // namespace CreateBooleanComponent
+
+	namespace CreateScalarComponent
+	{
+		Hook<CreateScalarComponent::Signature>
+			FunctionHook("IVRDriverInput003::CreateScalarComponent");
+
+		static vr::EVRInputError Detour(vr::IVRDriverInput* _this,
+										vr::PropertyContainerHandle_t ulContainer,
+										const char* pchName,
+										vr::VRInputComponentHandle_t* pHandle,
+										vr::EVRScalarType eType,
+										vr::EVRScalarUnits eUnits)
+		{
+			// pHandle is populated by this function, so let it run first.
+			auto ret = CreateScalarComponent::FunctionHook.originalFunc(
+				_this, ulContainer, pchName, pHandle, eType, eUnits);
+
+			// Get the controller by serial
+			auto props = vr::VRProperties();
+			std::string serial
+				= props->GetStringProperty(ulContainer, vr::Prop_SerialNumber_String);
+
+			// We hook this to get a reference to the IVRDriverInput for each controller.
+			// We can identify the controller by the PropertyContainer, because it is unique
+			// to each controller.
+			HOL::HookedController* controller
+				= HOL::HandOfLesser::Current->getHookedControllerBySerial(serial);
+			if (controller != nullptr)
+			{
+				controller->driverInput = _this;
+
+				// Also store the path and handle of each input
+				ControllerInputHandle input = {
+					.inputPath = pchName, .type = ControllerInputType::Scalar, .handle = *pHandle};
+				uint64_t key = *pHandle; // Something is fucked
+				controller->inputHandles[key] = input;
+				controller->inputHandlesByName[pchName] = *pHandle;
+			}
+
+			return ret;
+		};
+	} // namespace CreateScalarComponent
+
+	namespace UpdateBooleanComponent
+	{
+		Hook<UpdateBooleanComponent::Signature>
+			FunctionHook("IVRDriverInput003::UpdateBooleanComponent");
+
+		static vr::EVRInputError Detour(vr::IVRDriverInput* _this,
+										vr::VRInputComponentHandle_t ulComponent,
+										bool bNewValue,
+										double fTimeOffset)
+		{
+			auto& config = HOL::HandOfLesser::Current->Config;
+			HookedController* controller
+				= HandOfLesser::Current->getHookedControllerByInputHandle(ulComponent);
+
+			//TODO we shouldn't do anything here if we're not... doing stuff.
+			// Kinda wasteful.
+
+			if (controller != nullptr)
+			{
+				auto& inputHandle = controller->inputHandles[ulComponent];
+
+				// For the time being allow system gesture
+				if (inputHandle.inputPath.find("system") == std::string::npos)
+				{
+									/*
+				DriverLog("Controller: %s, Button: %s, value: %s",
+							controller->serial.c_str(),
+							inputHandle.inputPath.c_str(),
+							bNewValue ? "True" : "False");
+							*/
+					auto controllerMode = config.handPose.mControllerMode;
+					if (controller->canPossess())
+					{
+						if (controllerMode == ControllerMode::HookedControllerMode
+							|| controllerMode == ControllerMode::OffsetControllerMode)
+						{
+							if (config.input.blockControllerInputWhileHandTracking)
+							{
+								// DriverLog("Blocked!");
+								return vr::EVRInputError::VRInputError_None;
+							}
+						}
+					}
+				}	
+			}
+			else
+			{
+				DriverLog("Button on unknown controller!");
+			}
+
+			// Make sure to return early if we don't want to call the original function
+			return UpdateBooleanComponent::FunctionHook.originalFunc(
+				_this, ulComponent, bNewValue, fTimeOffset);
+		};
+	} // namespace UpdateBooleanComponent
+
+	namespace UpdateScalarComponent
+	{
+		Hook<UpdateScalarComponent::Signature>
+			FunctionHook("IVRDriverInput003::UpdateScalarComponent");
+
+		static vr::EVRInputError Detour(vr::IVRDriverInput* _this,
+										vr::VRInputComponentHandle_t ulComponent,
+										float fNewValue,
+										double fTimeOffset)
+		{
+			auto& config = HOL::HandOfLesser::Current->Config;
+			HookedController* controller
+				= HandOfLesser::Current->getHookedControllerByInputHandle(ulComponent);
+
+			// TODO we shouldn't do anything here if we're not... doing stuff.
+			//  Kinda wasteful.
+
+			if (controller != nullptr)
+			{
+				/*
+				auto& inputHandle = controller->inputHandles[ulComponent];
+
+				DriverLog("Controller: %s, Button: %s, value: %.3f",
+							controller->serial.c_str(),
+							inputHandle.inputPath.c_str(),
+							bNewValue);
+							*/
+				auto controllerMode = config.handPose.mControllerMode;
+				if (controller->canPossess())
+				{
+					if (controllerMode == ControllerMode::HookedControllerMode
+						|| controllerMode == ControllerMode::OffsetControllerMode)
+					{
+						if (config.input.blockControllerInputWhileHandTracking)
+						{
+							//DriverLog("Blocked!");
+							return vr::EVRInputError::VRInputError_None;
+						}
+					}
+				}
+				
+			}
+			else
+			{
+				DriverLog("Scalar on unknown controller!");
+			}
+
+			// Make sure to return early if we don't want to call the original function
+			return UpdateScalarComponent::FunctionHook.originalFunc(
+				_this, ulComponent, fNewValue, fTimeOffset);
+		};
+	} // namespace UpdateScalarComponent
 
 	namespace GetGenericInterface
 	{
@@ -150,7 +366,7 @@ namespace HOL::hooks
 			if (iface == "IVRServerDriverHost_006")
 			{
 				DriverLog("Interface version: %s", iface.c_str());
-				
+
 				if (!IHook::Exists(TrackedDeviceAdded006::FunctionHook.name))
 				{
 					DriverLog("Adding added hook");
@@ -167,6 +383,47 @@ namespace HOL::hooks
 					TrackedDevicePoseUpdated::FunctionHook.CreateHookInObjectVTable(
 						originalInterface, 1, &TrackedDevicePoseUpdated::Detour);
 					IHook::Register(&TrackedDevicePoseUpdated::FunctionHook);
+				}
+			}
+
+			if (iface.find("IVRDriverInput") != std::string::npos)
+			{
+				DriverLog("Found Input interface: %s", iface.c_str());
+
+				if (!IHook::Exists(UpdateBooleanComponent::FunctionHook.name))
+				{
+					DriverLog("Adding UpdateBooleanComponent hook");
+
+					UpdateBooleanComponent::FunctionHook.CreateHookInObjectVTable(
+						originalInterface, 1, &UpdateBooleanComponent::Detour);
+					IHook::Register(&UpdateBooleanComponent::FunctionHook);
+				}
+
+				if (!IHook::Exists(UpdateScalarComponent::FunctionHook.name))
+				{
+					DriverLog("Adding UpdateScalarComponent hook");
+
+					UpdateScalarComponent::FunctionHook.CreateHookInObjectVTable(
+						originalInterface, 3, &UpdateScalarComponent::Detour);
+					IHook::Register(&UpdateScalarComponent::FunctionHook);
+				}
+
+				if (!IHook::Exists(CreateBooleanComponent::FunctionHook.name))
+				{
+					DriverLog("Adding CreateBooleanComponent hook");
+
+					CreateBooleanComponent::FunctionHook.CreateHookInObjectVTable(
+						originalInterface, 0, &CreateBooleanComponent::Detour);
+					IHook::Register(&CreateBooleanComponent::FunctionHook);
+				}
+
+				if (!IHook::Exists(CreateScalarComponent::FunctionHook.name))
+				{
+					DriverLog("Adding CreateScalarComponent hook");
+
+					CreateScalarComponent::FunctionHook.CreateHookInObjectVTable(
+						originalInterface, 2, &CreateScalarComponent::Detour);
+					IHook::Register(&CreateScalarComponent::FunctionHook);
 				}
 			}
 
@@ -197,4 +454,4 @@ namespace HOL::hooks
 		MH_Uninitialize();
 	}
 
-}
+} // namespace HOL::hooks

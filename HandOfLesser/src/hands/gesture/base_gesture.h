@@ -7,37 +7,49 @@
 #include <functional>
 #include <HandOfLesserCommon.h>
 #include <memory>
+#include <src/hands/hand_pose.h>
 
-namespace HOL
+namespace HOL::Gesture
 {
 	struct GestureData
 	{
 		XrHandJointLocationEXT* joints[HandSide::HandSide_MAX];
 		XrHandTrackingAimStateFB* aimState[HandSide::HandSide_MAX];
+		HandPose* handPose[HandSide::HandSide_MAX];
 		XrPosef HMDPose;
 	};
 
-	class BaseGesture
+	namespace BaseGesture 
 	{
-	public:
-		BaseGesture(){};
-		static std::shared_ptr<BaseGesture> Create()
+		class Gesture
 		{
-			return std::make_shared<BaseGesture>();
-		}
+		public:
+			Gesture(){};
+			static std::shared_ptr<Gesture> Create()
+			{
+				return std::make_shared<Gesture>();
+			}
 
-		float evaluate(GestureData data);
+			float evaluate(GestureData data);
 
-		std::vector<std::shared_ptr<BaseGesture>>& getSubGestures();
+			std::vector<std::shared_ptr<Gesture>>& getSubGestures();
 
-		float lastValue = 0;
-		std::string name = "baseGesture";
-		std::vector<std::shared_ptr<BaseGesture>> mSubGestures;
+			float lastValue = 0;
+			std::string name = "baseGesture";
+			std::vector<std::shared_ptr<Gesture>> mSubGestures;
 
-	protected:
-		virtual float evaluateInternal(GestureData data)
-		{
-			return 0;
-		}
-	};
+		protected:
+			virtual float evaluateInternal(GestureData data)
+			{
+				return 0;
+			}
+
+			// Some kind of map? 
+			//virtual setup();
+			
+			// Call after populating 
+			virtual void init(){};
+		};
+	}
+
 } // namespace HOL

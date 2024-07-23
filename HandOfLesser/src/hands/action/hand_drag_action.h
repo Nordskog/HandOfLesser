@@ -8,15 +8,19 @@
 
 namespace HOL
 {
-	class HandDragAction : public BaseAction<Eigen::Vector2f>
+	class HandDragAction : public BaseAction, public std::enable_shared_from_this<HandDragAction>
 	{
 	public:
-		HandDragAction(){};
-		HandDragAction(HandSide side, XrHandJointEXT joint);
-		static std::shared_ptr<HandDragAction> Create(HandSide side, XrHandJointEXT joint)
+		HandDragAction() : BaseAction({InputType::XAxis, InputType::ZAxis, InputType::Touch}){};
+		static std::shared_ptr<HandDragAction> Create()
 		{
-			return std::make_shared<HandDragAction>(side, joint);
+			return std::make_shared<HandDragAction>();
 		}
+
+		// Locally defined function for initializing action.
+		// In addition to this all actions should accept a map of values
+		// accepting the same arguments ( TODO )
+		std::shared_ptr<HandDragAction> setup(HandSide side, XrHandJointEXT joint);
 		void onEvaluate(GestureData gestureData, ActionData actionData) override;
 
 	private:
@@ -24,6 +28,9 @@ namespace HOL
 		HandSide mHandSide = HandSide::LeftHand;
 		XrHandJointEXT mTargetJoint = XrHandJointEXT::XR_HAND_JOINT_THUMB_TIP_EXT;
 		float mMultiplier = 5;
+		
+		std::shared_ptr<BaseInput<float>> mAxisInputX;
+		std::shared_ptr<BaseInput<float>> mAxisInputY;
 	};
 
 } // namespace HOL

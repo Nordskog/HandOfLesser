@@ -3,13 +3,13 @@
 #include "base_gesture.h"
 #include <HandOfLesserCommon.h>
 
-namespace HOL
+namespace HOL::Gesture
 {
-	class ProximityGesture : public BaseGesture
+	class ProximityGesture : public BaseGesture::Gesture
 	{
 
 	public:
-		ProximityGesture() : BaseGesture(){};
+		ProximityGesture() : BaseGesture::Gesture(){};
 		static std::shared_ptr<ProximityGesture> Create()
 		{
 			return std::make_shared<ProximityGesture>();

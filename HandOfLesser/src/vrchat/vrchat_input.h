@@ -6,8 +6,6 @@
 
 namespace HOL::VRChat
 {
-	static const std::string OSC_INPUT_PREFIX = "/input/";
-
 	static const int OSC_INPUT_PACKET_BUFFER_SIZE = 2560; // Big number
 
 	class VRChatInput

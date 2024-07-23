@@ -10,12 +10,14 @@ namespace HOL
 	HookedController::HookedController(uint32_t id,
 									   HandSide side,
 									   vr::IVRServerDriverHost* host,
-									   vr::ITrackedDeviceServerDriver* driver)
+									   vr::ITrackedDeviceServerDriver* driver,
+									   std::string serial)
 	{
 		this->mSide = side;
 		this->mDeviceId = id;
 		this->mHookedHost = host;
 		this->mHookedDriver = driver;
+		this->serial = serial;
 	}
 
 	void HookedController::UpdatePose(HOL::HandTransformPacket* packet)
@@ -24,7 +26,7 @@ namespace HOL
 		// so make a copy now.
 		this->mLastTransformPacket = *packet;
 
-		// Do not update pose if invalid, because we want to continue submitting 
+		// Do not update pose if invalid, because we want to continue submitting
 		// the last valid one. Is this necessary? is there some kind of timeout?
 		if (this->mLastTransformPacket.valid)
 		{
@@ -33,8 +35,27 @@ namespace HOL
 	}
 	void HookedController::UpdateInput(HOL::ControllerInputPacket* packet)
 	{
-
 	}
+	void HookedController::UpdateBoolInput(const std::string& input, bool value)
+	{
+		auto inputHandle = this->inputHandlesByName.find(input);
+		if (inputHandle != this->inputHandlesByName.end())
+		{
+			hooks::UpdateBooleanComponent::FunctionHook.originalFunc(
+				this->driverInput, (*inputHandle).second, value, 0.0);
+		}
+	}
+
+	void HookedController::UpdateFloatInput(const std::string& input, float value)
+	{
+		auto inputHandle = this->inputHandlesByName.find(input);
+		if (inputHandle != this->inputHandlesByName.end())
+		{
+			hooks::UpdateScalarComponent::FunctionHook.originalFunc(
+				this->driverInput, (*inputHandle).second, value, 0.0);
+		}
+	}
+
 	void HookedController::SubmitPose()
 	{
 		if (HOL::HandOfLesser::Current->shouldPossess(this))
@@ -45,13 +66,11 @@ namespace HOL
 			// If we are submitting a stale pose to lock it in place, we must jitter it
 			// because vrchat is stupid and ignores all the status information steamvr provides.
 			const auto& pose = (this->mLastTransformPacket.valid)
-							? this->mLastPose
-							: HOL::ControllerCommon::addJitter(this->mLastPose);
-			
-			HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
-				this->mHookedHost, this->mDeviceId, pose, sizeof(vr::DriverPose_t));	
-	
+								   ? this->mLastPose
+								   : HOL::ControllerCommon::addJitter(this->mLastPose);
 
+			HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
+				this->mHookedHost, this->mDeviceId, pose, sizeof(vr::DriverPose_t));
 		}
 	}
 
@@ -65,11 +84,11 @@ namespace HOL
 	// Assuming other external conditions also say it should.
 	bool HookedController::shouldPossess()
 	{
-		// Ideally we should only posses if the controllers are not 
+		// Ideally we should only posses if the controllers are not
 		// being held by the user, but this is difficult to detect.
 		// Quest2 using Airlink will diconnect, probably Quest3 too.
 		// With VD? Impossible at the moment.
-		// Lighthouse? I guess we check if the 
+		// Lighthouse? I guess we check if the
 		// Until I have actual other hardware to test with, possesss
 		// anytime handtracking is valid. If using Airlink, we continue
 		// possessing until real controllers come back online.
@@ -86,11 +105,16 @@ namespace HOL
 		if (mLastOriginalPoseValid)
 		{
 			// Only keep posessing while handtracking invalid
-			// until original pose becomes valid. 
+			// until original pose becomes valid.
 			mValidWhileOriginalInvalid = false;
 		}
 
 		return canPoss || this->mValidWhileOriginalInvalid;
+	}
+
+	void HookedController::setSide(HandSide side)
+	{
+		this->mSide = side;
 	}
 
 	HandSide HookedController::getSide()

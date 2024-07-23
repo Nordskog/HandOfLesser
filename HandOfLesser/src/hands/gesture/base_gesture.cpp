@@ -1,13 +1,15 @@
 #include "base_gesture.h"
 
-using namespace HOL;
-
-float HOL::BaseGesture::evaluate(GestureData data)
+namespace HOL::Gesture
 {
-	return this->lastValue = this->evaluateInternal(data);
-}
+	float BaseGesture::Gesture::evaluate(GestureData data)
+	{
+		return this->lastValue = this->evaluateInternal(data);
+	}
 
-std::vector<std::shared_ptr<BaseGesture>>& HOL::BaseGesture::getSubGestures()
-{
-	return this->mSubGestures;
-}
+	std::vector<std::shared_ptr<BaseGesture::Gesture>>& BaseGesture::Gesture::getSubGestures()
+	{
+		return this->mSubGestures;
+	}
+} // namespace HOL::Gesture
+

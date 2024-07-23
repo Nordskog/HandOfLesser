@@ -24,14 +24,23 @@
 	src/hands/action/base_action.cpp
 	src/hands/input/base_input.cpp
 	src/hands/action/hand_drag_action.cpp
-	src/hands/input/osc_axis_input.cpp
-	src/vrchat/vrchat_input.cpp
+	
 	src/hands/gesture/chain_gesture.cpp
 	src/util/hol_utils.cpp
 	src/hands/input/settings_toggle_input.cpp
-	src/hands/action/button_action.h
+	src/hands/action/trigger_action.cpp
 	src/hands/action/button_action.cpp
-	src/hands/gesture/aim_state_gesture.cpp
+	src/hands/action/button_action.cpp
+	
+	src/hands/gesture/finger_curl_gesture.cpp
+	src/hands/gesture/combo_gesture.cpp
+	src/vrchat/vrchat_input.cpp
+	src/hands/input/osc_float_input.cpp
+	src/hands/input/osc_alternate_float_input.cpp
+	src/steamvr/steamvr_input.cpp
+	src/hands/input/steamvr_float_input.cpp
+	src/hands/input/steamvr_bool_input.cpp
+	src/steamvr/input_wrapper.cpp
 )
 
 find_package(OpenGL REQUIRED)

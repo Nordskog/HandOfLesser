@@ -4,6 +4,6 @@ namespace HOL
 {
 	void ButtonAction::onEvaluate(GestureData gestureData, ActionData actionData)
 	{
-		this->mInputSink->submit(actionData.isDown);
+		this->submitInput(InputType::Button, actionData.isDown);
 	}
 } // namespace HOL

@@ -14,22 +14,24 @@ namespace HOL
 		void cleanup();
 		void runFrame();
 		void addControllers();
-		void addHookedController(uint32_t id,
-								 HandSide side,
+		HookedController* addHookedController(uint32_t id,
 								 vr::IVRServerDriverHost* host,
-								 vr::ITrackedDeviceServerDriver* driver);
+								 vr::ITrackedDeviceServerDriver* driver,
+								 std::string serial);
 
 		bool shouldPossess(uint32_t deviceId);
 		bool shouldPossess(HookedController* controller);
 
 		bool shouldEmulateControllers();
-		bool hookedControllersFound();
 		static HandOfLesser* Current; // Time to commit sins
 		static HOL::settings::HandOfLesserSettings Config;
 
 		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
 		HookedController* getHookedController(HOL::HandSide side);
 		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
+		HookedController* getHookedControllerBySerial(std::string serial);
+		HookedController*
+		getHookedControllerByInputHandle(vr::VRInputComponentHandle_t inputHandle);
 		GenericControllerInterface* GetActiveController(HOL::HandSide side);
 
 	private:
@@ -41,6 +43,6 @@ namespace HOL
 		HOL::NativeTransport mTransport;
 
 		std::unique_ptr<EmulatedControllerDriver> mEmulatedControllers[2];
-		std::unique_ptr<HookedController> mHookedControllers[2];
+		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
 	};
 } // namespace HOL

@@ -3,26 +3,33 @@
 #include "base_gesture.h"
 #include <HandOfLesserCommon.h>
 
-namespace HOL
+namespace HOL::Gesture::AboveBelowCurlPlaneGesture
 {
-	class AboveBelowCurlPlaneGesture : public BaseGesture
+	struct Parameters
+	{
+		FingerType planeFinger;
+		FingerType otherFinger;
+		HandSide side;
+	};
+
+	class Gesture : public BaseGesture::Gesture
 	{
 
 	public:
-		AboveBelowCurlPlaneGesture() : BaseGesture(){};
-		static std::shared_ptr<AboveBelowCurlPlaneGesture> Create()
+		Gesture() : BaseGesture::Gesture()
 		{
-			return std::make_shared<AboveBelowCurlPlaneGesture>();
+			this->name = "AboveBelowCurlPlaneGesture";
+		};
+		static std::shared_ptr<Gesture> Create()
+		{
+			return std::make_shared<Gesture>();
 		}
 
-		void setup(HOL::FingerType planeFinger, HOL::FingerType otherFinger, HOL::HandSide side);
+		AboveBelowCurlPlaneGesture::Parameters parameters;
 
 	private:
-		HOL::FingerType mPlaneFinger;
-		HOL::FingerType mOtherFinger;
-		HOL::HandSide mSide;
 
 	protected:
 		float evaluateInternal(GestureData data) override;
 	};
-} // namespace HOL
+} // namespace HOL::Gesture::AboveBelowCurlPlaneGesture

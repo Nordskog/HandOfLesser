@@ -553,8 +553,6 @@ void UserInterface::buildVRChatOSCSettings()
 	ImGui::SameLine();
 	ImGui::Checkbox("Send Alternating", &Config.vrchat.sendAlternating);
 
-	ImGui::Checkbox("Send OSC Input", &Config.vrchat.sendOscInput);
-	ImGui::SameLine();
 	ImGui::Checkbox("Use Unity Humanoid Splay", &Config.vrchat.useUnityHumanoidSplay);
 
 	ImGui::SeparatorText("Offsets");
@@ -674,7 +672,17 @@ void UserInterface::buildInterface()
 		}
 		if (ImGui::BeginTabItem("Input"))
 		{
-			ImGui::Text("This is the Broccoli tab!\nblah blah blah blah blah");
+			bool syncSettings = false;
+			syncSettings |= ImGui::Checkbox("Block Controller Input while handtracking",
+											&Config.input.blockControllerInputWhileHandTracking);
+			syncSettings |= ImGui::Checkbox("Send OSC Input", &Config.input.sendOscInput);
+			syncSettings |= ImGui::Checkbox("Send SteamVR Input", &Config.input.sendSteamVRInput);
+
+			if (syncSettings)
+			{
+				HOL::HandOfLesserCore::Current->syncSettings();
+			}
+
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Visual"))

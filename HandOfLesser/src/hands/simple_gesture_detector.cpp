@@ -8,39 +8,39 @@ namespace HOL::SimpleGesture
 		{
 		case SimpleGestureType::IndexFingerPinch: {
 			return {
-				hand.mAimState.pinchStrengthIndex,
-				hand.mAimState.pinchStrengthIndex >= 1.0f,
+				hand.aimState.pinchStrengthIndex,
+				hand.aimState.pinchStrengthIndex >= 1.0f,
 			};
 		}
 
 		case SimpleGestureType::MiddleFingerPinch: {
 			return {
-				hand.mAimState.pinchStrengthMiddle,
-				hand.mAimState.pinchStrengthMiddle >= 1.0f,
+				hand.aimState.pinchStrengthMiddle,
+				hand.aimState.pinchStrengthMiddle >= 1.0f,
 			};
 		}
 
 		case SimpleGestureType::RingFingerPinch: {
 			return {
-				hand.mAimState.pinchStrengthRing,
-				hand.mAimState.pinchStrengthRing >= 1.0f,
+				hand.aimState.pinchStrengthRing,
+				hand.aimState.pinchStrengthRing >= 1.0f,
 			};
 		}
 
 		case SimpleGestureType::PinkyFingerPinch: {
 			return {
-				hand.mAimState.pinchStrengthLittle,
-				hand.mAimState.pinchStrengthLittle >= 1.0f,
+				hand.aimState.pinchStrengthLittle,
+				hand.aimState.pinchStrengthLittle >= 1.0f,
 			};
 		}
 
 		case SimpleGestureType::OpenHandFacingFace: {
 			return {
-				(hand.mAimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB)
+				(hand.aimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB)
 						== XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB
 					? 1.0f
 					: 0.0f,
-				(hand.mAimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB)
+				(hand.aimState.status & XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB)
 					== XR_HAND_TRACKING_AIM_SYSTEM_GESTURE_BIT_FB,
 			};
 		}

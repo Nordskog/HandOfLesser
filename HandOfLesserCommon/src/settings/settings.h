@@ -80,8 +80,6 @@ namespace HOL
 			bool sendAlternating = false;
 			bool sendPacked = true;
 
-			bool sendOscInput = true;
-
 			// Modify splay to work with humanoid rig
 			bool useUnityHumanoidSplay = true;
 		};
@@ -97,6 +95,13 @@ namespace HOL
 	
 		};
 
+		struct InputSettings
+		{
+			bool sendOscInput = true;
+			bool sendSteamVRInput = true;
+			bool blockControllerInputWhileHandTracking = true;
+		};
+
 		struct HandOfLesserSettings
 		{
 			GeneralSettings general;
@@ -105,6 +110,7 @@ namespace HOL
 			VRChatSettings vrchat;
 			DebugSettings debug;
 			VisualizerSettings visualizer;
+			InputSettings input;
 		};
 	}
 } // namespace HOL::settings
