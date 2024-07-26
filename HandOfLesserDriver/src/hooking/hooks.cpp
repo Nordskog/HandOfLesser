@@ -30,37 +30,49 @@ namespace HOL::hooks
 			// we need to add the controller first.
 			auto ret = TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
 
-			// Now we can get the role ( except for vive wands maybe )
-			vr::ETrackedControllerRole role = (vr::ETrackedControllerRole)props->GetInt32Property(
-				container, vr::Prop_ControllerRoleHint_Int32);
+			auto deviceClass = props->GetInt32Property(container, vr::Prop_DeviceClass_Int32);
 
-			// TODO: vive wands will probably swap sides after activating
-			HandSide side = HandSide::HandSide_MAX;
-			switch (role)
+			if (deviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
 			{
-				case vr::ETrackedControllerRole::TrackedControllerRole_LeftHand:
-					side = HandSide::LeftHand;
-					break;
-				case vr::ETrackedControllerRole::TrackedControllerRole_RightHand:
-					side = HandSide::RightHand;
-					break;
-				default:
-					side = HandSide::HandSide_MAX;
-			}
+				// Now we can get the role ( except for vive wands maybe )
+				vr::ETrackedControllerRole role
+					= (vr::ETrackedControllerRole)props->GetInt32Property(
+						container, vr::Prop_ControllerRoleHint_Int32);
 
-			if (side == HandSide_MAX)
-			{
-				// Not a controller. I think ViveWands are assigned a side,
-				// it just may swap them dynamically.
-				// We should probably remove these.
-				DriverLog("Got controller but no side assigned");
+				// TODO: vive wands will probably swap sides after activating
+				HandSide side = HandSide::HandSide_MAX;
+				switch (role)
+				{
+					case vr::ETrackedControllerRole::TrackedControllerRole_LeftHand:
+						side = HandSide::LeftHand;
+						break;
+					case vr::ETrackedControllerRole::TrackedControllerRole_RightHand:
+						side = HandSide::RightHand;
+						break;
+					default:
+						side = HandSide::HandSide_MAX;
+				}
+
+				if (side == HandSide_MAX)
+				{
+					// Not a controller. I think ViveWands are assigned a side,
+					// it just may swap them dynamically.
+					// We should probably remove these.
+					DriverLog("Got controller but no side assigned");
+				}
+				else
+				{
+					DriverLog("Got controller, side: %s",
+							  side == HandSide::LeftHand ? "Left" : "Right");
+					controller->setSide(side);
+				}
 			}
 			else
 			{
-				DriverLog("Got controller, side: %s",
-						  side == HandSide::LeftHand ? "Left" : "Right");
-				controller->setSide(side);
+				DriverLog("Some other device activated, class: %d", deviceClass);
 			}
+
+
 
 			return ret;
 		}
