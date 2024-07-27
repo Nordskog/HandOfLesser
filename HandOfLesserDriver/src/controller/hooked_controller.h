@@ -13,7 +13,8 @@ namespace HOL
 						 HandSide side,
 						 vr::IVRServerDriverHost* host, 
 						 vr::ITrackedDeviceServerDriver* driver,
-						 std::string serial);
+						 std::string serial,
+						 vr::ETrackedDeviceClass deviceClass);
 		void UpdatePose(HOL::HandTransformPacket* packet) override;
 		void UpdateInput(HOL::ControllerInputPacket* packet) override;
 		void UpdateBoolInput(const std::string& input, bool value) override;
@@ -28,6 +29,7 @@ namespace HOL
 
 		void setLastOriginalPoseState(bool valid);
 
+		vr::ETrackedDeviceClass mDeviceClass = vr::ETrackedDeviceClass::TrackedDeviceClass_Max;
 		std::string serial;
 		vr::IVRDriverInput* driverInput;
 		std::unordered_map<vr::VRInputComponentHandle_t, ControllerInputHandle> inputHandles;

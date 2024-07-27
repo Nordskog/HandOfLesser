@@ -11,13 +11,15 @@ namespace HOL
 									   HandSide side,
 									   vr::IVRServerDriverHost* host,
 									   vr::ITrackedDeviceServerDriver* driver,
-									   std::string serial)
+									   std::string serial,
+									   vr::ETrackedDeviceClass deviceClass)
 	{
 		this->mSide = side;
 		this->mDeviceId = id;
 		this->mHookedHost = host;
 		this->mHookedDriver = driver;
 		this->serial = serial;
+		this->mDeviceClass = deviceClass;
 	}
 
 	void HookedController::UpdatePose(HOL::HandTransformPacket* packet)

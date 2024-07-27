@@ -17,7 +17,8 @@ namespace HOL
 		HookedController* addHookedController(uint32_t id,
 								 vr::IVRServerDriverHost* host,
 								 vr::ITrackedDeviceServerDriver* driver,
-								 std::string serial);
+											  std::string serial,
+											  vr::ETrackedDeviceClass deviceClass);
 
 		bool shouldPossess(uint32_t deviceId);
 		bool shouldPossess(HookedController* controller);

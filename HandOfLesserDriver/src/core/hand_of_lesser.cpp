@@ -134,7 +134,8 @@ namespace HOL
 	HookedController* HandOfLesser::addHookedController(uint32_t id,
 														vr::IVRServerDriverHost* host,
 														vr::ITrackedDeviceServerDriver* driver,
-														std::string serial)
+														std::string serial,
+														vr::ETrackedDeviceClass deviceClass)
 	{
 		// Check for existing
 		for (auto& controllerContainer : mHookedControllers)
@@ -146,15 +147,15 @@ namespace HOL
 				// thread safety, but not today!
 				controllerContainer.reset();
 				controllerContainer = std::make_unique<HookedController>(
-					id, HandSide::HandSide_MAX, host, driver, serial);
+					id, HandSide::HandSide_MAX, host, driver, serial, deviceClass);
 
 				return controllerContainer.get();
 			}
 		}
 
 		// otherwise just add
-		this->mHookedControllers.push_back(
-			std::make_unique<HookedController>(id, HandSide::HandSide_MAX, host, driver, serial));
+		this->mHookedControllers.push_back(std::make_unique<HookedController>(
+			id, HandSide::HandSide_MAX, host, driver, serial, deviceClass));
 
 		return this->mHookedControllers.back().get();
 	}

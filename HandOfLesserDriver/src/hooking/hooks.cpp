@@ -22,15 +22,16 @@ namespace HOL::hooks
 			std::string serial = props->GetStringProperty(
 				container, vr::Prop_SerialNumber_String);
 
+			vr::ETrackedDeviceClass deviceClass = (vr::ETrackedDeviceClass) props->GetInt32Property(
+				container, vr::Prop_DeviceClass_Int32);
+
 			// Add controller, get a pointer so we can set side later.
 			HookedController* controller = HOL::HandOfLesser::Current->addHookedController(
-				unWhichDevice, HOL::hooks::mLastDeviceDriverHost, _this, serial);
+				unWhichDevice, HOL::hooks::mLastDeviceDriverHost, _this, serial, deviceClass);
 			
 			// Let original function run. This will add all the inputs, which is why
 			// we need to add the controller first.
 			auto ret = TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
-
-			auto deviceClass = props->GetInt32Property(container, vr::Prop_DeviceClass_Int32);
 
 			if (deviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
 			{
