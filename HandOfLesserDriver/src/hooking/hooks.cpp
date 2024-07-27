@@ -132,18 +132,20 @@ namespace HOL::hooks
 		{
 			auto& config = HOL::HandOfLesser::Current->Config;
 
-			auto controllerMode = config.handPose.mControllerMode;
-			if (controllerMode == ControllerMode::HookedControllerMode
-				|| controllerMode == ControllerMode::OffsetControllerMode)
+			HookedController* controller
+				= HOL::HandOfLesser::Current->getHookedControllerByDeviceId(unWhichDevice);
+
+			if (controller != nullptr)
 			{
-				HookedController* controller
-					= HOL::HandOfLesser::Current->getHookedControllerByDeviceId(unWhichDevice);
+				controller->setLastOriginalPoseState(newPose.deviceIsConnected
+													 && newPose.poseIsValid);
 
-				if (controller != nullptr)
+				controller->lastOriginalPose = newPose;
+
+				auto controllerMode = config.handPose.mControllerMode;
+				if (controllerMode == ControllerMode::HookedControllerMode
+					|| controllerMode == ControllerMode::OffsetControllerMode)
 				{
-					controller->setLastOriginalPoseState(newPose.deviceIsConnected
-														 && newPose.poseIsValid);
-
 					if (controllerMode == ControllerMode::HookedControllerMode)
 					{
 						// Just do nothing if we are possessing controllers
@@ -166,6 +168,7 @@ namespace HOL::hooks
 					}
 				}
 			}
+
 
 			// Make sure to return early if we don't want to call the original function
 			return TrackedDevicePoseUpdated::FunctionHook.originalFunc(

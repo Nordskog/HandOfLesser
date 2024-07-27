@@ -37,6 +37,7 @@ namespace HOL
 
 		uint32_t getDeviceId();
 
+		vr::DriverPose_t lastOriginalPose;
 
 
 	private:
