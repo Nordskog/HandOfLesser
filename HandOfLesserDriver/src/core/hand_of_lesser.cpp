@@ -136,16 +136,23 @@ namespace HOL
 														vr::ITrackedDeviceServerDriver* driver,
 														std::string serial)
 	{
-		// TODO: I geuss they can be activated multiple times and we should deal with that
-		// We assign the side later now so uhhhh
-		// if (this->mHookedControllers[side] != nullptr)
-		/*
+		// Check for existing
+		for (auto& controllerContainer : mHookedControllers)
 		{
-			DriverLog("Tried to add hooked %s controller but already added!",
-					  (side == HandSide::LeftHand ? "left" : "right"));
-			return;
-		}*/
+			if (controllerContainer->serial == serial)
+			{
+				// Just clear the existing pointer and reuse it
+				// Sooner or later we are going to have to care about
+				// thread safety, but not today!
+				controllerContainer.reset();
+				controllerContainer = std::make_unique<HookedController>(
+					id, HandSide::HandSide_MAX, host, driver, serial);
 
+				return controllerContainer.get();
+			}
+		}
+
+		// otherwise just add
 		this->mHookedControllers.push_back(
 			std::make_unique<HookedController>(id, HandSide::HandSide_MAX, host, driver, serial));
 
