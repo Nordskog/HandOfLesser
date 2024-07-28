@@ -19,27 +19,30 @@ namespace HOL::hooks
 			vr::PropertyContainerHandle_t container
 				= props->TrackedDeviceToPropertyContainer(unWhichDevice);
 
-			std::string serial = props->GetStringProperty(
-				container, vr::Prop_SerialNumber_String);
-
-			vr::ETrackedDeviceClass deviceClass = (vr::ETrackedDeviceClass) props->GetInt32Property(
-				container, vr::Prop_DeviceClass_Int32);
-
 			// Add controller, get a pointer so we can set side later.
 			HookedController* controller = HOL::HandOfLesser::Current->addHookedController(
-				unWhichDevice, HOL::hooks::mLastDeviceDriverHost, _this, serial, deviceClass);
+				unWhichDevice, HOL::hooks::mLastDeviceDriverHost, _this, container);
 			
 			// Let original function run. This will add all the inputs, which is why
 			// we need to add the controller first.
 			auto ret = TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
 
+			// These devices should not be populated until activate has been called,
+			// but for some devices they are. Weird.
+			std::string serial = props->GetStringProperty(container, vr::Prop_SerialNumber_String);
+			vr::ETrackedDeviceClass deviceClass = (vr::ETrackedDeviceClass)props->GetInt32Property(
+				container, vr::Prop_DeviceClass_Int32);
+			vr::ETrackedControllerRole role = (vr::ETrackedControllerRole)props->GetInt32Property(
+				container, vr::Prop_ControllerRoleHint_Int32);
+
+			DriverLog("Device serial: %s", serial.c_str());
+			DriverLog("Device class: %d", deviceClass);
+			DriverLog("Device role: %d", role);
+
+			controller->lateInit(serial, deviceClass, role);
+
 			if (deviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
 			{
-				// Now we can get the role ( except for vive wands maybe )
-				vr::ETrackedControllerRole role
-					= (vr::ETrackedControllerRole)props->GetInt32Property(
-						container, vr::Prop_ControllerRoleHint_Int32);
-
 				// TODO: vive wands will probably swap sides after activating
 				HandSide side = HandSide::HandSide_MAX;
 				switch (role)
@@ -73,6 +76,7 @@ namespace HOL::hooks
 				DriverLog("Some other device activated, class: %d", deviceClass);
 			}
 
+			HandOfLesser::Current->removeDuplicateDevices();
 
 
 			return ret;
@@ -199,7 +203,7 @@ namespace HOL::hooks
 			// We can identify the controller by the PropertyContainer, because it is unique
 			// to each controller.
 			HOL::HookedController* controller
-				= HOL::HandOfLesser::Current->getHookedControllerBySerial(serial);
+				= HOL::HandOfLesser::Current->getHookedControllerByPropertyContainer(ulContainer);
 			if (controller != nullptr)
 			{
 				controller->driverInput = _this;
@@ -241,7 +245,7 @@ namespace HOL::hooks
 			// We can identify the controller by the PropertyContainer, because it is unique
 			// to each controller.
 			HOL::HookedController* controller
-				= HOL::HandOfLesser::Current->getHookedControllerBySerial(serial);
+				= HOL::HandOfLesser::Current->getHookedControllerByPropertyContainer(ulContainer);
 			if (controller != nullptr)
 			{
 				controller->driverInput = _this;

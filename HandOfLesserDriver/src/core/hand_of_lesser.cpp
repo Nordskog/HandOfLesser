@@ -1,6 +1,7 @@
 #include "hand_of_lesser.h"
 #include "HandOfLesserCommon.h"
 #include <driverlog.h>
+#include <unordered_set>
 
 namespace HOL
 {
@@ -134,30 +135,46 @@ namespace HOL
 	HookedController* HandOfLesser::addHookedController(uint32_t id,
 														vr::IVRServerDriverHost* host,
 														vr::ITrackedDeviceServerDriver* driver,
-														std::string serial,
-														vr::ETrackedDeviceClass deviceClass)
+									  vr::PropertyContainerHandle_t propertyContainer)
 	{
-		// Check for existing
-		for (auto& controllerContainer : mHookedControllers)
-		{
-			if (controllerContainer->serial == serial)
-			{
-				// Just clear the existing pointer and reuse it
-				// Sooner or later we are going to have to care about
-				// thread safety, but not today!
-				controllerContainer.reset();
-				controllerContainer = std::make_unique<HookedController>(
-					id, HandSide::HandSide_MAX, host, driver, serial, deviceClass);
 
-				return controllerContainer.get();
-			}
-		}
-
-		// otherwise just add
 		this->mHookedControllers.push_back(std::make_unique<HookedController>(
-			id, HandSide::HandSide_MAX, host, driver, serial, deviceClass));
+			id, HandSide::HandSide_MAX, host, driver, propertyContainer));
 
 		return this->mHookedControllers.back().get();
+	}
+
+	// We don't bother removing devices when they're deactivated at the moment, since we
+	// may went to continue controlling them. This may mean they can be activated again.
+	// We can't identify them until they have been fully activated, so once they have been
+	// fully activated and populated, check for duplicate serials and nuke the oldest instance.
+	void HandOfLesser::removeDuplicateDevices()
+	{
+		std::unordered_map<std::string,int> existingSerials;
+
+		// count duplicates
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			existingSerials[controllerContainer->serial]++;
+		}
+
+		// Starting from oldest, delete while duplicate count > 1
+		auto it = mHookedControllers.begin();
+		while (it != mHookedControllers.end())
+		{
+			if (existingSerials[it->get()->serial] > 1)
+			{
+				DriverLog("Removing duplicate device with serial: %s", it->get()->serial.c_str());
+
+				it->reset();
+				existingSerials[it->get()->serial]--;
+				it = mHookedControllers.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+		}
 	}
 
 	static bool lastPossessState = false;
@@ -250,6 +267,33 @@ namespace HOL
 				{
 					return controller;
 				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	HookedController*
+	HandOfLesser::getHookedControllerByPropertyContainer(vr::PropertyContainerHandle_t container)
+	{
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			if (controllerContainer->propertyContainer == container)
+			{
+				return controllerContainer.get();
+			}
+		}
+
+		return nullptr;
+	}
+
+	HookedController* HandOfLesser::getHMD()
+	{
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			if (controllerContainer->mDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_HMD)
+			{
+				return controllerContainer.get();
 			}
 		}
 

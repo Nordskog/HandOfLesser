@@ -17,8 +17,9 @@ namespace HOL
 		HookedController* addHookedController(uint32_t id,
 								 vr::IVRServerDriverHost* host,
 								 vr::ITrackedDeviceServerDriver* driver,
-											  std::string serial,
-											  vr::ETrackedDeviceClass deviceClass);
+											  vr::PropertyContainerHandle_t propertyContainer);
+
+		void removeDuplicateDevices();
 
 		bool shouldPossess(uint32_t deviceId);
 		bool shouldPossess(HookedController* controller);
@@ -31,6 +32,9 @@ namespace HOL
 		HookedController* getHookedController(HOL::HandSide side);
 		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
 		HookedController* getHookedControllerBySerial(std::string serial);
+		HookedController*
+		getHookedControllerByPropertyContainer(vr::PropertyContainerHandle_t container);
+		HookedController* getHMD();
 		HookedController*
 		getHookedControllerByInputHandle(vr::VRInputComponentHandle_t inputHandle);
 		GenericControllerInterface* GetActiveController(HOL::HandSide side);

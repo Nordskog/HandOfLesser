@@ -11,15 +11,22 @@ namespace HOL
 									   HandSide side,
 									   vr::IVRServerDriverHost* host,
 									   vr::ITrackedDeviceServerDriver* driver,
-									   std::string serial,
-									   vr::ETrackedDeviceClass deviceClass)
+									   vr::PropertyContainerHandle_t propertyContainer)
 	{
 		this->mSide = side;
 		this->mDeviceId = id;
 		this->mHookedHost = host;
 		this->mHookedDriver = driver;
+		this->propertyContainer = propertyContainer;
+	}
+
+	void HookedController::lateInit(std::string serial,
+									vr::ETrackedDeviceClass deviceClass,
+									vr::ETrackedControllerRole role)
+	{
 		this->serial = serial;
 		this->mDeviceClass = deviceClass;
+		this->role = role;
 	}
 
 	void HookedController::UpdatePose(HOL::HandTransformPacket* packet)
@@ -122,6 +129,49 @@ namespace HOL
 	HandSide HookedController::getSide()
 	{
 		return mSide;
+	}
+
+	void HookedController::updateSideFromRole()
+	{
+		// Devices that do not have a pre-determined left/right role
+		// also have no way of telling which side they've been assigned to.
+		// Best you can do is ask SteamVR what the current controller for whichever side
+		// is, and check if that corresponds to any given controller.
+		
+		// Get the role
+		auto props = vr::VRProperties();
+		vr::PropertyContainerHandle_t container
+			= props->TrackedDeviceToPropertyContainer(this->mDeviceId);
+
+		// Now we can get the role ( except for vive wands maybe )
+		vr::ETrackedControllerRole role = (vr::ETrackedControllerRole)props->GetInt32Property(
+			container, vr::Prop_ControllerRoleHint_Int32);
+			
+		HandSide side = HandSide::HandSide_MAX;
+		switch (role)
+		{
+			case vr::ETrackedControllerRole::TrackedControllerRole_LeftHand:
+				side = HandSide::LeftHand;
+				break;
+			case vr::ETrackedControllerRole::TrackedControllerRole_RightHand:
+				side = HandSide::RightHand;
+				break;
+			default:
+				side = HandSide::HandSide_MAX;
+		}
+
+		if (mSide != side)
+		{
+			if (side == HandSide_MAX)
+			{
+				DriverLog("Controller unassigned side somehow.");
+			}
+			else
+			{
+				DriverLog("Controller assigned new side: %s",
+						  side == HandSide::LeftHand ? "Left" : "Right");
+			}
+		}
 	}
 
 	void HookedController::setLastOriginalPoseState(bool valid)
