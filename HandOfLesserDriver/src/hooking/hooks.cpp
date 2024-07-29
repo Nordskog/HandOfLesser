@@ -83,6 +83,30 @@ namespace HOL::hooks
 		}
 	} // namespace TrackedDeviceActivate
 
+	namespace PollNextEvent
+	{
+		Hook<PollNextEvent::Signature> FunctionHook("ITrackedDeviceServerDriver::PollNextEvent");
+
+		static bool
+		Detour(vr::IVRServerDriverHost* _this, vr::VREvent_t* pEvent, uint32_t uncbVREvent)
+		{
+			//DriverLog("PollNextEvent!");
+			auto ret = PollNextEvent::FunctionHook.originalFunc(_this, pEvent, uncbVREvent);
+
+			if (ret)
+			{
+				//DriverLog("Event: %d", pEvent->eventType);
+				if (pEvent->eventType == vr::EVREventType::VREvent_TrackedDeviceRoleChanged)
+				{
+					DriverLog("Received TrackedDeviceRoleChanged event, updating unhanded controllers");
+					HandOfLesser::Current->requestEstimateControllerSide();
+				}
+			}
+
+			return ret;
+		}
+	} // namespace PollNextEvent
+
 	namespace TrackedDeviceAdded006
 	{
 		Hook<TrackedDeviceAdded006::Signature>
@@ -144,7 +168,11 @@ namespace HOL::hooks
 				controller->setLastOriginalPoseState(newPose.deviceIsConnected
 													 && newPose.poseIsValid);
 
-				controller->lastOriginalPose = newPose;
+				if (newPose.poseIsValid && newPose.deviceIsConnected)
+				{
+					controller->lastOriginalPose = newPose;
+				}
+				
 
 				auto controllerMode = config.handPose.mControllerMode;
 				if (controllerMode == ControllerMode::HookedControllerMode
@@ -403,6 +431,15 @@ namespace HOL::hooks
 					TrackedDevicePoseUpdated::FunctionHook.CreateHookInObjectVTable(
 						originalInterface, 1, &TrackedDevicePoseUpdated::Detour);
 					IHook::Register(&TrackedDevicePoseUpdated::FunctionHook);
+				}
+
+				if (!IHook::Exists(PollNextEvent::FunctionHook.name))
+				{
+					DriverLog("Adding PollNextEvent hook");
+
+					PollNextEvent::FunctionHook.CreateHookInObjectVTable(
+						originalInterface, 5, &PollNextEvent::Detour);
+					IHook::Register(&PollNextEvent::FunctionHook);
 				}
 			}
 

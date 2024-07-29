@@ -39,10 +39,17 @@ namespace HOL
 		getHookedControllerByInputHandle(vr::VRInputComponentHandle_t inputHandle);
 		GenericControllerInterface* GetActiveController(HOL::HandSide side);
 
+		void requestEstimateControllerSide();
+
 	private:
 		void ReceiveDataThread();
+		void estimateControllerSide();
 
 		bool mActive;
+		int mControllerSideEstimationAttemptCount = 0;
+
+
+		bool mEstimateControllerSideWhenPositionValid = false;
 
 		std::thread my_pose_update_thread_;
 		HOL::NativeTransport mTransport;

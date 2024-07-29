@@ -32,6 +32,7 @@ namespace HOL
 
 		void setSide(HandSide side);
 		HandSide getSide();
+		void updateSideFromRole();
 
 		void setLastOriginalPoseState(bool valid);
 
@@ -46,6 +47,7 @@ namespace HOL
 		uint32_t getDeviceId();
 
 		vr::DriverPose_t lastOriginalPose;
+		bool mLastOriginalPoseValid;
 
 
 	private:
@@ -54,7 +56,6 @@ namespace HOL
 		HOL::HandTransformPacket mLastTransformPacket;
 		HOL::ControllerInputPacket mLastInputPacket;
 
-		bool mLastOriginalPoseValid;
 		bool mValidWhileOriginalInvalid;
 
 		HandSide mSide;

@@ -80,6 +80,13 @@ namespace HOL::hooks
 		extern Hook<TrackedDevicePoseUpdated::Signature> FunctionHook;
 	} // namespace TrackedDevicePoseUpdated
 
+	namespace PollNextEvent
+	{ 
+		using Signature = bool (*)(vr::IVRServerDriverHost*, vr::VREvent_t*, uint32_t);
+
+		extern Hook<PollNextEvent::Signature> FunctionHook;
+	} // namespace PollNextEvent
+
 	// Set in TrackedDeviceAdded006(), should be directly before the corresponding device is
 	// activated. If you get the wrong driverHost we won't be able to update the pose.
 	extern vr::IVRServerDriverHost* mLastDeviceDriverHost;

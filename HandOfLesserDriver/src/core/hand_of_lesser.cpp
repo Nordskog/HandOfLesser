@@ -1,7 +1,7 @@
 #include "hand_of_lesser.h"
 #include "HandOfLesserCommon.h"
 #include <driverlog.h>
-#include <unordered_set>
+#include "src/utils/math_utils.h"
 
 namespace HOL
 {
@@ -334,6 +334,162 @@ namespace HOL
 		}
 	}
 
+	void HandOfLesser::requestEstimateControllerSide()
+	{
+		// Ideally we would just wait for the controller-has-been-assigned-a-side
+		// event and immediately decide on what side each controller is.
+		// However, OVR will send this event before the controller has
+		// submitted a valid pose, resulting in it failing. 
+		// As a result of this we need to wait for all poses to be valid before 
+		// we run our estimation. 
+		this->mEstimateControllerSideWhenPositionValid = true;
+
+
+	}
+
+	void HandOfLesser::estimateControllerSide()
+	{
+		mControllerSideEstimationAttemptCount++;
+
+		if (mControllerSideEstimationAttemptCount > 500)
+		{
+			this->mEstimateControllerSideWhenPositionValid = false;
+			this->mControllerSideEstimationAttemptCount = 0;
+			DriverLog("Waited 500 frames HDM and controllers to have valid positions, giving up on deciding sides.");
+			return;
+		}
+
+		// Vive wands don't know what side they are until later,
+		// and we can't query what side they're assigned without
+		// being a client, so instead we listen for the event 
+		// that says they've been assigned a side, and... guess.
+		std::vector<HookedController*> unsidedControllers;
+
+		for (auto& controller : mHookedControllers)
+		{
+			// Controller with no left/right role hint.
+			// Only applies to Vive wand, and they use the invalid role.
+			if (controller->mDeviceClass == vr::TrackedDeviceClass_Controller
+				&& controller->role == vr::TrackedControllerRole_Invalid)
+			{
+				if (!controller->mLastOriginalPoseValid)
+				{
+					//DriverLog("Sided controller without valid position, skipping side estimation");
+					return;
+				}
+
+				unsidedControllers.push_back(controller.get());
+			}
+		}
+
+		if (unsidedControllers.empty())
+		{
+			// uhhhhhh
+			DriverLog("No unsided controllers, not peforming side estimation");
+			this->mEstimateControllerSideWhenPositionValid = false;
+			this->mControllerSideEstimationAttemptCount = 0;
+		}
+
+		if (unsidedControllers.size() > 2)
+		{
+			// uhhhhhh
+			DriverLog("More than two unsided controller, so I give up. Count: %d",
+					  unsidedControllers.size());
+		}
+
+		HookedController* hmd = getHMD();
+		if (hmd == nullptr)
+		{
+			DriverLog("Could not get HMD to do handedness math, so I give up.");
+			return;
+		}
+
+		if (!hmd->mLastOriginalPoseValid)
+		{
+			DriverLog("HMD position not valid, will not estimate controller side");
+			return;
+		}
+
+		// Cross forward with 0,1,0 to get x axis on flat plane
+		// This will be our plane up
+		Eigen::Vector3f hmdPos = HOL::ovrVectorToEigen(hmd->lastOriginalPose.vecPosition);
+		Eigen::Quaternionf hmdRot = HOL::ovrQuaternionToEigen(hmd->lastOriginalPose.qRotation);
+
+		Eigen::Quaternionf hmdHead
+			= HOL::ovrQuaternionToEigen(hmd->lastOriginalPose.qWorldFromDriverRotation);
+		hmdRot = hmdRot * hmdHead;
+
+		Eigen::Vector3f hmdForward = hmdRot * Eigen::Vector3f(0, 0, 1);
+		Eigen::Vector3f hmdSide = hmdForward.cross(Eigen::Vector3f(0, 1, 0));
+
+		if (unsidedControllers.size() == 2)
+		{
+			// remove y component, get angle between hmd forward and hmd->controller.
+			// lower of two values is left, higher is right.
+
+			Eigen::Vector3f controller1Pos =  HOL::ovrVectorToEigen(unsidedControllers[0]->lastOriginalPose.vecPosition);
+			Eigen::Vector3f controller2Pos = HOL::ovrVectorToEigen(unsidedControllers[1]->lastOriginalPose.vecPosition);
+
+			Eigen::Vector3f controller1Vector = controller1Pos - hmdPos;
+			Eigen::Vector3f controller2Vector = controller2Pos - hmdPos;
+
+			float controller1Distance = hmdSide.dot(controller1Vector);
+			float controller2Distance = hmdSide.dot(controller2Vector);
+
+			// The more above the plane the more right the controller is.
+			// Higher number is right controller, other is left.
+			// OR IT SHOULD BE BUT ITS OPPOSITE AND I GIVE UP
+			// I just inverted the if/else 
+			if (controller1Distance > controller2Distance)
+			{
+				unsidedControllers[0]->setSide(HandSide::LeftHand);
+				unsidedControllers[1]->setSide(HandSide::RightHand);
+
+				DriverLog("Asssigned controller %s to left", unsidedControllers[0]->serial.c_str());
+				DriverLog("Asssigned controller %s to right",
+						  unsidedControllers[1]->serial.c_str());
+			}
+			else
+			{
+				unsidedControllers[0]->setSide(HandSide::RightHand);
+				unsidedControllers[1]->setSide(HandSide::LeftHand);
+
+				DriverLog("Asssigned controller %s to right",
+						  unsidedControllers[0]->serial.c_str());
+				DriverLog("Asssigned controller %s to left", unsidedControllers[1]->serial.c_str());
+			}
+		}
+		else if (unsidedControllers.size() == 1)
+		{
+			// Same general idea, but anything to right of HMD will be right and vice versa
+			Eigen::Vector3f controller1Pos
+				= HOL::ovrVectorToEigen(unsidedControllers[0]->lastOriginalPose.vecPosition);
+
+			Eigen::Vector3f controller1Vector = controller1Pos - hmdPos;
+
+			float controller1Distance = hmdSide.dot(controller1Vector);
+
+			// right if > 0, otherwise left
+			// OR IT SHOULD BE BUT ITS OPPOSITE AND I GIVE UP
+			// I just inverted the if/else 
+			if (controller1Distance > 0)
+			{
+				unsidedControllers[0]->setSide(HandSide::LeftHand);
+				DriverLog("Asssigned controller %s to left", unsidedControllers[0]->serial.c_str());
+			}
+			else
+			{
+
+				unsidedControllers[0]->setSide(HandSide::RightHand);
+				DriverLog("Asssigned controller %s to right",
+						  unsidedControllers[0]->serial.c_str());
+			}
+		}
+
+		this->mControllerSideEstimationAttemptCount = 0;
+		this->mEstimateControllerSideWhenPositionValid = false;
+	}
+
 	void HandOfLesser::runFrame()
 	{
 		// As of writing only emulated controllers need to do anything here
@@ -376,6 +532,11 @@ namespace HOL
 			{
 				// We don't actually have anything to do for these
 			}
+		}
+
+		if (this->mEstimateControllerSideWhenPositionValid)
+		{
+			this->estimateControllerSide();
 		}
 	}
 
