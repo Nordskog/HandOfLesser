@@ -20,7 +20,8 @@ namespace HOL
 		switch (type)
 		{
 			case ControllerOffsetPreset::RoughyVRChatHand: {
-				return {Eigen::Vector3f(-0.002, 0.020, 0.011), Eigen::Vector3f(10, -7, 5)};
+				return {Eigen::Vector3f(-0.019, -0.022, 0.003),
+						Eigen::Vector3f(-10.000, 5.000, 0.000)};
 			}
 
 			case ControllerOffsetPreset::ZERO: {

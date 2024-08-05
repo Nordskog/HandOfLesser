@@ -18,8 +18,8 @@ namespace HOL
 			};
 
 			float ThumbCurlCenter[3] = {
-				27.1f, 
-				-47.1f, 
+				20.1f, 
+				-63.1f, 
 				50.2f
 			};
 
