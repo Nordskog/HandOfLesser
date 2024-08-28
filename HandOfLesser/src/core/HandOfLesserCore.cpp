@@ -104,6 +104,17 @@ void HandOfLesserCore::mainLoop()
 		if (this->mInstanceHolder.getState() == OpenXrState::Running)
 		{
 			doOpenXRStuff();
+			generateOscData();
+			sendOscData();
+		}
+		else
+		{
+			if (Config.vrchat.sendDebugOsc)
+			{
+				// Send some data for testing
+				this->mVrchatOSC.generateOscTestOutput();
+				sendOscData();
+			}
 		}
 
 		// draw queue swapping because UI and main loop are not in sync
@@ -128,18 +139,18 @@ void HandOfLesserCore::doOpenXRStuff()
 
 	this->sendUpdate();
 
-	// OSC is less time critically and should probably happen after we send the controller packet
-	doOscStuff();
-
 	return;
 }
 
-void HandOfLesserCore::doOscStuff()
+void HandOfLesserCore::generateOscData()
 {
 	// This will generate everything needed for all transmit types
 	this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(HandSide::LeftHand),
 									   this->mHandTracking.getHandPose(HandSide::RightHand));
+}
 
+void HOL::HandOfLesserCore::sendOscData()
+{
 	size_t size = 0;
 
 	// Always send full, expect when testing remote stuff locally because it will break things

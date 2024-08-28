@@ -82,6 +82,11 @@ namespace HOL
 
 			// Modify splay to work with humanoid rig
 			bool useUnityHumanoidSplay = true;
+			// Values we can adjust to send curl/spray to vrchat
+			// without having to be in VR
+			bool sendDebugOsc = false;
+			float curlDebug = 0;
+			float splayDebug = 0;
 		};
 
 		struct VisualizerSettings

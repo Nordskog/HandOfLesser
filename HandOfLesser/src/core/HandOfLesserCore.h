@@ -42,7 +42,8 @@ namespace HOL
 
 		void mainLoop();
 		void doOpenXRStuff();
-		void doOscStuff();
+		void generateOscData();
+		void sendOscData();
 		void sendUpdate();
 	};
 } // namespace HOL

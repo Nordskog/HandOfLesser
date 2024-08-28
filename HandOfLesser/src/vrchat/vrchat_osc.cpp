@@ -327,6 +327,36 @@ namespace HOL::VRChat
 		generateOscOutputPacked();
 	}
 
+	// Make everything the same value and spit that out
+	// for when we don't want to launch VR
+	void VRChatOSC::generateOscTestOutput()
+	{
+		// Fill full with whatever
+		for (int side = 0; side < HandSide::HandSide_MAX; side++)
+		{
+			for (int i = 0; i < FingerType::FingerType_MAX; i++)
+			{
+				for (int j = 0; j < FingerBendType_MAX; j++)
+				{
+					// Configurable in UI
+					float bend = Config.vrchat.curlDebug;
+					if (j == FingerBendType::Splay)
+					{
+						bend = Config.vrchat.splayDebug; // Eh
+					}
+
+					HOL::display::FingerTracking[side].humanoidBend[i].bend[j] = bend;
+
+					int index = getParameterIndex((HandSide)side, (FingerType)i, (FingerBendType)j);
+					this->mOscOutput[index] = bend;
+				}
+			}
+		}
+
+		// Then we just do everything else per usual
+		generateOscOutputPacked();
+	}
+
 	// includes a hand_side param denoting which hand the data is for
 	size_t HOL::VRChat::VRChatOSC::generateOscBundleAlternating()
 	{

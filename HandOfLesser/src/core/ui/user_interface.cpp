@@ -555,6 +555,15 @@ void UserInterface::buildVRChatOSCSettings()
 
 	ImGui::Checkbox("Use Unity Humanoid Splay", &Config.vrchat.useUnityHumanoidSplay);
 
+	ImGui::Checkbox("Send OSC test data", &Config.vrchat.sendDebugOsc);
+
+	if (Config.vrchat.sendDebugOsc)
+	{
+		ImGui::SeparatorText("OSC test data");
+		ImGui::SliderFloat("Curl", &Config.vrchat.curlDebug, -1, 1);
+		ImGui::SliderFloat("Splay", &Config.vrchat.splayDebug, -1, 1);
+	}
+
 	ImGui::SeparatorText("Offsets");
 
 	InputFloatMultipleSingleLableWithButtons("thumbRotationOffset",

@@ -38,6 +38,8 @@ namespace HOL::VRChat
 
 		void generateOscOutput(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
 
+		void generateOscTestOutput();
+
 		float encodePacked(float left, float right);
 
 		// these guys need to be easily configurable
