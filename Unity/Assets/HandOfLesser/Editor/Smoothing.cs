@@ -24,7 +24,7 @@ namespace HOL
             ClipTools.setClipProperty(
                 ref clip,
                     HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.smooth),
-                    AnimationValues.getValueForPose(position) * AnimationValues.SHOULD_BE_ONE_BUT_ISNT_SMOOTHING // See definition
+                    AnimationValues.getValueForPose(position) // See definition
                 );
 
             // SHOULD_BE_ONE_BUT_ISNT is used because when you have this animation output 1, it outputs 40 instead.
@@ -35,13 +35,17 @@ namespace HOL
             return 1;
         }
 
-        public static BlendTree generatSmoothingBlendtreeInner(BlendTree rootTree, HandSide side, FingerType finger, FingerBendType joint, PropertyType propertType)
+        public static BlendTree generatSmoothingBlendtreeInner( BlendTree parent, HandSide side, FingerType finger, FingerBendType joint, PropertyType propertType)
         {
             // generats blendtrees 1 and 2 for generateSmoothingBlendtree()
             BlendTree tree = new BlendTree();
-            tree.blendType = BlendTreeType.Simple1D;
+
+            AssetDatabase.AddObjectToAsset(tree, parent);
             tree.name = HOL.Resources.getJointParameterName(side, finger, joint, propertType);
+            tree.blendType = BlendTreeType.Simple1D;
             tree.useAutomaticThresholds = false;    // Automatic probably would work fine
+            tree.hideFlags = HideFlags.HideInHierarchy;
+
 
             // Blend either by original param or proxy param
             tree.blendParameter = HOL.Resources.getJointParameterName(side, finger, joint, propertType);
@@ -61,7 +65,7 @@ namespace HOL
         }
 
 
-        public static int generateSmoothingBlendtree(BlendTree rootTree, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
+        public static int generateSmoothingBlendtree(BlendTree parent, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
         {
             // So we have 3 blend trees.
             // 1. Takes the original input value and blends between animations setting the proxy value to -1 / 1
@@ -70,10 +74,12 @@ namespace HOL
 
             // #3
             BlendTree tree = new BlendTree();
+            AssetDatabase.AddObjectToAsset(tree, parent);
             tree.blendType = BlendTreeType.Simple1D;
             tree.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.input);
             tree.useAutomaticThresholds = false;    // Automatic probably would work fine
             tree.blendParameter = HOL.Resources.REMOTE_SMOOTHING_PARAMETER_NAME;
+            tree.hideFlags = HideFlags.HideInHierarchy;
 
             // In order to see the DirectBlendParamter required for the parent Direct blendtree, we need to use a ChildMotion,.
             // However, you cannot add a ChildMotion to a blendtree, and modifying it after adding it has no effect.
@@ -92,16 +98,18 @@ namespace HOL
             return 1;
         }
 
-        public static void populateSmoothingLayer(AnimatorController controller, AnimatorControllerLayer layer)
+        public static void populateSmoothingLayer(AnimatorControllerLayer layer)
         {
             // State within this controller. TODO: attach to stuff
             AnimatorState rootState = layer.stateMachine.AddState("HOLSmoothing");
-            rootState.writeDefaultValues = false; // I Think?
+            rootState.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
 
             // Blendtree at the root of our state
             BlendTree rootBlendtree = new BlendTree();
+            AssetDatabase.AddObjectToAsset(rootBlendtree, rootState);
+
+            rootBlendtree.name = "HandRoot_smoothing";
             rootBlendtree.blendType = BlendTreeType.Direct;
-            rootBlendtree.name = "HandRoot";
             rootBlendtree.useAutomaticThresholds = false;
             rootBlendtree.blendParameter = HOL.Resources.ALWAYS_1_PARAMETER;
 
@@ -123,7 +131,6 @@ namespace HOL
                     }
                 }
             }
-
             // Cannot add directly to parent tree, see generateSmoothingBlendtree()
             // Have to be added like this in order to set directblendparameter
             rootBlendtree.children = childTrees.ToArray();

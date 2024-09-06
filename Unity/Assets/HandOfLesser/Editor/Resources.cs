@@ -198,6 +198,11 @@ namespace HOL
             return AssetDatabase.LoadAssetAtPath<AvatarMask>(HANDOFLESSER_PATH + "/vrc_handsonly.mask");
         }
 
+        public static AvatarMask getBothHandsSkeletalMask()
+        {
+            return AssetDatabase.LoadAssetAtPath<AvatarMask>(HANDOFLESSER_PATH + "/vrc_handsonly_skeletal.mask");
+        }
+
         public static string getParametersPath()
         {
             return HANDOFLESSER_PATH + "/generated/handoflesser_parameters.asset";

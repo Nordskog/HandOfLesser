@@ -8,13 +8,6 @@ namespace HOL
 {
     class AnimationValues
     {
-        // There are some animations that should set parameters to -1 or 1.
-        // Instead they set them to -40 or 10. I have no idea why.
-        // Until someone can explain this to me, we multiply the values by this
-        public static readonly float SHOULD_BE_ONE_BUT_ISNT_SMOOTHING = 1f/ 30f;    // ok now it's 30   
-        // And here's one that sets 1600 instead! wTF
-        public static readonly float SHOULD_BE_ONE_BUT_ISNT_PACKED = 1f / 1200f; // And this 1200. No idea what makes it change.
-
         public static readonly int TOTAL_JOINT_COUNT = 4 * 5 * 2;
 
         public static float getValueForPose(AnimationClipPosition clipPos)
@@ -65,6 +58,57 @@ namespace HOL
             {
                 case AnimationClipPosition.negative: return range.start;
                 case AnimationClipPosition.neutral: return 0;   // Don't use this
+                case AnimationClipPosition.positive: return range.end;
+            }
+            return 0;
+        }
+
+        private static MotionRange getSkeletalRange( HandSide side, FingerType finger, FingerBendType joint, AnimationClipPosition clipPos)
+        {
+            // Same as getValueForPose(), but returns our configured values
+            // instead of -1 to +1, as that doesn't cover the full range of motion.
+            // Remember that the app side must be using the same range values.
+            MotionRange range;
+
+            if (joint == FingerBendType.splay)
+            {
+                range = HOL.SkeletalConfig.FingersplayRange[(int)finger];
+
+                if (side == HandSide.right)
+                {
+                    // Swap and flip splay
+                    (range.start, range.end) = (-range.end, -range.start); 
+                }
+
+            }
+            else
+            {
+                if (finger == FingerType.thumb)
+                {
+                    range = HOL.SkeletalConfig.ThumbCurlRange[(int)joint];
+                }
+                else
+                {
+                    range = HOL.SkeletalConfig.CommonCurlRange[(int)joint];
+                }
+            }
+
+            return range;
+        }
+
+        public static float getSkeletalValueFromCenter(HandSide side, FingerType finger, FingerBendType joint, AnimationClipPosition clipPos)
+        {
+            return getSkeletalValue(side, finger, joint, clipPos) - getSkeletalValue(side, finger, joint, AnimationClipPosition.neutral);
+        }
+
+        public static float getSkeletalValue(HandSide side, FingerType finger, FingerBendType joint, AnimationClipPosition clipPos)
+        {
+            MotionRange range = getSkeletalRange(side, finger, joint, clipPos);
+
+            switch (clipPos)
+            {
+                case AnimationClipPosition.negative: return range.start;
+                case AnimationClipPosition.neutral: return range.center;
                 case AnimationClipPosition.positive: return range.end;
             }
             return 0;

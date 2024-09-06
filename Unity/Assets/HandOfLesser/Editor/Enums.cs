@@ -38,8 +38,7 @@ namespace HOL
         input_packed,   // used for animation name because we need to do non-standard values
         input,      // full joint path with left/right qualified
         smooth,     // Output used for smoothing, used to drive avatarRig
-        avatarRig,  // Humanoid rig parameters. In the future humanoid rig will not be used.
-        skeletal,   // bone transform animations instead of humanoid
+        avatarRig,  // Humanoid rig or skeletal
         avatarRigCombined   // Contains both curl and splay in a single animation
     }
 
@@ -152,7 +151,6 @@ namespace HOL
                 case PropertyType.smooth: return "smooth";
                 case PropertyType.avatarRig: return "avatarRig";
                 case PropertyType.avatarRigCombined: return "avatarRigCombined";
-                case PropertyType.skeletal: return "skeletal";
                 default:
                     return "";
             }

@@ -13,15 +13,15 @@ namespace HOL
         private static AnimatorState generateDummyState(AnimatorControllerLayer layer, string name)
         {
             AnimatorState state = layer.stateMachine.AddState(name);
-            state.writeDefaultValues = false; // I Think?
+            state.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
 
             return state;
         }
 
-    public static AnimatorState generateSingleHandState(AnimatorController controller, AnimatorControllerLayer layer, HandSide side)
+    public static AnimatorState generateSingleHandState(AnimatorControllerLayer layer, HandSide side)
         {
             AnimatorState state = layer.stateMachine.AddState(side.propertyName());
-            state.writeDefaultValues = false; // I Think?
+            state.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
 
             // Driver to copy raw osc params to hand
             VRCAvatarParameterDriver driver = state.AddStateMachineBehaviour<VRCAvatarParameterDriver>();
@@ -72,7 +72,7 @@ namespace HOL
             return transition;
         }
 
-        public static void populateHandSwitchLayer(AnimatorController controller, AnimatorControllerLayer layer)
+        public static void populateHandSwitchLayer(AnimatorControllerLayer layer)
         {
             // This layer will be responsible for taking the raw osc values
             // and updating either the left or right hand values.
@@ -85,8 +85,8 @@ namespace HOL
             var lefToRightState = generateDummyState(layer, "leftToRight");
 
             // State that will house the driver setting our params
-            var leftState = generateSingleHandState(controller, layer, HandSide.left);
-            var rightState = generateSingleHandState(controller, layer, HandSide.right);
+            var leftState = generateSingleHandState(layer, HandSide.left);
+            var rightState = generateSingleHandState(layer, HandSide.right);
 
             // The two dummy states just sit and wait until the hand side param changes
             // Once it does it enters the corresponding state, it does its thing, and 

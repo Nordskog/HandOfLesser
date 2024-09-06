@@ -1,4 +1,5 @@
 ﻿using HOL;
+using HOL.FingerAnimations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,43 +16,12 @@ namespace HOL
         public static readonly int HUMANOID_BLENDTREE_COUNT = AnimationValues.TOTAL_JOINT_COUNT; // Bend joints ( including splay ) * fingers * hands
         public static readonly int HUMANOID_ANIMATION_COUNT = HUMANOID_BLENDTREE_COUNT * 2; // Positive and negative animation for each
 
-        public static int generateBendAnimation(HandSide side, FingerType finger, FingerBendType joint, AnimationClipPosition position)
-        {
-            AnimationClip clip = new AnimationClip();
-            ClipTools.setClipProperty(
-                ref clip,
-                    HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.avatarRig),
-                    AnimationValues.getHumanoidValue(finger, joint, position)
-                ); ;
 
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, joint, PropertyType.avatarRig, position)));
-
-            return 1;
-        }
-
-        public static int generateCombinedCurlSplayAnimation(HandSide side, FingerType finger, AnimationClipPosition curlPosition, AnimationClipPosition splayPosition )
-        {
-            AnimationClip clip = new AnimationClip();
-            ClipTools.setClipProperty(
-                ref clip,
-                    HOL.Resources.getJointParameterName(side, finger, FingerBendType.first, PropertyType.avatarRig),
-                    AnimationValues.getHumanoidValue(finger, FingerBendType.first, curlPosition)
-                );
-
-            ClipTools.setClipProperty(
-            ref clip,
-                HOL.Resources.getJointParameterName(side, finger, FingerBendType.splay, PropertyType.avatarRig),
-                AnimationValues.getHumanoidValue(finger, FingerBendType.splay, splayPosition)
-            );
-
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(side, finger, FingerBendType.first, PropertyType.avatarRigCombined, curlPosition, splayPosition)));
-
-            return 1;
-        }
-
-        public static int generateCurlBlendTree(BlendTree rootTree, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
+        public static int generateCurlBlendTree(BlendTree parent, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
         {
             BlendTree tree = new BlendTree();
+            AssetDatabase.AddObjectToAsset(tree, parent);
+
             tree.blendType = BlendTreeType.Simple1D;
             tree.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.avatarRig);
             tree.useAutomaticThresholds = false;    // Automatic probably would work fine
@@ -92,18 +62,20 @@ namespace HOL
                         )));
         }
 
-        public static int generateCurlSplayBlendTree(BlendTree rootTree, List<ChildMotion> childTrees, HandSide side, FingerType finger)
+        public static int generateCurlSplayBlendTree(BlendTree parent, List<ChildMotion> childTrees, HandSide side, FingerType finger, bool useSkeletal)
         {
             // This blendtree blends between 4 animations that represent that joint fully open and closed ( curled ), both with and without splay.
             // X is curl, Y is spread
             // The tree should be generated such that splay represents the rolling of the knuckle, along the z axis, before curl is applied.
 
             BlendTree tree = new BlendTree();
+            AssetDatabase.AddObjectToAsset(tree, parent);
+
             tree.blendType = BlendTreeType.SimpleDirectional2D;
             tree.name = HOL.Resources.getJointParameterName(side, finger, FingerBendType.first, PropertyType.avatarRigCombined);
             tree.useAutomaticThresholds = false;    // Automatic probably would work fine
             tree.blendParameter = HOL.Resources.getJointParameterName(side, finger, FingerBendType.first, PropertyType.smooth); // Note that we're using the smoothed proxy here
-            tree.blendParameterY = HOL.Resources.getJointParameterName(side, finger, FingerBendType.splay, PropertyType.smooth);
+            tree.blendParameterY = HOL.Resources.getJointParameterName(side, finger, FingerBendType.splay, PropertyType.smooth); // also smooth
 
             // In order to see the DirectBlendParamter required for the parent Direct blendtree, we need to use a ChildMotion,.
             // However, you cannot add a ChildMotion to a blendtree, and modifying it after adding it has no effect.
@@ -121,27 +93,45 @@ namespace HOL
             AnimationClip curl_open_splay_out = GetAnimationClip(side, finger, AnimationClipPosition.positive, AnimationClipPosition.positive);  
             AnimationClip curl_closed_splay_out = GetAnimationClip(side, finger, AnimationClipPosition.negative, AnimationClipPosition.positive);  
 
-            tree.AddChild(curl_open_splay_in,       new Vector2(-1, -1));
-            tree.AddChild(curl_closed_splay_in,     new Vector2(1, -1));
-            tree.AddChild(curl_open_splay_out,      new Vector2(-1, 1));
-            tree.AddChild(curl_closed_splay_out,    new Vector2(1, 1));
+            if(useSkeletal)
+            {
+                tree.AddChild(curl_open_splay_in, new Vector2(-1, -1));
+                tree.AddChild(curl_closed_splay_in, new Vector2(1, -1));
+                tree.AddChild(curl_open_splay_out, new Vector2(-1, 1));
+                tree.AddChild(curl_closed_splay_out, new Vector2(1, 1));
+            }
+            else
+            {
+                // Invert splay here
+                tree.AddChild(curl_open_splay_in, new Vector2(-1, -1));
+                tree.AddChild(curl_closed_splay_in, new Vector2(1, -1));
+                tree.AddChild(curl_open_splay_out, new Vector2(-1, 1));
+                tree.AddChild(curl_closed_splay_out, new Vector2(1, 1));
+            }
+
+
 
             return 2; // For the sake of counting, treat as two, one for curl and one for splay
         }
 
-        public static void populateFingerJointLayer(AnimatorController controller, AnimatorControllerLayer layer)
+        public static void populateFingerJointLayer(AnimatorControllerLayer layer, bool useSkeletal)
         {
             // This mostly works like your average joint state machine
             // Accept -1 to 1, blend between corresponding negative and positive animation.
 
             // State within this controller. TODO: attach to stuff
             AnimatorState rootState = layer.stateMachine.AddState("HandOfLesserHands");
-            rootState.writeDefaultValues = false; // I Think?
+            rootState.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
 
             // Blendtree at the root of our state
             BlendTree rootBlendtree = new BlendTree();
-            rootBlendtree.blendType = BlendTreeType.Direct;
+            AssetDatabase.AddObjectToAsset(rootBlendtree, rootState);
+
+
+            // You /must/ create blendtrees using this to attach them to the controller
+            // or they will be saved properly
             rootBlendtree.name = "HandRoot";
+            rootBlendtree.blendType = BlendTreeType.Direct;
             rootBlendtree.useAutomaticThresholds = false;
             rootBlendtree.blendParameter = HOL.Resources.ALWAYS_1_PARAMETER;
 
@@ -177,7 +167,8 @@ namespace HOL
                             // The app is responsible for sending special values that make the best of this nonsense.
                             // Even doing this curl is still incorrect, since they rotate on the z axis /after/ performing the curl on the x axis, rather than before.
                             // tl;dr the rotation order is wrong and fingers rotate wrong. Fix your fucking game engine Unity.
-                            blendtreesProcessed += generateCurlSplayBlendTree(rootBlendtree, childTrees, side, finger);
+                            // Late: Not a problem for skeletal tho
+                            blendtreesProcessed += generateCurlSplayBlendTree(rootBlendtree, childTrees, side, finger, useSkeletal);
 
                         }
                         else
@@ -199,12 +190,14 @@ namespace HOL
             ProgressDisplay.clearProgress();
         }
 
-        public static void generateAnimations()
+        public static void generateAnimations(GameObject avatar, bool useSkeletal)
         {
             HOL.Resources.createOutputDirectories();
 
             int animationProcessed = 0;
             ProgressDisplay.updateAnimationProgress(animationProcessed, HUMANOID_ANIMATION_COUNT);
+
+            FingerAnimationInterface animGenerator = useSkeletal ? new FingerAnimations.SkeletalFingerAnimations() : new FingerAnimations.HumanoidFingerAnimations();
 
             foreach (HandSide side in new HandSide().Values())
             {
@@ -221,18 +214,18 @@ namespace HOL
                         if (joint == FingerBendType.first)
                         {
                             // Closed and open, fully ACTUALLY splayed ( finger rolled outwards along the Z axis in an open state )
-                            animationProcessed += generateCombinedCurlSplayAnimation(side, finger, AnimationClipPosition.negative, AnimationClipPosition.positive);
-                            animationProcessed += generateCombinedCurlSplayAnimation(side, finger, AnimationClipPosition.positive, AnimationClipPosition.negative);
+                            animationProcessed += animGenerator.generateCombinedCurlSplayAnimation(avatar, side, finger, AnimationClipPosition.negative, AnimationClipPosition.positive);
+                            animationProcessed += animGenerator.generateCombinedCurlSplayAnimation(avatar, side, finger, AnimationClipPosition.positive, AnimationClipPosition.negative);
 
                             // Closed and open, not splayed ( rolled inwards, if at all )
-                            animationProcessed += generateCombinedCurlSplayAnimation(side, finger, AnimationClipPosition.negative, AnimationClipPosition.negative);
-                            animationProcessed += generateCombinedCurlSplayAnimation(side, finger, AnimationClipPosition.positive, AnimationClipPosition.positive);
+                            animationProcessed += animGenerator.generateCombinedCurlSplayAnimation(avatar, side, finger, AnimationClipPosition.negative, AnimationClipPosition.negative);
+                            animationProcessed += animGenerator.generateCombinedCurlSplayAnimation(avatar, side, finger, AnimationClipPosition.positive, AnimationClipPosition.positive);
                         }
                         else // Joints that don't have splay
                         {
                             // These animatiosn drive the humanoid rig ( for now )
-                            animationProcessed += generateBendAnimation(side, finger, joint, AnimationClipPosition.negative);
-                            animationProcessed += generateBendAnimation(side, finger, joint, AnimationClipPosition.positive);
+                            animationProcessed += animGenerator.generateBendAnimation(avatar, side, finger, joint, AnimationClipPosition.negative);
+                            animationProcessed += animGenerator.generateBendAnimation(avatar, side, finger, joint, AnimationClipPosition.positive);
                         }
 
                         ProgressDisplay.updateAnimationProgress(animationProcessed, HUMANOID_ANIMATION_COUNT);

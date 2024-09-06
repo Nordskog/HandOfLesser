@@ -20,11 +20,13 @@ namespace HOL
         private static readonly int PACKED_ANIMATION_COUNT = PACKED_ANIMATION_COUNT_RIGHT + PACKED_ANIMATION_COUNT_LEFT;
         private static readonly int PACKED_VALUE_COUNT = 256;    // Max an 8bit int can store
 
-        private static int generateSingleBlendTree(BlendTree rootTree, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
+        private static int generateSingleBlendTree(BlendTree parent, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
         {
             BlendTree tree = new BlendTree();
-            tree.blendType = BlendTreeType.Simple1D;
+            AssetDatabase.AddObjectToAsset(tree, parent);
+
             tree.name = HOL.Resources.getJointParameterName(null, finger, joint, PropertyType.OSC_Packed);
+            tree.blendType = BlendTreeType.Simple1D;
             tree.useAutomaticThresholds = false;    
             tree.blendParameter = HOL.Resources.getJointParameterName(null, finger, joint, PropertyType.OSC_Packed);
 
@@ -99,18 +101,21 @@ namespace HOL
             return 1;
         }
 
-        public static void populatedPackedLayer(AnimatorController controller, AnimatorControllerLayer layer)
+        public static void populatedPackedLayer(AnimatorControllerLayer layer)
         {
             // State within this controller. TODO: attach to stuff
             AnimatorState rootState = layer.stateMachine.AddState("HOLPacked");
-            rootState.writeDefaultValues = false; // I Think?
+            rootState.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
 
             // Blendtree at the root of our state
             BlendTree rootBlendtree = new BlendTree();
-            rootBlendtree.blendType = BlendTreeType.Direct;
+            AssetDatabase.AddObjectToAsset(rootBlendtree, rootState);
+
             rootBlendtree.name = "HandRoot";
+            rootBlendtree.blendType = BlendTreeType.Direct;
             rootBlendtree.useAutomaticThresholds = false;
             rootBlendtree.blendParameter = HOL.Resources.ALWAYS_1_PARAMETER;
+            
             rootState.motion = rootBlendtree;
 
             int blendtreesProcessed = 0;
@@ -152,7 +157,7 @@ namespace HOL
             ClipTools.setClipProperty(
                 ref clip,
                     HOL.Resources.getJointParameterName(HandSide.left, finger, joint, PropertyType.input),
-                    getValueAtStep(leftStep, STEP_COUNT, -1, 1) * AnimationValues.SHOULD_BE_ONE_BUT_ISNT_PACKED // See definition
+                    getValueAtStep(leftStep, STEP_COUNT, -1, 1)
                 );
 
             // Note separate animation clip name getter
@@ -167,7 +172,7 @@ namespace HOL
             ClipTools.setClipProperty(
                 ref clip,
                     HOL.Resources.getJointParameterName(HandSide.right, finger, joint, PropertyType.input),
-                    AnimationValues.getValueForPose(position) * AnimationValues.SHOULD_BE_ONE_BUT_ISNT_PACKED // See definition
+                    AnimationValues.getValueForPose(position)
                 );
 
             ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(null, finger, joint, PropertyType.input_packed, position)));

@@ -14,6 +14,9 @@ public class HandOfLesserAnimationGenerator : EditorWindow
     // This depends on framerate, so we need to figure out something for that.
     static float sRemoteSmoothing = 0.7f;
 
+    static GameObject sTargetAvatar = null;
+    static bool sUseSkeletal = false;
+
     [MenuItem("Window/HandOfLesser")]
     public static void ShowWindow()
     {
@@ -23,6 +26,10 @@ public class HandOfLesserAnimationGenerator : EditorWindow
     private void OnGUI()
     {
         sRemoteSmoothing = EditorGUILayout.FloatField("Remote smoothing:", sRemoteSmoothing);
+
+        sTargetAvatar = (GameObject) EditorGUILayout.ObjectField("Avatar:", sTargetAvatar, typeof(GameObject), true);
+
+        sUseSkeletal = EditorGUILayout.Toggle("Use skeletal: ", sUseSkeletal);
 
         if (GUILayout.Button("Generate Animations"))
         {
@@ -67,7 +74,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
     private static void generateControllerLayers(AnimatorController controller, TransmitType transmitType)
     {
-        AvatarMask bothHandsMask = HOL.Resources.getBothHandsMask();
+        AvatarMask bothHandsMask = sUseSkeletal ? HOL.Resources.getBothHandsSkeletalMask() : HOL.Resources.getBothHandsMask();
 
         // We cannot modify the weight or mask of any layers added to the controller, 
         // so we need to remove the base layer, and manually create it and our finger joint layer
@@ -98,16 +105,18 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         switch (transmitType)
         {
             case TransmitType.alternating:
-                Alternating.populateHandSwitchLayer(controller, controller.layers[1]);
+                Alternating.populateHandSwitchLayer(controller.layers[1]);
                 break;
             case TransmitType.packed:   // TODO generate unpacking layer
-                Packed.populatedPackedLayer(controller, controller.layers[1]);
+                Packed.populatedPackedLayer(controller.layers[1]);
                 break;
             default:
                 break;
         }
-        Smoothing.populateSmoothingLayer(controller, controller.layers[2]);
-        FingerBend.populateFingerJointLayer(controller, controller.layers[3]);
+        Smoothing.populateSmoothingLayer(controller.layers[2]);
+        FingerBend.populateFingerJointLayer(controller.layers[3], sUseSkeletal);
+
+        ProgressDisplay.clearProgress();
     }
 
     private void generateControllerParameters(AnimatorController controller, TransmitType transmitType)
@@ -187,13 +196,19 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
     private void generateAnimations(TransmitType transmitType)
     {
+        if (sTargetAvatar == null)
+        {
+            EditorGUILayout.HelpBox("Not avatar assigned!", MessageType.Warning);
+        }
+
+
         // https://forum.unity.com/threads/createasset-is-super-slow.291667/#post-3853330
         // Makes createAsset not be super slow. Note the call to StopAssetEditing() below.
         AssetDatabase.StartAssetEditing(); // Yes, Start goes first.
 
         try
         {
-            FingerBend.generateAnimations();
+            FingerBend.generateAnimations(sTargetAvatar, sUseSkeletal);
             Smoothing.generateAnimations();
             switch (transmitType)
             {
