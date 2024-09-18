@@ -79,6 +79,8 @@ namespace HOL
 			bool sendFull = false;
 			bool sendAlternating = false;
 			bool sendPacked = true;
+			
+			bool interlacePacked = true;
 
 			// Modify splay to work with humanoid rig
 			bool useUnityHumanoidSplay = true;

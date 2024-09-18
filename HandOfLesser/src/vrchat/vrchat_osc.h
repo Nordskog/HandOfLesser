@@ -42,6 +42,8 @@ namespace HOL::VRChat
 
 		float encodePacked(float left, float right);
 
+		float handleInterlacing(float newValue, float oldValue);
+
 		// these guys need to be easily configurable
 		static float HUMAN_RIG_RANGE[SINGLE_HAND_JOINT_COUNT];
 		static float HUMAN_RIG_CENTER[SINGLE_HAND_JOINT_COUNT];
@@ -71,6 +73,7 @@ namespace HOL::VRChat
 		static std::string OSC_PARAMETER_NAMES_PACKED[SINGLE_HAND_JOINT_COUNT];
 
 		float mOscOutput[SINGLE_HAND_JOINT_COUNT * 2];		// Full. This also used for alternating.
+		float mOscOutputInterlacedForClamp[SINGLE_HAND_JOINT_COUNT * 2];	//See handleInterlacing()
 		float mOscOutputPacked[SINGLE_HAND_JOINT_COUNT];	// Packed, generated from Full.
 
 		char mOscPacketBuffer[OSC_PACKET_BUFFER_SIZE]; // 2560 Should be plenty

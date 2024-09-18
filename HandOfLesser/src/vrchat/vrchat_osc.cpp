@@ -263,6 +263,52 @@ namespace HOL::VRChat
 		return ((packed / 255.f) * 2.f) - 1.f;
 	}
 
+	float HOL::VRChat::VRChatOSC::handleInterlacing(float newValue, float oldValue)
+	{
+		// We can double the precision from 16 to 32 steps by 
+		// alternating between two values when, then having the
+		// vrchat side use the average of the two latest values.
+		// First decide what the nearest two steps are,
+		// then decide if we are within 50% of the center of these two steps.
+		// If we are, clamp to the farthest of the two steps.
+		// The value we choose will depend on what we chose last, 
+		// so store that somewhere.
+
+		// For the sake of my sanity, scale from -1/1 to 0/1 again
+		// Also multiply by 15, so we get a range of 0/15 with no rounding
+		newValue = ((newValue + 1.f) * 0.5f) * 15.f;
+		oldValue = ((oldValue + 1.f) * 0.5f) * 15.f;
+		
+		// fmod is basically modulo for floats, remainder.
+		float remainder = fmod(newValue,1);
+
+		// if within 0.25f of the center of two steps
+		if ( abs(0.5f - remainder) <= 0.25f )
+		{
+			// At this point we don't care what the actual value is, 
+			// only that it needs to be between the two steps.
+			// Floor the value to get the lower step, and we know +1 
+			// will be the upper step.
+			newValue = floorf(newValue);
+
+			// Find the step that is the most distant from the previous 
+			// value. This ensure that we will always be alternating, and 
+			// using the most distant value of the two when moving further.
+			float distanceLower = abs(newValue - oldValue);
+			float distanceUpper = abs((newValue + 1) - oldValue );
+			if (distanceLower < distanceUpper)
+			{
+				// Value is already at lower, so if upper is further away return it instead.
+				newValue += 1;	
+			}
+		}
+		// If false we don't need to do anything,
+		// scale it back to -1/1 and return.
+		return ((newValue / 15.f) * 2.f) - 1.f;
+
+
+	}
+
 	void HOL::VRChat::VRChatOSC::generateOscOutputPacked()
 	{
 		for (int i = 0; i < FingerType::FingerType_MAX; i++)
@@ -280,6 +326,17 @@ namespace HOL::VRChat
 				HOL::display::FingerTracking[HandSide::LeftHand].humanoidBend[i].bend[j] = leftBend;
 				HOL::display::FingerTracking[HandSide::RightHand].humanoidBend[i].bend[j]
 					= rightBend;
+
+				// Handle interlacing
+				if (HOL::Config.vrchat.interlacePacked)
+				{
+					leftBend
+						= handleInterlacing(leftBend, mOscOutputInterlacedForClamp[leftSideIndex]);
+					rightBend = handleInterlacing(rightBend,
+												  mOscOutputInterlacedForClamp[rightSideIndex]);
+					mOscOutputInterlacedForClamp[leftSideIndex] = leftBend;
+					mOscOutputInterlacedForClamp[rightSideIndex] = rightBend;
+				}
 
 				int index = getParameterIndex((FingerType)i, (FingerBendType)j);
 				float packed = encodePacked(leftBend, rightBend);
