@@ -477,6 +477,16 @@ namespace HOL::VRChat
 				.closeMessage();
 		}
 
+		if (HOL::Config.vrchat.interlacePacked)
+		{
+			// Just need to alternate between 0 and 1, so reuse transmit side logic
+			int flipFlop = this->swapTransmitSide();
+
+			packet.openMessage(OSC_PACKED_INTERLACE_BIT.c_str(), 1)
+				.int32(flipFlop)
+				.closeMessage();
+		}
+
 		packet.closeBundle();
 
 		return packet.size();
