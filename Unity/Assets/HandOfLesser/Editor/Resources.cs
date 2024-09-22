@@ -18,10 +18,14 @@ namespace HOL
         public static readonly string HAND_SIDE_OSC_PARAMETER_NAME = addNamespacePrefix( 
             PropertyType.OSC_Alternating.addPrefixNamespace("hand_side"));
 
+        public static readonly string INTERLACE_BIT_OSC_PARAMETER_NAME = addNamespacePrefix(
+    PropertyType.OSC_Packed.addPrefixNamespace("interlace_bit"));
+
         public static readonly string REMOTE_SMOOTHING_PARAMETER_NAME = addNamespacePrefix("remote_smoothing");
 
         public static readonly string ALWAYS_1_PARAMETER = addNamespacePrefix( "always_one");
 
+        public static readonly string ALWAYS_HALF_PARAMETER = addNamespacePrefix("always_half");
         private static string addNamespacePrefix(string param)
         {
             return NAMESPACE + "/" + param;

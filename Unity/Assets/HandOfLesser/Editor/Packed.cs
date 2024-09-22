@@ -101,8 +101,10 @@ namespace HOL
             return 1;
         }
 
-        public static void populatedPackedLayer(AnimatorControllerLayer layer)
+        public static void populatedPackedLayer(AnimatorController controller)
         {
+            AnimatorControllerLayer layer = ControllerLayer.inputPacked.findLayer(controller);
+
             // State within this controller. TODO: attach to stuff
             AnimatorState rootState = layer.stateMachine.AddState("HOLPacked");
             rootState.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
@@ -149,14 +151,14 @@ namespace HOL
             return (ratio * endVal) + ((1f - ratio) * startVal);
         }
 
-        private static void generatePackedAnimationLeft(FingerType finger, FingerBendType joint, int leftStep)
+        private static void generatePackedAnimationLeft(FingerType finger, FingerBendType joint, int leftStep, PropertyType outputProperty)
         {
             // Animations for steps 0-15 of the left hand only
             // drives input
             AnimationClip clip = new AnimationClip();
             ClipTools.setClipProperty(
                 ref clip,
-                    HOL.Resources.getJointParameterName(HandSide.left, finger, joint, PropertyType.input),
+                    HOL.Resources.getJointParameterName(HandSide.left, finger, joint, outputProperty),
                     getValueAtStep(leftStep, STEP_COUNT, -1, 1)
                 );
 
@@ -164,14 +166,14 @@ namespace HOL
             ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, leftStep)));
         }
 
-        public static int generatedPackedAnimationRight(FingerType finger, FingerBendType joint, AnimationClipPosition position)
+        public static int generatedPackedAnimationRight(FingerType finger, FingerBendType joint, AnimationClipPosition position, PropertyType outputProperty)
         {
             // Basically just a negative and positive animation for each joint, with a multiplier because unity is a buggy mess
             // Drives input
             AnimationClip clip = new AnimationClip();
             ClipTools.setClipProperty(
                 ref clip,
-                    HOL.Resources.getJointParameterName(HandSide.right, finger, joint, PropertyType.input),
+                    HOL.Resources.getJointParameterName(HandSide.right, finger, joint, outputProperty),
                     AnimationValues.getValueForPose(position)
                 );
 
@@ -180,12 +182,14 @@ namespace HOL
             return 1;
         }
 
-        public static void generateAnimations()
+        public static void generateAnimations(bool interlaced)
         {
             HOL.Resources.createOutputDirectories();
 
             int animationProcessed = 0;
             ProgressDisplay.updateAnimationProgress(animationProcessed, PACKED_ANIMATION_COUNT);
+
+            PropertyType outputProperty = interlaced ? PropertyType.input_interlaced : PropertyType.input;
 
             foreach (FingerType finger in new FingerType().Values())
             {
@@ -193,21 +197,18 @@ namespace HOL
                 {
                     // We use two different methods for unpacking the data into left/right values.
                     // See each generator method for details, and generateSingleBlendTree() for how they are used
-                    animationProcessed += generatedPackedAnimationRight( finger, joint, AnimationClipPosition.negative);
-                    animationProcessed += generatedPackedAnimationRight(finger, joint, AnimationClipPosition.positive);
+                    animationProcessed += generatedPackedAnimationRight( finger, joint, AnimationClipPosition.negative, outputProperty);
+                    animationProcessed += generatedPackedAnimationRight(finger, joint, AnimationClipPosition.positive, outputProperty);
 
                     for(int i = 0; i < STEP_COUNT; i++)
                     {
-                        generatePackedAnimationLeft(finger, joint, i);
+                        generatePackedAnimationLeft(finger, joint, i, outputProperty);
                         animationProcessed++;
                     }
 
                     ProgressDisplay.updateAnimationProgress(animationProcessed, PACKED_ANIMATION_COUNT);
                 }
             }
-            
-
-
         }
     }
 

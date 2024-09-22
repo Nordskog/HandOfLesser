@@ -114,8 +114,10 @@ namespace HOL
             return 2; // For the sake of counting, treat as two, one for curl and one for splay
         }
 
-        public static void populateFingerJointLayer(AnimatorControllerLayer layer, bool useSkeletal)
+        public static void populateFingerJointLayer(AnimatorController controller, bool useSkeletal)
         {
+            AnimatorControllerLayer layer = ControllerLayer.bend.findLayer(controller);
+
             // This mostly works like your average joint state machine
             // Accept -1 to 1, blend between corresponding negative and positive animation.
 

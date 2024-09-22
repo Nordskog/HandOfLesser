@@ -16,6 +16,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
     static GameObject sTargetAvatar = null;
     static bool sUseSkeletal = false;
+    static bool sUseInterlace = true;
 
     [MenuItem("Window/HandOfLesser")]
     public static void ShowWindow()
@@ -47,7 +48,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         }
     }
 
-    private static void addAnimatorLayer(AnimatorController controller, string name, float weight, AvatarMask mask)
+    private static void addAnimatorLayer(AnimatorController controller, ControllerLayer layer, float weight, AvatarMask mask)
     {
         // https://forum.unity.com/threads/animator-controller-layer-and-default-weight.527167/
         // You cannot programtically modify a layer after it has been created, so in order to set a weight
@@ -55,7 +56,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
         AnimatorStateMachine stateMachine = new AnimatorStateMachine
         {
-            name = controller.MakeUniqueLayerName(name),
+            name = controller.MakeUniqueLayerName(layer.propertyName()),
             hideFlags = HideFlags.HideInHierarchy
         };
 
@@ -80,24 +81,29 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         // so we need to remove the base layer, and manually create it and our finger joint layer
         controller.RemoveLayer(0);
 
-        addAnimatorLayer(controller, "Base Layer", 1, bothHandsMask);
+        addAnimatorLayer(controller, ControllerLayer.baseLayer, 1, bothHandsMask);
         switch (transmitType)
         {
             case TransmitType.alternating:
-                addAnimatorLayer(controller, "HOL_alternating", 1, bothHandsMask);
+                addAnimatorLayer(controller, ControllerLayer.inputAlternating, 1, bothHandsMask);
                 break;
             case TransmitType.packed:
-                addAnimatorLayer(controller, "HOL_packed", 1, bothHandsMask);
+                addAnimatorLayer(controller, ControllerLayer.inputPacked, 1, bothHandsMask);
+
+                if (sUseInterlace)
+                {
+                    // Add the 3 interlace layers
+                    addAnimatorLayer(controller, ControllerLayer.interlacePopulate, 1, bothHandsMask);
+                    addAnimatorLayer(controller, ControllerLayer.interlaceWeigh, 1, bothHandsMask);
+                    addAnimatorLayer(controller, ControllerLayer.interlateOutput, 1, bothHandsMask);
+                }
+
                 break;
             default:
-                // Ultimately full should be used for local, and packed for network,
-                // but I haven't implemented that yet, so we need a filler to keep
-                // the layer indices the same if packed or alternating don't exist.
-                addAnimatorLayer(controller, "HOL_filler", 1, bothHandsMask);
                 break;
         }
-        addAnimatorLayer(controller, "HOL_smoothing", 1, bothHandsMask);
-        addAnimatorLayer(controller, "HOL_bend", 1, bothHandsMask);
+        addAnimatorLayer(controller, ControllerLayer.smoothing, 1, bothHandsMask);
+        addAnimatorLayer(controller, ControllerLayer.bend, 1, bothHandsMask);
     }
 
     private static void populateControllerLayers(AnimatorController controller, TransmitType transmitType)
@@ -105,16 +111,24 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         switch (transmitType)
         {
             case TransmitType.alternating:
-                Alternating.populateHandSwitchLayer(controller.layers[1]);
+                Alternating.populateHandSwitchLayer(controller);
                 break;
             case TransmitType.packed:   // TODO generate unpacking layer
-                Packed.populatedPackedLayer(controller.layers[1]);
+                Packed.populatedPackedLayer(controller);
+                if (sUseInterlace)
+                {
+                    InterlacedFlipFlop.populateFlipflopLayer(controller);
+                    //InterlacedFlipFlopStateMachine.populateHandSwitchLayer(controller);
+
+                    InterlacedWeigh.populateWeighLayer(controller);
+                    InterlacedCombine.populateCombineLayer(controller);
+                }
                 break;
             default:
                 break;
         }
-        Smoothing.populateSmoothingLayer(controller.layers[2]);
-        FingerBend.populateFingerJointLayer(controller.layers[3], sUseSkeletal);
+        Smoothing.populateSmoothingLayer(controller);
+        FingerBend.populateFingerJointLayer(controller, sUseSkeletal);
 
         ProgressDisplay.clearProgress();
     }
@@ -142,6 +156,14 @@ public class HandOfLesserAnimationGenerator : EditorWindow
             type = AnimatorControllerParameterType.Float,
             defaultFloat = 1
         });
+
+        controller.AddParameter(new AnimatorControllerParameter()
+        {
+            name = HOL.Resources.ALWAYS_HALF_PARAMETER,
+            type = AnimatorControllerParameterType.Float,
+            defaultFloat = 0.5f
+        });
+
 
         // FULL requires no unpacking or fancy stuff, and should directly to the Input parameters instead.
         if (transmitType != TransmitType.full)
@@ -177,6 +199,12 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                     controller.AddParameter(HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.smooth), AnimatorControllerParameterType.Float);
                 }
             }
+        }
+
+        if (sUseInterlace)
+        {
+            InterlacedFlipFlop.addParameters(controller);
+            InterlacedWeigh.addParameters(controller);
         }
     }
 
@@ -214,7 +242,13 @@ public class HandOfLesserAnimationGenerator : EditorWindow
             {
                 case TransmitType.packed:
                     {
-                        Packed.generateAnimations();
+                        Packed.generateAnimations(sUseInterlace);
+                        if (sUseInterlace)
+                        {
+                            InterlacedFlipFlop.generateAnimations();
+                            InterlacedWeigh.generateAnimations();
+                            InterlacedCombine.generateAnimations();
+                        }
                         break;
                     }
                 default:
@@ -274,6 +308,21 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                     // Alternating and Packed share a single one.
                     if (propertyType != PropertyType.OSC_Full)
                         break;
+                }
+            }
+
+            if (transmitType == TransmitType.packed)
+            {
+                if (sUseInterlace)
+                {
+                    // flipFlop for interlaced
+                    VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
+                    newParam.name = HOL.Resources.INTERLACE_BIT_OSC_PARAMETER_NAME;
+                    newParam.valueType = VRCExpressionParameters.ValueType.Float;
+                    newParam.defaultValue = 0;
+                    newParam.networkSynced = true;
+
+                    parameters.Add(newParam);
                 }
             }
 

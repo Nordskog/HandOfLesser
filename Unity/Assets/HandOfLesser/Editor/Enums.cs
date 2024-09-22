@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEditor.Animations;
 
 namespace HOL
 {
@@ -29,14 +30,23 @@ namespace HOL
         right
     }
 
+    enum ControllerLayer
+    {
+        baseLayer, inputAlternating, inputPacked, smoothing, interlacePopulate, interlaceWeigh, interlateOutput, bend
+    }
+
     enum PropertyType
     {
         OSC_Full,       // This should always be the same as input, as it required no processing
         OSC_Alternating,      
         OSC_Packed,     // We will use packed for network and full for local, so need to separate them
 
-        input_packed,   // used for animation name because we need to do non-standard values
-        input,      // full joint path with left/right qualified
+        input_packed,       // used for animation name because we need to do non-standard values
+        input,              // full joint path with left/right qualified
+        input_interlaced,           // same as above, but values can alternate to signify in-between value
+        input_interlaced_first,     // Used to store prev/current interlaced value
+        input_interlaced_second,    // we flip-flop between the two, so either may be current or prev.
+        interlaced_weight,          // distance between current and past interlaced input
         smooth,     // Output used for smoothing, used to drive avatarRig
         avatarRig,  // Humanoid rig or skeletal
         avatarRigCombined   // Contains both curl and splay in a single animation
@@ -137,6 +147,40 @@ namespace HOL
         }
 
         /////////////////////
+        // ControllerLayer
+        /////////////////////
+
+        public static string propertyName(this ControllerLayer prop)
+        {
+            switch (prop)
+            {
+                case ControllerLayer.baseLayer: return "HOL_base";
+                case ControllerLayer.inputPacked:       return "HOL_inputPacked";
+                case ControllerLayer.inputAlternating:  return "HOL_inputAlternating";
+                case ControllerLayer.smoothing:         return "HOL_smoothing";
+                case ControllerLayer.bend:              return "HOL_bend";
+                case ControllerLayer.interlacePopulate: return "HOL_interlacePopulate";
+                case ControllerLayer.interlaceWeigh:    return "HOL_interlaceWeigh";
+                case ControllerLayer.interlateOutput:   return "HOL_interlaceOutput";
+                default:
+                    return "";
+            }
+        }
+
+        public static AnimatorControllerLayer findLayer(this ControllerLayer prop, AnimatorController controller)
+        {
+            foreach (AnimatorControllerLayer layer in controller.layers)
+            {
+                if (layer.name.Equals(prop.propertyName()))
+                {
+                    return layer;
+                }
+            }
+
+            return null;
+        }
+
+        /////////////////////
         // PropertyType
         /////////////////////
         public static string propertyName(this PropertyType prop)
@@ -151,6 +195,10 @@ namespace HOL
                 case PropertyType.smooth: return "smooth";
                 case PropertyType.avatarRig: return "avatarRig";
                 case PropertyType.avatarRigCombined: return "avatarRigCombined";
+                case PropertyType.input_interlaced: return "inputInterlaced";
+                case PropertyType.input_interlaced_first: return "inputInterlacedFirst";
+                case PropertyType.input_interlaced_second: return "inputInterlacedSecond";
+                case PropertyType.interlaced_weight: return "interlacedWeight";
                 default:
                     return "";
             }

@@ -98,8 +98,10 @@ namespace HOL
             return 1;
         }
 
-        public static void populateSmoothingLayer(AnimatorControllerLayer layer)
+        public static void populateSmoothingLayer(AnimatorController controller)
         {
+            AnimatorControllerLayer layer = ControllerLayer.smoothing.findLayer(controller);
+
             // State within this controller. TODO: attach to stuff
             AnimatorState rootState = layer.stateMachine.AddState("HOLSmoothing");
             rootState.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!

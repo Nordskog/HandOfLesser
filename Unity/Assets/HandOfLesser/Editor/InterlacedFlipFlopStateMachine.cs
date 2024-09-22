@@ -8,7 +8,7 @@ using VRC.SDK3.Avatars.Components;
 
 namespace HOL
 {
-    class Alternating
+    class InterlacedFlipFlopStateMachine
     {
         private static AnimatorState generateDummyState(AnimatorControllerLayer layer, string name)
         {
@@ -18,32 +18,37 @@ namespace HOL
             return state;
         }
 
-    public static AnimatorState generateSingleHandState(AnimatorControllerLayer layer, HandSide side)
+    public static AnimatorState generateSingleHandState(AnimatorControllerLayer layer, PropertyType outputProperty)
         {
-            AnimatorState state = layer.stateMachine.AddState(side.propertyName());
+            AnimatorState state = layer.stateMachine.AddState(outputProperty.propertyName());
             state.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
 
             // Driver to copy raw osc params to hand
             VRCAvatarParameterDriver driver = state.AddStateMachineBehaviour<VRCAvatarParameterDriver>();
 
+            HandSide[] sides = (HandSide[])Enum.GetValues(typeof(HandSide));
             FingerType[] fingers = (FingerType[])Enum.GetValues(typeof(FingerType));
             FingerBendType[] joints = (FingerBendType[])Enum.GetValues(typeof(FingerBendType));
 
-            foreach (FingerType finger in fingers)
+            foreach(HandSide side in sides)
             {
-                foreach (FingerBendType joint in joints)
+                foreach (FingerType finger in fingers)
                 {
-                    var parameter = new VRC.SDKBase.VRC_AvatarParameterDriver.Parameter();
-                    driver.parameters.Add(parameter);
-                    //parameter.source = HOL.Resources.getJointOSCName(finger, joint)
-                    parameter.type = VRC.SDKBase.VRC_AvatarParameterDriver.ChangeType.Copy;
+                    foreach (FingerBendType joint in joints)
+                    {
+                        var parameter = new VRC.SDKBase.VRC_AvatarParameterDriver.Parameter();
+                        driver.parameters.Add(parameter);
+                        //parameter.source = HOL.Resources.getJointOSCName(finger, joint)
+                        parameter.type = VRC.SDKBase.VRC_AvatarParameterDriver.ChangeType.Copy;
 
-                    // Name is the parameter it will drive, source is the paremter that will drive it.
-                    // Amazing naming convention you idiots
-                    parameter.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.input);
-                    parameter.source = HOL.Resources.getJointParameterName(null, finger, joint, PropertyType.OSC_Alternating);
+                        // Name is the parameter it will drive, source is the paremter that will drive it.
+                        // Amazing naming convention you idiots
+                        parameter.name = HOL.Resources.getJointParameterName(side, finger, joint, outputProperty);
+                        parameter.source = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.input_interlaced);
+                    }
                 }
             }
+
 
 
             return state;
@@ -74,7 +79,7 @@ namespace HOL
 
         public static void populateHandSwitchLayer(AnimatorController controller)
         {
-            AnimatorControllerLayer layer = ControllerLayer.inputAlternating.findLayer(controller);
+            AnimatorControllerLayer layer = ControllerLayer.interlacePopulate.findLayer(controller);
 
             // This layer will be responsible for taking the raw osc values
             // and updating either the left or right hand values.
@@ -87,8 +92,8 @@ namespace HOL
             var lefToRightState = generateDummyState(layer, "leftToRight");
 
             // State that will house the driver setting our params
-            var leftState = generateSingleHandState(layer, HandSide.left);
-            var rightState = generateSingleHandState(layer, HandSide.right);
+            var leftState = generateSingleHandState(layer, PropertyType.input_interlaced_first);
+            var rightState = generateSingleHandState(layer, PropertyType.input_interlaced_second);
 
             // The two dummy states just sit and wait until the hand side param changes
             // Once it does it enters the corresponding state, it does its thing, and 
@@ -96,12 +101,12 @@ namespace HOL
             AnimatorStateTransition transition;
             {
                 transition = generateTransition(leftState, layer.stateMachine);
-                transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.HAND_SIDE_OSC_PARAMETER_NAME);
+                transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.INTERLACE_BIT_OSC_PARAMETER_NAME);
                 rightToLeftState.AddTransition(transition);
             }
             {
                 transition = generateTransition(rightState, layer.stateMachine);
-                transition.AddCondition(AnimatorConditionMode.Equals, 1, HOL.Resources.HAND_SIDE_OSC_PARAMETER_NAME);
+                transition.AddCondition(AnimatorConditionMode.Equals, 1, HOL.Resources.INTERLACE_BIT_OSC_PARAMETER_NAME);
                 lefToRightState.AddTransition(transition);
             }
 
