@@ -88,12 +88,15 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 addAnimatorLayer(controller, ControllerLayer.inputAlternating, 1, bothHandsMask);
                 break;
             case TransmitType.packed:
+                if (sUseInterlace)
+                {
+                    addAnimatorLayer(controller, ControllerLayer.interlacePopulate, 1, bothHandsMask);
+                }
+
                 addAnimatorLayer(controller, ControllerLayer.inputPacked, 1, bothHandsMask);
 
                 if (sUseInterlace)
                 {
-                    // Add the 3 interlace layers
-                    addAnimatorLayer(controller, ControllerLayer.interlacePopulate, 1, bothHandsMask);
                     addAnimatorLayer(controller, ControllerLayer.interlaceWeigh, 1, bothHandsMask);
                     addAnimatorLayer(controller, ControllerLayer.interlateOutput, 1, bothHandsMask);
                 }
@@ -114,12 +117,10 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                 Alternating.populateHandSwitchLayer(controller);
                 break;
             case TransmitType.packed:   // TODO generate unpacking layer
-                Packed.populatedPackedLayer(controller);
+                Packed.populatePackedLayer(controller);
                 if (sUseInterlace)
                 {
-                    InterlacedFlipFlop.populateFlipflopLayer(controller);
-                    //InterlacedFlipFlopStateMachine.populateHandSwitchLayer(controller);
-
+                    InterlacedFlipFlopStateMachine.populateHandSwitchLayer(controller);
                     InterlacedWeigh.populateWeighLayer(controller);
                     InterlacedCombine.populateCombineLayer(controller);
                 }
@@ -318,12 +319,13 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                     // flipFlop for interlaced
                     VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
                     newParam.name = HOL.Resources.INTERLACE_BIT_OSC_PARAMETER_NAME;
-                    newParam.valueType = VRCExpressionParameters.ValueType.Float;
+                    newParam.valueType = VRCExpressionParameters.ValueType.Int;
                     newParam.defaultValue = 0;
                     newParam.networkSynced = true;
 
                     parameters.Add(newParam);
                 }
+                    
             }
 
             if (transmitType == TransmitType.alternating)

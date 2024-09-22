@@ -154,7 +154,6 @@ namespace HOL
                     {
                         blendtreesProcessed += generateWeighBlendtree(rootBlendtree, childTrees, side, finger, joint);
                         ProgressDisplay.updateBlendtreeProgress(blendtreesProcessed, WEIGH_BLENDTREE_COUNT);
-
                     }
                 }
             }

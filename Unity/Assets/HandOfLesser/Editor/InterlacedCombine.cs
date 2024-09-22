@@ -73,7 +73,7 @@ namespace HOL
             // Will blend 50/50 between childre
             tree.blendParameter = HOL.Resources.ALWAYS_HALF_PARAMETER;
 
-            tree.AddChild(generateValueDriverBlendtree(parent, side, finger, joint, PropertyType.input_interlaced_first, PropertyType.input), -1);
+            tree.AddChild(generateValueDriverBlendtree(parent, side, finger, joint, PropertyType.input_interlaced_first, PropertyType.input), 0);
             tree.AddChild(generateValueDriverBlendtree(parent, side, finger, joint, PropertyType.input_interlaced_second, PropertyType.input), 1);
 
             return tree;
@@ -149,7 +149,6 @@ namespace HOL
                     {
                         blendtreesProcessed += generateFlipFlopBlendTree(rootBlendtree, childTrees, side, finger, joint, PropertyType.input_interlaced_first);
                         ProgressDisplay.updateBlendtreeProgress(blendtreesProcessed, COMBINE_BLENDTREE_COUNT);
-
                     }
                 }
             }

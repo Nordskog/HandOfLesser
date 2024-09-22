@@ -20,7 +20,7 @@ namespace HOL
         private static readonly int PACKED_ANIMATION_COUNT = PACKED_ANIMATION_COUNT_RIGHT + PACKED_ANIMATION_COUNT_LEFT;
         private static readonly int PACKED_VALUE_COUNT = 256;    // Max an 8bit int can store
 
-        private static int generateSingleBlendTree(BlendTree parent, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
+        private static int generateSingleBlendTree(BlendTree parent, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint, PropertyType inputProperty, PropertyType outputProperty)
         {
             BlendTree tree = new BlendTree();
             AssetDatabase.AddObjectToAsset(tree, parent);
@@ -28,7 +28,7 @@ namespace HOL
             tree.name = HOL.Resources.getJointParameterName(null, finger, joint, PropertyType.OSC_Packed);
             tree.blendType = BlendTreeType.Simple1D;
             tree.useAutomaticThresholds = false;    
-            tree.blendParameter = HOL.Resources.getJointParameterName(null, finger, joint, PropertyType.OSC_Packed);
+            tree.blendParameter = HOL.Resources.getJointParameterName(null, finger, joint, inputProperty);
 
             childTrees.Add(new ChildMotion()
             {
@@ -50,7 +50,7 @@ namespace HOL
                 {
                     // Start
                     {
-                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, i));
+                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, i, outputProperty));
                         AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
 
                         float threshold = getValueAtStep(i*STEP_COUNT, PACKED_VALUE_COUNT, -1, 1);
@@ -59,7 +59,7 @@ namespace HOL
 
                     // End
                     {
-                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, i));
+                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, i, outputProperty));
                         AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
 
                         float threshold = getValueAtStep(i * STEP_COUNT + ( STEP_COUNT - 1 ), PACKED_VALUE_COUNT, -1, 1);
@@ -80,7 +80,7 @@ namespace HOL
                 {
                     // Negative
                     {
-                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(null, finger, joint, PropertyType.input_packed, AnimationClipPosition.negative));
+                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(HandSide.right, finger, joint, outputProperty, AnimationClipPosition.negative));
                         AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
 
                         float threshold = getValueAtStep(i, PACKED_VALUE_COUNT, -1, 1);
@@ -89,7 +89,7 @@ namespace HOL
 
                     // Positive
                     {
-                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(null, finger, joint, PropertyType.input_packed, AnimationClipPosition.positive));
+                        string animationPath = HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(HandSide.right, finger, joint, outputProperty, AnimationClipPosition.positive));
                         AnimationClip animation = AssetDatabase.LoadAssetAtPath<AnimationClip>(animationPath);
 
                         float threshold = getValueAtStep(i+(STEP_COUNT-1), PACKED_VALUE_COUNT, -1, 1);
@@ -101,7 +101,7 @@ namespace HOL
             return 1;
         }
 
-        public static void populatedPackedLayer(AnimatorController controller)
+        public static void populatePackedLayer(AnimatorController controller)
         {
             AnimatorControllerLayer layer = ControllerLayer.inputPacked.findLayer(controller);
 
@@ -126,12 +126,22 @@ namespace HOL
             // Cannot add directly to parent tree, see generateSmoothingBlendtree()
             List<ChildMotion> childTrees = new List<ChildMotion>();
 
+            // We now repeat this for interlaced, first and second using different inputs and writing to different outputs
             foreach (FingerType finger in new FingerType().Values())
             {
                 foreach (FingerBendType joint in new FingerBendType().Values())
                 {
-                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.left, finger, joint);
-                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.right, finger, joint);
+                    // interlaced
+                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.left, finger, joint, PropertyType.OSC_Packed, PropertyType.input_interlaced);
+                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.right, finger, joint, PropertyType.OSC_Packed, PropertyType.input_interlaced);
+
+                    // interlaced_first
+                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.left, finger, joint, PropertyType.OSC_Packed_first, PropertyType.input_interlaced_first);
+                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.right, finger, joint, PropertyType.OSC_Packed_first, PropertyType.input_interlaced_first);
+
+                    // interlaced second
+                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.left, finger, joint, PropertyType.OSC_Packed_second, PropertyType.input_interlaced_second);
+                    blendtreesProcessed += generateSingleBlendTree(rootBlendtree, childTrees, HandSide.right, finger, joint, PropertyType.OSC_Packed_second, PropertyType.input_interlaced_second);
                     ProgressDisplay.updateBlendtreeProgress(blendtreesProcessed, PACKED_BLENDTREE_COUNT);
                 }
             }
@@ -163,7 +173,7 @@ namespace HOL
                 );
 
             // Note separate animation clip name getter
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, leftStep)));
+            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getPackedAnimationClipName(finger, joint, leftStep, outputProperty)));
         }
 
         public static int generatedPackedAnimationRight(FingerType finger, FingerBendType joint, AnimationClipPosition position, PropertyType outputProperty)
@@ -177,7 +187,7 @@ namespace HOL
                     AnimationValues.getValueForPose(position)
                 );
 
-            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(null, finger, joint, PropertyType.input_packed, position)));
+            ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(HOL.Resources.getAnimationClipName(HandSide.right, finger, joint, outputProperty, position)));
 
             return 1;
         }
@@ -189,21 +199,37 @@ namespace HOL
             int animationProcessed = 0;
             ProgressDisplay.updateAnimationProgress(animationProcessed, PACKED_ANIMATION_COUNT);
 
-            PropertyType outputProperty = interlaced ? PropertyType.input_interlaced : PropertyType.input;
+            PropertyType[] properties;
+            if (interlaced)
+            {
+                properties = new PropertyType[] { PropertyType.input_interlaced, PropertyType.input_interlaced_first, PropertyType.input_interlaced_second };
+            }
+            else
+            {
+                properties = new PropertyType[] { PropertyType.input };
+            }
 
             foreach (FingerType finger in new FingerType().Values())
             {
                 foreach (FingerBendType joint in new FingerBendType().Values())
                 {
-                    // We use two different methods for unpacking the data into left/right values.
-                    // See each generator method for details, and generateSingleBlendTree() for how they are used
-                    animationProcessed += generatedPackedAnimationRight( finger, joint, AnimationClipPosition.negative, outputProperty);
-                    animationProcessed += generatedPackedAnimationRight(finger, joint, AnimationClipPosition.positive, outputProperty);
+                    // Because reasons, we need 3 sets of packed animations:
+                    // #1: normal, output to interlaced
+                    // #2 output to interlaced_first
+                    // # output to interlaced_second
 
-                    for(int i = 0; i < STEP_COUNT; i++)
+                    foreach(PropertyType property in properties)
                     {
-                        generatePackedAnimationLeft(finger, joint, i, outputProperty);
-                        animationProcessed++;
+                        // We use two different methods for unpacking the data into left/right values.
+                        // See each generator method for details, and generateSingleBlendTree() for how they are used
+                        animationProcessed += generatedPackedAnimationRight(finger, joint, AnimationClipPosition.negative, property);
+                        animationProcessed += generatedPackedAnimationRight(finger, joint, AnimationClipPosition.positive, property);
+
+                        for (int i = 0; i < STEP_COUNT; i++)
+                        {
+                            generatePackedAnimationLeft(finger, joint, i, property);
+                            animationProcessed++;
+                        }
                     }
 
                     ProgressDisplay.updateAnimationProgress(animationProcessed, PACKED_ANIMATION_COUNT);

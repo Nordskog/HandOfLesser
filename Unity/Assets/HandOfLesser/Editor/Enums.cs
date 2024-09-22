@@ -32,7 +32,13 @@ namespace HOL
 
     enum ControllerLayer
     {
-        baseLayer, inputAlternating, inputPacked, smoothing, interlacePopulate, interlaceWeigh, interlateOutput, bend
+        baseLayer, 
+        inputAlternating, 
+        inputPacked, 
+        smoothing, 
+        interlacePopulate, 
+        interlaceWeigh, 
+        interlateOutput, bend
     }
 
     enum PropertyType
@@ -40,6 +46,8 @@ namespace HOL
         OSC_Full,       // This should always be the same as input, as it required no processing
         OSC_Alternating,      
         OSC_Packed,     // We will use packed for network and full for local, so need to separate them
+        OSC_Packed_first,      // for interlacing
+        OSC_Packed_second,     // for interlacing
 
         input_packed,       // used for animation name because we need to do non-standard values
         input,              // full joint path with left/right qualified
@@ -190,6 +198,8 @@ namespace HOL
                 case PropertyType.OSC_Full: return "input"; // No processing required, so just treat as input
                 case PropertyType.OSC_Alternating: return "alternating";
                 case PropertyType.OSC_Packed: return "packed";
+                case PropertyType.OSC_Packed_first: return "packed_first";
+                case PropertyType.OSC_Packed_second: return "packed_second";
                 case PropertyType.input: return "input";
                 case PropertyType.input_packed: return "input"; // only used for animation clip names, drive input
                 case PropertyType.smooth: return "smooth";

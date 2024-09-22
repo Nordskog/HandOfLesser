@@ -32,11 +32,13 @@ namespace HOL
         }
 
         // Packed animations need separate 0-15 animations for the left hand only
-        public static string getPackedAnimationClipName(FingerType finger, FingerBendType joint, int leftStep)
+        public static string getPackedAnimationClipName(FingerType finger, FingerBendType joint, int leftStep, PropertyType outputProperty)
         {
             StringBuilder builder = new StringBuilder();
 
             builder.Append("packed_");
+            builder.Append(outputProperty.propertyName());
+            builder.Append("_");
             builder.Append(finger.propertyName());
             builder.Append("_");
             builder.Append(joint.propertyName());
@@ -46,14 +48,14 @@ namespace HOL
             return builder.ToString();
         }
 
-        public static string getAnimationClipName(HandSide? side, FingerType finger, FingerBendType joint, PropertyType propertyType, AnimationClipPosition primaryPosition = AnimationClipPosition.neutral)
+        public static string getAnimationClipName(HandSide? side, FingerType finger, FingerBendType joint, PropertyType outputProperty, AnimationClipPosition primaryPosition = AnimationClipPosition.neutral)
         {
-            return getAnimationClipName(side, finger, joint, propertyType, primaryPosition, null);
+            return getAnimationClipName(side, finger, joint, outputProperty, primaryPosition, null);
         }
 
-        public static string getAnimationClipName(HandSide? side, FingerType finger, FingerBendType joint, PropertyType propertyType, AnimationClipPosition primaryPosition, AnimationClipPosition? secondaryPosition )
+        public static string getAnimationClipName(HandSide? side, FingerType finger, FingerBendType joint, PropertyType outputProperty, AnimationClipPosition primaryPosition, AnimationClipPosition? secondaryPosition )
         {
-            string clipName = getJointParameterName(side, finger, joint, propertyType);
+            string clipName = getJointParameterName(side, finger, joint, outputProperty);
             clipName = clipName + "_" + primaryPosition.propertyName();
 
             if (secondaryPosition.HasValue)
@@ -74,6 +76,8 @@ namespace HOL
                 case PropertyType.OSC_Alternating:
                 case PropertyType.OSC_Packed:
                 case PropertyType.input_packed:
+                case PropertyType.OSC_Packed_first:
+                case PropertyType.OSC_Packed_second:
                     {
                     // the param may be supplied even when dealing with these.
                     // This is easier than checking the enum over and over.
