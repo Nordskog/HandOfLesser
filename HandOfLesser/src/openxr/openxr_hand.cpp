@@ -99,7 +99,9 @@ void OpenXRHand::calculateCurlSplay()
 		}
 
 		// Between metacarpal and proximal. No flipping this.
-		bend->bend[FingerBendType::Splay] = computeSplay(rawOrientation[0], rawOrientation[1]);
+		//bend->bend[FingerBendType::Splay] = computeSplay(rawOrientation[0], rawOrientation[1]);
+		bend->bend[FingerBendType::Splay]
+			= computeUncurledSplay(rawOrientation[0], rawOrientation[1], -bend->bend[0]);	// Note that we flip it again
 
 		if (Config.vrchat.useUnityHumanoidSplay)
 		{
@@ -118,6 +120,14 @@ void OpenXRHand::calculateCurlSplay()
 				= getJointPosition((XrHandJointEXT)(OpenXR::getFirstFingerJoint(finger) + 1));
 
 			bend->setSplay(computeHumanoidSplay(palmRot, knucklePos, splayRefPos));
+		}
+		else
+		{
+			// URGHHHHHHH
+
+
+
+
 		}
 	}
 }

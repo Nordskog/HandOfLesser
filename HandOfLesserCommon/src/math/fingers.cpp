@@ -35,6 +35,18 @@ namespace HOL
 		return euler.y();
 	}
 
+	float computeUncurledSplay(const Eigen::Quaternionf& previous, const Eigen::Quaternionf& next, float curl)
+	{
+		Eigen::Quaternionf localRot = previous.inverse() * next;
+
+		// Un-curl the finger
+		localRot = localRot * quaternionFromEulerAngles(Eigen::Vector3f(-curl, 0, 0));
+
+		// Extract y rotation
+		Eigen::Vector3f euler = localRot.toRotationMatrix().canonicalEulerAngles(0, 1, 2);
+		return euler.y();
+	}
+
 	// Creates a plane defined by palmOrientation and knucklePosition, returns angle between
 	// tip position and its closest point on the plane. This emulates how Humanoid spread works.
 	float computeHumanoidSplay(const Eigen::Quaternionf& palmOrientation,

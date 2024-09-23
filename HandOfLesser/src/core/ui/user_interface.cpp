@@ -565,53 +565,96 @@ void UserInterface::buildVRChatOSCSettings()
 		ImGui::SliderFloat("Splay", &Config.vrchat.splayDebug, -1, 1);
 	}
 
-	ImGui::SeparatorText("Offsets");
+	if (Config.vrchat.useUnityHumanoidSplay)
+	{
+		ImGui::SeparatorText("Offsets");
 
-	InputFloatMultipleSingleLableWithButtons("thumbRotationOffset",
-											 "Thumb rotation offset",
-											 1.f,
-											 1.f,
-											 "%.1f",
-											 90,
-											 {&Config.fingerBend.ThumbAxisOffset[0],
-											  &Config.fingerBend.ThumbAxisOffset[1],
-											  &Config.fingerBend.ThumbAxisOffset[2]});
+		InputFloatMultipleSingleLableWithButtons("thumbRotationOffset",
+												 "Thumb rotation offset",
+												 1.f,
+												 1.f,
+												 "%.1f",
+												 90,
+												 {&Config.fingerBend.ThumbAxisOffset[0],
+												  &Config.fingerBend.ThumbAxisOffset[1],
+												  &Config.fingerBend.ThumbAxisOffset[2]});
 
-	ImGui::SeparatorText("Curl Center");
+		ImGui::SeparatorText("Curl Center");
 
-	InputFloatMultipleSingleLableWithButtons("commonFingerCurlCenter",
-											 "Common",
-											 0.5f,
-											 1.f,
-											 "%.1f",
-											 90,
-											 {&Config.fingerBend.CommonCurlCenter[0],
-											  &Config.fingerBend.CommonCurlCenter[1],
-											  &Config.fingerBend.CommonCurlCenter[2]});
+		InputFloatMultipleSingleLableWithButtons("commonFingerCurlCenter",
+												 "Common",
+												 0.5f,
+												 1.f,
+												 "%.1f",
+												 90,
+												 {&Config.fingerBend.CommonCurlCenter[0],
+												  &Config.fingerBend.CommonCurlCenter[1],
+												  &Config.fingerBend.CommonCurlCenter[2]});
 
-	InputFloatMultipleSingleLableWithButtons("thumbFingerCurlCenter",
-											 "Thumb",
-											 0.5f,
-											 1.f,
-											 "%.1f",
-											 90,
-											 {&Config.fingerBend.ThumbCurlCenter[0],
-											  &Config.fingerBend.ThumbCurlCenter[1],
-											  &Config.fingerBend.ThumbCurlCenter[2]});
+		InputFloatMultipleSingleLableWithButtons("thumbFingerCurlCenter",
+												 "Thumb",
+												 0.5f,
+												 1.f,
+												 "%.1f",
+												 90,
+												 {&Config.fingerBend.ThumbCurlCenter[0],
+												  &Config.fingerBend.ThumbCurlCenter[1],
+												  &Config.fingerBend.ThumbCurlCenter[2]});
 
-	ImGui::SeparatorText("Splay Center");
+		ImGui::SeparatorText("Splay Center");
 
-	InputFloatMultipleTopLableWithButtons("fingerSplayCenter",
-										  {"Index", "Middle", "Ring", "Little", "Thumb"},
-										  0.5f,
-										  1.f,
-										  "%.1f",
-										  90,
-										  {&Config.fingerBend.FingerSplayCenter[0],
-										   &Config.fingerBend.FingerSplayCenter[1],
-										   &Config.fingerBend.FingerSplayCenter[2],
-										   &Config.fingerBend.FingerSplayCenter[3],
-										   &Config.fingerBend.FingerSplayCenter[4]});
+		InputFloatMultipleTopLableWithButtons("fingerSplayCenter",
+											  {"Index", "Middle", "Ring", "Little", "Thumb"},
+											  0.5f,
+											  1.f,
+											  "%.1f",
+											  90,
+											  {&Config.fingerBend.FingerSplayCenter[0],
+											   &Config.fingerBend.FingerSplayCenter[1],
+											   &Config.fingerBend.FingerSplayCenter[2],
+											   &Config.fingerBend.FingerSplayCenter[3],
+											   &Config.fingerBend.FingerSplayCenter[4]});
+	}
+	else
+	{
+		ImGui::SeparatorText("Curl Offset");
+
+		InputFloatMultipleSingleLableWithButtons("Common curl offset",
+												 "Common",
+												 0.5f,
+												 1.f,
+												 "%.1f",
+												 90,
+												 {&Config.skeletalBend.CommonCurlCenter[0],
+												  &Config.skeletalBend.CommonCurlCenter[1],
+												  &Config.skeletalBend.CommonCurlCenter[2]});
+
+		InputFloatMultipleSingleLableWithButtons("Thumb curl offset",
+												 "Thumb",
+												 0.5f,
+												 1.f,
+												 "%.1f",
+												 90,
+												 {&Config.skeletalBend.ThumbCurlCenter[0],
+												  &Config.skeletalBend.ThumbCurlCenter[1],
+												  &Config.skeletalBend.ThumbCurlCenter[2]});
+
+		ImGui::SeparatorText("Splay Offset");
+
+		InputFloatMultipleTopLableWithButtons("Splay offset",
+											  {"Index", "Middle", "Ring", "Little", "Thumb"},
+											  0.5f,
+											  1.f,
+											  "%.1f",
+											  90,
+											  {&Config.skeletalBend.FingerSplayCenter[0],
+											   &Config.skeletalBend.FingerSplayCenter[1],
+											   &Config.skeletalBend.FingerSplayCenter[2],
+											   &Config.skeletalBend.FingerSplayCenter[3],
+											   &Config.skeletalBend.FingerSplayCenter[4]});
+	}
+
+
 
 	// Raw
 	ImGui::SeparatorText("Raw bend");

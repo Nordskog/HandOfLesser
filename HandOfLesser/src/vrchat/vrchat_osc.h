@@ -21,6 +21,9 @@ namespace HOL::VRChat
 	static const std::string OSC_ALTERNATING_HAND_SIDE_PARAMETER
 		= OSC_PREFIX + NAMESPACE_PREFIX + OSC_ALTERNATING_PREFIX + "hand_side";
 
+	static const std::string OSC_PACKED_INTERLACE_BIT
+		= OSC_PREFIX + NAMESPACE_PREFIX + OSC_PACKED_PREFIX + "interlace_bit";
+
 	class VRChatOSC
 	{
 
@@ -31,10 +34,13 @@ namespace HOL::VRChat
 		static int getParameterIndex(HOL::FingerType finger, HOL::FingerBendType joint);
 		//For full
 		static int getParameterIndex(HOL::HandSide side, HOL::FingerType finger, HOL::FingerBendType joint);
-		static float computeParameterValue(float rawValue,
+		float computeParameterValue(float rawValue,
 										   HOL::HandSide side,
 										   HOL::FingerType finger,
 										   HOL::FingerBendType joint);
+
+		static std::pair<float, MotionRange>
+		getRangeParameters(HOL::HandSide side, HOL::FingerType finger, HOL::FingerBendType joint);
 
 		void generateOscOutput(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
 
@@ -45,6 +51,7 @@ namespace HOL::VRChat
 		float handleInterlacing(float newValue, float oldValue);
 
 		// these guys need to be easily configurable
+		static float SKELETAL_RIG_RANGE[SINGLE_HAND_JOINT_COUNT];
 		static float HUMAN_RIG_RANGE[SINGLE_HAND_JOINT_COUNT];
 		static float HUMAN_RIG_CENTER[SINGLE_HAND_JOINT_COUNT];
 

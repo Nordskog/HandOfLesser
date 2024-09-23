@@ -8,7 +8,7 @@ namespace HOL::hooks
 {
 	namespace TrackedDeviceAdded006
 	{
-		using Signature = void (*)(vr::IVRServerDriverHost*,
+		using Signature = bool (*)(vr::IVRServerDriverHost*,
 								   const char* pchDeviceSerialNumber,
 								   vr::ETrackedDeviceClass eDeviceClass,
 								   vr::ITrackedDeviceServerDriver* pDriver);

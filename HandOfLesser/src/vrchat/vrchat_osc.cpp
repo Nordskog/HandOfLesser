@@ -131,79 +131,157 @@ namespace HOL::VRChat
 		return (finger * 4) + joint + (SINGLE_HAND_JOINT_COUNT * side);
 	}
 
+	std::pair<float,MotionRange> VRChatOSC::getRangeParameters(HOL::HandSide side,
+										HOL::FingerType finger,
+										HOL::FingerBendType joint)
+	{
+
+		float center;
+		// Hardcode for now, need to match stuff generated in unity
+		MotionRange jointRange;
+
+		// Complicated humanoid rig stuff, and simple skeletal stuff
+		if (Config.vrchat.useUnityHumanoidSplay)
+		{
+			int index = getParameterIndex(finger, joint);
+
+			// Unity humanoid rig curl goes from -1 closed to 1 open.
+			// The rotation between these two values is listed in VRChatOSC::HUMAN_RIG_RANGE.
+			// We need to rotate a bit more than this in some cases, so we can extend the range.
+			// The values used must be mirrored by the animations created in unity.
+
+			float center;
+			if (joint == HOL::FingerBendType::Splay)
+			{
+				// Splay is always inwards towards the center of the hand,
+				// so it will be different for left/right hands. -1 in, 1 out.
+				// Thumb is -1: downwards ( towards palm ), 1: upwards.
+				center = Config.fingerBend.FingerSplayCenter[finger];
+				jointRange = Config.fingerBend.FingersplayRange[finger];
+			}
+			else
+			{
+				if (finger == FingerType::FingerThumb)
+				{
+					center = Config.fingerBend.ThumbCurlCenter[joint];
+					jointRange = Config.fingerBend.ThumbCurlRange[joint];
+				}
+				else
+				{
+					center = Config.fingerBend.CommonCurlCenter[joint];
+					jointRange = Config.fingerBend.CommonCurlRange[joint];
+				}
+			}
+
+			// Stock range being the rotation between -1 and 1
+			float halfStockRange = VRChatOSC::HUMAN_RIG_RANGE[index] * 0.5f;
+
+			// if both raw ranges are the same, this will span from -range to +range
+			// values are in radians.
+			float startRange = halfStockRange * jointRange.start;
+			float endRange = halfStockRange * jointRange.end;
+
+			return std::make_pair(center, MotionRange(startRange, endRange));
+		}
+		else
+		{
+			center = 0; // Not configurable atm
+			if (joint == HOL::FingerBendType::Splay)
+			{
+				// Flip and invert if right
+				center = Config.skeletalBend.FingerSplayCenter[finger];
+				jointRange = Config.skeletalBend.FingersplayRange[finger];
+
+				if (side == HandSide::RightHand)
+				{
+					center = -center;
+					std::swap(jointRange.start, jointRange.end);
+					jointRange.start = -jointRange.start;
+					jointRange.end = -jointRange.end;
+				}
+			}
+			else
+			{
+				if (finger == FingerType::FingerThumb)
+				{
+					center = Config.skeletalBend.ThumbCurlCenter[joint];
+					jointRange = Config.skeletalBend.ThumbCurlRange[joint];
+				}
+				else
+				{
+					center = Config.skeletalBend.CommonCurlCenter[joint];
+					jointRange = Config.skeletalBend.CommonCurlRange[joint];
+				}
+			}
+
+			// For actual bone rotation, unity is opposite to openxr, so flip them here.
+			return std::make_pair(center,
+					MotionRange(HOL::degreesToRadians(-jointRange.start),
+								HOL::degreesToRadians(-jointRange.end)));
+		}
+
+		
+	}
+
+
+
+
 	// Individual joint on one hand
 	float HOL::VRChat::VRChatOSC::computeParameterValue(float rawValue,
 														HOL::HandSide side,
 														HOL::FingerType finger,
 														HOL::FingerBendType joint)
 	{
-		int index = getParameterIndex(finger, joint);
-
-		// Hardcode for now, need to match stuff generated in unity
-		MotionRange jointRange;
-
 		// Unity humanoid rig curl goes from -1 closed to 1 open.
 		// The rotation between these two values is listed in VRChatOSC::HUMAN_RIG_RANGE.
 		// We need to rotate a bit more than this in some cases, so we can extend the range.
 		// The values used must be mirrored by the animations created in unity.
 
-		float center;
 		if (joint == HOL::FingerBendType::Splay)
 		{
 			// Splay is always inwards towards the center of the hand,
 			// so it will be different for left/right hands. -1 in, 1 out.
 			// Thumb is -1: downwards ( towards palm ), 1: upwards.
-			center = Config.fingerBend.FingerSplayCenter[finger];
-			jointRange = Config.fingerBend.FingersplayRange[finger];
 
-			// Raw values are provided, so we do the conversion for unity here.
-			// I /think/ all we need to do is flip the input
-			if (side == HandSide::LeftHand)
+			if (Config.vrchat.useUnityHumanoidSplay)
 			{
-				// If so, index and middle flipped.
-				// Thumb splay moves in the opposite direction, so flip on right hand.
-				switch (finger)
+				// Raw values are provided, so we do the conversion for unity here.
+				// I /think/ all we need to do is flip the input
+				if (side == HandSide::LeftHand)
 				{
-					case HOL::FingerIndex:
-					case HOL::FingerMiddle:
+					// If so, index and middle flipped.
+					// Thumb splay moves in the opposite direction, so flip on right hand.
+					switch (finger)
 					{
-						rawValue *= -1.f;
-						break;
+						case HOL::FingerIndex:
+						case HOL::FingerMiddle: {
+							rawValue *= -1.f;
+							break;
+						}
+						default:
+							break;
 					}
-					default:
-						break;
 				}
-			}
-			else
-			{
-				// And opposite for right hand
-				switch (finger)
+				else
 				{
-					case HOL::FingerLittle:
-					case HOL::FingerRing: 
-					case HOL::FingerThumb: 
+					// And opposite for right hand
+					switch (finger)
 					{
-						rawValue *= -1.f;
-						break;
+						case HOL::FingerLittle:
+						case HOL::FingerRing:
+						case HOL::FingerThumb: {
+							rawValue *= -1.f;
+							break;
+						}
+						default:
+							break;
 					}
-					default:
-						break;
 				}
 			}
 		}
-		else
-		{
-			if (finger == FingerType::FingerThumb)
-			{
-				center = Config.fingerBend.ThumbCurlCenter[joint];
-				jointRange = Config.fingerBend.ThumbCurlRange[joint];
-			}
-			else
-			{
-				center = Config.fingerBend.CommonCurlCenter[joint];
-				jointRange = Config.fingerBend.CommonCurlRange[joint];
-			}
-		}
+
+		auto [center, jointRange] = getRangeParameters(side, finger, joint);
+
 
 		// For whatever reason these offsets all want to be negative.
 		// Since they don't really mean anything to anyone, invert them
@@ -216,22 +294,27 @@ namespace HOL::VRChat
 		// Makes the math a lot simpler
 		rawValue += center; 
 
-		// Stock range being the rotation between -1 and 1
-		float halfStockRange = VRChatOSC::HUMAN_RIG_RANGE[index] * 0.5f;
-
-		// if both raw ranges are the same, this will span from -range to +range
-		// values are in radians.
-		float startRange = halfStockRange * jointRange.start;
-		float endRange = halfStockRange * jointRange.end;
-
 		// Ratio of RawValue between rangeStart and rangeEnd
-		float outputCurl = (rawValue - startRange) / (endRange - startRange);
+		float outputCurl = (rawValue - jointRange.start) / (jointRange.end - jointRange.start);
 		// clamp between 0 and 1
 		outputCurl = std::clamp(outputCurl, 0.f, 1.f);
+
+		
+		if (!Config.vrchat.useUnityHumanoidSplay)
+		{
+			if (joint != HOL::FingerBendType::Splay)
+			{
+				// Values end up needing to be inverted. Could adjust the vrchat side too
+				// TODO: deal with this
+				outputCurl = 1.f - outputCurl;
+			}
+		}
 
 		// scale our 0-1 -> -1 to 1
 		return (outputCurl * 2.f) - 1.f;
 	}
+
+
 
 	float HOL::VRChat::VRChatOSC::encodePacked(float left, float right)
 	{
@@ -458,6 +541,16 @@ namespace HOL::VRChat
 				.closeMessage();
 		}
 
+		if (HOL::Config.vrchat.interlacePacked)
+		{
+			// Just need to alternate between 0 and 1, so reuse transmit side logic
+			int flipFlop = this->swapTransmitSide();
+
+			packet.openMessage(OSC_PACKED_INTERLACE_BIT.c_str(), 1)
+				.int32(flipFlop)
+				.closeMessage();
+		}
+
 		packet.closeBundle();
 
 		return packet.size();
@@ -474,16 +567,6 @@ namespace HOL::VRChat
 		{
 			packet.openMessage(VRChatOSC::OSC_PARAMETER_NAMES_FULL[i].c_str(), 1)
 				.float32(this->mOscOutput[i])
-				.closeMessage();
-		}
-
-		if (HOL::Config.vrchat.interlacePacked)
-		{
-			// Just need to alternate between 0 and 1, so reuse transmit side logic
-			int flipFlop = this->swapTransmitSide();
-
-			packet.openMessage(OSC_PACKED_INTERLACE_BIT.c_str(), 1)
-				.int32(flipFlop)
 				.closeMessage();
 		}
 

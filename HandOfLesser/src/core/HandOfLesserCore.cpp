@@ -112,7 +112,7 @@ void HandOfLesserCore::mainLoop()
 			if (Config.vrchat.sendDebugOsc)
 			{
 				// Send some data for testing
-				this->mVrchatOSC.generateOscTestOutput();
+				generateOscData();
 				sendOscData();
 			}
 		}
@@ -134,6 +134,7 @@ void HandOfLesserCore::doOpenXRStuff()
 
 	this->mInstanceHolder.pollEvent();
 
+	//this->mInstanceHolder.getHmdPosition();
 	this->mHandTracking.updateHands(this->mInstanceHolder.mStageSpace, time);
 	this->mHandTracking.updateInputs();
 
@@ -144,9 +145,17 @@ void HandOfLesserCore::doOpenXRStuff()
 
 void HandOfLesserCore::generateOscData()
 {
-	// This will generate everything needed for all transmit types
-	this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(HandSide::LeftHand),
-									   this->mHandTracking.getHandPose(HandSide::RightHand));
+	if (Config.vrchat.sendDebugOsc)
+	{
+		this->mVrchatOSC.generateOscTestOutput();
+	}
+	else
+	{
+		// This will generate everything needed for all transmit types
+		this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(HandSide::LeftHand),
+										   this->mHandTracking.getHandPose(HandSide::RightHand));
+	}
+
 }
 
 void HOL::HandOfLesserCore::sendOscData()

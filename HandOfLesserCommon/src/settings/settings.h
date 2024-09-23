@@ -56,6 +56,53 @@ namespace HOL
 			Eigen::Vector3f ThumbAxisOffset = Eigen::Vector3f(0, 0, -89);
 		};
 
+		struct SkeletalBendSettings
+		{
+			// clang-format off
+			// clang-format off
+			float CommonCurlCenter[3] = {
+				7.0f, 
+				0.0f,
+				0.0f
+			};
+
+			float ThumbCurlCenter[3] = {
+				-21.5f, 
+				-34.6f, 
+				2.5f
+			};
+
+			float FingerSplayCenter[5] = {
+				-2.5f,// Index
+				0.0f,
+				-4.5f,
+				-4.0f,
+				-5.5f		// Thumb
+			};
+
+
+			// Range values must match unity!
+			MotionRange CommonCurlRange[3] = {
+				{30.f,  -100.f }, 
+				{30.f,  -100.f }, 
+				{30.f,  -100.f }
+			};
+			MotionRange ThumbCurlRange[3] = {
+				{	75,	 -25.f		},
+				{	0,	-100.f   },			
+				{	25, -90.f	},
+			};
+			MotionRange FingersplayRange[5] = {
+				{-25.0f,  60.0f  }, // index
+				{-25.0f,  60.0f  },
+				{ -60.0f, 25.0f  },
+				{ -60.0f, 25.0f  },
+				{-40.0f,  40.0f   } // thumb
+			};
+
+			// clang-format on
+		};
+
 		struct GeneralSettings
 		{
 			int MotionPredictionMS = 15; // ms
@@ -113,6 +160,7 @@ namespace HOL
 		{
 			GeneralSettings general;
 			FingerBendSettings fingerBend;
+			SkeletalBendSettings skeletalBend;
 			HandPoseSettings handPose;
 			VRChatSettings vrchat;
 			DebugSettings debug;

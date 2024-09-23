@@ -112,7 +112,7 @@ namespace HOL::hooks
 		Hook<TrackedDeviceAdded006::Signature>
 			FunctionHook("IVRServerDriverHost006::TrackedDeviceAdded");
 
-		static void Detour(vr::IVRServerDriverHost* _this,
+		static bool Detour(vr::IVRServerDriverHost* _this,
 						   const char* pchDeviceSerialNumber,
 						   vr::ETrackedDeviceClass eDeviceClass,
 						   vr::ITrackedDeviceServerDriver* pDriver)
