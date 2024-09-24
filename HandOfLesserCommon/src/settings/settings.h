@@ -39,7 +39,7 @@ namespace HOL
 			};
 			MotionRange ThumbCurlRange[3] = {
 				{-4.1f, 0.4	}, 
-				{-0.5, 2.5	},
+				{-0.5, 1.0	},
 				{-2, 1.27	}
 			};
 

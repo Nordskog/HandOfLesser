@@ -41,7 +41,7 @@ namespace HOL
 
         public static MotionRange[] ThumbCurlRange = new MotionRange[3] {
             new MotionRange(-4.1f, 0.4f   ), 
-            new MotionRange(-0.5f, 2.5f	  ),
+            new MotionRange(-0.5f, 1f	  ),
             new MotionRange(-2f, 1.27f  ),
         };
 
