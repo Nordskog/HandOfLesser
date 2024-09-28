@@ -38,7 +38,11 @@ namespace HOL
         smoothing, 
         interlacePopulate, 
         interlaceWeigh, 
-        interlateOutput, bend
+        interlateOutput, 
+        bend,
+        fpsMeasure,
+        fpsSmoothing,
+        smoothingAdjustment,
     }
 
     enum PropertyType
@@ -57,7 +61,11 @@ namespace HOL
         interlaced_weight,          // distance between current and past interlaced input
         smooth,     // Output used for smoothing, used to drive avatarRig
         avatarRig,  // Humanoid rig or skeletal
-        avatarRigCombined   // Contains both curl and splay in a single animation
+        avatarRigCombined,   // Contains both curl and splay in a single animation
+        fps,            // Measuring fps to adjusting smoothing accordingly
+        fps_smooth,     //  Measured value is unstable so needs smoothing
+        smoothing_input,    // Raw smoothing amount for 60fps
+        smoothing_adjusted, // adjusted for various other framerates
     }
 
     enum AnimationClipPosition
@@ -170,6 +178,9 @@ namespace HOL
                 case ControllerLayer.interlacePopulate: return "HOL_interlacePopulate";
                 case ControllerLayer.interlaceWeigh:    return "HOL_interlaceWeigh";
                 case ControllerLayer.interlateOutput:   return "HOL_interlaceOutput";
+                case ControllerLayer.fpsMeasure:        return "HOL_fpsMeasure";
+                case ControllerLayer.fpsSmoothing:      return "HOL_fpsSmoothing";
+                case ControllerLayer.smoothingAdjustment: return "HOL_smoothingAdjustment";
                 default:
                     return "";
             }
@@ -209,6 +220,10 @@ namespace HOL
                 case PropertyType.input_interlaced_first: return "inputInterlacedFirst";
                 case PropertyType.input_interlaced_second: return "inputInterlacedSecond";
                 case PropertyType.interlaced_weight: return "interlacedWeight";
+                case PropertyType.fps: return "fps";
+                case PropertyType.fps_smooth: return "fpsSmooth";
+                case PropertyType.smoothing_input: return "smoothingAmount";
+                case PropertyType.smoothing_adjusted: return "smoothingAdjusted";
                 default:
                     return "";
             }

@@ -15,6 +15,8 @@ namespace HOL
         public static readonly int SMOOTHING_BLENDTREE_COUNT = AnimationValues.TOTAL_JOINT_COUNT; // Bend joints ( including splay ) * fingers * hands
         public static readonly int SMOOTHING_ANIMATION_COUNT = SMOOTHING_BLENDTREE_COUNT * 2; // Positive and negative animation for each
 
+        private static bool sAdjustSmoothingToFramerate = false;
+
         public static int generateSmoothingAnimation(HandSide side, FingerType finger, FingerBendType joint, AnimationClipPosition position)
         {
             // This just sets the proxy parameter to whatever position, and we blend between these to do the smoothing
@@ -64,7 +66,6 @@ namespace HOL
             return tree;
         }
 
-
         public static int generateSmoothingBlendtree(BlendTree parent, List<ChildMotion> childTrees, HandSide side, FingerType finger, FingerBendType joint)
         {
             // So we have 3 blend trees.
@@ -78,7 +79,7 @@ namespace HOL
             tree.blendType = BlendTreeType.Simple1D;
             tree.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.input);
             tree.useAutomaticThresholds = false;    // Automatic probably would work fine
-            tree.blendParameter = HOL.Resources.REMOTE_SMOOTHING_PARAMETER_NAME;
+            tree.blendParameter =  HOL.Resources.getParameterName(sAdjustSmoothingToFramerate ? PropertyType.smoothing_adjusted : PropertyType.smoothing_input );
             tree.hideFlags = HideFlags.HideInHierarchy;
 
             // In order to see the DirectBlendParamter required for the parent Direct blendtree, we need to use a ChildMotion,.
@@ -98,8 +99,9 @@ namespace HOL
             return 1;
         }
 
-        public static void populateSmoothingLayer(AnimatorController controller)
+        public static void populateSmoothingLayer(AnimatorController controller, bool adjustSmoothingToFramerate)
         {
+            sAdjustSmoothingToFramerate = adjustSmoothingToFramerate; // rather than add it to be a bunch of functions
             AnimatorControllerLayer layer = ControllerLayer.smoothing.findLayer(controller);
 
             // State within this controller. TODO: attach to stuff

@@ -12,9 +12,10 @@ public class HandOfLesserAnimationGenerator : EditorWindow
     static TransmitType sTransmitType = TransmitType.packed;
 
     // This depends on framerate, so we need to figure out something for that.
-    static float sRemoteSmoothing = 0.7f;
+    static float sRemoteSmoothing = 0.6f;
 
     static GameObject sTargetAvatar = null;
+    static bool sAdjustSmoothingToFramerate = true;
     static bool sUseSkeletal = false;
     static bool sUseInterlace = true;
 
@@ -31,6 +32,8 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         sTargetAvatar = (GameObject) EditorGUILayout.ObjectField("Avatar:", sTargetAvatar, typeof(GameObject), true);
 
         sUseSkeletal = EditorGUILayout.Toggle("Use skeletal: ", sUseSkeletal);
+
+        sAdjustSmoothingToFramerate = EditorGUILayout.Toggle("Adjust smoothing to framrate: ", sAdjustSmoothingToFramerate);
 
         if (GUILayout.Button("Generate Animations"))
         {
@@ -82,6 +85,11 @@ public class HandOfLesserAnimationGenerator : EditorWindow
         controller.RemoveLayer(0);
 
         addAnimatorLayer(controller, ControllerLayer.baseLayer, 1, bothHandsMask);
+
+        addAnimatorLayer(controller, ControllerLayer.fpsMeasure, 1, bothHandsMask);
+        addAnimatorLayer(controller, ControllerLayer.fpsSmoothing, 1, bothHandsMask);
+        addAnimatorLayer(controller, ControllerLayer.smoothingAdjustment, 1, bothHandsMask);
+
         switch (transmitType)
         {
             case TransmitType.alternating:
@@ -128,7 +136,10 @@ public class HandOfLesserAnimationGenerator : EditorWindow
             default:
                 break;
         }
-        Smoothing.populateSmoothingLayer(controller);
+        FrameRateMeasure.populateFpsMeasureLayer(controller);
+        FrameRateMeasure.populateFpsSmoothingLayer(controller);
+        SmoothingAdjustment.populateFpsSmoothingLayer(controller, sRemoteSmoothing);
+        Smoothing.populateSmoothingLayer(controller, sAdjustSmoothingToFramerate);
         FingerBend.populateFingerJointLayer(controller, sUseSkeletal);
 
         ProgressDisplay.clearProgress();
@@ -143,13 +154,6 @@ public class HandOfLesserAnimationGenerator : EditorWindow
             // Only if generating controller for alternating update
             controller.AddParameter(HOL.Resources.HAND_SIDE_OSC_PARAMETER_NAME, AnimatorControllerParameterType.Int); // left/right switch
         }
-
-        controller.AddParameter(new AnimatorControllerParameter()
-        {
-            name = HOL.Resources.REMOTE_SMOOTHING_PARAMETER_NAME,
-            type = AnimatorControllerParameterType.Float,
-            defaultFloat = sRemoteSmoothing  // whatever we set the smoothing to. Can we even edit via code afterwards? 
-        });
 
         controller.AddParameter(new AnimatorControllerParameter()
         {
@@ -207,6 +211,8 @@ public class HandOfLesserAnimationGenerator : EditorWindow
             InterlacedFlipFlop.addParameters(controller);
             InterlacedWeigh.addParameters(controller);
         }
+
+        FrameRateMeasure.addParameters(controller);
     }
 
     private void generateAnimationController(TransmitType transmitType)

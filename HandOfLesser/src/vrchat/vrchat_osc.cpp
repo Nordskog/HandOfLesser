@@ -379,11 +379,24 @@ namespace HOL::VRChat
 			// using the most distant value of the two when moving further.
 			float distanceLower = abs(newValue - oldValue);
 			float distanceUpper = abs((newValue + 1) - oldValue );
+
+			// However, if we are traveling more than 1 step, doing this will result in an initally
+			// overshoot, with looks bad. If the Distance is greather than 1, reverse this.
+			float rawDistance = abs(newValue - oldValue);
+			if (rawDistance > 1.0f) 
+			{
+				// just reverse the values and everything will work out
+				std::swap(distanceLower, distanceUpper);
+			}
+
 			if (distanceLower < distanceUpper)
 			{
 				// Value is already at lower, so if upper is further away return it instead.
 				newValue += 1;	
 			}
+
+			
+
 		}
 		// If false we don't need to do anything,
 		// scale it back to -1/1 and return.

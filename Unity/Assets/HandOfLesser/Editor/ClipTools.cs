@@ -28,6 +28,32 @@ namespace HOL
                 AnimationCurve.Linear(0, value, 0, value));
         }
 
+        public static void setClipProperty(ref AnimationClip clip, string property, AnimationCurve curve)
+        {
+            // Single keyframe
+            AnimationUtility.SetEditorCurve(
+                    clip,
+                    EditorCurveBinding.FloatCurve(
+                        string.Empty,
+                        typeof(Animator),
+                        property
+                        ),
+                curve);
+        }
+
+        public static void setClipProperty(ref AnimationClip clip, string property, float startTime, float startValue, float EndTime, float endValue)
+        {
+            // Single keyframe
+            AnimationUtility.SetEditorCurve(
+                    clip,
+                    EditorCurveBinding.FloatCurve(
+                        string.Empty,
+                        typeof(Animator),
+                        property
+                        ),
+                AnimationCurve.Linear(startTime, startValue, EndTime, endValue));
+        }
+
         public static void setClipPropertyLocalRotation( ref AnimationClip clip, Transform avatarRoot, Transform trans, Quaternion value)
         {
             AnimationCurve curveX = new AnimationCurve();

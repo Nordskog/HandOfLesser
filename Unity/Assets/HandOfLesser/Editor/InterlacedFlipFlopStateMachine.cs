@@ -54,6 +54,8 @@ namespace HOL
 
         public static AnimatorStateTransition generateTransition(AnimatorState to, AnimatorStateMachine stateMachine, bool exitImmediately = false)
         {
+            // This should not be an any-state transition, but if you do it properly unity starts breaking.
+            // I'm not going to ask any more questions.
             AnimatorStateTransition transition = stateMachine.AddAnyStateTransition(to);
 
             // While we could just go full speed, nothing really updates fast enough to warrant that.
@@ -75,21 +77,6 @@ namespace HOL
                 transition.duration = 0.02f;
                 transition.canTransitionToSelf = false;
             }
-
-            return transition;
-        }
-
-        public static AnimatorStateTransition generateSlowTransition(AnimatorState to, AnimatorStateMachine stateMachine)
-        {
-            AnimatorStateTransition transition = stateMachine.AddAnyStateTransition(to);
-
-            // While we could just go full speed, nothing really updates fast enough to warrant that.
-            // VRChat recommends 20ms duration for paramter driver to be executed, so do this for now.
-            transition.hasExitTime = true;
-            transition.hasFixedDuration = true;
-            transition.exitTime = 0.00f;
-            transition.duration = 0.02f;
-            
 
             return transition;
         }

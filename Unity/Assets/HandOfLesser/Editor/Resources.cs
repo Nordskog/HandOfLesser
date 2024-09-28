@@ -19,9 +19,12 @@ namespace HOL
             PropertyType.OSC_Alternating.addPrefixNamespace("hand_side"));
 
         public static readonly string INTERLACE_BIT_OSC_PARAMETER_NAME = addNamespacePrefix(
-    PropertyType.OSC_Packed.addPrefixNamespace("interlace_bit"));
+            PropertyType.OSC_Packed.addPrefixNamespace("interlace_bit"));
 
-        public static readonly string REMOTE_SMOOTHING_PARAMETER_NAME = addNamespacePrefix("remote_smoothing");
+        public static readonly string FPS_SMOOTHING_PARAMETER = addNamespacePrefix("fps_smoothing_amount");
+
+        public static readonly string FPS_FRAME_COUNTER_PARAMETER = addNamespacePrefix("fps_frame_count");
+        public static readonly string FPS_FRAME_COUNT_SUM_PARAMETER = addNamespacePrefix("fps_frame_count_sum");
 
         public static readonly string ALWAYS_1_PARAMETER = addNamespacePrefix( "always_one");
 
@@ -65,6 +68,52 @@ namespace HOL
 
             // Probably don't want slashes in filenames
             return clipName.Replace('/', '_');
+        }
+
+        public static string getAnimationOutputPath(PropertyType outputProperty, int smoothingFramerate)
+        {
+            return getAnimationOutputPath(getAnimationClipName(outputProperty, smoothingFramerate));
+        }
+
+        public static string getAnimationOutputPath(PropertyType outputProperty)
+        {
+            return getAnimationOutputPath(getAnimationClipName(outputProperty));
+        }
+
+        public static string getAnimationOutputPath(PropertyType outputProperty, AnimationClipPosition position)
+        {
+            return getAnimationOutputPath(getAnimationClipName(outputProperty, position));
+        }
+
+        public static string getAnimationClipName(PropertyType outputProperty, int smoothingFramerate)
+        {
+            string clipName = outputProperty.propertyName() + "_" + smoothingFramerate;
+
+            // Probably don't want slashes in filenames
+            return clipName.Replace('/', '_');
+        }
+
+        public static string getAnimationClipName(PropertyType outputProperty)
+        {
+            string clipName = outputProperty.propertyName();
+
+            // Probably don't want slashes in filenames
+            return clipName.Replace('/', '_');
+        }
+
+        public static string getAnimationClipName(PropertyType outputProperty, AnimationClipPosition primaryPosition)
+        {
+            string clipName = outputProperty.propertyName();
+            clipName = clipName + "_" + primaryPosition.propertyName();
+
+            // Probably don't want slashes in filenames
+            return clipName.Replace('/', '_');
+        }
+
+        // Only for use with fps and fpsSmooth
+        public static string getParameterName(PropertyType outputProperty)
+        {
+            return addNamespacePrefix(outputProperty.propertyName());
         }
 
         public static string getJointParameterName( HandSide? side, FingerType finger, FingerBendType joint, PropertyType propertyType)
