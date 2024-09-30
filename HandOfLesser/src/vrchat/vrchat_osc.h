@@ -2,6 +2,7 @@
 
 #include <HandOfLesserCommon.h>
 #include "src/hands/hand_pose.h"
+#include <chrono>
 
 namespace HOL::VRChat
 {
@@ -42,18 +43,24 @@ namespace HOL::VRChat
 		static std::pair<float, MotionRange>
 		getRangeParameters(HOL::HandSide side, HOL::FingerType finger, HOL::FingerBendType joint);
 
-		void generateOscOutput(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
-
 		void generateOscTestOutput();
 
 		float encodePacked(float left, float right);
 
 		float handleInterlacing(float newValue, float oldValue);
 
+		// Should only be sent at 100ms interval
+		bool shouldSendPacked();
+
 		// these guys need to be easily configurable
 		static float SKELETAL_RIG_RANGE[SINGLE_HAND_JOINT_COUNT];
 		static float HUMAN_RIG_RANGE[SINGLE_HAND_JOINT_COUNT];
 		static float HUMAN_RIG_CENTER[SINGLE_HAND_JOINT_COUNT];
+
+		void generateOscOutputFull(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
+
+		// requires that full is generated first.
+		void generateOscOutputPacked();
 
 		size_t generateOscBundleFull();
 		size_t generateOscBundleAlternating();
@@ -69,9 +76,8 @@ namespace HOL::VRChat
 									 float second,
 									 float third,
 									 float splay);
-		void generateOscOutputFull(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
-		void generateOscOutputPacked();
 
+		std::chrono::steady_clock::time_point mLastPackedSendTime;
 		HOL::HandSide swapTransmitSide();
 		HOL::HandSide mNextNextTransmitSide;
 

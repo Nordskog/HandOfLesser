@@ -2,6 +2,9 @@
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
 #include <oscpp/client.hpp>
+#include "src/util/hol_utils.h"
+
+using namespace std::chrono_literals;
 
 namespace HOL::VRChat
 {
@@ -447,6 +450,21 @@ namespace HOL::VRChat
 		}
 	}
 
+	bool VRChatOSC::shouldSendPacked()
+	{
+		// VRChat sends osc updates at 100ms intervals,
+		// so carefully time our updates to match.
+		// Doesn't need to be perfect, it's a pretty wide window.
+		if (HOL::timeSince(mLastPackedSendTime) >= 100ms)
+		{
+			mLastPackedSendTime = std::chrono::steady_clock::now();
+
+			return true;
+		}
+
+		return false;
+	}
+
 	void HOL::VRChat::VRChatOSC::generateOscOutputFull(HOL::HandPose& leftHand,
 													   HOL::HandPose& rightHand)
 	{
@@ -470,14 +488,6 @@ namespace HOL::VRChat
 				}
 			}
 		}
-	}
-
-	// Generates the values for one hand at the time
-	void HOL::VRChat::VRChatOSC::generateOscOutput(HOL::HandPose& leftHand,
-												   HOL::HandPose& rightHand)
-	{
-		generateOscOutputFull(leftHand, rightHand);
-		generateOscOutputPacked();
 	}
 
 	// Make everything the same value and spit that out
@@ -521,9 +531,6 @@ namespace HOL::VRChat
 				}
 			}
 		}
-
-		// Then we just do everything else per usual
-		generateOscOutputPacked();
 	}
 
 	// includes a hand_side param denoting which hand the data is for

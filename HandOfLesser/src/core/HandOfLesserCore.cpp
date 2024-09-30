@@ -104,15 +104,12 @@ void HandOfLesserCore::mainLoop()
 		if (this->mInstanceHolder.getState() == OpenXrState::Running)
 		{
 			doOpenXRStuff();
-			generateOscData();
 			sendOscData();
 		}
 		else
 		{
 			if (Config.vrchat.sendDebugOsc)
 			{
-				// Send some data for testing
-				generateOscData();
 				sendOscData();
 			}
 		}
@@ -143,7 +140,7 @@ void HandOfLesserCore::doOpenXRStuff()
 	return;
 }
 
-void HandOfLesserCore::generateOscData()
+void HOL::HandOfLesserCore::sendOscData()
 {
 	if (Config.vrchat.sendDebugOsc)
 	{
@@ -151,15 +148,14 @@ void HandOfLesserCore::generateOscData()
 	}
 	else
 	{
-		// This will generate everything needed for all transmit types
-		this->mVrchatOSC.generateOscOutput(this->mHandTracking.getHandPose(HandSide::LeftHand),
-										   this->mHandTracking.getHandPose(HandSide::RightHand));
+		// Generates the full data which is shared by alternating.
+		// Packed requires full to be generated first, and is generated on-demand below.
+		this->mVrchatOSC.generateOscOutputFull(
+			this->mHandTracking.getHandPose(HandSide::LeftHand),
+			this->mHandTracking.getHandPose(HandSide::RightHand));
 	}
 
-}
 
-void HOL::HandOfLesserCore::sendOscData()
-{
 	size_t size = 0;
 
 	// Always send full, expect when testing remote stuff locally because it will break things
@@ -177,8 +173,13 @@ void HOL::HandOfLesserCore::sendOscData()
 
 	if (Config.vrchat.sendPacked)
 	{
-		size = this->mVrchatOSC.generateOscBundlePacked();
-		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+		// Wait for 100ms to have passed since last
+		if (this->mVrchatOSC.shouldSendPacked())
+		{
+			this->mVrchatOSC.generateOscOutputPacked();
+			size = this->mVrchatOSC.generateOscBundlePacked();
+			this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+		}
 	}
 
 	// VRChat input goes here for now

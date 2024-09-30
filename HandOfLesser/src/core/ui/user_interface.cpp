@@ -553,7 +553,7 @@ void UserInterface::buildVRChatOSCSettings()
 	ImGui::SameLine();
 	ImGui::Checkbox("Send Alternating", &Config.vrchat.sendAlternating);
 
-	ImGui::Checkbox("Interlace packed (100ms interval required!!)", &Config.vrchat.interlacePacked);
+	ImGui::Checkbox("Interlace packed", &Config.vrchat.interlacePacked);
 	ImGui::Checkbox("Use Unity Humanoid Splay", &Config.vrchat.useUnityHumanoidSplay);
 
 	ImGui::Checkbox("Send OSC test data", &Config.vrchat.sendDebugOsc);
