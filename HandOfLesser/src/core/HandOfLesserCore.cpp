@@ -173,6 +173,9 @@ void HOL::HandOfLesserCore::sendOscData()
 
 	if (Config.vrchat.sendPacked)
 	{
+		// Keep track of values between updates so we don't miss quick movement
+		this->mVrchatOSC.handleInbetweenPacked();
+
 		// Wait for 100ms to have passed since last
 		if (this->mVrchatOSC.shouldSendPacked())
 		{

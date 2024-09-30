@@ -419,12 +419,31 @@ namespace HOL::VRChat
 				int rightSideIndex
 					= getParameterIndex(HandSide::RightHand, (FingerType)i, (FingerBendType)j);
 
-				float leftBend = this->mOscOutput[leftSideIndex];
-				float rightBend = this->mOscOutput[rightSideIndex];
+				// Used max distance values so we don't quick short movements
+				float leftBend = this->mOscMaxSinceLastPacked[leftSideIndex];
+				float rightBend = this->mOscMaxSinceLastPacked[rightSideIndex];
 
-				HOL::display::FingerTracking[HandSide::LeftHand].humanoidBend[i].bend[j] = leftBend;
-				HOL::display::FingerTracking[HandSide::RightHand].humanoidBend[i].bend[j]
-					= rightBend;
+				// But values may be bogus if we haven't written anything
+				// so write latest output if no update since last packed.
+				if (!mPackedMaxDistanceUpdated[leftSideIndex])
+				{
+					leftBend = this->mOscOutput[leftSideIndex];
+				}
+				if (!mPackedMaxDistanceUpdated[rightSideIndex])
+				{
+					rightBend = this->mOscOutput[rightSideIndex];
+				}
+				// then always reset the bool
+				mPackedMaxDistanceUpdated[leftSideIndex] = false;
+				mPackedMaxDistanceUpdated[rightSideIndex] = false;
+
+				// Store this as the last used value
+				this->mOscOutputPrevForPacked[leftSideIndex] = leftBend;
+				this->mOscOutputPrevForPacked[rightSideIndex] = rightBend;
+				// Also reset the max to the same value
+				this->mOscMaxSinceLastPacked[leftSideIndex] = leftBend;
+				this->mOscMaxSinceLastPacked[rightSideIndex] = rightBend;
+
 
 				// Handle interlacing
 				if (HOL::Config.vrchat.interlacePacked)
@@ -455,7 +474,7 @@ namespace HOL::VRChat
 		// VRChat sends osc updates at 100ms intervals,
 		// so carefully time our updates to match.
 		// Doesn't need to be perfect, it's a pretty wide window.
-		if (HOL::timeSince(mLastPackedSendTime) >= 100ms)
+		if (HOL::timeSince(mLastPackedSendTime) >= std::chrono::milliseconds(Config.vrchat.packedUpdateInterval))
 		{
 			mLastPackedSendTime = std::chrono::steady_clock::now();
 
@@ -590,6 +609,28 @@ namespace HOL::VRChat
 		packet.closeBundle();
 
 		return packet.size();
+	}
+
+	void VRChatOSC::handleInbetweenPacked()
+	{
+		// Full values have been updated, but we don't necessarily be sending a packed
+		// OSC packet yet, since that only happens every 100 frames.
+		// However, they may be very quick movements that we'll miss if we do this.
+		// Every frame check the current bend value and store the most distant one.
+		// Even if it ends up being a bit delayed, it's better than missing the movement entirely.
+		for (int i = 0; i < BOTH_HAND_JOINT_COUNT; i++)
+		{
+			float newDistance = abs(this->mOscOutput[i] - this->mOscOutputPrevForPacked[i]);
+			float prevDistance
+				= abs(this->mOscMaxSinceLastPacked[i] - this->mOscOutputPrevForPacked[i]);
+			if (newDistance > prevDistance)
+			{
+				// New value is farther from value we used for previous packed packet than previous one.
+				// Replace it.
+				mPackedMaxDistanceUpdated[i] = true;
+				mOscMaxSinceLastPacked[i] = this->mOscOutput[i];
+			}
+		}
 	}
 
 	size_t HOL::VRChat::VRChatOSC::generateOscBundleFull()

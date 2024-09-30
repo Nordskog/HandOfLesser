@@ -129,6 +129,9 @@ namespace HOL
 			
 			bool interlacePacked = true;
 
+			// Should always be 100 except for testing
+			int packedUpdateInterval = 100;
+
 			// Modify splay to work with humanoid rig
 			bool useUnityHumanoidSplay = true;
 			// Values we can adjust to send curl/spray to vrchat

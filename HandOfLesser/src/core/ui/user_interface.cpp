@@ -558,6 +558,15 @@ void UserInterface::buildVRChatOSCSettings()
 
 	ImGui::Checkbox("Send OSC test data", &Config.vrchat.sendDebugOsc);
 
+	if (ImGui::InputInt("Packed Update Interval (ms)", &Config.vrchat.packedUpdateInterval))
+	{
+		// Should never be anything but 100, and definitely never less
+		if (Config.general.UpdateIntervalMS < 100)
+		{
+			Config.general.UpdateIntervalMS = 100;
+		}
+	}
+
 	if (Config.vrchat.sendDebugOsc)
 	{
 		ImGui::SeparatorText("OSC test data");

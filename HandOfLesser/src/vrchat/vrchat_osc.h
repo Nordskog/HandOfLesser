@@ -59,8 +59,11 @@ namespace HOL::VRChat
 
 		void generateOscOutputFull(HOL::HandPose& leftHand, HOL::HandPose& rightHand);
 
-		// requires that full is generated first.
+		// requires that full is generated first
 		void generateOscOutputPacked();
+
+		// Measure and save most distance since last packed
+		void handleInbetweenPacked();
 
 		size_t generateOscBundleFull();
 		size_t generateOscBundleAlternating();
@@ -88,6 +91,10 @@ namespace HOL::VRChat
 		float mOscOutput[SINGLE_HAND_JOINT_COUNT * 2];		// Full. This also used for alternating.
 		float mOscOutputInterlacedForClamp[SINGLE_HAND_JOINT_COUNT * 2];	//See handleInterlacing()
 		float mOscOutputPacked[SINGLE_HAND_JOINT_COUNT];	// Packed, generated from Full.
+
+		float mOscOutputPrevForPacked[SINGLE_HAND_JOINT_COUNT * 2]; // The last full value used by packed
+		float mOscMaxSinceLastPacked[SINGLE_HAND_JOINT_COUNT * 2]; // Furthest value since last packed
+		bool  mPackedMaxDistanceUpdated[SINGLE_HAND_JOINT_COUNT* 2]; // so it doesn't get stuck on bogus values
 
 		char mOscPacketBuffer[OSC_PACKET_BUFFER_SIZE]; // 2560 Should be plenty
 	};
