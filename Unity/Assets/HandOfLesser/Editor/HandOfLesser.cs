@@ -12,8 +12,8 @@ public class HandOfLesserAnimationGenerator : EditorWindow
     static TransmitType sTransmitType = TransmitType.packed;
 
     // This depends on framerate, so we need to figure out something for that.
-    static float sSmoothing = 0.6f;
-    static float sMaxSmoothing = 0.95f;
+    static float sSmoothing = 0.45f;
+    static float sMaxSmoothing = 0.90f;
 
     static GameObject sTargetAvatar = null;
     static bool sAdjustSmoothingToFramerate = true;
