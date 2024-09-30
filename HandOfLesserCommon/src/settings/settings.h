@@ -134,6 +134,7 @@ namespace HOL
 			// Values we can adjust to send curl/spray to vrchat
 			// without having to be in VR
 			bool sendDebugOsc = false;
+			bool alternateCurlTest = false;	// flip between -1 and 1 every 100ms
 			float curlDebug = 0;
 			float splayDebug = 0;
 		};

@@ -484,6 +484,22 @@ namespace HOL::VRChat
 	// for when we don't want to launch VR
 	void VRChatOSC::generateOscTestOutput()
 	{
+		float curlValue = Config.vrchat.curlDebug;
+
+		// This will only work when interlacing is enabled for now
+		// still need to add separate logic for 100ms updates.
+		if (Config.vrchat.alternateCurlTest)
+		{
+			if (this->mNextNextTransmitSide == HOL::LeftHand)
+			{
+				curlValue = -1;
+			}
+			else
+			{
+				curlValue = 1;
+			}
+		}
+
 		// Fill full with whatever
 		for (int side = 0; side < HandSide::HandSide_MAX; side++)
 		{
@@ -492,7 +508,7 @@ namespace HOL::VRChat
 				for (int j = 0; j < FingerBendType_MAX; j++)
 				{
 					// Configurable in UI
-					float bend = Config.vrchat.curlDebug;
+					float bend = curlValue;
 					if (j == FingerBendType::Splay)
 					{
 						bend = Config.vrchat.splayDebug; // Eh

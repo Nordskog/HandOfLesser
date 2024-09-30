@@ -561,6 +561,7 @@ void UserInterface::buildVRChatOSCSettings()
 	if (Config.vrchat.sendDebugOsc)
 	{
 		ImGui::SeparatorText("OSC test data");
+		ImGui::Checkbox("Alternate curl test (requires interlace)", &Config.vrchat.alternateCurlTest);
 		ImGui::SliderFloat("Curl", &Config.vrchat.curlDebug, -1, 1);
 		ImGui::SliderFloat("Splay", &Config.vrchat.splayDebug, -1, 1);
 	}
