@@ -12,7 +12,8 @@ namespace HOL
 {
     class SmoothingAdjustment
     {
-        private static int[] FrameRates = { 100, 50, 30, 60, 72, 90, 120, 144, 180 };
+        // Order is important!
+        private static int[] FrameRates = { 180, 144, 120, 100, 90, 72, 60, 50, 30 };
 
         // I definitely didn't have chatgpt write this for me
         public static float CalculateAdjustedSmoothingFactor(float originalAlpha, float referenceFrameRate, float currentFrameRate)
@@ -33,6 +34,7 @@ namespace HOL
             // We accomplish this by measuring the framerate ( frametime ), 
             // and using that to drive an animation of pre-computed adjusted values.
 
+            // Thresholds must be added in order smallest-to-largest or unity will break!
             Keyframe[] keyframes = new Keyframe[FrameRates.Length];
             for (int i = 0; i < FrameRates.Length; i++)
             {
