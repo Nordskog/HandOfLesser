@@ -79,7 +79,7 @@ namespace HOL
             tree.blendType = BlendTreeType.Simple1D;
             tree.name = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.input);
             tree.useAutomaticThresholds = false;    // Automatic probably would work fine
-            tree.blendParameter =  HOL.Resources.getParameterName(sAdjustSmoothingToFramerate ? PropertyType.smoothing_adjusted : PropertyType.smoothing_input );
+            tree.blendParameter = HOL.Resources.getJointParameterName(side, finger, joint, PropertyType.smoothing_individual);
             tree.hideFlags = HideFlags.HideInHierarchy;
 
             // In order to see the DirectBlendParamter required for the parent Direct blendtree, we need to use a ChildMotion,.

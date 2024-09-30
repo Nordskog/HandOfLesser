@@ -26,7 +26,7 @@ namespace HOL
 
         }
 
-        public static void generateSmoothingRateAdjustmentAnimation(float smoothing60Fps)
+        public static void generateSmoothingRateAdjustmentAnimation(float smoothing60Fps, float smoothingMax60fps)
         {
             // The amount of smoothing we want depends on the framerate, since
             // we want things to move the same amount in a certain amount of time.
@@ -38,15 +38,19 @@ namespace HOL
             {
                 // Calculate the adjusted smoothing ratio for each frame time
                 float adjustedAlpha = CalculateAdjustedSmoothingFactor(smoothing60Fps, 60, FrameRates[i]);
+                float adjustedMax = CalculateAdjustedSmoothingFactor(smoothingMax60fps, 60, FrameRates[i]);
 
                 AnimationClip clip = new AnimationClip();
                 ClipTools.setClipProperty(ref clip, Resources.getParameterName(PropertyType.smoothing_adjusted), adjustedAlpha);
-
                 ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(PropertyType.smoothing_adjusted, (int)FrameRates[i]));
+
+                clip = new AnimationClip();
+                ClipTools.setClipProperty(ref clip, Resources.getParameterName(PropertyType.smoothing_adjusted_max), adjustedMax);
+                ClipTools.saveClip(clip, HOL.Resources.getAnimationOutputPath(PropertyType.smoothing_adjusted_max, (int)FrameRates[i]));
             }
         }
 
-        public static void addParameters(AnimatorController controller, float smoothing)
+        private static void addParameters(AnimatorController controller, float smoothing, float smoothingMax)
         {
             controller.AddParameter(new AnimatorControllerParameter()
             {
@@ -61,12 +65,19 @@ namespace HOL
                 type = AnimatorControllerParameterType.Float,
                 defaultFloat = smoothing
             });
+
+            controller.AddParameter(new AnimatorControllerParameter()
+            {
+                name = Resources.getParameterName(PropertyType.smoothing_adjusted_max),
+                type = AnimatorControllerParameterType.Float,
+                defaultFloat = smoothingMax
+            });
         }
 
  
 
 
-        public static int generateSmoothingAdjustmentBlendTree(BlendTree parent, List<ChildMotion> childTrees)
+        public static int generateSmoothingAdjustmentBlendTree(BlendTree parent, List<ChildMotion> childTrees, PropertyType adjustedProperty)
         {
             // We will drive this using the smoothened frametime
             BlendTree tree = new BlendTree();
@@ -95,7 +106,7 @@ namespace HOL
                 float frametime = 1000.0f / (float)framerate;
 
                 AnimationClip anim = AssetDatabase.LoadAssetAtPath<AnimationClip>(
-                    HOL.Resources.getAnimationOutputPath(PropertyType.smoothing_adjusted, framerate));
+                    HOL.Resources.getAnimationOutputPath(adjustedProperty, framerate));
 
                 tree.AddChild(anim, frametime);
             }
@@ -103,12 +114,12 @@ namespace HOL
             return 1;
         }
 
-        public static void populateFpsSmoothingLayer(AnimatorController controller, float smoothingAmount)
+        public static void populateFpsSmoothingLayer(AnimatorController controller, float smoothingAmount, float smoothingAmountMax)
         {
             AnimatorControllerLayer layer = ControllerLayer.smoothingAdjustment.findLayer(controller);
 
-            generateSmoothingRateAdjustmentAnimation(smoothingAmount);
-            addParameters(controller, smoothingAmount);
+            generateSmoothingRateAdjustmentAnimation(smoothingAmount, smoothingAmountMax);
+            addParameters(controller, smoothingAmount, smoothingAmountMax);
 
             // State within this controller. TODO: attach to stuff
             AnimatorState rootState = layer.stateMachine.AddState("HOLSmoothingAdjustment");
@@ -128,7 +139,8 @@ namespace HOL
             // Cannot add directly to parent tree, see generateSmoothingBlendtree()
             List<ChildMotion> childTrees = new List<ChildMotion>();
 
-            generateSmoothingAdjustmentBlendTree(rootBlendtree, childTrees);
+            generateSmoothingAdjustmentBlendTree(rootBlendtree, childTrees, PropertyType.smoothing_adjusted);
+            generateSmoothingAdjustmentBlendTree(rootBlendtree, childTrees, PropertyType.smoothing_adjusted_max);
 
             // Cannot add directly to parent tree, see generateSmoothingBlendtree()
             // Have to be added like this in order to set directblendparameter

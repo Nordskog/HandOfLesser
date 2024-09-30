@@ -43,6 +43,8 @@ namespace HOL
         fpsMeasure,
         fpsSmoothing,
         smoothingAdjustment,
+        smoothingIndividual,
+        smoothingWeigh,
     }
 
     enum PropertyType
@@ -66,6 +68,9 @@ namespace HOL
         fps_smooth,     //  Measured value is unstable so needs smoothing
         smoothing_input,    // Raw smoothing amount for 60fps
         smoothing_adjusted, // adjusted for various other framerates
+        smoothing_adjusted_max, // use when there is little motion to
+        smoothing_individual,  // adjusted smoothing, further adjusted for movement of individual joint
+        smoothing_weight,   // like interlace weigh, but uses latest and smoothed
     }
 
     enum AnimationClipPosition
@@ -181,6 +186,8 @@ namespace HOL
                 case ControllerLayer.fpsMeasure:        return "HOL_fpsMeasure";
                 case ControllerLayer.fpsSmoothing:      return "HOL_fpsSmoothing";
                 case ControllerLayer.smoothingAdjustment: return "HOL_smoothingAdjustment";
+                case ControllerLayer.smoothingIndividual: return "HOL_smoothingIndividiual";
+                case ControllerLayer.smoothingWeigh:    return "HOL_smoothingWeigh";
                 default:
                     return "";
             }
@@ -224,6 +231,9 @@ namespace HOL
                 case PropertyType.fps_smooth: return "fpsSmooth";
                 case PropertyType.smoothing_input: return "smoothingAmount";
                 case PropertyType.smoothing_adjusted: return "smoothingAdjusted";
+                case PropertyType.smoothing_adjusted_max: return "smoothingMax";
+                case PropertyType.smoothing_individual: return "smoothingIndividual";
+                case PropertyType.smoothing_weight: return "smoothingWeigh";
                 default:
                     return "";
             }

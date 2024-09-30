@@ -23,9 +23,6 @@ namespace HOL
 
         public static readonly string FPS_SMOOTHING_PARAMETER = addNamespacePrefix("fps_smoothing_amount");
 
-        public static readonly string FPS_FRAME_COUNTER_PARAMETER = addNamespacePrefix("fps_frame_count");
-        public static readonly string FPS_FRAME_COUNT_SUM_PARAMETER = addNamespacePrefix("fps_frame_count_sum");
-
         public static readonly string ALWAYS_1_PARAMETER = addNamespacePrefix( "always_one");
 
         public static readonly string ALWAYS_HALF_PARAMETER = addNamespacePrefix("always_half");
