@@ -13,8 +13,8 @@ namespace HOL
 		{
 			PoseLocationEuler def = HOL::getControllerOffsetPreset(type);
 
-			Config.handPose.PositionOffset = def.position;
-			Config.handPose.OrientationOffset = def.orientation;
+			Config.handPose.positionOffset = def.position;
+			Config.handPose.orientationOffset = def.orientation;
 		}
 
 	} // namespace settings

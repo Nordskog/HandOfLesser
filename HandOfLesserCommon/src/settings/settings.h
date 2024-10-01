@@ -11,19 +11,19 @@ namespace HOL
 		struct FingerBendSettings
 		{
 			// clang-format off
-			float CommonCurlCenter[3] = {
+			float commonCurlCenter[3] = {
 				50.3f, 
 				44.7f,
 				27.0f
 			};
 
-			float ThumbCurlCenter[3] = {
+			float thumbCurlCenter[3] = {
 				20.1f, 
 				-2.1f, 
 				50.2f
 			};
 
-			float FingerSplayCenter[5] = {
+			float fingerSplayCenter[5] = {
 				2.8f,	// Index
 				-3.6f,
 				12.9f, 
@@ -32,18 +32,18 @@ namespace HOL
 			};
 
 			// Range values must match unity!
-			MotionRange CommonCurlRange[3] = {
+			MotionRange commonCurlRange[3] = {
 				{-1.3, 1}, 
 				{-1, 1}, 
 				{-1, 1}
 			};
-			MotionRange ThumbCurlRange[3] = {
+			MotionRange thumbCurlRange[3] = {
 				{-4.1f, 0.4	}, 
 				{-0.5, 1.0	},
 				{-2, 1.27	}
 			};
 
-			MotionRange FingersplayRange[5] = {
+			MotionRange fingersplayRange[5] = {
 				{-2,	1	},	// Index
 				{-2,	1	},	// middle	
 				{-3,	1	},	// ring
@@ -60,19 +60,19 @@ namespace HOL
 		{
 			// clang-format off
 			// clang-format off
-			float CommonCurlCenter[3] = {
+			float commonCurlCenter[3] = {
 				7.0f, 
 				0.0f,
 				0.0f
 			};
 
-			float ThumbCurlCenter[3] = {
+			float thumbCurlCenter[3] = {
 				-21.5f, 
 				-34.6f, 
 				2.5f
 			};
 
-			float FingerSplayCenter[5] = {
+			float fingerSplayCenter[5] = {
 				-2.5f,// Index
 				0.0f,
 				-4.5f,
@@ -82,17 +82,17 @@ namespace HOL
 
 
 			// Range values must match unity!
-			MotionRange CommonCurlRange[3] = {
+			MotionRange commonCurlRange[3] = {
 				{30.f,  -100.f }, 
 				{30.f,  -100.f }, 
 				{30.f,  -100.f }
 			};
-			MotionRange ThumbCurlRange[3] = {
+			MotionRange thumbCurlRange[3] = {
 				{	75,	 -25.f		},
 				{	0,	-100.f   },			
 				{	25, -90.f	},
 			};
-			MotionRange FingersplayRange[5] = {
+			MotionRange fingersplayRange[5] = {
 				{-25.0f,  60.0f  }, // index
 				{-25.0f,  60.0f  },
 				{ -60.0f, 25.0f  },
@@ -105,8 +105,8 @@ namespace HOL
 
 		struct GeneralSettings
 		{
-			int MotionPredictionMS = 15; // ms
-			int UpdateIntervalMS = 1;
+			int motionPredictionMS = 15; // ms
+			int updateIntervalMS = 1;
 			float steamPoseTimeOffset = .0f;
 			float linearVelocityMultiplier = 0.f;
 			float angularVelocityMultiplier = 0.f;
@@ -116,10 +116,10 @@ namespace HOL
 
 		struct HandPoseSettings
 		{
-			HOL::ControllerMode mControllerMode = HOL::ControllerMode::HookedControllerMode;
-			HOL::ControllerType mControllerType = HOL::ControllerType::OculusTouch_VDXR;
-			Eigen::Vector3f OrientationOffset = Eigen::Vector3f(0, 0, 0);
-			Eigen::Vector3f PositionOffset = Eigen::Vector3f(0, 0, 0);
+			HOL::ControllerMode controllerMode = HOL::ControllerMode::HookedControllerMode;
+			HOL::ControllerType controllerType = HOL::ControllerType::OculusTouch_VDXR;
+			Eigen::Vector3f orientationOffset = Eigen::Vector3f(0, 0, 0);
+			Eigen::Vector3f positionOffset = Eigen::Vector3f(0, 0, 0);
 		};
 
 		struct VRChatSettings

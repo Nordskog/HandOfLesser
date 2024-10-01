@@ -200,7 +200,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 			// We have a base offset for each controller type, which for the time being
 			// has been configured to match what VD handtracking gives you.
 			// The user-configurable offset is applied in addition to this.
-			auto controllerOffset = HOL::getControllerBaseOffset(Config.handPose.mControllerType);
+			auto controllerOffset = HOL::getControllerBaseOffset(Config.handPose.controllerType);
 
 			// Matches to controller position, matching what VD does
 			Eigen::Vector3f controllerRotationOffset = controllerOffset.orientation;
@@ -208,8 +208,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 
 			// Additional user-configurable offset, so it can be applied
 			// either directly to the pose we submit, or used as an offset in the driver.
-			Eigen::Vector3f userRotationOffset = Config.handPose.OrientationOffset;
-			Eigen::Vector3f userTranslationOffset = Config.handPose.PositionOffset;
+			Eigen::Vector3f userRotationOffset = Config.handPose.orientationOffset;
+			Eigen::Vector3f userTranslationOffset = Config.handPose.positionOffset;
 
 			if (this->mSide == HandSide::LeftHand)
 			{

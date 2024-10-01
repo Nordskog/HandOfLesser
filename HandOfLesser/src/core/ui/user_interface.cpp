@@ -410,7 +410,7 @@ void HOL::UserInterface::buildMain()
 		}
 
 		if (ImGui::RadioButton(std::get<0>(buttonContent).c_str(),
-							   (int*)&HOL::Config.handPose.mControllerMode,
+							   (int*)&HOL::Config.handPose.controllerMode,
 							   std::get<1>(buttonContent)))
 		{
 			HOL::HandOfLesserCore::Current->syncSettings();
@@ -424,14 +424,14 @@ void HOL::UserInterface::buildMain()
 	/////////////////
 
 	ImGui::SeparatorText("General");
-	ImGui::InputInt("Prediction (ms)", &Config.general.MotionPredictionMS);
-	if (ImGui::InputInt("Update Interval (ms)", &Config.general.UpdateIntervalMS))
+	ImGui::InputInt("Prediction (ms)", &Config.general.motionPredictionMS);
+	if (ImGui::InputInt("Update Interval (ms)", &Config.general.updateIntervalMS))
 	{
 		// We probably shouldn't sleep for less than 1ms, and sleeping for
 		// negative time is probably undefined behavior.
-		if (Config.general.UpdateIntervalMS < 1)
+		if (Config.general.updateIntervalMS < 1)
 		{
-			Config.general.UpdateIntervalMS = 1;
+			Config.general.updateIntervalMS = 1;
 		}
 	}
 
@@ -467,14 +467,14 @@ void HOL::UserInterface::buildMain()
 
 	if (ImGui::Button("Touch Airlink"))
 	{
-		Config.handPose.mControllerType = ControllerType::OculusTouch_Airlink;
+		Config.handPose.controllerType = ControllerType::OculusTouch_Airlink;
 	}
 
 	ImGui::SameLine();
 
 	if (ImGui::Button("Touch VDXR"))
 	{
-		Config.handPose.mControllerType = ControllerType::OculusTouch_VDXR;
+		Config.handPose.controllerType = ControllerType::OculusTouch_VDXR;
 	}
 
 	ImGui::SeparatorText("Offset preset");
@@ -500,7 +500,7 @@ void HOL::UserInterface::buildMain()
 	bool offsetChanged = false;
 	ImGui::SeparatorText("Translation");
 
-	auto& positionOffset = Config.handPose.PositionOffset;
+	auto& positionOffset = Config.handPose.positionOffset;
 	offsetChanged |= ImGui::InputFloat("posX", &positionOffset.x(), 0.001f, 0.01f, "%.3f");
 	offsetChanged |= ImGui::InputFloat("posY", &positionOffset.y(), 0.001f, 0.01f, "%.3f");
 	offsetChanged |= ImGui::InputFloat("posZ", &positionOffset.z(), 0.001f, 0.01f, "%.3f");
@@ -512,7 +512,7 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::SeparatorText("Orientation");
 
-	auto& orientationOffset = Config.handPose.OrientationOffset;
+	auto& orientationOffset = Config.handPose.orientationOffset;
 	offsetChanged |= ImGui::InputFloat("rotX", &orientationOffset.x(), 1.0f, 5.0f, "%.3f");
 	offsetChanged |= ImGui::InputFloat("rotY", &orientationOffset.y(), 1.0f, 5.0f, "%.3f");
 	offsetChanged |= ImGui::InputFloat("rotZ", &orientationOffset.z(), 1.0f, 5.0f, "%.3f");
@@ -566,9 +566,9 @@ void UserInterface::buildVRChatOSCSettings()
 	if (ImGui::InputInt("Packed Update Interval (ms)", &Config.vrchat.packedUpdateInterval))
 	{
 		// Should never be anything but 100, and definitely never less
-		if (Config.general.UpdateIntervalMS < 100)
+		if (Config.general.updateIntervalMS < 100)
 		{
-			Config.general.UpdateIntervalMS = 100;
+			Config.general.updateIntervalMS = 100;
 		}
 	}
 
@@ -602,9 +602,9 @@ void UserInterface::buildVRChatOSCSettings()
 												 1.f,
 												 "%.1f",
 												 90,
-												 {&Config.fingerBend.CommonCurlCenter[0],
-												  &Config.fingerBend.CommonCurlCenter[1],
-												  &Config.fingerBend.CommonCurlCenter[2]});
+												 {&Config.fingerBend.commonCurlCenter[0],
+												  &Config.fingerBend.commonCurlCenter[1],
+												  &Config.fingerBend.commonCurlCenter[2]});
 
 		InputFloatMultipleSingleLableWithButtons("thumbFingerCurlCenter",
 												 "Thumb",
@@ -612,9 +612,9 @@ void UserInterface::buildVRChatOSCSettings()
 												 1.f,
 												 "%.1f",
 												 90,
-												 {&Config.fingerBend.ThumbCurlCenter[0],
-												  &Config.fingerBend.ThumbCurlCenter[1],
-												  &Config.fingerBend.ThumbCurlCenter[2]});
+												 {&Config.fingerBend.thumbCurlCenter[0],
+												  &Config.fingerBend.thumbCurlCenter[1],
+												  &Config.fingerBend.thumbCurlCenter[2]});
 
 		ImGui::SeparatorText("Splay Center");
 
@@ -624,11 +624,11 @@ void UserInterface::buildVRChatOSCSettings()
 											  1.f,
 											  "%.1f",
 											  90,
-											  {&Config.fingerBend.FingerSplayCenter[0],
-											   &Config.fingerBend.FingerSplayCenter[1],
-											   &Config.fingerBend.FingerSplayCenter[2],
-											   &Config.fingerBend.FingerSplayCenter[3],
-											   &Config.fingerBend.FingerSplayCenter[4]});
+											  {&Config.fingerBend.fingerSplayCenter[0],
+											   &Config.fingerBend.fingerSplayCenter[1],
+											   &Config.fingerBend.fingerSplayCenter[2],
+											   &Config.fingerBend.fingerSplayCenter[3],
+											   &Config.fingerBend.fingerSplayCenter[4]});
 	}
 	else
 	{
@@ -640,9 +640,9 @@ void UserInterface::buildVRChatOSCSettings()
 												 1.f,
 												 "%.1f",
 												 90,
-												 {&Config.skeletalBend.CommonCurlCenter[0],
-												  &Config.skeletalBend.CommonCurlCenter[1],
-												  &Config.skeletalBend.CommonCurlCenter[2]});
+												 {&Config.skeletalBend.commonCurlCenter[0],
+												  &Config.skeletalBend.commonCurlCenter[1],
+												  &Config.skeletalBend.commonCurlCenter[2]});
 
 		InputFloatMultipleSingleLableWithButtons("Thumb curl offset",
 												 "Thumb",
@@ -650,9 +650,9 @@ void UserInterface::buildVRChatOSCSettings()
 												 1.f,
 												 "%.1f",
 												 90,
-												 {&Config.skeletalBend.ThumbCurlCenter[0],
-												  &Config.skeletalBend.ThumbCurlCenter[1],
-												  &Config.skeletalBend.ThumbCurlCenter[2]});
+												 {&Config.skeletalBend.thumbCurlCenter[0],
+												  &Config.skeletalBend.thumbCurlCenter[1],
+												  &Config.skeletalBend.thumbCurlCenter[2]});
 
 		ImGui::SeparatorText("Splay Offset");
 
@@ -662,11 +662,11 @@ void UserInterface::buildVRChatOSCSettings()
 											  1.f,
 											  "%.1f",
 											  90,
-											  {&Config.skeletalBend.FingerSplayCenter[0],
-											   &Config.skeletalBend.FingerSplayCenter[1],
-											   &Config.skeletalBend.FingerSplayCenter[2],
-											   &Config.skeletalBend.FingerSplayCenter[3],
-											   &Config.skeletalBend.FingerSplayCenter[4]});
+											  {&Config.skeletalBend.fingerSplayCenter[0],
+											   &Config.skeletalBend.fingerSplayCenter[1],
+											   &Config.skeletalBend.fingerSplayCenter[2],
+											   &Config.skeletalBend.fingerSplayCenter[3],
+											   &Config.skeletalBend.fingerSplayCenter[4]});
 	}
 
 

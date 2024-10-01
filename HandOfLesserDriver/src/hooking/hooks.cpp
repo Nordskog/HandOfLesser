@@ -175,7 +175,7 @@ namespace HOL::hooks
 				// reset frame counter
 				controller->framesSinceLastPoseUpdate = 0;
 				
-				auto controllerMode = config.handPose.mControllerMode;
+				auto controllerMode = config.handPose.controllerMode;
 				if (controllerMode == ControllerMode::HookedControllerMode
 					|| controllerMode == ControllerMode::OffsetControllerMode)
 				{
@@ -196,8 +196,8 @@ namespace HOL::hooks
 						// constantly.
 						HOL::ControllerCommon::offsetPose((vr::DriverPose_t&)newPose,
 														  controller->getSide(),
-														  config.handPose.PositionOffset,
-														  config.handPose.OrientationOffset);
+														  config.handPose.positionOffset,
+														  config.handPose.orientationOffset);
 					}
 				}
 			}
@@ -321,7 +321,7 @@ namespace HOL::hooks
 							inputHandle.inputPath.c_str(),
 							bNewValue ? "True" : "False");
 							*/
-					auto controllerMode = config.handPose.mControllerMode;
+					auto controllerMode = config.handPose.controllerMode;
 					if (controller->canPossess())
 					{
 						if (controllerMode == ControllerMode::HookedControllerMode
@@ -374,7 +374,7 @@ namespace HOL::hooks
 							inputHandle.inputPath.c_str(),
 							bNewValue);
 							*/
-				auto controllerMode = config.handPose.mControllerMode;
+				auto controllerMode = config.handPose.controllerMode;
 				if (controller->canPossess())
 				{
 					if (controllerMode == ControllerMode::HookedControllerMode

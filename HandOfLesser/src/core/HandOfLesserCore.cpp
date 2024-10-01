@@ -117,7 +117,7 @@ void HandOfLesserCore::mainLoop()
 		// draw queue swapping because UI and main loop are not in sync
 		this->mUserInterface.Current->getVisualizer()->swapOuterDrawQueue();
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(Config.general.UpdateIntervalMS));
+		std::this_thread::sleep_for(std::chrono::milliseconds(Config.general.updateIntervalMS));
 	}
 
 	std::cout << "Exiting loop" << std::endl;
@@ -127,7 +127,7 @@ void HandOfLesserCore::mainLoop()
 void HandOfLesserCore::doOpenXRStuff()
 {
 	XrTime time = this->mInstanceHolder.getTime();
-	time += 1000000LL * (XrTime)Config.general.MotionPredictionMS;
+	time += 1000000LL * (XrTime)Config.general.motionPredictionMS;
 
 	this->mInstanceHolder.pollEvent();
 

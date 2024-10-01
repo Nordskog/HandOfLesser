@@ -181,7 +181,7 @@ namespace HOL
 
 	bool HandOfLesser::shouldPossess(uint32_t deviceId)
 	{
-		if (HandOfLesser::Current->Config.handPose.mControllerMode
+		if (HandOfLesser::Current->Config.handPose.controllerMode
 			== ControllerMode::HookedControllerMode)
 		{
 			return shouldPossess(getHookedControllerByDeviceId(deviceId));
@@ -203,7 +203,7 @@ namespace HOL
 		// Other lighthouse devices will pr obably always remain active, so I guess we just
 		// wait for the controllers to be completely still while the user is holding up their
 		// hands for a few seconds. Also a problem for later.
-		if (HandOfLesser::Current->Config.handPose.mControllerMode
+		if (HandOfLesser::Current->Config.handPose.controllerMode
 			== ControllerMode::HookedControllerMode)
 		{
 			// Only possess the controllers we are hooking
@@ -218,7 +218,7 @@ namespace HOL
 
 	bool HandOfLesser::shouldEmulateControllers()
 	{
-		return HandOfLesser::Current->Config.handPose.mControllerMode
+		return HandOfLesser::Current->Config.handPose.controllerMode
 			   == ControllerMode::EmulateControllerMode;
 	}
 
@@ -319,7 +319,7 @@ namespace HOL
 
 	GenericControllerInterface* HandOfLesser::GetActiveController(HOL::HandSide side)
 	{
-		switch (HandOfLesser::Current->Config.handPose.mControllerMode)
+		switch (HandOfLesser::Current->Config.handPose.controllerMode)
 		{
 			case ControllerMode::EmulateControllerMode: {
 				return getEmulatedController(side);
@@ -493,7 +493,7 @@ namespace HOL
 	void HandOfLesser::runFrame()
 	{
 		// As of writing only emulated controllers need to do anything here
-		if (HandOfLesser::Current->Config.handPose.mControllerMode
+		if (HandOfLesser::Current->Config.handPose.controllerMode
 			== ControllerMode::EmulateControllerMode)
 		{
 			// TODO: only run if using index controller
@@ -520,7 +520,7 @@ namespace HOL
 				}
 			}
 		}
-		else if (HandOfLesser::Current->Config.handPose.mControllerMode
+		else if (HandOfLesser::Current->Config.handPose.controllerMode
 				 == ControllerMode::HookedControllerMode)
 		{
 			// TODO: only run if using index controller

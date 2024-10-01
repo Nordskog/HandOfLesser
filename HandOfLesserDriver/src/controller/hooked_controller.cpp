@@ -84,7 +84,7 @@ namespace HOL
 			HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
 				this->mHookedHost, this->mDeviceId, pose, sizeof(vr::DriverPose_t));
 		}
-		else if (config.handPose.mControllerMode == ControllerMode::OffsetControllerMode)
+		else if (config.handPose.controllerMode == ControllerMode::OffsetControllerMode)
 		{
 			// If we have gonte 5 frames without a pose update when offsetting, we should also
 			// jitter the pose so vrchat doesn't disable our arms for several seconds.

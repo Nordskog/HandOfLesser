@@ -159,20 +159,20 @@ namespace HOL::VRChat
 				// Splay is always inwards towards the center of the hand,
 				// so it will be different for left/right hands. -1 in, 1 out.
 				// Thumb is -1: downwards ( towards palm ), 1: upwards.
-				center = Config.fingerBend.FingerSplayCenter[finger];
-				jointRange = Config.fingerBend.FingersplayRange[finger];
+				center = Config.fingerBend.fingerSplayCenter[finger];
+				jointRange = Config.fingerBend.fingersplayRange[finger];
 			}
 			else
 			{
 				if (finger == FingerType::FingerThumb)
 				{
-					center = Config.fingerBend.ThumbCurlCenter[joint];
-					jointRange = Config.fingerBend.ThumbCurlRange[joint];
+					center = Config.fingerBend.thumbCurlCenter[joint];
+					jointRange = Config.fingerBend.thumbCurlRange[joint];
 				}
 				else
 				{
-					center = Config.fingerBend.CommonCurlCenter[joint];
-					jointRange = Config.fingerBend.CommonCurlRange[joint];
+					center = Config.fingerBend.commonCurlCenter[joint];
+					jointRange = Config.fingerBend.commonCurlRange[joint];
 				}
 			}
 
@@ -192,8 +192,8 @@ namespace HOL::VRChat
 			if (joint == HOL::FingerBendType::Splay)
 			{
 				// Flip and invert if right
-				center = Config.skeletalBend.FingerSplayCenter[finger];
-				jointRange = Config.skeletalBend.FingersplayRange[finger];
+				center = Config.skeletalBend.fingerSplayCenter[finger];
+				jointRange = Config.skeletalBend.fingersplayRange[finger];
 
 				if (side == HandSide::RightHand)
 				{
@@ -207,13 +207,13 @@ namespace HOL::VRChat
 			{
 				if (finger == FingerType::FingerThumb)
 				{
-					center = Config.skeletalBend.ThumbCurlCenter[joint];
-					jointRange = Config.skeletalBend.ThumbCurlRange[joint];
+					center = Config.skeletalBend.thumbCurlCenter[joint];
+					jointRange = Config.skeletalBend.thumbCurlRange[joint];
 				}
 				else
 				{
-					center = Config.skeletalBend.CommonCurlCenter[joint];
-					jointRange = Config.skeletalBend.CommonCurlRange[joint];
+					center = Config.skeletalBend.commonCurlCenter[joint];
+					jointRange = Config.skeletalBend.commonCurlRange[joint];
 				}
 			}
 
