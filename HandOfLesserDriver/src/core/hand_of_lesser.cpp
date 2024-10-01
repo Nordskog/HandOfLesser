@@ -538,6 +538,12 @@ namespace HOL
 		{
 			this->estimateControllerSide();
 		}
+
+		// iterate frame counter for all controller
+		for (auto& controller : this->mHookedControllers)
+		{
+			controller->framesSinceLastPoseUpdate++;
+		}
 	}
 
 	void HandOfLesser::cleanup()

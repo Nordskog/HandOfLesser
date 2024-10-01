@@ -95,7 +95,6 @@ namespace HOL::hooks
 
 			if (ret)
 			{
-				//DriverLog("Event: %d", pEvent->eventType);
 				if (pEvent->eventType == vr::EVREventType::VREvent_TrackedDeviceRoleChanged)
 				{
 					DriverLog("Received TrackedDeviceRoleChanged event, updating unhanded controllers");
@@ -172,8 +171,10 @@ namespace HOL::hooks
 				{
 					controller->lastOriginalPose = newPose;
 				}
-				
 
+				// reset frame counter
+				controller->framesSinceLastPoseUpdate = 0;
+				
 				auto controllerMode = config.handPose.mControllerMode;
 				if (controllerMode == ControllerMode::HookedControllerMode
 					|| controllerMode == ControllerMode::OffsetControllerMode)

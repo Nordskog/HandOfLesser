@@ -453,6 +453,11 @@ void HOL::UserInterface::buildMain()
 	}
 
 	ImGui::Checkbox("Force inactive", &Config.general.forceInactive);
+	ImGui::SameLine();
+	if (ImGui::Checkbox("Jitter on tracking loss", &Config.general.jitterLastPoseOnTrackingLoss))
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
 
 	/////////////////
 	// Offset inputs

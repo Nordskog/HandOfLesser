@@ -49,6 +49,10 @@ namespace HOL
 		vr::DriverPose_t lastOriginalPose;
 		bool mLastOriginalPoseValid;
 
+		// Frames since last updated by original driver.
+		// Reset every time there's an update, if we are possessing or offsetting.
+		int32_t framesSinceLastPoseUpdate = 0;
+
 
 	private:
 		vr::DriverPose_t mLastPose;

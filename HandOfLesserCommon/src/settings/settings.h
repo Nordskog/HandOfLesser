@@ -111,6 +111,7 @@ namespace HOL
 			float linearVelocityMultiplier = 0.f;
 			float angularVelocityMultiplier = 0.f;
 			bool forceInactive = false;
+			bool jitterLastPoseOnTrackingLoss = true;
 		};
 
 		struct HandPoseSettings
