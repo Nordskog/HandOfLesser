@@ -5,6 +5,7 @@
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
 #include "src/vrchat/vrchat_osc.h"
+#include <fstream>
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -57,8 +58,10 @@ void HandOfLesserCore::init(int serverPort)
 
 void HandOfLesserCore::start()
 {
+	this->loadSettings();
 	this->mUserInterfaceThread = std::thread(&HandOfLesserCore::userInterfaceLoop, this);
 	this->mainLoop();
+	this->saveSettings();
 }
 
 std::vector<const char*> HandOfLesserCore::getRequiredExtensions()
@@ -238,4 +241,23 @@ void HOL::HandOfLesserCore::syncSettings()
 	HOL::SettingsPacket packet;
 	packet.config = HOL::Config;
 	this->mTransport.send(9006, (char*)&packet, sizeof(HOL::SettingsPacket));
+}
+
+void HOL::HandOfLesserCore::saveSettings()
+{
+	// Good enough for now
+	std::ofstream file("settings.json");
+	nlohmann::json j = Config;
+	file << j.dump(4); // indented
+}
+
+void HOL::HandOfLesserCore::loadSettings()
+{
+	std::ifstream file("settings.json");
+	if (file.is_open())
+	{
+		nlohmann::json j;
+		file >> j;
+		Config = j.get<HOL::settings::HandOfLesserSettings>();
+	}
 }

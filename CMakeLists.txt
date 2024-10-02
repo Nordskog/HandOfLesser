@@ -28,6 +28,10 @@ include(GoogleTest)
 add_library(openxr-hpp INTERFACE)
 target_include_directories(openxr-hpp INTERFACE lib/openxr-hpp)
 
+# JSON
+add_library(json INTERFACE)
+target_include_directories(json INTERFACE lib/nlohmann)
+
 # OSC lib
 add_library(oscpp INTERFACE)
 target_include_directories(oscpp INTERFACE lib/oscpp/include)

@@ -25,6 +25,8 @@ namespace HOL
 		static HandOfLesserCore* Current; // Time to commit sinss
 
 		void syncSettings();
+		void saveSettings();
+		void loadSettings();
 
 		virtual std::vector<const char*> getRequiredExtensions();
 

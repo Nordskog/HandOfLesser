@@ -34,6 +34,8 @@ namespace HOL
 
 		void updateStyles(float scale);
 
+		bool rightAlignButton(const char* label, int verticalLineOffset = 0);
+
 		void InputFloatMultipleSingleLableWithButtons(std::string inputLabelBase,
 													  std::string visibleLabel,
 													  float smallIncrement,

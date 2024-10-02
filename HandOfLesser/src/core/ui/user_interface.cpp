@@ -9,6 +9,7 @@
 #include <cmath>
 #include <iostream>
 #include <imgui_impl_win32.h>
+#include <iterator>
 
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
@@ -110,6 +111,26 @@ void UserInterface::updateStyles(float scale)
 	io.FontGlobalScale = scale; // Fonts look blurry, need to rebuild atlas I guess.
 
 	return;
+}
+
+bool HOL::UserInterface::rightAlignButton(const char* label, int verticalLineOffset)
+{
+	float available_width = ImGui::GetContentRegionAvail().x;
+
+	// note that hide_text_after_double_hash is false, otherwise it will calculate its width too
+	float button_width
+		= ImGui::CalcTextSize(label, nullptr, true).x + ImGui::GetStyle().FramePadding.x * 2;
+
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + available_width - button_width);
+
+	if (verticalLineOffset != 0)
+	{
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() + (ImGui::GetStyle().FramePadding.x * 2 ) * verticalLineOffset));
+	}
+
+
+
+	return ImGui::Button(label);
 }
 
 void UserInterface::initGLFW()
@@ -459,6 +480,12 @@ void HOL::UserInterface::buildMain()
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}
 
+	ImGui::SameLine();
+	if (rightAlignButton("Reset##General"))
+	{
+		Config.general = HOL::settings::GeneralSettings();
+	}
+
 	/////////////////
 	// Offset inputs
 	/////////////////
@@ -572,10 +599,17 @@ void UserInterface::buildVRChatOSCSettings()
 		}
 	}
 
+	ImGui::SameLine();
+	if (rightAlignButton("Reset##VRChat"))
+	{
+		Config.vrchat = HOL::settings::VRChatSettings();
+	}
+
 	if (Config.vrchat.sendDebugOsc)
 	{
 		ImGui::SeparatorText("OSC test data");
-		ImGui::Checkbox("Alternate curl test (requires interlace)", &Config.vrchat.alternateCurlTest);
+		ImGui::Checkbox("Alternate curl test (requires interlace)",
+						&Config.vrchat.alternateCurlTest);
 		ImGui::SliderFloat("Curl", &Config.vrchat.curlDebug, -1, 1);
 		ImGui::SliderFloat("Splay", &Config.vrchat.splayDebug, -1, 1);
 	}
@@ -593,6 +627,12 @@ void UserInterface::buildVRChatOSCSettings()
 												 {&Config.fingerBend.ThumbAxisOffset[0],
 												  &Config.fingerBend.ThumbAxisOffset[1],
 												  &Config.fingerBend.ThumbAxisOffset[2]});
+
+		ImGui::SameLine();
+		if (rightAlignButton("Reset##VRChat_humanoid_thumb_axis"))
+		{
+			Config.fingerBend.ThumbAxisOffset = HOL::settings::FingerBendSettings().ThumbAxisOffset;
+		}
 
 		ImGui::SeparatorText("Curl Center");
 
@@ -616,6 +656,20 @@ void UserInterface::buildVRChatOSCSettings()
 												  &Config.fingerBend.thumbCurlCenter[1],
 												  &Config.fingerBend.thumbCurlCenter[2]});
 
+		ImGui::SameLine();
+		if (rightAlignButton("Reset##VRChat_humanoid_curl"))
+		{
+			// Well this is cancer
+			auto defValues = HOL::settings::FingerBendSettings();
+			std::copy(std::begin(defValues.commonCurlCenter),
+					  std::end(defValues.commonCurlCenter),
+					  std::begin(Config.fingerBend.commonCurlCenter));
+
+			std::copy(std::begin(defValues.thumbCurlCenter),
+					  std::end(defValues.thumbCurlCenter),
+					  std::begin(Config.fingerBend.thumbCurlCenter));
+		}
+
 		ImGui::SeparatorText("Splay Center");
 
 		InputFloatMultipleTopLableWithButtons("fingerSplayCenter",
@@ -629,6 +683,17 @@ void UserInterface::buildVRChatOSCSettings()
 											   &Config.fingerBend.fingerSplayCenter[2],
 											   &Config.fingerBend.fingerSplayCenter[3],
 											   &Config.fingerBend.fingerSplayCenter[4]});
+
+		// This section has 2-line groups so we need to compensate
+		ImGui::SameLine();
+		if (rightAlignButton("Reset##VRChat_humanoid_splay", 1))
+		{
+			// still cancer
+			auto defValues = HOL::settings::FingerBendSettings();
+			std::copy(std::begin(defValues.fingerSplayCenter),
+					  std::end(defValues.fingerSplayCenter),
+					  std::begin(Config.fingerBend.fingerSplayCenter));
+		}
 	}
 	else
 	{
@@ -668,8 +733,6 @@ void UserInterface::buildVRChatOSCSettings()
 											   &Config.skeletalBend.fingerSplayCenter[3],
 											   &Config.skeletalBend.fingerSplayCenter[4]});
 	}
-
-
 
 	// Raw
 	ImGui::SeparatorText("Raw bend");
@@ -758,6 +821,42 @@ void UserInterface::buildInterface()
 			buildVisual();
 			ImGui::EndTabItem();
 		}
+
+		if (ImGui::BeginTabItem("Misc"))
+		{
+			const char* restoreDefaultsLabel = "restore defaults";
+			if (ImGui::Button(restoreDefaultsLabel))
+				ImGui::OpenPopup(restoreDefaultsLabel);
+
+			// Always center this window when appearing
+			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+			ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+			if (ImGui::BeginPopupModal(
+					restoreDefaultsLabel, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				ImGui::Text("Restore all settings to default?");
+				ImGui::Separator();
+
+				if (ImGui::Button("OK##restoreDefaults", ImVec2(140, 0)))
+				{
+					Config = HOL::settings::HandOfLesserSettings();
+					ImGui::CloseCurrentPopup();
+				}
+				ImGui::SetItemDefaultFocus();
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel##restoreDefaults", ImVec2(140, 0)))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+
+
+				ImGui::EndPopup();
+			}
+
+			ImGui::EndTabItem();
+		}
+
 		ImGui::EndTabBar();
 	}
 

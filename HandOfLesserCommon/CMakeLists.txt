@@ -10,6 +10,7 @@ add_library(HandOfLesserCommon STATIC
 )
 
 target_link_libraries(HandOfLesserCommon PUBLIC
+	json
 	eigen
 	openxr_loader
 	wsock32
