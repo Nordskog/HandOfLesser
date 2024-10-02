@@ -109,8 +109,8 @@ namespace HOL
 
             // If weight is near 0, use average, otherwise use latest value.
             tree.AddChild(generateValueDriverBlendtree(tree, side, finger, joint, PropertyType.input_interlaced, PropertyType.input), -0.1f);
-            tree.AddChild(generateCombiningBlendTree(tree, side, finger, joint), -0.06f);
-            tree.AddChild(generateCombiningBlendTree(tree, side, finger, joint), 0.06f);
+            tree.AddChild(generateCombiningBlendTree(tree, side, finger, joint), -0.066667f);
+            tree.AddChild(generateCombiningBlendTree(tree, side, finger, joint), 0.066667f);
             tree.AddChild(generateValueDriverBlendtree(tree, side, finger, joint, PropertyType.input_interlaced, PropertyType.input), 0.1f);
 
             return 1;
