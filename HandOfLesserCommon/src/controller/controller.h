@@ -8,6 +8,8 @@ namespace HOL
 {
 	enum ControllerType
 	{
+		NONE,
+		ValveIndexKnucles,
 		OculusTouch_Airlink,
 		OculusTouch_VDXR,
 		ControllerType_MAX

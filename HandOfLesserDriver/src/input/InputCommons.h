@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>;
+#include <string>
 #include <openvr_driver.h>
 
 namespace HOL

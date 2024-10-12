@@ -10,3 +10,4 @@
 #include "src/settings/settings.h"
 #include "src/json/types.h"
 #include "src/steamvr/input_wrapper.h"
+#include "src/steamvr/skeletal_input_joints.h"

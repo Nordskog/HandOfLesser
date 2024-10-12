@@ -5,6 +5,14 @@ namespace HOL
 	{
 		switch (type)
 		{
+			case ControllerType::NONE: {
+				return {Eigen::Vector3f(0,0,0), Eigen::Vector3f(0,0,0)};
+			}
+
+			case ControllerType::ValveIndexKnucles: {
+				return {Eigen::Vector3f(0.076, -0.043, -0.107), Eigen::Vector3f(39.5f, 1, -91)};
+			}
+
 			case ControllerType::OculusTouch_Airlink: {
 				return {Eigen::Vector3f(0.076, -0.043, -0.107), Eigen::Vector3f(39.5f, 1, -91)};
 			}

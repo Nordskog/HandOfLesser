@@ -15,4 +15,6 @@ namespace HOL::ControllerCommon
 						   Eigen::Vector3f translationOffset,
 						   Eigen::Vector3f rotationOffset);
 
+	vr::VRBoneTransform_t poseLocationToBoneTransform(HOL::PoseLocation& location);
+
 }

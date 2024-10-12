@@ -11,6 +11,8 @@ namespace HOL::ControllerCommon
 	static std::uniform_real_distribution<float> JitterDistribution
 		= std::uniform_real_distribution<float>(0, 0.0001);
 
+	
+
 	vr::DriverPose_t generatePose(HOL::HandTransformPacket* packet, bool deviceConnected)
 	{
 		// Let's retrieve the Hmd pose to base our controller pose off.
@@ -182,6 +184,22 @@ namespace HOL::ControllerCommon
 		existingPose.qRotation.x = poseRotation.x();
 		existingPose.qRotation.y = poseRotation.y();
 		existingPose.qRotation.z = poseRotation.z();
+	}
+
+	vr::VRBoneTransform_t poseLocationToBoneTransform(HOL::PoseLocation& location)
+	{
+		vr::VRBoneTransform_t trans;
+		trans.position.v[0] = location.position.x();
+		trans.position.v[1] = location.position.y();
+		trans.position.v[2] = location.position.z();
+		trans.position.v[3] = 1.0f; // I guess?
+
+		trans.orientation.w = location.orientation.w();
+		trans.orientation.x = location.orientation.x();
+		trans.orientation.y = location.orientation.y();
+		trans.orientation.z = location.orientation.z();	
+
+		return trans;
 	}
 
 } // namespace HOL::ControllerCommon

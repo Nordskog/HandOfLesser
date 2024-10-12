@@ -10,6 +10,7 @@
 #include <thread>
 #include "src/vrchat/vrchat_input.h"
 #include "src/steamvr/steamvr_input.h"
+#include "src/steamvr/skeletal_input.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -36,6 +37,7 @@ namespace HOL
 		UserInterface mUserInterface;
 		VRChatOSC mVrchatOSC;
 		VRChatInput mVrchatInput;
+		SteamVR::SkeletalInput mSkeletalInput;
 		SteamVR::SteamVRInput mSteamVRInput;
 		NativeTransport mTransport;
 

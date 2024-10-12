@@ -4,6 +4,8 @@
 #include "hand_simulation.h"
 #include "vrmath.h"
 
+using namespace HOL::SteamVR;
+
 struct HandSimSplayableJoint
 {
 	vr::HmdVector2_t swing = {0.f, 0.f};
@@ -298,8 +300,8 @@ void MyHandSimulation::ComputeSkeletonTransforms(
 
 	// Set the handed-ness of the current skeleton (left or right hand)
 	hand.role = role;
-
 	// root bone. This is just 0s. It's aligned to /pose/raw.
+
 	out_transforms[0]
 		= {{0.000000f, 0.000000f, 0.000000f, 1.000000f},
 		   {1.000000f, -0.000000f, -0.000000f, 0.000000f}};

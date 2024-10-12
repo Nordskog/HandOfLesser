@@ -5,6 +5,7 @@
 #include "vrmath.h"
 #include "controller_common.h"
 #include <HandOfLesserCommon.h>
+#include <src/core/hand_of_lesser.h>
 
 // Let's create some variables for strings used in getting settings.
 // This is the section where all of the settings we want are stored. A section name can be anything,
@@ -302,6 +303,85 @@ namespace HOL
 			driverInput->UpdateScalarComponent(mInputHandles[inputType->second], value, 0);
 		}
 	}
+
+	void EmulatedControllerDriver::UpdateSkeletal(HOL::SkeletalPacket* packet)
+	{
+		// Data submitted to driver should all be in local space, -Z forward.
+		// We handle the weird FBX compatibility garbage here
+
+		// Wrist is weird though, it's space is entirely upside down.
+		// Again I just eye-balled the correct transform from normal space.
+		if (packet->side == HandSide::RightHand)
+		{
+			// Un-mirror, do the upside-down thing steamvr wants
+			HOL::PoseLocation& wristJoint = packet->locations[HandSkeletonBone::eBone_Wrist];
+
+			wristJoint.position.x() *= -1.f;
+			wristJoint.position.y() *= -1.f;
+
+			wristJoint.orientation.x() *= -1.f;
+			wristJoint.orientation.y() *= -1.f;
+		}
+
+		// Make +X forward instead of Z, flip Z, flip Y if left hand.
+		// In what space does that put us? no idea.
+		for (int i = 1; i < HandSkeletonBone::eBone_Count; i++)
+		{
+
+			HOL::PoseLocation& joint = packet->locations[(HandSkeletonBone)i];
+
+			std::swap(joint.position.x(), joint.position.z());
+			joint.position.z() *= -1.f;
+
+			std::swap(joint.orientation.x(), joint.orientation.z());
+			joint.orientation.z() *= -1.f;
+
+			if (packet->side == HandSide::LeftHand)
+			{
+				joint.position.x() *= -1.f;
+				joint.position.y() *= -1.0f;
+
+				joint.orientation.x() *= -1.f;
+				joint.orientation.y() *= -1.f;
+			}
+		}
+
+		// Then we do the weird FBX compatibility rotation they required,
+		// metacarpals 90 degrees ( on two axes ) from wrist, so sideways then rolled basically.
+		const std::vector<HandSkeletonBone> metacarpals = {eBone_Thumb0,
+														   eBone_IndexFinger0,
+														   eBone_MiddleFinger0,
+														   eBone_RingFinger0,
+														   eBone_PinkyFinger0};
+
+		// I just eyeballed these
+		const Eigen::Quaternionf leftMagic(0.5f, 0.5f, -0.5f, 0.5f);
+		const Eigen::Quaternionf rightMagic(-0.5f, 0.5f, -0.5f, -0.5f);
+		for (int i = 0; i < metacarpals.size(); i++)
+		{
+			PoseLocation& joint = packet->locations[metacarpals[i]];
+
+			const Eigen::Quaternionf magic
+				= packet->side == HandSide::LeftHand ? leftMagic : rightMagic;
+
+			joint.orientation = magic * joint.orientation;
+			joint.position = magic * joint.position;
+		}
+
+		for (int i = 0; i < HandSkeletonBone::eBone_Count; i++)
+		{
+			mSkeletalPose[i] = ControllerCommon::poseLocationToBoneTransform(packet->locations[i]);
+		}
+
+		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
+													 vr::VRSkeletalMotionRange_WithController,
+													 mSkeletalPose,
+													 eBone_Count);
+
+		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
+													 vr::VRSkeletalMotionRange_WithoutController,
+													 mSkeletalPose,
+													 eBone_Count);
 	}
 
 	void EmulatedControllerDriver::SubmitPose()

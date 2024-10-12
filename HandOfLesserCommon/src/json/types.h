@@ -58,6 +58,12 @@ namespace HOL
 									   sendSteamVRInput,
 									   blockControllerInputWhileHandTracking);
 
+		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SkeletalInput,
+										   jointLengthMultiplier,
+										   sendSkeletalInput,
+										   positionOffset,
+										   orientationOffset);
+
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HandOfLesserSettings,
 										   general,
 										   fingerBend,

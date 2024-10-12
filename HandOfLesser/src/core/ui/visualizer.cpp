@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include <HandOfLesserCommon.h>
 #include "src/core/settings_global.h"
+#include <src/core/HandOfLesserCore.h>
 
 namespace HOL
 {

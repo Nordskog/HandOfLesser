@@ -22,13 +22,13 @@ namespace HOL::OpenXR
 		HOL::ControllerInputPacket getInputPacket(HOL::HandSide side);
 		HOL::HandPose& getHandPose(HOL::HandSide side);
 		void drawHands();
+		OpenXRHand& getHand(HOL::HandSide side);
 
 	private:
 		void initHands(xr::UniqueDynamicSession& session);
 		void initGestures();
 		void updateSimpleGestures();
 		void updateGestures();
-		OpenXRHand& getHand(HOL::HandSide side);
 		OpenXRHand mLeftHand;
 		OpenXRHand mRightHand;
 

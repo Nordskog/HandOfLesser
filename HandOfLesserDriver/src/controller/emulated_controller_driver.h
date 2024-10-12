@@ -13,8 +13,6 @@
 
 namespace HOL
 {
-	a_touch,
-	a_click,
 	enum InputHandleType
 	{
 		a_touch,
@@ -118,6 +116,7 @@ namespace HOL
 		void UpdateInput(HOL::ControllerInputPacket* packet) override;
 		void UpdateBoolInput(const std::string& input, bool value) override;
 		void UpdateFloatInput(const std::string& input, float value) override;
+		void UpdateSkeletal(HOL::SkeletalPacket* packet) override;
 		void SubmitPose() override;
 
 		void Deactivate() override;
@@ -147,6 +146,8 @@ namespace HOL
 		std::array<vr::VRInputComponentHandle_t, InputHandleType::MAX> mInputHandles;
 
 		std::atomic<bool> is_active_ = false;
+
+		vr::VRBoneTransform_t mSkeletalPose[eBone_Count];
 
 		vr::DriverPose_t mLastPose;
 

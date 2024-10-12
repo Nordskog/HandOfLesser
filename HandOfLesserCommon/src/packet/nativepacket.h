@@ -2,6 +2,7 @@
 
 #include "src/hand/hand.h"
 #include <src/settings/settings.h>
+#include "src/steamvr/skeletal_input_joints.h"
 
 namespace HOL
 {
@@ -12,6 +13,7 @@ namespace HOL
 		ControllerInput = 600,
 		FloatInput = 601,
 		BoolInput = 602,
+		SkeletalInput = 603,
 		Settings = 700
 	};
 
@@ -63,6 +65,14 @@ namespace HOL
 	{
 		NativePacketType packetType = NativePacketType::Settings;
 		HOL::settings::HandOfLesserSettings config;
+	};
+
+	struct SkeletalPacket
+	{
+		NativePacketType packetType = NativePacketType::SkeletalInput;
+		HOL::HandSide side;
+		HOL::PoseLocation
+			locations[SteamVR::HandSkeletonBone::eBone_Count]; // HandSkeletonBone::eBone_Count
 	};
 
 	// Mimics vr::DriverPose_t, but only contains the bits we care about.

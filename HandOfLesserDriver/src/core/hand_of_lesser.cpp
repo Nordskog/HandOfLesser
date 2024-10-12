@@ -78,12 +78,24 @@ namespace HOL
 					break;
 				}
 
-				case HOL::NativePacketType::BoolInput:  {
+				case HOL::NativePacketType::BoolInput: {
+
 					HOL::BoolInputPacket* packet = (HOL::BoolInputPacket*)rawPacket;
 					auto controller = this->GetActiveController(packet->side);
 					if (controller != nullptr)
 					{
 						controller->UpdateBoolInput(packet->inputName, packet->value);
+					}
+
+					break;
+				}
+
+				case HOL::NativePacketType::SkeletalInput: {
+					HOL::SkeletalPacket* packet = (HOL::SkeletalPacket*)rawPacket;
+					auto controller = this->GetActiveController(packet->side);
+					if (controller != nullptr)
+					{
+						controller->UpdateSkeletal(packet);
 					}
 
 					break;
@@ -132,9 +144,10 @@ namespace HOL
 		}
 	}
 
-	HookedController* HandOfLesser::addHookedController(uint32_t id,
-														vr::IVRServerDriverHost* host,
-														vr::ITrackedDeviceServerDriver* driver,
+	HookedController*
+	HandOfLesser::addHookedController(uint32_t id,
+									  vr::IVRServerDriverHost* host,
+									  vr::ITrackedDeviceServerDriver* driver,
 									  vr::PropertyContainerHandle_t propertyContainer)
 	{
 
@@ -150,7 +163,7 @@ namespace HOL
 	// fully activated and populated, check for duplicate serials and nuke the oldest instance.
 	void HandOfLesser::removeDuplicateDevices()
 	{
-		std::unordered_map<std::string,int> existingSerials;
+		std::unordered_map<std::string, int> existingSerials;
 
 		// count duplicates
 		for (auto& controllerContainer : mHookedControllers)
@@ -291,7 +304,8 @@ namespace HOL
 	{
 		for (auto& controllerContainer : mHookedControllers)
 		{
-			if (controllerContainer->mDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_HMD)
+			if (controllerContainer->mDeviceClass
+				== vr::ETrackedDeviceClass::TrackedDeviceClass_HMD)
 			{
 				return controllerContainer.get();
 			}
@@ -339,12 +353,10 @@ namespace HOL
 		// Ideally we would just wait for the controller-has-been-assigned-a-side
 		// event and immediately decide on what side each controller is.
 		// However, OVR will send this event before the controller has
-		// submitted a valid pose, resulting in it failing. 
-		// As a result of this we need to wait for all poses to be valid before 
-		// we run our estimation. 
+		// submitted a valid pose, resulting in it failing.
+		// As a result of this we need to wait for all poses to be valid before
+		// we run our estimation.
 		this->mEstimateControllerSideWhenPositionValid = true;
-
-
 	}
 
 	void HandOfLesser::estimateControllerSide()
@@ -355,13 +367,14 @@ namespace HOL
 		{
 			this->mEstimateControllerSideWhenPositionValid = false;
 			this->mControllerSideEstimationAttemptCount = 0;
-			DriverLog("Waited 500 frames HDM and controllers to have valid positions, giving up on deciding sides.");
+			DriverLog("Waited 500 frames HDM and controllers to have valid positions, giving up on "
+					  "deciding sides.");
 			return;
 		}
 
 		// Vive wands don't know what side they are until later,
 		// and we can't query what side they're assigned without
-		// being a client, so instead we listen for the event 
+		// being a client, so instead we listen for the event
 		// that says they've been assigned a side, and... guess.
 		std::vector<HookedController*> unsidedControllers;
 
@@ -374,7 +387,8 @@ namespace HOL
 			{
 				if (!controller->mLastOriginalPoseValid)
 				{
-					//DriverLog("Sided controller without valid position, skipping side estimation");
+					// DriverLog("Sided controller without valid position, skipping side
+					// estimation");
 					return;
 				}
 
@@ -427,8 +441,10 @@ namespace HOL
 			// remove y component, get angle between hmd forward and hmd->controller.
 			// lower of two values is left, higher is right.
 
-			Eigen::Vector3f controller1Pos =  HOL::ovrVectorToEigen(unsidedControllers[0]->lastOriginalPose.vecPosition);
-			Eigen::Vector3f controller2Pos = HOL::ovrVectorToEigen(unsidedControllers[1]->lastOriginalPose.vecPosition);
+			Eigen::Vector3f controller1Pos
+				= HOL::ovrVectorToEigen(unsidedControllers[0]->lastOriginalPose.vecPosition);
+			Eigen::Vector3f controller2Pos
+				= HOL::ovrVectorToEigen(unsidedControllers[1]->lastOriginalPose.vecPosition);
 
 			Eigen::Vector3f controller1Vector = controller1Pos - hmdPos;
 			Eigen::Vector3f controller2Vector = controller2Pos - hmdPos;
@@ -439,7 +455,7 @@ namespace HOL
 			// The more above the plane the more right the controller is.
 			// Higher number is right controller, other is left.
 			// OR IT SHOULD BE BUT ITS OPPOSITE AND I GIVE UP
-			// I just inverted the if/else 
+			// I just inverted the if/else
 			if (controller1Distance > controller2Distance)
 			{
 				unsidedControllers[0]->setSide(HandSide::LeftHand);
@@ -471,7 +487,7 @@ namespace HOL
 
 			// right if > 0, otherwise left
 			// OR IT SHOULD BE BUT ITS OPPOSITE AND I GIVE UP
-			// I just inverted the if/else 
+			// I just inverted the if/else
 			if (controller1Distance > 0)
 			{
 				unsidedControllers[0]->setSide(HandSide::LeftHand);

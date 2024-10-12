@@ -394,6 +394,72 @@ void HOL::UserInterface::buildVisual()
 	mVisualizer.drawVisualizer();
 }
 
+
+void HOL::UserInterface::buildSkeletal()
+{
+	ImGui::BeginChild(
+		"LeftSkeletalWindow", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
+
+	/////////////////
+	// General
+	/////////////////
+
+	ImGui::SeparatorText("Skeletal Input");
+
+	ImGui::Checkbox("Transmit skeletal input", &Config.skeletal.sendSkeletalInput);
+
+	ImGui::SameLine();
+	if (rightAlignButton("Reset##Skeletal"))
+	{
+		Config.skeletal = HOL::settings::SkeletalInput();
+	}
+
+	bool lengthChanged = false;
+
+	lengthChanged |= ImGui::InputFloat(
+		"Length multiplier",
+					&Config.skeletal.jointLengthMultiplier,
+					0.01f,
+					0.1f,
+					"%.3f");
+
+	if (lengthChanged)
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+
+	/////////////////
+	// Offset inputs
+	/////////////////
+
+	ImGui::BeginChild("SkeletalTranslationInput",
+					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
+					  ImGuiChildFlags_AutoResizeY);
+
+	ImGui::SeparatorText("Translation##Skeletal");
+
+	auto& positionOffset = Config.skeletal.positionOffset;
+	ImGui::InputFloat("posX##Skeletal", &positionOffset.x(), 0.001f, 0.01f, "%.3f");
+	ImGui::InputFloat("posY##Skeletal", &positionOffset.y(), 0.001f, 0.01f, "%.3f");
+	ImGui::InputFloat("posZ##Skeletal", &positionOffset.z(), 0.001f, 0.01f, "%.3f");
+
+	ImGui::EndChild();
+	ImGui::SameLine();
+
+	ImGui::BeginChild("OrientationInput##Skeletal", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
+
+	ImGui::SeparatorText("Orientation##Skeletal");
+
+	auto& orientationOffset = Config.skeletal.orientationOffset;
+	ImGui::InputFloat("rotX##Skeletal", &orientationOffset.x(), 1.0f, 5.0f, "%.3f");
+	ImGui::InputFloat("rotY##Skeletal", &orientationOffset.y(), 1.0f, 5.0f, "%.3f");
+	ImGui::InputFloat("rotZ##Skeletal", &orientationOffset.z(), 1.0f, 5.0f, "%.3f");
+
+	ImGui::EndChild();
+	ImGui::EndChild();
+}
+
+
 void HOL::UserInterface::buildMain()
 {
 	ImGui::BeginChild(
@@ -491,6 +557,16 @@ void HOL::UserInterface::buildMain()
 	/////////////////
 
 	ImGui::SeparatorText("Controller type");
+
+	if (ImGui::Button("None (zero offset)"))
+	{
+		Config.handPose.controllerType = ControllerType::NONE;
+	}
+
+	if (ImGui::Button("Index Knucles"))
+	{
+		Config.handPose.controllerType = ControllerType::ValveIndexKnucles;
+	}
 
 	if (ImGui::Button("Touch Airlink"))
 	{
@@ -794,6 +870,11 @@ void UserInterface::buildInterface()
 		if (ImGui::BeginTabItem("Main"))
 		{
 			buildMain();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Skeletal"))
+		{
+			buildSkeletal();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("VRChat"))

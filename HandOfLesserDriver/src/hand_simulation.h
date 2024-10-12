@@ -2,7 +2,9 @@
 #pragma once
 
 #include "openvr_driver.h"
-#include <HandSimulationDefs.h>
+#include <HandOfLesserCommon.h>
+
+using namespace HOL::SteamVR;
 
 class MyHandSimulation
 {

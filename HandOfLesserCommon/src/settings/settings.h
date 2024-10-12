@@ -161,6 +161,14 @@ namespace HOL
 			bool blockControllerInputWhileHandTracking = true;
 		};
 
+		struct SkeletalInput
+		{
+			float jointLengthMultiplier = 1.05f;
+			bool sendSkeletalInput = true;
+			Eigen::Vector3f positionOffset = Eigen::Vector3f(-0.168, -0.041, 0.049);
+			Eigen::Vector3f orientationOffset = Eigen::Vector3f(5.000, 183.000, 43.000);
+		};
+
 		struct HandOfLesserSettings
 		{
 			GeneralSettings general;
@@ -171,6 +179,7 @@ namespace HOL
 			DebugSettings debug;
 			VisualizerSettings visualizer;
 			InputSettings input;
+			SkeletalInput skeletal;
 		};
 	}
 } // namespace HOL::settings
