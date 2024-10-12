@@ -93,10 +93,10 @@ namespace HOL
             });
 
             // If weight is near 0, use average, otherwise use latest value.
-            tree.AddChild(generateValueDriverBlendtree(tree, side, finger, joint, PropertyType.smoothing_adjusted, PropertyType.smoothing_individual), -0.1f);
+            tree.AddChild(generateValueDriverBlendtree(tree, side, finger, joint, PropertyType.smoothing_adjusted, PropertyType.smoothing_individual), -0.25f);
             tree.AddChild(generateValueDriverBlendtree(tree, side, finger, joint, PropertyType.smoothing_adjusted_max, PropertyType.smoothing_individual), -0.06667f);
             tree.AddChild(generateValueDriverBlendtree(tree, side, finger, joint, PropertyType.smoothing_adjusted_max, PropertyType.smoothing_individual), 0.066667f);
-            tree.AddChild(generateValueDriverBlendtree(tree, side, finger, joint, PropertyType.smoothing_adjusted, PropertyType.smoothing_individual), 0.1f);
+            tree.AddChild(generateValueDriverBlendtree(tree, side, finger, joint, PropertyType.smoothing_adjusted, PropertyType.smoothing_individual), 0.25f);
 
             return 1;
         }
