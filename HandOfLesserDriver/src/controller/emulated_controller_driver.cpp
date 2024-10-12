@@ -346,26 +346,63 @@ namespace HOL
 			}
 		}
 
+		const HandSkeletonBone startingJoint[5] = {
+			eBone_Thumb0,		 // thumb
+			eBone_IndexFinger0,	 // index
+			eBone_MiddleFinger0, // middle
+			eBone_RingFinger0,	 // ring
+			eBone_PinkyFinger0,	 // pinky
+		};
+
+		const float fingerJointCount[5] = {
+			4, // thumb
+			5, // index
+			5, // middle
+			5, // ring
+			5, // pinky
+		};
+
 		// Then we do the weird FBX compatibility rotation they required,
 		// metacarpals 90 degrees ( on two axes ) from wrist, so sideways then rolled basically.
-		const std::vector<HandSkeletonBone> metacarpals = {eBone_Thumb0,
-														   eBone_IndexFinger0,
-														   eBone_MiddleFinger0,
-														   eBone_RingFinger0,
-														   eBone_PinkyFinger0};
 
 		// I just eyeballed these
 		const Eigen::Quaternionf leftMagic(0.5f, 0.5f, -0.5f, 0.5f);
 		const Eigen::Quaternionf rightMagic(-0.5f, 0.5f, -0.5f, -0.5f);
-		for (int i = 0; i < metacarpals.size(); i++)
+		for (int i = 0; i < 5; i++)
 		{
-			PoseLocation& joint = packet->locations[metacarpals[i]];
+			PoseLocation& joint = packet->locations[startingJoint[i]];
 
 			const Eigen::Quaternionf magic
 				= packet->side == HandSide::LeftHand ? leftMagic : rightMagic;
 
 			joint.orientation = magic * joint.orientation;
 			joint.position = magic * joint.position;
+		}
+
+		// Which brings us to the aux joints, which are defined as: 
+		// > The skeleton has 5 auxiliary bones ('aux bones' for short) for helping in
+		// > the construction of hand poses. These bones have the same position and rotation and
+		// > rotation as the last knuckle bone in each finger, but are direct children of the
+		// Add up all the transforms from wrist to joint-before-tip and we should get that.
+		PoseLocation& wristJoint = packet->locations[HandSkeletonBone::eBone_Wrist];
+		for (int i = 0; i < 5; i++)
+		{
+			HandSkeletonBone firstJoint = startingJoint[i];
+			int childCount = fingerJointCount[i] - 1;	// Skip the tip
+
+			PoseLocation& auxJoint = packet->locations[eBone_Aux_Thumb+i];
+			// Root should always be 0, so just use wrist as starting point.
+			auxJoint.position = wristJoint.position;
+			auxJoint.orientation = wristJoint.orientation;
+
+			// loop through the remaining joints and append transform
+			for (int j = 0; j < childCount; j++)
+			{
+				PoseLocation& child = packet->locations[firstJoint+i];
+				
+				auxJoint.position += auxJoint.orientation * child.position;
+				auxJoint.orientation = auxJoint.orientation * child.orientation;
+			}
 		}
 
 		for (int i = 0; i < HandSkeletonBone::eBone_Count; i++)
