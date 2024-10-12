@@ -4,13 +4,22 @@
 
 namespace HOL::SteamVR
 {
+	enum HandleType
+	{
+		input,
+		output,
+		skeleton,
+		pose,
+		HandleType_MAX
+	};
+
 	// Convenience class for steamVR input constants
 	// and their touch/click/value suffixes
 	class InputWrapper
 	{
 
 	public:
-		InputWrapper( std::string input);
+		InputWrapper(std::string input, HandleType type = HandleType::input);
 
 		std::string touch() const;
 		std::string click() const;
@@ -46,7 +55,12 @@ namespace HOL::SteamVR
 		InputWrapper const System = InputWrapper("system");
 		InputWrapper const Menu = InputWrapper("menu");
 
-		// index
+		// index 
 		InputWrapper const Finger = InputWrapper("finger");
+
+		// Skeleton
+		InputWrapper const Skeleton = InputWrapper("skeleton");
+		InputWrapper const Raw = InputWrapper("raw", HandleType::pose);
+
 	} // namespace Input
 } // namespace HOL::SteamVR

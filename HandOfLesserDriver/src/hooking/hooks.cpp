@@ -338,7 +338,7 @@ namespace HOL::hooks
 			}
 			else
 			{
-				DriverLog("Button on unknown controller!");
+				//DriverLog("Button on unknown controller!");
 			}
 
 			// Make sure to return early if we don't want to call the original function
@@ -391,7 +391,7 @@ namespace HOL::hooks
 			}
 			else
 			{
-				DriverLog("Scalar on unknown controller!");
+				//DriverLog("Scalar on unknown controller!");
 			}
 
 			// Make sure to return early if we don't want to call the original function

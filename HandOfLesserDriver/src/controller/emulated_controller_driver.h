@@ -11,41 +11,85 @@
 #include "src/hand_simulation.h"
 #include "generic_control_interface.h"
 
-enum InputHandleType
+namespace HOL
 {
 	a_touch,
 	a_click,
+	enum InputHandleType
+	{
+		a_touch,
+		a_click,
+		b_touch,
+		b_click,
 
-	trigger_value,
-	trigger_touch,
-	trigger_click,
+		trigger_value,
+		trigger_touch,
+		trigger_click,
 
-	grip_value,
-	grip_force,
-	grip_touch,
+		grip_value,
+		grip_force,
+		grip_touch,
 
-	system_click,
+		system_click,
 
-	finger_index,
-	finger_middle,
-	finger_ring,
-	finger_pinky,
+		finger_index,
+		finger_middle,
+		finger_ring,
+		finger_pinky,
 
-	skeleton,
+		skeleton,
 
-	haptic,
+		haptic,
 
-	MAX
-};
+		MAX
+	};
 
-namespace HOL
-{
+	inline std::array<std::string, InputHandleType::MAX> INPUT_PATHS = []
+	{
+		std::array<std::string, HOL::InputHandleType::MAX> arr;
+
+		using namespace HOL::SteamVR::Input;
+
+		arr[a_touch] = A.touch();
+		arr[a_click] = A.click();
+		arr[b_touch] = B.touch();
+		arr[b_click] = B.click();
+		arr[trigger_value] = Trigger.value();
+		arr[trigger_touch] = Trigger.touch();
+		arr[trigger_click] = Trigger.click();
+		arr[grip_value] = Grip.value();
+		arr[grip_force] = Grip.force();
+		arr[grip_touch] = Grip.touch();
+		arr[system_click] = System.click();
+		arr[finger_index] = Finger.index();
+		arr[finger_middle] = Finger.middle();
+		arr[finger_ring] = Finger.ring();
+		arr[finger_pinky] = Finger.pinky();
+
+		return arr;
+	}();
+
+	inline std::unordered_map<std::string, InputHandleType> INPUT_TYPES = []
+	{
+		std::unordered_map<std::string, InputHandleType> map;
+
+		int index = 0;
+		for (auto& it : INPUT_PATHS)
+		{
+			map.insert(std::make_pair(it, (InputHandleType)index));
+			index++;
+		}
+
+		return map;
+	}();
+
 	//-----------------------------------------------------------------------------
 	// Purpose: Represents a single tracked device in the system.
 	// What this device actually is (controller, hmd) depends on the
 	// properties you set within the device (see implementation of Activate)
 	//-----------------------------------------------------------------------------
-	class EmulatedControllerDriver : public vr::ITrackedDeviceServerDriver, public HOL::GenericControllerInterface
+	class EmulatedControllerDriver : public vr::ITrackedDeviceServerDriver,
+									 public HOL::GenericControllerInterface
 	{
 	public:
 		EmulatedControllerDriver(vr::ETrackedControllerRole role);
@@ -62,6 +106,14 @@ namespace HOL
 
 		vr::DriverPose_t GetPose() override;
 
+		vr::VRInputComponentHandle_t createBooleanComponent(vr::PropertyContainerHandle_t container,
+															vr::IVRDriverInput* input,
+															InputHandleType type);
+
+		vr::VRInputComponentHandle_t createScalarComponent(vr::PropertyContainerHandle_t container,
+														   vr::IVRDriverInput* input,
+														   InputHandleType type);
+
 		void UpdatePose(HOL::HandTransformPacket* packet) override;
 		void UpdateInput(HOL::ControllerInputPacket* packet) override;
 		void UpdateBoolInput(const std::string& input, bool value) override;
@@ -73,7 +125,7 @@ namespace HOL
 		// ----- Functions we declare ourselves below -----
 
 		const std::string& MyGetSerialNumber();
-		
+
 		void MyRunFrame();
 		void MyProcessEvent(const vr::VREvent_t& vrevent);
 
@@ -102,5 +154,4 @@ namespace HOL
 		HOL::ControllerInputPacket mLastInputPacket;
 	};
 
-}
-
+} // namespace HOL

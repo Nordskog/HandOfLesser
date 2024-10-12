@@ -4,8 +4,7 @@
 #include "driverlog.h"
 #include "vrmath.h"
 #include "controller_common.h"
-
-
+#include <HandOfLesserCommon.h>
 
 // Let's create some variables for strings used in getting settings.
 // This is the section where all of the settings we want are stored. A section name can be anything,
@@ -23,6 +22,8 @@ static const char* my_controller_settings_key_serial_number = "controller_serial
 
 namespace HOL
 {
+	using namespace SteamVR;
+
 	EmulatedControllerDriver::EmulatedControllerDriver(vr::ETrackedControllerRole role)
 	{
 		// Set a member to keep track of whether we've activated yet or not
@@ -125,14 +126,13 @@ namespace HOL
 		// We need to get handles to them to update the inputs.
 
 		auto input = vr::VRDriverInput();
-		const auto abs = vr::VRScalarType_Absolute;
-		const auto norm = vr::VRScalarUnits_NormalizedOneSided;
 
 		// Let's set up our "A" button. We've defined it to have a touch and a click component.
-		input->CreateBooleanComponent(
-			container, "/input/a/touch", &mInputHandles[InputHandleType::a_touch]);
-		input->CreateBooleanComponent(
-			container, "/input/a/click", &mInputHandles[InputHandleType::a_click]);
+		createBooleanComponent(container, input, InputHandleType::a_touch);
+		createBooleanComponent(container, input, InputHandleType::a_click);
+
+		createBooleanComponent(container, input, InputHandleType::b_touch);
+		createBooleanComponent(container, input, InputHandleType::b_click);
 
 		// Let's set up our trigger. We've defined it to have a value and click component.
 
@@ -146,62 +146,36 @@ namespace HOL
 		// Trigger
 		///////////
 
-		input->CreateScalarComponent(container,
-									 "/input/trigger/value",
-									 &mInputHandles[InputHandleType::trigger_value],
-									 abs,
-									 norm);
-
-		input->CreateBooleanComponent(
-			container, "/input/trigger/touch", &mInputHandles[InputHandleType::trigger_touch]);
-
-		input->CreateBooleanComponent(
-			container, "/input/trigger/click", &mInputHandles[InputHandleType::trigger_click]);
+		createScalarComponent(container, input, InputHandleType::trigger_value);
+		createBooleanComponent(container, input, InputHandleType::trigger_touch);
+		createBooleanComponent(container, input, InputHandleType::trigger_click);
 
 		//////////
 		// Grip
 		//////////
 
-		input->CreateScalarComponent(
-			container, "/input/grip/value", &mInputHandles[InputHandleType::grip_value], abs, norm);
-
-		input->CreateScalarComponent(
-			container, "/input/grip/force", &mInputHandles[InputHandleType::grip_force], abs, norm);
-
-		input->CreateBooleanComponent(
-			container, "/input/grip/touch", &mInputHandles[InputHandleType::grip_touch]);
+		createScalarComponent(container, input, InputHandleType::grip_value);
+		createScalarComponent(container, input, InputHandleType::grip_force);
+		createBooleanComponent(container, input, InputHandleType::grip_touch);
 
 		//////////////////
 		// Finger curl
 		/////////////////
 
-		input->CreateScalarComponent(container,
-									 "/input/finger/index",
-									 &mInputHandles[InputHandleType::finger_index],
-									 abs,
-									 norm);
-		input->CreateScalarComponent(container,
-									 "/input/finger/middle",
-									 &mInputHandles[InputHandleType::finger_middle],
-									 abs,
-									 norm);
-		input->CreateScalarComponent(container,
-									 "/input/finger/ring",
-									 &mInputHandles[InputHandleType::finger_ring],
-									 abs,
-									 norm);
-		input->CreateScalarComponent(container,
-									 "/input/finger/pinky",
-									 &mInputHandles[InputHandleType::finger_pinky],
-									 abs,
-									 norm);
+		createScalarComponent(container, input, InputHandleType::finger_index);
+		createScalarComponent(container, input, InputHandleType::finger_middle);
+		createScalarComponent(container, input, InputHandleType::finger_ring);
+		createScalarComponent(container, input, InputHandleType::finger_pinky);
 
 		////////////////
 		// Buttons
 		////////////////
 
-		input->CreateBooleanComponent(
-			container, "/input/system/click", &mInputHandles[InputHandleType::system_click]);
+		createBooleanComponent(container, input, InputHandleType::system_click);
+
+		////////////////
+		// Skeleton
+		////////////////
 
 		const vr::EVRInputError err = input->CreateSkeletonComponent(
 			container, // container
@@ -217,7 +191,7 @@ namespace HOL
 			vr::VRSkeletalTracking_Full, // Inform the runtime about the capabilities of the device.
 			nullptr, // Used for calculating curl and splay values. If this is null then defaults
 					 // are used.
-			0, // How many bones there are in the gripLimitTransforms above.
+			0,		 // How many bones there are in the gripLimitTransforms above.
 			&mInputHandles[InputHandleType::skeleton] // Bind the component to a handle.
 		);
 
@@ -270,6 +244,28 @@ namespace HOL
 		return this->mLastPose;
 	}
 
+	vr::VRInputComponentHandle_t
+	EmulatedControllerDriver::createBooleanComponent(vr::PropertyContainerHandle_t container,
+													 vr::IVRDriverInput* input,
+													 InputHandleType type)
+	{
+		input->CreateBooleanComponent(container, INPUT_PATHS[type].c_str(), &mInputHandles[type]);
+		return mInputHandles[type];
+	}
+
+	vr::VRInputComponentHandle_t
+	EmulatedControllerDriver::createScalarComponent(vr::PropertyContainerHandle_t container,
+													vr::IVRDriverInput* input,
+													InputHandleType type)
+	{
+		input->CreateScalarComponent(container,
+									 INPUT_PATHS[type].c_str(),
+									 &mInputHandles[type],
+									 vr::VRScalarType_Absolute,
+									 vr::VRScalarUnits_NormalizedOneSided);
+		return mInputHandles[type];
+	}
+
 	void EmulatedControllerDriver::UpdatePose(HOL::HandTransformPacket* packet)
 	{
 		// packet data resides in receive buffer and will be replaced on next receive,
@@ -287,10 +283,25 @@ namespace HOL
 
 	void EmulatedControllerDriver::UpdateBoolInput(const std::string& input, bool value)
 	{
+		auto driverInput = vr::VRDriverInput();
+
+		auto inputType = INPUT_TYPES.find(input);
+		if (inputType != INPUT_TYPES.end())
+		{
+			driverInput->UpdateBooleanComponent(mInputHandles[inputType->second], value, 0);
+		}
 	}
 
 	void EmulatedControllerDriver::UpdateFloatInput(const std::string& input, float value)
 	{
+		auto driverInput = vr::VRDriverInput();
+
+		auto inputType = INPUT_TYPES.find(input);
+		if (inputType != INPUT_TYPES.end())
+		{
+			driverInput->UpdateScalarComponent(mInputHandles[inputType->second], value, 0);
+		}
+	}
 	}
 
 	void EmulatedControllerDriver::SubmitPose()
@@ -512,5 +523,4 @@ namespace HOL
 		frame_++;
 	}
 
-}
-
+} // namespace HOL

@@ -65,6 +65,10 @@ namespace HOL
 		}
 	}
 
+	void HookedController::UpdateSkeletal(HOL::SkeletalPacket* packet)
+	{
+	}
+
 	void HookedController::SubmitPose()
 	{
 		auto& config = HOL::HandOfLesser::Current->Config;

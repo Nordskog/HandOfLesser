@@ -7,9 +7,23 @@ namespace HOL::SteamVR
 {
 
 	// e.g. input/x then call touch() to get input/x/touch
-	SteamVR::InputWrapper::InputWrapper(std::string input)
+	SteamVR::InputWrapper::InputWrapper(std::string input, HandleType type)
 	{
-		this->mBaseInput = "/input/" + input;
+		switch (type)
+		{
+			case HandleType::input:
+				this->mBaseInput = "/input/" + input;
+				break;
+			case HandleType::output:
+				this->mBaseInput = "/output/" + input;
+				break;
+			case HandleType::skeleton:
+				this->mBaseInput = "/skeleton/" + input;
+				break;
+			case HandleType::pose:
+				this->mBaseInput = "/pose/" + input;
+				break;
+		}
 	}
 
 	std::string InputWrapper::touch() const

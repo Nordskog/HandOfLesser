@@ -9,3 +9,4 @@
 #include "src/controller/controller.h"
 #include "src/settings/settings.h"
 #include "src/json/types.h"
+#include "src/steamvr/input_wrapper.h"
