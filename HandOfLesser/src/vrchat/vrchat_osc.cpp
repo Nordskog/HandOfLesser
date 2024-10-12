@@ -319,7 +319,7 @@ namespace HOL::VRChat
 
 
 
-	float HOL::VRChat::VRChatOSC::encodePacked(float left, float right)
+	int HOL::VRChat::VRChatOSC::encodePacked(float left, float right)
 	{
 		// This was originally written with 0-1 values in mind, but now we're reusing
 		// the value from the non-packed OSC params, so scale from -1/1 to 0/1
@@ -342,11 +342,9 @@ namespace HOL::VRChat
 		// Adding the two together, we get two separate 0-15 values encoded in a single 0-255 value.
 		// Left will be in the same position for values 0 to 15, 16 to 31, and so on.
 		float packed = leftEncoded + rightEncoded;
-
-		// 0 to 255, but we need this to be in the range -1 to 1 for vrchat and the blendtrees.
-		// vrchat will ultimately transmit the float value as an 8-bit float, so there will only
-		// be 256 steps between -1 and 1
-		return ((packed / 255.f) * 2.f) - 1.f;
+		
+		// Just make damn sure it doesn't round down.
+		return round(packed); 
 	}
 
 	float HOL::VRChat::VRChatOSC::handleInterlacing(float newValue, float oldValue)
@@ -457,14 +455,12 @@ namespace HOL::VRChat
 				}
 
 				int index = getParameterIndex((FingerType)i, (FingerBendType)j);
-				float packed = encodePacked(leftBend, rightBend);
+				int packed = encodePacked(leftBend, rightBend);
 				this->mOscOutputPacked[index] = packed;
 
 				// 0-255 values in left hand slot, -1 to +1 values in right hand slot
 				// We're recreating the 0-255 values from the -1 to +1 for display purposes
-				HOL::display::FingerTracking[HandSide::LeftHand].packedBend[i].bend[j]
-					= std::roundf(((packed + 1.f) * 0.5f) * 255.f);
-				HOL::display::FingerTracking[HandSide::RightHand].packedBend[i].bend[j] = packed;
+				HOL::display::FingerTracking[HandSide::LeftHand].packedBend[i].bend[j] = packed;
 			}
 		}
 	}
@@ -592,7 +588,7 @@ namespace HOL::VRChat
 		for (int i = 0; i < SINGLE_HAND_JOINT_COUNT; i++)
 		{
 			packet.openMessage(VRChatOSC::OSC_PARAMETER_NAMES_PACKED[i].c_str(), 1)
-				.float32(this->mOscOutputPacked[i])
+				.int32(this->mOscOutputPacked[i])
 				.closeMessage();
 		}
 

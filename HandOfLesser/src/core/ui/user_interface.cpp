@@ -845,12 +845,6 @@ void UserInterface::buildVRChatOSCSettings()
 									 HOL::display::FingerTracking[HOL::LeftHand].packedBend,
 									 true,
 									 false);
-	ImGui::SameLine();
-	buildSingleFingerTrackingDisplay("packedBendBothHandsVrchat",
-									 HOL::RightHand,
-									 HOL::display::FingerTracking[HOL::RightHand].packedBend,
-									 false,
-									 false);
 
 	ImGui::EndChild();
 }

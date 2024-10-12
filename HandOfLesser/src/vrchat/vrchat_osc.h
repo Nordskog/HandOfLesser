@@ -45,7 +45,7 @@ namespace HOL::VRChat
 
 		void generateOscTestOutput();
 
-		float encodePacked(float left, float right);
+		int encodePacked(float left, float right);
 
 		float handleInterlacing(float newValue, float oldValue);
 

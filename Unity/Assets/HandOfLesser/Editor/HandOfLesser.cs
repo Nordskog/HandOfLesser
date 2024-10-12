@@ -311,7 +311,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                             // Curl
                             VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
                             newParam.name = HOL.Resources.getJointParameterName(side, finger, joint, propertyType);
-                            newParam.valueType = VRCExpressionParameters.ValueType.Float;
+                            newParam.valueType = VRCExpressionParameters.ValueType.Int;
                             newParam.defaultValue = 0;
                             // Only sync if not full, or syncFull true because we will be using full for network sync too
                             newParam.networkSynced = propertyType != PropertyType.OSC_Full || syncFull;
@@ -334,7 +334,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
                     // flipFlop for interlaced
                     VRCExpressionParameters.Parameter newParam = new VRCExpressionParameters.Parameter();
                     newParam.name = HOL.Resources.INTERLACE_BIT_OSC_PARAMETER_NAME;
-                    newParam.valueType = VRCExpressionParameters.ValueType.Int;
+                    newParam.valueType = VRCExpressionParameters.ValueType.Bool;
                     newParam.defaultValue = 0;
                     newParam.networkSynced = true;
 
