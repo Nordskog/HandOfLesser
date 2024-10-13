@@ -394,6 +394,39 @@ void HOL::UserInterface::buildVisual()
 	mVisualizer.drawVisualizer();
 }
 
+void HOL::UserInterface::buildMisc()
+{
+	const char* restoreDefaultsLabel = "restore defaults";
+	if (ImGui::Button(restoreDefaultsLabel))
+		ImGui::OpenPopup(restoreDefaultsLabel);
+
+	// Always center this window when appearing
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+	if (ImGui::BeginPopupModal(restoreDefaultsLabel, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Restore all settings to default?");
+		ImGui::Separator();
+
+		if (ImGui::Button("OK##restoreDefaults", ImVec2(140, 0)))
+		{
+			Config = HOL::settings::HandOfLesserSettings();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel##restoreDefaults", ImVec2(140, 0)))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+
+}
+
 
 void HOL::UserInterface::buildSkeletal()
 {
@@ -899,36 +932,7 @@ void UserInterface::buildInterface()
 
 		if (ImGui::BeginTabItem("Misc"))
 		{
-			const char* restoreDefaultsLabel = "restore defaults";
-			if (ImGui::Button(restoreDefaultsLabel))
-				ImGui::OpenPopup(restoreDefaultsLabel);
-
-			// Always center this window when appearing
-			ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-			ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-			if (ImGui::BeginPopupModal(
-					restoreDefaultsLabel, NULL, ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				ImGui::Text("Restore all settings to default?");
-				ImGui::Separator();
-
-				if (ImGui::Button("OK##restoreDefaults", ImVec2(140, 0)))
-				{
-					Config = HOL::settings::HandOfLesserSettings();
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::SetItemDefaultFocus();
-				ImGui::SameLine();
-				if (ImGui::Button("Cancel##restoreDefaults", ImVec2(140, 0)))
-				{
-					ImGui::CloseCurrentPopup();
-				}
-
-
-				ImGui::EndPopup();
-			}
-
+			buildMisc();
 			ImGui::EndTabItem();
 		}
 

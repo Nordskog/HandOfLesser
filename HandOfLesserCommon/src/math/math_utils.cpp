@@ -11,9 +11,9 @@ namespace HOL
 
 	Eigen::Quaternionf quaternionFromEulerAngles(float x, float y, float z)
 	{
-		return Eigen::Quaternionf(Eigen::AngleAxisf(z, Eigen::Vector3f::UnitZ())
+		return Eigen::Quaternionf(Eigen::AngleAxisf(x, Eigen::Vector3f::UnitX())
 								  * Eigen::AngleAxisf(y, Eigen::Vector3f::UnitY())
-								  * Eigen::AngleAxisf(x, Eigen::Vector3f::UnitX()));
+								  * Eigen::AngleAxisf(z, Eigen::Vector3f::UnitZ()));
 	}
 
 	Eigen::Quaternionf quaternionFromEulerAnglesDegrees(float x, float y, float z)
@@ -25,6 +25,12 @@ namespace HOL
 	Eigen::Quaternionf quaternionFromEulerAnglesDegrees(Eigen::Vector3f degrees)
 	{
 		return quaternionFromEulerAnglesDegrees(degrees.x(), degrees.y(), degrees.z());
+	}
+
+	Eigen::Vector3f quaternionToEulerAngles(const Eigen::Quaternionf& q)
+	{
+		Eigen::Matrix3f rotationMatrix = q.toRotationMatrix();
+		return rotationMatrix.eulerAngles(0, 1, 2); // XYZ
 	}
 
 	float degreesToRadians(float degrees)

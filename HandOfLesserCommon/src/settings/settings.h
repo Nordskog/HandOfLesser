@@ -116,7 +116,6 @@ namespace HOL
 
 		struct HandPoseSettings
 		{
-			HOL::ControllerMode controllerMode = HOL::ControllerMode::HookedControllerMode;
 			HOL::ControllerType controllerType = HOL::ControllerType::OculusTouch_VDXR;
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(0, 0, 0);
 			Eigen::Vector3f positionOffset = Eigen::Vector3f(0, 0, 0);
@@ -165,8 +164,8 @@ namespace HOL
 		{
 			float jointLengthMultiplier = 1.05f;
 			bool sendSkeletalInput = true;
-			Eigen::Vector3f positionOffset = Eigen::Vector3f(-0.168, -0.041, 0.049);
-			Eigen::Vector3f orientationOffset = Eigen::Vector3f(5.000, 183.000, 43.000);
+			Eigen::Vector3f positionOffset = Eigen::Vector3f(-0.168f, -0.041f, 0.049f);
+			Eigen::Vector3f orientationOffset = Eigen::Vector3f(174.300f, 1.221f, 136.930f);
 		};
 
 		struct HandOfLesserSettings

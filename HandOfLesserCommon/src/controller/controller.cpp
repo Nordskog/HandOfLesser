@@ -10,15 +10,18 @@ namespace HOL
 			}
 
 			case ControllerType::ValveIndexKnucles: {
-				return {Eigen::Vector3f(0.076, -0.043, -0.107), Eigen::Vector3f(39.5f, 1, -91)};
+				return {Eigen::Vector3f(0.076, -0.043, -0.107),
+						Eigen::Vector3f(0.176f, -39.510f, -91.296f)};
 			}
 
 			case ControllerType::OculusTouch_Airlink: {
-				return {Eigen::Vector3f(0.076, -0.043, -0.107), Eigen::Vector3f(39.5f, 1, -91)};
+				return {Eigen::Vector3f(0.076, -0.043, -0.107),
+						Eigen::Vector3f(0.176f, -39.510f, -91.296f)};
 			}
 
 			case ControllerType::OculusTouch_VDXR: {
-				return {Eigen::Vector3f(0.076, -0.043, -0.107), Eigen::Vector3f(39.5f, 1, -91)};
+				return {Eigen::Vector3f(0.076, -0.043, -0.107),
+						Eigen::Vector3f(0.176f, -39.510f, -91.296f)};
 			}
 		}
 	}
@@ -29,7 +32,7 @@ namespace HOL
 		{
 			case ControllerOffsetPreset::RoughyVRChatHand: {
 				return {Eigen::Vector3f(-0.019, -0.022, 0.003),
-						Eigen::Vector3f(-10.000, 5.000, 0.000)};
+						Eigen::Vector3f(169.963f, 175.076f, -179.130f)};
 			}
 
 			case ControllerOffsetPreset::ZERO: {

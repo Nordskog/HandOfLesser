@@ -64,5 +64,6 @@ namespace HOL
 		void buildVRChatOSCSettings();
 		void buildInput();
 		void buildVisual();
+		void buildMisc();
 	};
 } // namespace HOL

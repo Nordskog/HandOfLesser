@@ -10,6 +10,7 @@ namespace HOL
 	Eigen::Quaternionf quaternionFromEulerAnglesDegrees(Eigen::Vector3f degrees);
 	Eigen::Quaternionf quaternionFromEulerAnglesDegrees(float x, float y, float z);
 	Eigen::Quaternionf quaternionFromEulerAngles(float x, float y, float z);
+	Eigen::Vector3f quaternionToEulerAngles(const Eigen::Quaternionf& q);
 	float degreesToRadians(float degrees);
 	float radiansToDegrees(float radians);
 	float angleBetweenVectors(const Eigen::Vector3f& first, const Eigen::Vector3f& second);
