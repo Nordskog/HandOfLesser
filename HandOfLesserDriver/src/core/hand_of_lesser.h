@@ -29,6 +29,7 @@ namespace HOL
 		static HOL::settings::HandOfLesserSettings Config;
 
 		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
+		bool isEmulatedController(vr::ITrackedDeviceServerDriver* driver);
 		HookedController* getHookedController(HOL::HandSide side);
 		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
 		HookedController* getHookedControllerBySerial(std::string serial);

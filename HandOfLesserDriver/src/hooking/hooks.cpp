@@ -14,6 +14,14 @@ namespace HOL::hooks
 			DriverLog("TrackedDeviceActivate!");
 			DriverLog("Device ID: %lld", (long long)unWhichDevice);
 
+			if (HandOfLesser::Current->isEmulatedController(_this))
+			{
+				// Do not hook our own controllers. In theory we never evne add the hook to our own driver
+				// so this should never be called, but just in case.
+				DriverLog("Activate hooked on emulated controller, this probably shouldn't happen but skipping anyway.");
+				return TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
+			}
+
 			// Get the role
 			auto props = vr::VRProperties();
 			vr::PropertyContainerHandle_t container
@@ -118,28 +126,36 @@ namespace HOL::hooks
 		{
 			DriverLog("TrackedDeviceAdded006!");
 
-			if (!IHook::Exists(TrackedDeviceActivate::FunctionHook.name))
+			if (HandOfLesser::Current->isEmulatedController(pDriver))
 			{
-				DriverLog("Adding activate hook");
-
-				TrackedDeviceActivate::FunctionHook.CreateHookInObjectVTable(
-					pDriver, 0, &TrackedDeviceActivate::Detour);
-				IHook::Register(&TrackedDeviceActivate::FunctionHook);
-			}
-
-			if (eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
-			{
-				DriverLog("Controller added!");
-
-				// TODO: We only have access to the driverHost here, but don't know the ID
-				// or the role of the controller yet. Activate() should be called
-				// immediately afterwards, so the only concern is when devices are
-				// deactivated and re-activated again. Think about that later.
-				HOL::hooks::mLastDeviceDriverHost = _this;
+				// Do not hook our own controllers
+				DriverLog("Emulated controller, skipping TrackedDeviceAdded hook.");
 			}
 			else
 			{
-				DriverLog("Some other device added, class: %d", eDeviceClass);
+				if (!IHook::Exists(TrackedDeviceActivate::FunctionHook.name))
+				{
+					DriverLog("Adding activate hook");
+
+					TrackedDeviceActivate::FunctionHook.CreateHookInObjectVTable(
+						pDriver, 0, &TrackedDeviceActivate::Detour);
+					IHook::Register(&TrackedDeviceActivate::FunctionHook);
+				}
+
+				if (eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
+				{
+					DriverLog("Controller added!");
+
+					// TODO: We only have access to the driverHost here, but don't know the ID
+					// or the role of the controller yet. Activate() should be called
+					// immediately afterwards, so the only concern is when devices are
+					// deactivated and re-activated again. Think about that later.
+					HOL::hooks::mLastDeviceDriverHost = _this;
+				}
+				else
+				{
+					DriverLog("Some other device added, class: %d", eDeviceClass);
+				}
 			}
 
 			return TrackedDeviceAdded006::FunctionHook.originalFunc(

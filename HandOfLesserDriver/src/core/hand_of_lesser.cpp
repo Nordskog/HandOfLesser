@@ -240,6 +240,20 @@ namespace HOL
 		return this->mEmulatedControllers[(int)side].get();
 	}
 
+	bool HandOfLesser::isEmulatedController(vr::ITrackedDeviceServerDriver* driver)
+	{
+		for (auto& controllerContainer : mEmulatedControllers)
+		{
+			EmulatedControllerDriver* controller = controllerContainer.get();
+			if (controller == driver)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	// Only works if a side has been assigned
 	// usually is, just not right after being activated.
 	HookedController* HandOfLesser::getHookedController(HOL::HandSide side)
