@@ -62,7 +62,11 @@ namespace HOL
 				case HOL::NativePacketType::Settings: {
 					HOL::SettingsPacket* packet = (HOL::SettingsPacket*)rawPacket;
 
+					HOL::settings::HandOfLesserSettings oldSettings = Config;
 					HandOfLesser::Config = packet->config;
+
+					// Handle any configuration changes
+					handleConfigurationChange(oldSettings);
 
 					break;
 				}
@@ -108,40 +112,81 @@ namespace HOL
 		}
 	}
 
-	void HandOfLesser::addControllers()
+	void HandOfLesser::handleConfigurationChange(HOL::settings::HandOfLesserSettings& oldConfig)
 	{
-		// Let's add our controllers to the system.
-		// First, we need to actually instantiate our controller devices.
-		// We made the constructor take in a controller role, so let's pass their respective roles
-		// in.
-		this->mEmulatedControllers[HOL::HandSide::LeftHand]
-			= std::make_unique<EmulatedControllerDriver>(vr::TrackedControllerRole_LeftHand);
-		this->mEmulatedControllers[HOL::HandSide::RightHand]
-			= std::make_unique<EmulatedControllerDriver>(vr::TrackedControllerRole_RightHand);
-
-		// Now we need to tell vrserver about our controllers.
-		// The first argument is the serial number of the device, which must be unique across all
-		// devices. We get it from our driver settings when we instantiate, And can pass it out of
-		// the function with MyGetSerialNumber(). Let's add the left hand controller first (there
-		// isn't a specific order). make sure we actually managed to create the device.
-		// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
-		// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
-
-		// Make sure we actually managed to create the device.
-		// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
-
-		for (int i = 0; i < HOL::HandSide_MAX; i++)
+		// Add or remove ( or enable/disable ) emulated controllers on controller mode change
+		if (Config.handPose.controllerMode != oldConfig.handPose.controllerMode)
 		{
-			EmulatedControllerDriver* controller = this->mEmulatedControllers[i].get();
-
-			if (!vr::VRServerDriverHost()->TrackedDeviceAdded(
-					controller->MyGetSerialNumber().c_str(),
-					vr::TrackedDeviceClass_Controller,
-					controller))
+			if (Config.handPose.controllerMode == ControllerMode::EmulateControllerMode)
 			{
-				DriverLog("Failed to create %s controller device!", (i == 0 ? "left" : "right"));
+				addEmulatedControllers();
+			}
+			else if (oldConfig.handPose.controllerMode == ControllerMode::EmulateControllerMode)
+			{
+				removeEmulatedControllers();
 			}
 		}
+	}
+
+	void HandOfLesser::addEmulatedControllers()
+	{
+		if (this->mEmulatedControllers[HOL::HandSide::LeftHand])
+		{
+			// We only add controllers once, and then enable/disable them.
+			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(true);
+			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(true);
+
+		}
+		else
+		{
+			// Let's add our controllers to the system.
+			// First, we need to actually instantiate our controller devices.
+			// We made the constructor take in a controller role, so let's pass their respective
+			// roles in.
+			this->mEmulatedControllers[HOL::HandSide::LeftHand]
+				= std::make_unique<EmulatedControllerDriver>(vr::TrackedControllerRole_LeftHand);
+			this->mEmulatedControllers[HOL::HandSide::RightHand]
+				= std::make_unique<EmulatedControllerDriver>(vr::TrackedControllerRole_RightHand);
+
+			// Now we need to tell vrserver about our controllers.
+			// The first argument is the serial number of the device, which must be unique across
+			// all devices. We get it from our driver settings when we instantiate, And can pass it
+			// out of the function with MyGetSerialNumber(). Let's add the left hand controller
+			// first (there isn't a specific order). make sure we actually managed to create the
+			// device. TrackedDeviceAdded returning true means we have had our device added to
+			// SteamVR. TrackedDeviceAdded returning true means we have had our device added to
+			// SteamVR.
+
+			// Make sure we actually managed to create the device.
+			// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
+
+			for (int i = 0; i < HOL::HandSide_MAX; i++)
+			{
+				EmulatedControllerDriver* controller = this->mEmulatedControllers[i].get();
+
+				if (!vr::VRServerDriverHost()->TrackedDeviceAdded(
+						controller->MyGetSerialNumber().c_str(),
+						vr::TrackedDeviceClass_Controller,
+						controller))
+				{
+					DriverLog("Failed to create %s controller device!",
+							  (i == 0 ? "left" : "right"));
+				}
+			}
+		}
+	}
+
+	
+	void HandOfLesser::removeEmulatedControllers()
+	{
+		// If no pointer, then we never even added the controllers.
+		if (this->mEmulatedControllers[HOL::HandSide::LeftHand])
+		{
+			// We only add controllers once, and then enable/disable them.
+			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(false);
+			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(false);
+		}
+
 	}
 
 	HookedController*

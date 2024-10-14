@@ -245,6 +245,28 @@ namespace HOL
 		return this->mLastPose;
 	}
 
+	void EmulatedControllerDriver::setConnectedState(bool connected)
+	{
+		if (connected)
+		{
+			// We don't send any updates when disconnected.
+			mDeviceConnected = true;
+		}
+		else
+		{
+			// Disconnect a controller by sending a single update
+			// saying we're disconnected, and preventing 
+			// any updates from being sent.
+			mDeviceConnected = false;
+
+			vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
+				my_controller_index_,
+				ControllerCommon::generateDisconnectedPose(),
+				sizeof(vr::DriverPose_t));
+		}
+
+	}
+
 	vr::VRInputComponentHandle_t
 	EmulatedControllerDriver::createBooleanComponent(vr::PropertyContainerHandle_t container,
 													 vr::IVRDriverInput* input,
@@ -284,6 +306,9 @@ namespace HOL
 
 	void EmulatedControllerDriver::UpdateBoolInput(const std::string& input, bool value)
 	{
+		if (!mDeviceConnected)
+			return;
+
 		auto driverInput = vr::VRDriverInput();
 
 		auto inputType = INPUT_TYPES.find(input);
@@ -295,6 +320,9 @@ namespace HOL
 
 	void EmulatedControllerDriver::UpdateFloatInput(const std::string& input, float value)
 	{
+		if (!mDeviceConnected)
+			return;
+
 		auto driverInput = vr::VRDriverInput();
 
 		auto inputType = INPUT_TYPES.find(input);
@@ -306,6 +334,9 @@ namespace HOL
 
 	void EmulatedControllerDriver::UpdateSkeletal(HOL::SkeletalPacket* packet)
 	{
+		if (!mDeviceConnected)
+			return;
+		
 		// Data submitted to driver should all be in local space, -Z forward.
 		// We handle the weird FBX compatibility garbage here
 
@@ -423,7 +454,7 @@ namespace HOL
 
 	void EmulatedControllerDriver::SubmitPose()
 	{
-		if (this->is_active_)
+		if (this->is_active_ && mDeviceConnected)
 		{
 			// UpdateSkeleton(); // TODO: this sends dummy data, needs actual implementation
 			// Inform the vrserver that our tracked device's pose has updated, giving it the pose
@@ -462,6 +493,9 @@ namespace HOL
 	//-----------------------------------------------------------------------------
 	void EmulatedControllerDriver::MyRunFrame()
 	{
+		if (!mDeviceConnected)
+			return;
+
 		auto input = vr::VRDriverInput();
 		// DriverLog("run frame");
 		/*

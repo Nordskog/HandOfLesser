@@ -14,17 +14,7 @@ vr::EVRInitError MyDeviceProvider::Init(vr::IVRDriverContext* pDriverContext)
 	// OpenVR provides a macro to do this for us.
 	VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
 
-	// Here we would add controllers, if we were defaulting to that
-	// For now we'll be defaulting to hooking existing controllers instead. 
-	// Lots of TODOs
 	this->mHandOfLesser.init();
-
-	// Should wait for some kind of config init sync from the app first,
-	// But it's all hardcoded for now.
-	if (this->mHandOfLesser.shouldEmulateControllers())
-	{
-		this->mHandOfLesser.addControllers();
-	}
 
 	HOL::hooks::InjectHooks(pDriverContext);
 

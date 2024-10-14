@@ -116,6 +116,10 @@ namespace HOL
 
 		struct HandPoseSettings
 		{
+			// NoControllerMode should always be the default so the driver does nothing 
+			// until the app connects.
+			HOL::ControllerMode controllerMode = HOL::ControllerMode::NoControllerMode;
+
 			HOL::ControllerType controllerType = HOL::ControllerType::OculusTouch_VDXR;
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(0, 0, 0);
 			Eigen::Vector3f positionOffset = Eigen::Vector3f(0, 0, 0);

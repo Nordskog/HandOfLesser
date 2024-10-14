@@ -13,7 +13,8 @@ namespace HOL
 		void init();
 		void cleanup();
 		void runFrame();
-		void addControllers();
+		void addEmulatedControllers();
+		void removeEmulatedControllers();
 		HookedController* addHookedController(uint32_t id,
 								 vr::IVRServerDriverHost* host,
 								 vr::ITrackedDeviceServerDriver* driver,
@@ -51,6 +52,8 @@ namespace HOL
 
 
 		bool mEstimateControllerSideWhenPositionValid = false;
+
+		void handleConfigurationChange(HOL::settings::HandOfLesserSettings& newConfig);
 
 		std::thread my_pose_update_thread_;
 		HOL::NativeTransport mTransport;

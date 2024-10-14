@@ -104,6 +104,8 @@ namespace HOL
 
 		vr::DriverPose_t GetPose() override;
 
+		void setConnectedState(bool connected);
+
 		vr::VRInputComponentHandle_t createBooleanComponent(vr::PropertyContainerHandle_t container,
 															vr::IVRDriverInput* input,
 															InputHandleType type);
@@ -146,6 +148,7 @@ namespace HOL
 		std::array<vr::VRInputComponentHandle_t, InputHandleType::MAX> mInputHandles;
 
 		std::atomic<bool> is_active_ = false;
+		std::atomic<bool> mDeviceConnected = true;	
 
 		vr::VRBoneTransform_t mSkeletalPose[eBone_Count];
 

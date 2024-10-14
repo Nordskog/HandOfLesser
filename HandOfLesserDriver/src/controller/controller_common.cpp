@@ -83,6 +83,17 @@ namespace HOL::ControllerCommon
 		return pose;
 	}
 
+	vr::DriverPose_t generateDisconnectedPose()
+	{
+		// Tells SteamVR that the controller is disconnected
+		vr::DriverPose_t pose = {0};
+
+		pose.deviceIsConnected = false;
+		pose.poseIsValid = false;
+
+		return pose;
+	}
+
 	vr::DriverPose_t addJitter(const vr::DriverPose_t& existingPose)
 	{
 		// VRChat is stupid and ignores all status values passed to it by SteamVR
