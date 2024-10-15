@@ -343,7 +343,7 @@ namespace HOL::hooks
 						if (controllerMode == ControllerMode::HookedControllerMode
 							|| controllerMode == ControllerMode::OffsetControllerMode)
 						{
-							if (config.input.blockControllerInputWhileHandTracking)
+							if (config.steamvr.blockControllerInputWhileHandTracking)
 							{
 								// DriverLog("Blocked!");
 								return vr::EVRInputError::VRInputError_None;
@@ -396,7 +396,7 @@ namespace HOL::hooks
 					if (controllerMode == ControllerMode::HookedControllerMode
 						|| controllerMode == ControllerMode::OffsetControllerMode)
 					{
-						if (config.input.blockControllerInputWhileHandTracking)
+						if (config.steamvr.blockControllerInputWhileHandTracking)
 						{
 							//DriverLog("Blocked!");
 							return vr::EVRInputError::VRInputError_None;

@@ -195,27 +195,31 @@ void HOL::HandOfLesserCore::sendOscData()
 
 void HandOfLesserCore::sendUpdate()
 {
-	for (int i = 0; i < HandSide_MAX; i++)
+
+	if (Config.steamvr.sendSteamVRControllerPosition)
 	{
-		HandPose hand = this->mHandTracking.getHandPose((HandSide)i);
-
-		// No point in sending any new data if the data is the same as last time.
-		if (!hand.poseStale)
+		for (int i = 0; i < HandSide_MAX; i++)
 		{
-			HOL::HandTransformPacket transPacket
-				= this->mHandTracking.getTransformPacket((HandSide)i);
-			this->mTransport.send(9006, (char*)&transPacket, sizeof(HOL::HandTransformPacket));
+			HandPose hand = this->mHandTracking.getHandPose((HandSide)i);
 
-			/*
-			HOL::ControllerInputPacket inputPacket
-				= this->mHandTracking.getInputPacket((HandSide)i);
-			this->mTransport.send(9006, (char*)&inputPacket, sizeof(HOL::ControllerInputPacket));
-			*/
+			// No point in sending any new data if the data is the same as last time.
+			if (!hand.poseStale)
+			{
+				HOL::HandTransformPacket transPacket
+					= this->mHandTracking.getTransformPacket((HandSide)i);
+				this->mTransport.send(9006, (char*)&transPacket, sizeof(HOL::HandTransformPacket));
+
+				/*
+				HOL::ControllerInputPacket inputPacket
+					= this->mHandTracking.getInputPacket((HandSide)i);
+				this->mTransport.send(9006, (char*)&inputPacket,
+				sizeof(HOL::ControllerInputPacket));
+				*/
+			}
 		}
 	}
 
-
-	if (Config.input.sendSteamVRInput)
+	if (Config.steamvr.sendSteamVRInput)
 	{
 		// SteamVR inputs are submitted to a global
 		for (auto& packet : SteamVR::SteamVRInput::Current->floatInputs)

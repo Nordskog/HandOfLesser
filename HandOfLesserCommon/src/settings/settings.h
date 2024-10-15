@@ -107,16 +107,14 @@ namespace HOL
 		{
 			int motionPredictionMS = 15; // ms
 			int updateIntervalMS = 1;
-			float steamPoseTimeOffset = .0f;
 			float linearVelocityMultiplier = 0.f;
 			float angularVelocityMultiplier = 0.f;
 			bool forceInactive = false;
-			bool jitterLastPoseOnTrackingLoss = true;
 		};
 
 		struct HandPoseSettings
 		{
-			// NoControllerMode should always be the default so the driver does nothing 
+			// NoControllerMode should always be the default so the driver does nothing
 			// until the app connects.
 			HOL::ControllerMode controllerMode = HOL::ControllerMode::NoControllerMode;
 
@@ -130,7 +128,7 @@ namespace HOL
 			bool sendFull = false;
 			bool sendAlternating = false;
 			bool sendPacked = true;
-			
+
 			bool interlacePacked = true;
 
 			// Should always be 100 except for testing
@@ -141,7 +139,7 @@ namespace HOL
 			// Values we can adjust to send curl/spray to vrchat
 			// without having to be in VR
 			bool sendDebugOsc = false;
-			bool alternateCurlTest = false;	// flip between -1 and 1 every 100ms
+			bool alternateCurlTest = false; // flip between -1 and 1 every 100ms
 			float curlDebug = 0;
 			float splayDebug = 0;
 		};
@@ -154,14 +152,13 @@ namespace HOL
 
 		struct DebugSettings
 		{
-	
+			Eigen::Vector3f rotationFix = Eigen::Vector3f(0, 0, 0);
+			Eigen::Vector3f rotationOut = Eigen::Vector3f(0, 0, 0);
 		};
 
 		struct InputSettings
 		{
 			bool sendOscInput = true;
-			bool sendSteamVRInput = true;
-			bool blockControllerInputWhileHandTracking = true;
 		};
 
 		struct SkeletalInput
@@ -172,6 +169,16 @@ namespace HOL
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(174.300f, 1.221f, 136.930f);
 		};
 
+		struct SteamVRSettings
+		{
+			bool sendSteamVRControllerPosition = true;
+			bool sendSteamVRInput = true;
+			bool blockControllerInputWhileHandTracking = true;
+			float steamPoseTimeOffset = .0f;
+			bool forceInactive = false;
+			bool jitterLastPoseOnTrackingLoss = true;
+		};
+
 		struct HandOfLesserSettings
 		{
 			GeneralSettings general;
@@ -180,9 +187,10 @@ namespace HOL
 			HandPoseSettings handPose;
 			VRChatSettings vrchat;
 			DebugSettings debug;
+			SteamVRSettings steamvr;
 			VisualizerSettings visualizer;
 			InputSettings input;
 			SkeletalInput skeletal;
 		};
-	}
-} // namespace HOL::settings
+	} // namespace settings
+} // namespace HOL

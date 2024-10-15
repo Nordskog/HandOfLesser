@@ -81,7 +81,7 @@ namespace HOL
 			// If we are submitting a stale pose to lock it in place, we must jitter it
 			// because vrchat is stupid and ignores all the status information steamvr provides.
 			const auto& pose
-				= (this->mLastTransformPacket.valid || !config.general.jitterLastPoseOnTrackingLoss)
+				= (this->mLastTransformPacket.valid || !config.steamvr.jitterLastPoseOnTrackingLoss)
 								   ? this->mLastPose
 								   : HOL::ControllerCommon::addJitter(this->mLastPose);
 
@@ -92,7 +92,7 @@ namespace HOL
 		{
 			// If we have gonte 5 frames without a pose update when offsetting, we should also
 			// jitter the pose so vrchat doesn't disable our arms for several seconds.
-			if (config.general.jitterLastPoseOnTrackingLoss && this->framesSinceLastPoseUpdate > 5)
+			if (config.steamvr.jitterLastPoseOnTrackingLoss && this->framesSinceLastPoseUpdate > 5)
 			{
 				const auto& pose = HOL::ControllerCommon::addJitter(this->lastOriginalPose);
 

@@ -14,49 +14,44 @@ namespace HOL
 	{
 
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(FingerBendSettings,
-									   commonCurlCenter,
-									   thumbCurlCenter,
-									   fingerSplayCenter,
-									   commonCurlRange,
-									   thumbCurlRange,
-									   fingersplayRange,
-									   ThumbAxisOffset);
+										   commonCurlCenter,
+										   thumbCurlCenter,
+										   fingerSplayCenter,
+										   commonCurlRange,
+										   thumbCurlRange,
+										   fingersplayRange,
+										   ThumbAxisOffset);
 
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SkeletalBendSettings,
-									   commonCurlCenter,
-									   thumbCurlCenter,
-									   fingerSplayCenter,
-									   commonCurlRange,
-									   thumbCurlRange,
-									   fingersplayRange);
+										   commonCurlCenter,
+										   thumbCurlCenter,
+										   fingerSplayCenter,
+										   commonCurlRange,
+										   thumbCurlRange,
+										   fingersplayRange);
 
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GeneralSettings,
-									   motionPredictionMS,
-									   updateIntervalMS,
-									   steamPoseTimeOffset,
-									   linearVelocityMultiplier,
-									   angularVelocityMultiplier,
-									   forceInactive,
-									   jitterLastPoseOnTrackingLoss);
+										   motionPredictionMS,
+										   updateIntervalMS,
+										   linearVelocityMultiplier,
+										   angularVelocityMultiplier,
+										   forceInactive);
 
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HandPoseSettings,
-									   controllerMode,
-									   controllerType,
-									   orientationOffset,
-									   positionOffset);
+										   controllerMode,
+										   controllerType,
+										   orientationOffset,
+										   positionOffset);
 
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(VRChatSettings,
-									   sendFull,
-									   sendAlternating,
-									   sendPacked,
-									   interlacePacked,
-									   packedUpdateInterval,
-									   useUnityHumanoidSplay);
+										   sendFull,
+										   sendAlternating,
+										   sendPacked,
+										   interlacePacked,
+										   packedUpdateInterval,
+										   useUnityHumanoidSplay);
 
-		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(InputSettings,
-									   sendOscInput,
-									   sendSteamVRInput,
-									   blockControllerInputWhileHandTracking);
+		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(InputSettings, sendOscInput);
 
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SkeletalInput,
 										   jointLengthMultiplier,
@@ -64,14 +59,22 @@ namespace HOL
 										   positionOffset,
 										   orientationOffset);
 
+		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SteamVRSettings,
+										   sendSteamVRControllerPosition,
+										   sendSteamVRInput,
+										   blockControllerInputWhileHandTracking,
+										   steamPoseTimeOffset,
+										   forceInactive,
+										   jitterLastPoseOnTrackingLoss);
+
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(HandOfLesserSettings,
 										   general,
 										   fingerBend,
 										   skeletalBend,
 										   handPose,
 										   vrchat,
-										   input);
-	}
+										   input,
+										   steamvr);
+	} // namespace settings
 
-
-} // namespace HOL::settings
+} // namespace HOL

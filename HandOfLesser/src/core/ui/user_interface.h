@@ -60,7 +60,7 @@ namespace HOL
 		void buildSingleHandTransformDisplay(HOL::HandSide side);
 
 		void buildMain();
-		void buildSkeletal();
+		void buildSteamVR();
 		void buildVRChatOSCSettings();
 		void buildInput();
 		void buildVisual();

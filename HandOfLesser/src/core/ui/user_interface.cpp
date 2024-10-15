@@ -428,8 +428,10 @@ void HOL::UserInterface::buildMisc()
 }
 
 
-void HOL::UserInterface::buildSkeletal()
+void HOL::UserInterface::buildSteamVR()
 {
+	bool syncSettings = false;
+
 	ImGui::BeginChild(
 		"LeftSkeletalWindow", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
 
@@ -437,9 +439,28 @@ void HOL::UserInterface::buildSkeletal()
 	// General
 	/////////////////
 
-	ImGui::SeparatorText("Skeletal Input");
+	ImGui::SeparatorText("Transmission");
+
+	ImGui::Checkbox("Transmit Controller position", &Config.steamvr.sendSteamVRControllerPosition);
 
 	ImGui::Checkbox("Transmit skeletal input", &Config.skeletal.sendSkeletalInput);
+
+	ImGui::Checkbox("Transmit SteamVR Input", &Config.steamvr.sendSteamVRInput);
+
+	ImGui::SeparatorText("Input");
+
+	syncSettings |= ImGui::Checkbox("Block Controller Input while handtracking",
+									&Config.steamvr.blockControllerInputWhileHandTracking);
+
+	ImGui::SeparatorText("General");
+
+	syncSettings |= ImGui::InputFloat("Steam Pose offset (s)", &Config.steamvr.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f");
+
+	/////////////////
+	// Skeletal 
+	/////////////////
+
+	ImGui::SeparatorText("Skeletal Input");
 
 	ImGui::SameLine();
 	if (rightAlignButton("Reset##Skeletal"))
@@ -449,20 +470,15 @@ void HOL::UserInterface::buildSkeletal()
 
 	bool lengthChanged = false;
 
-	lengthChanged |= ImGui::InputFloat(
+	syncSettings |= ImGui::InputFloat(
 		"Length multiplier",
 					&Config.skeletal.jointLengthMultiplier,
 					0.01f,
 					0.1f,
 					"%.3f");
 
-	if (lengthChanged)
-	{
-		HOL::HandOfLesserCore::Current->syncSettings();
-	}
-
 	/////////////////
-	// Offset inputs
+	// Skeletal Offset
 	/////////////////
 
 	ImGui::BeginChild("SkeletalTranslationInput",
@@ -490,6 +506,11 @@ void HOL::UserInterface::buildSkeletal()
 
 	ImGui::EndChild();
 	ImGui::EndChild();
+
+	if (syncSettings)
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
 }
 
 
@@ -555,29 +576,8 @@ void HOL::UserInterface::buildMain()
 		}
 	}
 
-	ImGui::InputFloat("Linear Velocity multiplier",
-					  &Config.general.linearVelocityMultiplier,
-					  0.05f,
-					  0.1f,
-					  "%.3f");
-	ImGui::InputFloat("Angular Velocity multiplier",
-					  &Config.general.angularVelocityMultiplier,
-					  0.05f,
-					  0.1f,
-					  "%.3f");
-
-	if (ImGui::InputFloat(
-			"Steam Pose offset (s)", &Config.general.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f"))
-	{
-		HOL::HandOfLesserCore::Current->syncSettings();
-	}
-
 	ImGui::Checkbox("Force inactive", &Config.general.forceInactive);
 	ImGui::SameLine();
-	if (ImGui::Checkbox("Jitter on tracking loss", &Config.general.jitterLastPoseOnTrackingLoss))
-	{
-		HOL::HandOfLesserCore::Current->syncSettings();
-	}
 
 	ImGui::SameLine();
 	if (rightAlignButton("Reset##General"))
@@ -707,6 +707,17 @@ void UserInterface::buildVRChatOSCSettings()
 			Config.general.updateIntervalMS = 100;
 		}
 	}
+
+	ImGui::InputFloat("Linear Velocity multiplier",
+					  &Config.general.linearVelocityMultiplier,
+					  0.05f,
+					  0.1f,
+					  "%.3f");
+	ImGui::InputFloat("Angular Velocity multiplier",
+					  &Config.general.angularVelocityMultiplier,
+					  0.05f,
+					  0.1f,
+					  "%.3f");
 
 	ImGui::SameLine();
 	if (rightAlignButton("Reset##VRChat"))
@@ -899,9 +910,9 @@ void UserInterface::buildInterface()
 			buildMain();
 			ImGui::EndTabItem();
 		}
-		if (ImGui::BeginTabItem("Skeletal"))
+		if (ImGui::BeginTabItem("SteamVR"))
 		{
-			buildSkeletal();
+			buildSteamVR();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("VRChat"))
@@ -912,10 +923,7 @@ void UserInterface::buildInterface()
 		if (ImGui::BeginTabItem("Input"))
 		{
 			bool syncSettings = false;
-			syncSettings |= ImGui::Checkbox("Block Controller Input while handtracking",
-											&Config.input.blockControllerInputWhileHandTracking);
 			syncSettings |= ImGui::Checkbox("Send OSC Input", &Config.input.sendOscInput);
-			syncSettings |= ImGui::Checkbox("Send SteamVR Input", &Config.input.sendSteamVRInput);
 
 			if (syncSettings)
 			{

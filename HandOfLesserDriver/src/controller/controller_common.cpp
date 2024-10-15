@@ -24,7 +24,7 @@ namespace HOL::ControllerCommon
 		// We can request a prediction from openXR as well
 		// At the moment using steam for anything does not end well,
 		// especially because velocities are mostly bogus.
-		pose.poseTimeOffset = HandOfLesser::Config.general.steamPoseTimeOffset;
+		pose.poseTimeOffset = HandOfLesser::Config.steamvr.steamPoseTimeOffset;
 
 		// These need to be set to be valid quaternions. The device won't appear otherwise.
 		pose.qWorldFromDriverRotation.w = 1.f;
