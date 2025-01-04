@@ -1,7 +1,6 @@
 #include "HandTracking.h"
 #include "HandTrackingInterface.h"
 #include <HandOfLesserCommon.h>
-#include "src/hands/simple_gesture_detector.h"
 #include <algorithm>
 #include <iterator>
 #include <iostream>
@@ -23,7 +22,6 @@
 
 using namespace HOL;
 using namespace HOL::OpenXR;
-using namespace HOL::SimpleGesture;
 using namespace std::chrono_literals;
 
 void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session)
@@ -261,14 +259,7 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time)
 
 void HandTracking::updateInputs()
 {
-	updateSimpleGestures();
 	updateGestures();
-}
-
-void HandTracking::updateSimpleGestures()
-{
-	HOL::SimpleGesture::populateGestures(this->mLeftHand.simpleGestures, this->mLeftHand);
-	HOL::SimpleGesture::populateGestures(this->mRightHand.simpleGestures, this->mRightHand);
 }
 
 static bool firstRun = true;
@@ -283,7 +274,6 @@ void HOL::OpenXR::HandTracking::updateGestures()
 		OpenXRHand& hand = getHand((HandSide)i);
 
 		data.handPose[i] = &hand.handPose;
-		data.aimState[i] = &hand.aimState;
 		data.joints[i] = hand.getLastJointLocations();
 	}
 
@@ -337,21 +327,6 @@ HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
 
 	packet.valid = hand.handPose.poseValid;
 	packet.side = (HOL::HandSide)side;
-
-	// A temporary end to the accidentally opening menu madness. System gesture is terrible.
-	if (side == HOL::HandSide::RightHand)
-	{
-		// Require both hands to do the thing, only trigger on right hand
-		packet.systemClick
-			= hand.simpleGestures[SimpleGestureType::OpenHandFacingFace].click
-			  && otherHand.simpleGestures[SimpleGestureType::OpenHandFacingFace].click;
-	}
-	else
-	{
-		packet.systemClick = false;
-	}
-
-	packet.triggerClick = hand.simpleGestures[SimpleGestureType::IndexFingerPinch].click;
 
 	//
 	packet.fingerCurlIndex

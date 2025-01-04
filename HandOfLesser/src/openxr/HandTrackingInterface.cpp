@@ -60,16 +60,12 @@ bool HandTrackingInterface::locateHandJoints(
 	xr::UniqueDynamicSpace& space,
 	XrTime time,
 	XrHandJointLocationEXT* handJointLocationsOut,
-	XrHandJointVelocityEXT* handJointVelocitiesOut,
-	XrHandTrackingAimStateFB* aimStateOut
+	XrHandJointVelocityEXT* handJointVelocitiesOut
 )
 {
-	// Data is returned directly to this struct
-	aimStateOut->type = XR_TYPE_HAND_TRACKING_AIM_STATE_FB;
-	aimStateOut->next = NULL;
 
 	XrHandJointVelocitiesEXT velocities{XR_TYPE_HAND_JOINT_VELOCITIES_EXT};
-	velocities.next = aimStateOut;
+	velocities.next = NULL;
 	velocities.jointCount = XR_HAND_JOINT_COUNT_EXT;
 	velocities.jointVelocities = handJointVelocitiesOut;
 

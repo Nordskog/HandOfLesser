@@ -7,7 +7,6 @@
 	src/openxr/InstanceHolder.cpp
 
 	src/core/settings_global.cpp
-	src/hands/simple_gesture_detector.cpp
 	src/openxr/openxr_hand.cpp
 	src/core/ui/user_interface.cpp
 	src/openxr/XrUtils.cpp

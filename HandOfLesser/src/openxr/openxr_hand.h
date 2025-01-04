@@ -4,7 +4,6 @@
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr.hpp>
 #include <HandOfLesserCommon.h>
-#include "src/hands/simple_gesture.h"
 #include "src/hands/hand_pose.h"
 
 using namespace HOL;
@@ -16,9 +15,6 @@ public:
 	void updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time);
 
 	HandPose handPose;
-	SimpleGesture::SimpleGestureState
-		simpleGestures[SimpleGesture::SimpleGestureType::SIMPLE_GESTURE_MAX];
-	XrHandTrackingAimStateFB aimState{XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
 	XrHandJointLocationEXT* getLastJointLocations();
 
 private:

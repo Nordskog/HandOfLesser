@@ -181,7 +181,6 @@ void InstanceHolder::initExtensions()
 {
 	this->mEnabledExtensions = {
 		XR_EXT_HAND_TRACKING_EXTENSION_NAME,
-		XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME,						  // Gestures
 		XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME, // Used to get current time.
 		XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
 

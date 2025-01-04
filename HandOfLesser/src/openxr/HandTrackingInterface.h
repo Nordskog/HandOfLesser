@@ -17,8 +17,7 @@ public:
 		xr::UniqueDynamicSpace& space,
 		XrTime time,
 		XrHandJointLocationEXT* handJointLocationsOut,
-		XrHandJointVelocityEXT* handJointVelocitiesOut,
-		XrHandTrackingAimStateFB* aimStateOut
+		XrHandJointVelocityEXT* handJointVelocitiesOut
 	);
 	static void destroyHandTracker();
 
