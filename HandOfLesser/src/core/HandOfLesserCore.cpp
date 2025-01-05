@@ -40,6 +40,9 @@ void HandOfLesserCore::init(int serverPort)
 			this->mHandTracking.init(this->mInstanceHolder.mInstance,
 									 this->mInstanceHolder.mSession);
 
+			this->mBodyTracking.init(this->mInstanceHolder.mInstance,
+									 this->mInstanceHolder.mSession);
+
 			// Airlink doesn't support headless and requires hax
 			// As of writing, the only other supported runtime is VDXR
 			if (!this->mInstanceHolder.isHeadless())
@@ -73,6 +76,7 @@ void HOL::HandOfLesserCore::userInterfaceLoop()
 		if (this->mInstanceHolder.getState() == OpenXrState::Running)
 		{
 			this->mHandTracking.drawHands();
+			this->mBodyTracking.drawBody();
 		}
 		this->mUserInterface.onFrame();
 		if (this->mUserInterface.shouldTerminate())
@@ -130,6 +134,7 @@ void HandOfLesserCore::doOpenXRStuff()
 	this->mInstanceHolder.pollEvent();
 
 	//this->mInstanceHolder.getHmdPosition();
+	this->mBodyTracking.updateBody(this->mInstanceHolder.mStageSpace, time);
 	this->mHandTracking.updateHands(this->mInstanceHolder.mStageSpace, time);
 	this->mHandTracking.updateInputs();
 

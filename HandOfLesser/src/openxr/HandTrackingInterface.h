@@ -9,6 +9,7 @@ class HandTrackingInterface
 public:
 	static void init(xr::UniqueDynamicInstance& instance);
 
+	// Hand
 	static void createHandTracker(
 		xr::UniqueDynamicSession& session, XrHandEXT side, XrHandTrackerEXT& handTrackerOut
 	);
@@ -21,10 +22,24 @@ public:
 	);
 	static void destroyHandTracker();
 
+	// Body
+	static void createBodyTracker(xr::UniqueDynamicSession& session,
+								  XrBodyTrackerFB& bodyTrackerOut);
+	static void destroyBodyTracker();
+	static void locateBodyJoints(XrBodyTrackerFB& bodyTracker,
+								 xr::UniqueDynamicSpace& space,
+								 XrTime time,
+								 XrBodyJointLocationFB* bodyJointLocationsOut);
+
 private:
 	static PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT_;
 	static PFN_xrDestroyHandTrackerEXT xrDestroyHandTrackerEXT_;
 	static PFN_xrLocateHandJointsEXT xrLocateHandJointsEXT_;
+
+	static PFN_xrCreateBodyTrackerFB xrCreateBodyTrackerFB_;
+	static PFN_xrDestroyBodyTrackerFB xrDestroyBodyTrackerFB_;
+	static PFN_xrLocateBodyJointsFB xrLocateBodyJointsFB_;
+
 
 	static void initFunctions(xr::UniqueDynamicInstance& instance);
 };

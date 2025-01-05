@@ -40,6 +40,9 @@
 	src/hands/input/steamvr_float_input.cpp
 	src/hands/input/steamvr_bool_input.cpp
 	src/steamvr/skeletal_input.cpp
+	
+	src/openxr/body_tracking.cpp
+	src/openxr/openxr_body.cpp
 )
 
 find_package(OpenGL REQUIRED)

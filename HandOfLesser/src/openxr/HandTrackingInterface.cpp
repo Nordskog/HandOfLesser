@@ -9,6 +9,10 @@ PFN_xrLocateHandJointsEXT HandTrackingInterface::xrLocateHandJointsEXT_ = nullpt
 XrPath LeftHandInteractionPath;
 XrPath RightHandInteractionPath;
 
+PFN_xrCreateBodyTrackerFB HandTrackingInterface::xrCreateBodyTrackerFB_ = nullptr;
+PFN_xrDestroyBodyTrackerFB HandTrackingInterface::xrDestroyBodyTrackerFB_ = nullptr;
+PFN_xrLocateBodyJointsFB HandTrackingInterface::xrLocateBodyJointsFB_ = nullptr;
+
 using namespace HOL::OpenXR;
 
 void HandTrackingInterface::init(xr::UniqueDynamicInstance& instance)
@@ -20,48 +24,51 @@ void HandTrackingInterface::initFunctions(xr::UniqueDynamicInstance& instance)
 {
 	XrInstance inst = instance.get();
 
-	handleXR(
-		"xrCreateHandTrackerEXT get",
-		xrGetInstanceProcAddr(
-			inst, "xrCreateHandTrackerEXT", (PFN_xrVoidFunction*)(&xrCreateHandTrackerEXT_)
-		)
-	);
+	// Hand
+	handleXR("xrCreateHandTrackerEXT get",
+			 xrGetInstanceProcAddr(
+				 inst, "xrCreateHandTrackerEXT", (PFN_xrVoidFunction*)(&xrCreateHandTrackerEXT_)));
 
-	handleXR(
-		"xrDestroyHandTrackerEXT get",
-		xrGetInstanceProcAddr(
-			inst, "xrDestroyHandTrackerEXT", (PFN_xrVoidFunction*)(&xrDestroyHandTrackerEXT_)
-		)
-	);
+	handleXR("xrDestroyHandTrackerEXT get",
+			 xrGetInstanceProcAddr(inst,
+								   "xrDestroyHandTrackerEXT",
+								   (PFN_xrVoidFunction*)(&xrDestroyHandTrackerEXT_)));
 
-	handleXR(
-		"xrLocateHandJointsEXT get",
-		xrGetInstanceProcAddr(
-			inst, "xrLocateHandJointsEXT", (PFN_xrVoidFunction*)(&xrLocateHandJointsEXT_)
-		)
-	);
+	handleXR("xrLocateHandJointsEXT get",
+			 xrGetInstanceProcAddr(
+				 inst, "xrLocateHandJointsEXT", (PFN_xrVoidFunction*)(&xrLocateHandJointsEXT_)));
+
+	// Body
+	handleXR("xrCreateBodyTrackerFB get",
+			 xrGetInstanceProcAddr(
+				 inst, "xrCreateBodyTrackerFB", (PFN_xrVoidFunction*)(&xrCreateBodyTrackerFB_)));
+
+	handleXR("xrDestroyBodyTrackerFB get",
+			xrGetInstanceProcAddr(
+				 inst, "xrDestroyBodyTrackerFB", (PFN_xrVoidFunction*)(&xrDestroyBodyTrackerFB_)));
+
+	handleXR("xrLocateBodyJointsFB get",
+			xrGetInstanceProcAddr(
+				 inst, "xrLocateBodyJointsFB", (PFN_xrVoidFunction*)(&xrLocateBodyJointsFB_)));
+
 }
 
-void HandTrackingInterface::createHandTracker(
-	xr::UniqueDynamicSession& session, XrHandEXT side, XrHandTrackerEXT& handTrackerOut
-)
+void HandTrackingInterface::createHandTracker(xr::UniqueDynamicSession& session,
+											  XrHandEXT side,
+											  XrHandTrackerEXT& handTrackerOut)
 {
 	XrHandTrackerCreateInfoEXT createInfo{XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT};
 	createInfo.handJointSet = XR_HAND_JOINT_SET_DEFAULT_EXT;
 	createInfo.hand = side;
-	handleXR(
-		"xrCreateHandTrackerEXT_ call",
-		xrCreateHandTrackerEXT_(session.get(), &createInfo, &handTrackerOut)
-	);
+	handleXR("xrCreateHandTrackerEXT_ call",
+			 xrCreateHandTrackerEXT_(session.get(), &createInfo, &handTrackerOut));
 }
 
-bool HandTrackingInterface::locateHandJoints(
-	XrHandTrackerEXT& handTracker,
-	xr::UniqueDynamicSpace& space,
-	XrTime time,
-	XrHandJointLocationEXT* handJointLocationsOut,
-	XrHandJointVelocityEXT* handJointVelocitiesOut
-)
+bool HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
+											 xr::UniqueDynamicSpace& space,
+											 XrTime time,
+											 XrHandJointLocationEXT* handJointLocationsOut,
+											 XrHandJointVelocityEXT* handJointVelocitiesOut)
 {
 
 	XrHandJointVelocitiesEXT velocities{XR_TYPE_HAND_JOINT_VELOCITIES_EXT};
@@ -78,9 +85,8 @@ bool HandTrackingInterface::locateHandJoints(
 	locateInfo.baseSpace = space.get();
 	locateInfo.time = time;
 
-	handleXR(
-		"xrLocateHandJointsEXT_ call", xrLocateHandJointsEXT_(handTracker, &locateInfo, &locations)
-	);
+	handleXR("xrLocateHandJointsEXT_ call",
+			 xrLocateHandJointsEXT_(handTracker, &locateInfo, &locations));
 
 	return locations.isActive;
 }
@@ -88,4 +94,38 @@ bool HandTrackingInterface::locateHandJoints(
 void HandTrackingInterface::destroyHandTracker()
 {
 	// TODO
+}
+
+void HandTrackingInterface::createBodyTracker(xr::UniqueDynamicSession& session,
+											  XrBodyTrackerFB& bodyTrackerOut)
+{
+	XrBodyTrackerCreateInfoFB createInfo{XR_TYPE_BODY_TRACKER_CREATE_INFO_FB};
+	createInfo.bodyJointSet = XR_BODY_JOINT_SET_DEFAULT_FB;
+	createInfo.next = nullptr;
+	handleXR("xrCreateBodyTrackerFB_ call",
+			 xrCreateBodyTrackerFB_(session.get(), &createInfo, &bodyTrackerOut));
+}
+
+void HandTrackingInterface::destroyBodyTracker()
+{
+}
+
+void HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
+											 xr::UniqueDynamicSpace& space,
+											 XrTime time,
+											 XrBodyJointLocationFB* bodyJointLocationsOut)
+{
+	XrBodyJointLocationsFB locations{XR_TYPE_BODY_JOINT_LOCATIONS_FB};
+	locations.next = NULL;
+	locations.jointCount = XR_BODY_JOINT_COUNT_FB;
+	locations.jointLocations = bodyJointLocationsOut;
+
+	XrBodyJointsLocateInfoFB locateInfo{XR_TYPE_BODY_JOINTS_LOCATE_INFO_FB};
+	locateInfo.baseSpace = space.get();
+	locateInfo.time = time;
+
+	handleXR("xrLocateHandJointsEXT_ call",
+			 xrLocateBodyJointsFB_(bodyTracker, &locateInfo, &locations));
+
+
 }

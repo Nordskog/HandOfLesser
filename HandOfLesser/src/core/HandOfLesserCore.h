@@ -11,6 +11,7 @@
 #include "src/vrchat/vrchat_input.h"
 #include "src/steamvr/steamvr_input.h"
 #include "src/steamvr/skeletal_input.h"
+#include "src/openxr/body_tracking.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -34,6 +35,7 @@ namespace HOL
 	private:
 		InstanceHolder mInstanceHolder;
 		HandTracking mHandTracking;
+		BodyTracking mBodyTracking;
 		UserInterface mUserInterface;
 		VRChatOSC mVrchatOSC;
 		VRChatInput mVrchatInput;
