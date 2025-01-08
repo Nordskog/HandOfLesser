@@ -112,17 +112,8 @@ namespace HOL
 	// Assuming other external conditions also say it should.
 	bool HookedController::shouldPossess()
 	{
-		// Ideally we should only posses if the controllers are not
-		// being held by the user, but this is difficult to detect.
-		// Quest2 using Airlink will diconnect, probably Quest3 too.
-		// With VD? Impossible at the moment.
-		// Lighthouse? I guess we check if the
-		// Until I have actual other hardware to test with, possesss
-		// anytime handtracking is valid. If using Airlink, we continue
-		// possessing until real controllers come back online.
-
 		bool canPoss = canPossess();
-		if (!mLastOriginalPoseValid && canPoss)
+		if (!mLastOriginalPoseValid && canPoss)	// All this needs to be reconsidered.
 		{
 			// We want to continue possessing while the real controllers
 			// are inactive, so it doesn't immediatley jump to their pose instead.
@@ -137,7 +128,18 @@ namespace HOL
 			mValidWhileOriginalInvalid = false;
 		}
 
-		return canPoss || this->mValidWhileOriginalInvalid;
+		// Oculus doesn't send a disconnect signal, they just stop submitting.
+		bool originalSubmitStale = framesSinceLastPoseUpdate > 30;
+
+		// As of Quest3, we will have a valid pose despite it being un-tracked.
+		// All we care about is whether or not the pose is valid.
+		// We should possess anytime the controller is not being tracked.
+		// Ideally we would ask OpenXR for this, but we cannot do this properly
+		// in headless mode with VDXR, and it also emulates the controllers using handtracking.
+		// Our conditions are therefor:
+		// # if hands are tracked OR if original pose invalid. 
+		return this->mLastTransformPacket.tracked || (canPoss && (!mLastOriginalPoseValid || originalSubmitStale))
+			   || this->mValidWhileOriginalInvalid;	
 	}
 
 	void HookedController::setSide(HandSide side)

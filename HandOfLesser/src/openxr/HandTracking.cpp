@@ -251,10 +251,10 @@ void HOL::OpenXR::HandTracking::initGestures()
 	}
 }
 
-void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time)
+void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker)
 {
-	this->mLeftHand.updateJointLocations(space, time);
-	this->mRightHand.updateJointLocations(space, time);
+	this->mLeftHand.updateJointLocations(space, time, bodyTracker);
+	this->mRightHand.updateJointLocations(space, time, bodyTracker);
 }
 
 void HandTracking::updateInputs()
@@ -308,6 +308,7 @@ HOL::HandTransformPacket HandTracking::getTransformPacket(HOL::HandSide side)
 
 	packet.active = hand.handPose.active;
 	packet.valid = hand.handPose.poseValid;
+	packet.tracked = hand.handPose.poseTracked;
 	packet.stale = hand.handPose.poseStale;
 	packet.side = (HOL::HandSide)side;
 	packet.location = hand.handPose.palmLocation;

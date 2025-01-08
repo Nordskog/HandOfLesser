@@ -3,10 +3,11 @@
 #include <d3d11.h> // Why do you need this??
 #include <memory>
 #include "openxr_hand.h"
+#include "openxr_body.h"
 #include "src/hands/gesture/open_hand_pinch_gesture.h"
 #include "src/hands/action/hand_drag_action.h"
 
-#include "src/vrchat/vrchat_input.h";
+#include "src/vrchat/vrchat_input.h"
 
 #include "src/hands/gesture/combo_gesture.h"
 
@@ -16,7 +17,7 @@ namespace HOL::OpenXR
 	{
 	public:
 		void init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session);
-		void updateHands(xr::UniqueDynamicSpace& space, XrTime time);
+		void updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker);
 		void updateInputs();
 		HOL::HandTransformPacket getTransformPacket(HOL::HandSide side);
 		HOL::ControllerInputPacket getInputPacket(HOL::HandSide side);

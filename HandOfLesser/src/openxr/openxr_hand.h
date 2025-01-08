@@ -5,6 +5,7 @@
 #include <openxr/openxr.hpp>
 #include <HandOfLesserCommon.h>
 #include "src/hands/hand_pose.h"
+#include "openxr_body.h"
 
 using namespace HOL;
 
@@ -12,7 +13,7 @@ class OpenXRHand
 {
 public:
 	void init(xr::UniqueDynamicSession& session, HOL::HandSide side);
-	void updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time);
+	void updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker);
 
 	HandPose handPose;
 	XrHandJointLocationEXT* getLastJointLocations();
@@ -24,6 +25,7 @@ private:
 	XrHandTrackerEXT mHandTracker;
 	XrPath mInputSourcePath;
 	XrHandJointLocationEXT mJointLocations[XR_HAND_JOINT_COUNT_EXT];
+	XrHandJointLocationEXT mPrevJointLocations[XR_HAND_JOINT_COUNT_EXT];
 	XrHandJointVelocityEXT mJointVelocities[XR_HAND_JOINT_COUNT_EXT];
 
 	HOL::PoseLocation mPrevRawPose;

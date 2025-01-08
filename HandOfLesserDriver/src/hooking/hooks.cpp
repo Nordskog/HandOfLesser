@@ -338,7 +338,7 @@ namespace HOL::hooks
 							bNewValue ? "True" : "False");
 							*/
 					auto controllerMode = config.handPose.controllerMode;
-					if (controller->canPossess())
+					if (controller->shouldPossess())
 					{
 						if (controllerMode == ControllerMode::HookedControllerMode
 							|| controllerMode == ControllerMode::OffsetControllerMode)
@@ -391,7 +391,7 @@ namespace HOL::hooks
 							bNewValue);
 							*/
 				auto controllerMode = config.handPose.controllerMode;
-				if (controller->canPossess())
+				if (controller->shouldPossess())
 				{
 					if (controllerMode == ControllerMode::HookedControllerMode
 						|| controllerMode == ControllerMode::OffsetControllerMode)

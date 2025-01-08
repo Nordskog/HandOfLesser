@@ -132,8 +132,15 @@ void OpenXRHand::calculateCurlSplay()
 	}
 }
 
-void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time)
+void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
+									  XrTime time,
+									  OpenXRBody& bodyTracker)
 {
+	// Copy to prev
+	std::copy(
+		std::begin(mJointLocations), std::end(mJointLocations), std::begin(mPrevJointLocations));
+
+
 	this->handPose.active = HandTrackingInterface::locateHandJoints(this->mHandTracker,
 																	space,
 																	time,
@@ -151,6 +158,61 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 
 	// Never stale if invalid?
 	this->handPose.poseStale = false;
+
+
+	// Basic freeze-fingers-if-too-close-to-face
+	// This doesn't work too well. Would honestly love to have 
+	// some confidence values, but even if they're a thing we're not 
+	// going to get them via VD.
+	XrBodyJointLocationFB& headLocation
+		= bodyTracker.getLastJointLocations()[XR_BODY_JOINT_HEAD_FB];
+	XrBodyJointLocationFB& neckLocation
+		= bodyTracker.getLastJointLocations()[XR_BODY_JOINT_NECK_FB];
+
+	float headDistance
+		= (toEigenVector(headLocation.pose.position)
+							  - toEigenVector(palmLocation.pose.position))
+			  .norm();
+	float neckDistance
+		= (toEigenVector(headLocation.pose.position) - toEigenVector(palmLocation.pose.position))
+			  .norm();
+	bool tooCloseToFace = headDistance < 0.300f;
+	tooCloseToFace |= neckDistance < 0.200f;
+
+	// Replace current data with past, but insert palm position from body tracker
+	bool alwaysUseUpperBodyTracking = true;	// Add to config later, probably does nothing though.
+	if (!this->handPose.active || tooCloseToFace)
+	{
+		XrBodyJointLocationFB& bodyPalmJoint
+			= bodyTracker.getLastJointLocations()[this->mSide == HandSide::LeftHand
+													  ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
+													  : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
+
+		// Copy prev to current to maintain finger pose
+		std::copy(std::begin(mPrevJointLocations),
+				  std::end(mPrevJointLocations),
+				  std::begin(mJointLocations));
+
+		palmLocation.pose.position = bodyPalmJoint.pose.position;
+		palmLocation.pose.orientation = bodyPalmJoint.pose.orientation;
+
+		this->handPose.active = true;
+		this->handPose.poseValid = true;
+		this->handPose.poseTracked = false; // otherwise estimated usign upper-body
+	}
+	else if (alwaysUseUpperBodyTracking)
+	{
+		// Just copy palm position from body.
+		XrBodyJointLocationFB& bodyPalmJoint
+			= bodyTracker.getLastJointLocations()[this->mSide == HandSide::LeftHand
+													  ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
+													  : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
+
+		palmLocation.pose.position = bodyPalmJoint.pose.position;
+		palmLocation.pose.orientation = bodyPalmJoint.pose.orientation;
+	}
+	
+
 
 	if (HOL::Config.general.forceInactive)
 	{

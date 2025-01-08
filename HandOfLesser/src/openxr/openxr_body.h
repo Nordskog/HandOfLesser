@@ -17,7 +17,20 @@ public:
 
 private:
 
+	void calculateRelativeTransform(const XrBodyJointLocationFB& baseJoint,
+									const XrBodyJointLocationFB& childJoint, Eigen::Vector3f& relativePos, Eigen::Quaternionf& relativeRot);
+	void applyRelativeTransform(const XrBodyJointLocationFB& baseJoint,
+								XrBodyJointLocationFB& childJoint,
+								const Eigen::Vector3f& relativePos,
+								const Eigen::Quaternionf& relativeRot);
+
+	void generatePalmPosition(HandSide side);
+
+	XrBodyJointLocationFB mLastWithTrackedHands[XR_BODY_JOINT_COUNT_FB];
+
+
 	XrBodyTrackerFB mBodyTracker;
 	XrPath mInputSourcePath;
 	XrBodyJointLocationFB mJointLocations[XR_BODY_JOINT_COUNT_FB];
+	XrBodyJointLocationFB mPreviousJointLocations[XR_BODY_JOINT_COUNT_FB];
 };

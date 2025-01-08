@@ -81,8 +81,9 @@ namespace HOL
 	struct HandTransformPacket
 	{
 		NativePacketType packetType = NativePacketType::HandTransform;
-		bool active = false;
-		bool valid = false;
+		bool active = false;	// Got a result
+		bool valid = false;		// Is a proper pose of some kind
+		bool tracked = false;	// Is directly tracked instead of inferred or frozen
 		bool stale = false;
 		HOL::HandSide side;
 		HOL::PoseLocation location;

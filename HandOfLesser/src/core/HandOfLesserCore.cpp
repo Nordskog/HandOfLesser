@@ -135,7 +135,7 @@ void HandOfLesserCore::doOpenXRStuff()
 
 	//this->mInstanceHolder.getHmdPosition();
 	this->mBodyTracking.updateBody(this->mInstanceHolder.mStageSpace, time);
-	this->mHandTracking.updateHands(this->mInstanceHolder.mStageSpace, time);
+	this->mHandTracking.updateHands(this->mInstanceHolder.mStageSpace, time, this->mBodyTracking.getBodyTracker());
 	this->mHandTracking.updateInputs();
 
 	this->sendUpdate();

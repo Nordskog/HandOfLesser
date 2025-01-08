@@ -30,9 +30,19 @@ void HOL::OpenXR::BodyTracking::drawBody()
 
 			auto color = colorGrey;
 			if (j == XR_BODY_JOINT_LEFT_HAND_WRIST_TWIST_FB)
+			{
 				color = IM_COL32(255, 0, 0, 255);
+			}
+		
 
 			// WIll replace this later anyway so nevermind wasteful conversion
 			vis->submitPoint(OpenXR::toEigenVector(joint.pose.position), color, 7);
 		}
 }
+
+OpenXRBody& HOL::OpenXR::BodyTracking::getBodyTracker()
+{
+	return mBodyTracker;
+}
+
+
