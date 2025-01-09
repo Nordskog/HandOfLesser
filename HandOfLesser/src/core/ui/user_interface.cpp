@@ -669,9 +669,12 @@ void HOL::UserInterface::buildMain()
 	ImGui::SameLine();
 	buildSingleHandTransformDisplay(HOL::RightHand);
 
-	///////////////////
-	// Right window
-	///////////////////
+	//////////////////
+	// Body
+	//////////////////
+
+	ImGui::SeparatorText("Body");
+	ImGui::Text("Confidence: %.3f", HOL::display::BodyTracking.confidence);
 
 	ImGui::EndChild();
 }

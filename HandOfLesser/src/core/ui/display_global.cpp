@@ -6,6 +6,7 @@ namespace HOL::display
 {
 	HandTransformDisplay HandTransform[2];
 	FingerTrackingDisplay FingerTracking[2];
+	BodyTrackingDisplay BodyTracking;
 
 	OpenXR::OpenXrState OpenXrInstanceState = OpenXR::OpenXrState::Uninitialized;
 	std::string OpenXrRuntimeName = "Unknown";

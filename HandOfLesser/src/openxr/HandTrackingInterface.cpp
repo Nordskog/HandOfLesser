@@ -110,7 +110,7 @@ void HandTrackingInterface::destroyBodyTracker()
 {
 }
 
-void HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
+float HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
 											 xr::UniqueDynamicSpace& space,
 											 XrTime time,
 											 XrBodyJointLocationFB* bodyJointLocationsOut)
@@ -127,5 +127,5 @@ void HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
 	handleXR("xrLocateHandJointsEXT_ call",
 			 xrLocateBodyJointsFB_(bodyTracker, &locateInfo, &locations));
 
-
+	return locations.confidence;
 }

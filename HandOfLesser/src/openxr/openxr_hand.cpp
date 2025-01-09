@@ -164,6 +164,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	// This doesn't work too well. Would honestly love to have 
 	// some confidence values, but even if they're a thing we're not 
 	// going to get them via VD.
+	// Edit: Body tracking has a confidence value, it's always 1.
 	XrBodyJointLocationFB& headLocation
 		= bodyTracker.getLastJointLocations()[XR_BODY_JOINT_HEAD_FB];
 	XrBodyJointLocationFB& neckLocation
@@ -180,8 +181,10 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	tooCloseToFace |= neckDistance < 0.200f;
 
 	// Replace current data with past, but insert palm position from body tracker
+	// Airlink provides incorrect values for anything but handtracking without controllers, 
+	// so using the body trackign values actually breaks things.
 	bool alwaysUseUpperBodyTracking = true;	// Add to config later, probably does nothing though.
-	if (!this->handPose.active || tooCloseToFace)
+	if ((bodyTracker.active) && (!this->handPose.active || tooCloseToFace))
 	{
 		XrBodyJointLocationFB& bodyPalmJoint
 			= bodyTracker.getLastJointLocations()[this->mSide == HandSide::LeftHand

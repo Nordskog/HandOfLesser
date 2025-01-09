@@ -26,7 +26,7 @@ public:
 	static void createBodyTracker(xr::UniqueDynamicSession& session,
 								  XrBodyTrackerFB& bodyTrackerOut);
 	static void destroyBodyTracker();
-	static void locateBodyJoints(XrBodyTrackerFB& bodyTracker,
+	static float locateBodyJoints(XrBodyTrackerFB& bodyTracker,
 								 xr::UniqueDynamicSpace& space,
 								 XrTime time,
 								 XrBodyJointLocationFB* bodyJointLocationsOut);

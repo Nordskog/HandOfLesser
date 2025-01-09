@@ -3,6 +3,8 @@
 
 #include "XrUtils.h"
 
+#include "src/core/ui/display_global.h"
+
 #include <iostream>
 
 void OpenXRBody::init(xr::UniqueDynamicSession& session)
@@ -12,11 +14,17 @@ void OpenXRBody::init(xr::UniqueDynamicSession& session)
 
 void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time)
 {
+	if (mBodyTracker == nullptr)
+		return;
+
 	std::copy(std::begin(mJointLocations),
 			  std::end(mJointLocations),
 			  std::begin(mPreviousJointLocations));
 
-	HandTrackingInterface::locateBodyJoints(this->mBodyTracker, space, time, this->mJointLocations);
+
+
+	this->confidence = HandTrackingInterface::locateBodyJoints(this->mBodyTracker, space, time, this->mJointLocations);
+	this->active = confidence > 0.0f;
 
 	// Terrible but good enough for now
 	auto& torsoJoint = this->mJointLocations[XR_BODY_JOINT_CHEST_FB];
@@ -68,6 +76,9 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 			}
 		}
 	}
+
+	// Display
+	HOL::display::BodyTracking.confidence = this->confidence;
 }
 
 XrBodyJointLocationFB* OpenXRBody::getLastJointLocations()

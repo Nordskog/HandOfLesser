@@ -7,6 +7,11 @@
 
 namespace HOL
 {
+	struct BodyTrackingDisplay
+	{
+		float confidence = 0;
+	};
+
 	struct HandTransformDisplay
 	{
 		bool active;
@@ -29,6 +34,7 @@ namespace HOL
 	{
 		extern FingerTrackingDisplay FingerTracking[2];
 		extern HandTransformDisplay HandTransform[2];
+		extern BodyTrackingDisplay BodyTracking;
 
 		extern OpenXR::OpenXrState OpenXrInstanceState;
 		extern std::string OpenXrRuntimeName;

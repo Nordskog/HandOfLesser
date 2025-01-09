@@ -14,6 +14,8 @@ public:
 	void updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time);
 
 	XrBodyJointLocationFB* getLastJointLocations();
+	float confidence;
+	bool active = false;
 
 private:
 
