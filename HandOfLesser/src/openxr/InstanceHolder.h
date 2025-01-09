@@ -29,6 +29,11 @@ namespace HOL::OpenXR
 		xr::UniqueDynamicSpace mStageSpace;
 		xr::DispatchLoaderDynamic mDispatcher;
 
+
+		// Foreground mode
+		int foregroundRender();
+		bool fullForegroundMode();
+
 	private:
 		bool mHeadless;
 		HOL::OpenXR::OpenXrState mState;
@@ -47,6 +52,14 @@ namespace HOL::OpenXR
 		void initInstance();
 		void initSession();
 		void initSpaces();
+
+		// Foreground mode
+		XrViewConfigurationProperties mViewportConfiguration{XR_TYPE_VIEW_CONFIGURATION_PROPERTIES};
+		XrViewConfigurationView mViewConfigurationView[2];
+		xr::SessionState mSessionState;
+		void doForegroundRendering(XrFrameState frameState);
+		void setupForegroundRendering();
+
 
 		void updateState(HOL::OpenXR::OpenXrState newState);
 

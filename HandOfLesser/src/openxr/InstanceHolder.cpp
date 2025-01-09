@@ -101,6 +101,29 @@ void InstanceHolder::initSession()
 	this->mSession = this->mInstance->createSessionUnique(createInfo, this->mDispatcher);
 
 	pollEvent();
+
+	if (this->fullForegroundMode())
+	{
+		setupForegroundRendering();
+	}
+}
+
+void InstanceHolder::doForegroundRendering(XrFrameState frameState)
+{
+	XrCompositionLayerProjectionView projectionViews[2] = {
+		{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}, {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}};
+	XrCompositionLayerProjection projectionLayer = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
+	XrCompositionLayerBaseHeader* layers[] = {(XrCompositionLayerBaseHeader*)&projectionLayer};
+	XrViewLocateInfo locateInfo = {XR_TYPE_VIEW_LOCATE_INFO};
+	locateInfo.displayTime = frameState.predictedDisplayTime;
+	locateInfo.space = this->mStageSpace.get();
+	locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+
+	XrViewState viewState = {XR_TYPE_VIEW_STATE};
+	XrView views[2] = {{XR_TYPE_VIEW}, {XR_TYPE_VIEW}};
+	uint32_t viewCount;
+	handleXR("xrLocateViews call",
+			 xrLocateViews(this->mSession.get(), &locateInfo, &viewState, 2, &viewCount, views));
 }
 
 void InstanceHolder::initSpaces()
@@ -206,6 +229,99 @@ void InstanceHolder::initExtensions()
 	}
 }
 
+void HOL::OpenXR::InstanceHolder::setupForegroundRendering()
+{
+	///////////////
+	// Session
+	//////////////
+
+	// Get the viewport configuration info for the chosen viewport configuration type.
+	// App only supports the primary stereo view config.
+	const XrViewConfigurationType supportedViewConfigType
+		= XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+
+	// Enumerate the viewport configurations.
+	{
+		uint32_t viewportConfigTypeCount = 0;
+		handleXR(
+			"xrEnumerateViewConfigurations call",
+			xrEnumerateViewConfigurations(
+				this->mInstance.get(), this->mSystemId.get(), 0, &viewportConfigTypeCount, NULL));
+
+		std::vector<XrViewConfigurationType> viewportConfigurationTypes(viewportConfigTypeCount);
+
+		handleXR("xrEnumerateViewConfigurations call",
+				 xrEnumerateViewConfigurations(this->mInstance.get(),
+											   this->mSystemId.get(),
+											   viewportConfigTypeCount,
+											   &viewportConfigTypeCount,
+											   viewportConfigurationTypes.data()));
+
+		for (uint32_t i = 0; i < viewportConfigTypeCount; i++)
+		{
+			const XrViewConfigurationType viewportConfigType = viewportConfigurationTypes[i];
+			XrViewConfigurationProperties viewportConfig{XR_TYPE_VIEW_CONFIGURATION_PROPERTIES};
+			handleXR("xrGetViewConfigurationProperties call",
+					 xrGetViewConfigurationProperties(this->mInstance.get(),
+													  this->mSystemId.get(),
+													  viewportConfigType,
+													  &viewportConfig));
+			uint32_t viewCount;
+			handleXR("xrEnumerateViewConfigurationViews call",
+					 xrEnumerateViewConfigurationViews(this->mInstance.get(),
+													   this->mSystemId.get(),
+													   viewportConfigType,
+													   0,
+													   &viewCount,
+													   NULL));
+
+			if (viewCount > 0)
+			{
+				std::vector<XrViewConfigurationView> elements(viewCount,
+															  {XR_TYPE_VIEW_CONFIGURATION_VIEW});
+
+				handleXR("xrEnumerateViewConfigurationViews call",
+						 xrEnumerateViewConfigurationViews(this->mInstance.get(),
+														   this->mSystemId.get(),
+														   viewportConfigType,
+														   viewCount,
+														   &viewCount,
+														   elements.data()));
+
+				// Cache the view config properties for the selected config type.
+				if (viewportConfigType == supportedViewConfigType)
+				{
+					// assert(viewCount == 2);
+					for (uint32_t e = 0; e < viewCount; e++)
+					{
+						mViewConfigurationView[e] = elements[e];
+					}
+				}
+			}
+			else
+			{
+				printf("Empty viewport configuration type: %d", viewCount);
+			}
+		}
+	}
+
+	// Get the viewport configuration info for the chosen viewport configuration type.
+	handleXR("xrGetViewConfigurationProperties call",
+			 xrGetViewConfigurationProperties(this->mInstance.get(),
+											  this->mSystemId.get(),
+											  supportedViewConfigType,
+											  &this->mViewportConfiguration));
+
+
+}
+
+bool HOL::OpenXR::InstanceHolder::fullForegroundMode()
+{
+	// Set to true to run in foreground when headless mode is not available.
+	// Otherwise we will never enter focused mode and must patch oculus dll to get data.
+	return !this->isHeadless() && false;
+}
+
 void InstanceHolder::setCallback(XrEventsInterface* callback)
 {
 	this->mCallback = callback;
@@ -230,4 +346,41 @@ OpenXrState InstanceHolder::getState()
 bool HOL::OpenXR::InstanceHolder::isHeadless()
 {
 	return this->mHeadless;
+}
+
+int InstanceHolder::foregroundRender()
+{
+		xr::Time time = getXrTimeNow(this->mInstance.get(), this->mDispatcher);
+
+		if (this->mSessionState != xr::SessionState::Stopping)
+		{
+			XrFrameWaitInfo waitFrameInfo = {XR_TYPE_FRAME_WAIT_INFO};
+			XrFrameState frameState = {XR_TYPE_FRAME_STATE};
+			handleXR("xrWaitFrame call",
+						xrWaitFrame(this->mSession.get(), &waitFrameInfo, &frameState));
+
+			////////////////
+			// Begin frame
+			////////////////
+
+			XrFrameBeginInfo beginFrameDesc = {XR_TYPE_FRAME_BEGIN_INFO};
+			handleXR("xrBeginFrame call",
+						(xrBeginFrame(this->mSession.get(), &beginFrameDesc)));
+
+			doForegroundRendering(frameState);
+
+			///////////////////
+			// Frame stuff
+			//////////////////////
+
+			XrFrameEndInfo endFrameInfo = {XR_TYPE_FRAME_END_INFO};
+			endFrameInfo.displayTime = frameState.predictedDisplayTime;
+			endFrameInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+			endFrameInfo.layerCount = 0;
+			endFrameInfo.layers = nullptr;
+
+			handleXR("xrEndFrame call", xrEndFrame(this->mSession.get(), &endFrameInfo));
+		}
+
+	return 0;
 }

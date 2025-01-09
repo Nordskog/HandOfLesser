@@ -45,7 +45,11 @@ void HandOfLesserCore::init(int serverPort)
 
 			// Airlink doesn't support headless and requires hax
 			// As of writing, the only other supported runtime is VDXR
-			if (!this->mInstanceHolder.isHeadless())
+			if (this->mInstanceHolder.fullForegroundMode())
+			{
+				std::cout << "Running in full foreground mode for testing only!" << std::endl; 
+			}
+			else if (!this->mInstanceHolder.isHeadless())
 			{
 				HOL::hacks::fixOvrSessionStateRestriction();
 			}
@@ -132,6 +136,11 @@ void HandOfLesserCore::doOpenXRStuff()
 	time += 1000000LL * (XrTime)Config.general.motionPredictionMS;
 
 	this->mInstanceHolder.pollEvent();
+
+	if (this->mInstanceHolder.fullForegroundMode())
+	{
+		this->mInstanceHolder.foregroundRender();
+	}
 
 	//this->mInstanceHolder.getHmdPosition();
 	this->mBodyTracking.updateBody(this->mInstanceHolder.mStageSpace, time);
