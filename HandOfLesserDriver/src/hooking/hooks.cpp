@@ -460,7 +460,8 @@ namespace HOL::hooks
 				}
 			}
 
-			if (iface.find("IVRDriverInput") != std::string::npos)
+			// There is also a IVRDriverInputInternal_XXX or something that needs to be avoided.
+			if (iface.find("IVRDriverInput_") != std::string::npos)
 			{
 				DriverLog("Found Input interface: %s", iface.c_str());
 
