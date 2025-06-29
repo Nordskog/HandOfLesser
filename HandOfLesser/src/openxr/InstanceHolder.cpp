@@ -50,7 +50,7 @@ void InstanceHolder::initInstance()
 								1, // app version
 								"",
 								0, // engine version
-								xr::Version::current()},
+								xr::Version(1,0,0)}, // VDXR only supports 1.0
 			uint32_t(enabledLayers.size()),
 			enabledLayers.data(),
 			uint32_t(this->mEnabledExtensions.size()),
