@@ -32,7 +32,7 @@ void HandOfLesserCore::init(int serverPort)
 
 	if (runtimeName.find("oculus_openxr") != std::string::npos)
 	{
-		HOL::display::IsVDXR = true;
+		HOL::display::IsOVR = true;
 		std::cout << "Runtime is Oculus, will support multimodal and stuff" << std::endl;
 	}
 
