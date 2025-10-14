@@ -4,6 +4,13 @@
 
 namespace HOL::hacks
 {
+	void applyPatch(HMODULE hModule, const BYTE* targetBytes,
+					size_t targetByteSize,
+					const BYTE* targetInstruction,
+					size_t targetInstructionSize,
+					const BYTE* replacementInstruction,
+					size_t replacementInstructionSize
+		);
 
 	void fixOvrSessionStateRestriction();
 	HMODULE getModule(HANDLE hProcess, const TCHAR moduleName[]);
