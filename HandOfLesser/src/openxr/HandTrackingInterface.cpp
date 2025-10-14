@@ -10,6 +10,10 @@ PFN_xrResumeSimultaneousHandsAndControllersTrackingMETA
 	HandTrackingInterface::xrResumEsimultaneousHandsAndControllersTrackingMETA_
 	= nullptr;
 
+PFN_xrPauseSimultaneousHandsAndControllersTrackingMETA
+	HandTrackingInterface::xrPauseSimultaneousHandsAndControllersTrackingMETA_
+	= nullptr;
+
 XrPath LeftHandInteractionPath;
 XrPath RightHandInteractionPath;
 
@@ -61,6 +65,12 @@ void HandTrackingInterface::initFunctions(xr::UniqueDynamicInstance& instance)
 				 inst,
 				 "xrResumeSimultaneousHandsAndControllersTrackingMETA",
 				 (PFN_xrVoidFunction*)(&xrResumEsimultaneousHandsAndControllersTrackingMETA_)));
+
+	handleXR("xrPauseSimultaneousHandsAndControllersTrackingMETA get",
+			 xrGetInstanceProcAddr(
+				 inst,
+				 "xrPauseSimultaneousHandsAndControllersTrackingMETA",
+				 (PFN_xrVoidFunction*)(&xrPauseSimultaneousHandsAndControllersTrackingMETA_)));
 }
 
 void HandTrackingInterface::createHandTracker(xr::UniqueDynamicSession& session,
@@ -149,4 +159,15 @@ void HandTrackingInterface::resumeMultimodal(xr::UniqueDynamicSession& session)
 
 	handleXR("XrSystemSimultaneousHandsAndControllersPropertiesMETA_ call",
 			 xrResumEsimultaneousHandsAndControllersTrackingMETA_(session.get(), &resumeInfo));
+}
+
+void HandTrackingInterface::pauseMultimodal(xr::UniqueDynamicSession& session)
+{
+	XrSimultaneousHandsAndControllersTrackingPauseInfoMETA pauseInfo{
+		XR_TYPE_SIMULTANEOUS_HANDS_AND_CONTROLLERS_TRACKING_PAUSE_INFO_META};
+
+	pauseInfo.next = nullptr;
+
+	handleXR("xrPauseSimultaneousHandsAndControllersTrackingMETA call",
+			 xrPauseSimultaneousHandsAndControllersTrackingMETA_(session.get(), &pauseInfo));
 }

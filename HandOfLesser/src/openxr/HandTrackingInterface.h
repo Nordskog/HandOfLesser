@@ -31,6 +31,7 @@ public:
 
 	// Multimodal
 	static void resumeMultimodal(xr::UniqueDynamicSession& session);
+	static void pauseMultimodal(xr::UniqueDynamicSession& session);
 
 private:
 	static PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT_;
@@ -39,6 +40,8 @@ private:
 
 	static PFN_xrResumeSimultaneousHandsAndControllersTrackingMETA
 		xrResumEsimultaneousHandsAndControllersTrackingMETA_;
+	static PFN_xrPauseSimultaneousHandsAndControllersTrackingMETA
+		xrPauseSimultaneousHandsAndControllersTrackingMETA_;
 
 	static PFN_xrCreateBodyTrackerFB xrCreateBodyTrackerFB_;
 	static PFN_xrDestroyBodyTrackerFB xrDestroyBodyTrackerFB_;
