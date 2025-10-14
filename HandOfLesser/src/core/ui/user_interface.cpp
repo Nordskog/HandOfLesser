@@ -586,6 +586,24 @@ void HOL::UserInterface::buildMain()
 	}
 
 	/////////////////
+	// Multimodal tracking
+	/////////////////
+
+	ImGui::SeparatorText("Multimodal tracking");
+
+	if (ImGui::Button("Resume Multimodal"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.enableMultimodal();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Pause Multimodal"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.disableMultimodal();
+	}
+
+	/////////////////
 	// Offset inputs
 	/////////////////
 

@@ -2,6 +2,7 @@
 	src/core/ui/display_global.cpp
 	src/HandOfLesser.cpp
 	src/core/HandOfLesserCore.cpp
+	src/core/features_manager.cpp
 	src/openxr/HandTracking.cpp
 	src/openxr/HandTrackingInterface.cpp
 	src/openxr/InstanceHolder.cpp

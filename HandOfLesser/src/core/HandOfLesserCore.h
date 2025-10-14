@@ -12,6 +12,7 @@
 #include "src/steamvr/steamvr_input.h"
 #include "src/steamvr/skeletal_input.h"
 #include "src/openxr/body_tracking.h"
+#include "src/core/features_manager.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -31,6 +32,8 @@ namespace HOL
 		void loadSettings();
 
 		virtual std::vector<const char*> getRequiredExtensions();
+
+		FeaturesManager featuresManager;
 
 	private:
 		InstanceHolder mInstanceHolder;

@@ -69,6 +69,7 @@ void HandOfLesserCore::init(int serverPort)
 		}
 	}
 	this->mTransport.init(serverPort);
+	this->featuresManager.setInstanceHolder(&this->mInstanceHolder);
 }
 
 void HandOfLesserCore::start()
