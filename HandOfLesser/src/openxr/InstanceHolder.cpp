@@ -44,14 +44,22 @@ void InstanceHolder::initInstance()
 	// We don't enable any
 	std::vector<const char*> enabledLayers;
 
+	// Should probably query the runtime for its min but good enough for now
+	xr::Version openXRVersion = xr::Version::current();
+	if (HOL::display::IsVDXR)
+	{
+		// Explicitly only suports 1.0
+		openXRVersion = xr::Version(1, 0, 0);
+	}
+
 	this->mInstance = xr::createInstanceUnique(
 		xr::InstanceCreateInfo{
 			xr::InstanceCreateFlagBits::None,
 			xr::ApplicationInfo{"HandOfLesser",
 								1, // app version
-								"",
+								"HandOfLesserStandalone",
 								0, // engine version
-								xr::Version(1,0,0)}, // VDXR only supports 1.0
+								openXRVersion},
 			uint32_t(enabledLayers.size()),
 			enabledLayers.data(),
 			uint32_t(this->mEnabledExtensions.size()),
