@@ -24,6 +24,7 @@ void InstanceHolder::init()
 		this->initExtensions();
 
 		this->initInstance();
+		this->getSystemProperties();
 		this->initSession();
 		this->initSpaces();
 	}
@@ -135,6 +136,24 @@ void InstanceHolder::initSpaces()
 	mStageSpace = this->mSession->createReferenceSpaceUnique(
 		xr::ReferenceSpaceCreateInfo{xr::ReferenceSpaceType::Stage, xr::Posef{}},
 		this->mDispatcher);
+}
+
+void HOL::OpenXR::InstanceHolder::getSystemProperties()
+{
+	XrSystemSimultaneousHandsAndControllersPropertiesMETA modalProperties{
+		XR_TYPE_SYSTEM_SIMULTANEOUS_HANDS_AND_CONTROLLERS_PROPERTIES_META};
+
+
+	xr::SystemProperties systemProperties;
+	systemProperties.type = xr::StructureType::SystemProperties;
+	systemProperties.next = &modalProperties;
+
+	this->mInstance->getSystemProperties(this->mSystemId, systemProperties, this->mDispatcher);
+
+	// META lies
+	std::cout << "Supported multimodal: " << modalProperties.supportsSimultaneousHandsAndControllers
+			  << "\n";
+
 }
 
 void InstanceHolder::pollEvent()

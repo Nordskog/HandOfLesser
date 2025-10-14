@@ -54,6 +54,8 @@ namespace HOL::OpenXR
 		void initSession();
 		void initSpaces();
 
+		void getSystemProperties();
+
 		// Foreground mode
 		XrViewConfigurationProperties mViewportConfiguration{XR_TYPE_VIEW_CONFIGURATION_PROPERTIES};
 		XrViewConfigurationView mViewConfigurationView[2];
