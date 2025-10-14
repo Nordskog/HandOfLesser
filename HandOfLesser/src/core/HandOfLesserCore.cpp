@@ -27,6 +27,12 @@ void HandOfLesserCore::init(int serverPort)
 		std::cout << "Runtime is VDXR, will expect being fed lies" << std::endl;
 	}
 
+	if (runtimeName.find("oculus_openxr") != std::string::npos)
+	{
+		HOL::display::IsVDXR = true;
+		std::cout << "Runtime is Oculus, will support multimodal and stuff" << std::endl;
+	}
+
 	this->mInstanceHolder.init();
 
 	if (this->mInstanceHolder.getState() != OpenXrState::Failed)
@@ -49,10 +55,14 @@ void HandOfLesserCore::init(int serverPort)
 			{
 				std::cout << "Running in full foreground mode for testing only!" << std::endl; 
 			}
-			else if (!this->mInstanceHolder.isHeadless())
+
+			if (HOL::display::IsOVR)
 			{
+				// Hacks to make OVR actually work
 				HOL::hacks::fixOvrSessionStateRestriction();
+				HOL::hacks::fixOvrMultimodalSupportCheck();
 			}
+
 		}
 	}
 	this->mTransport.init(serverPort);

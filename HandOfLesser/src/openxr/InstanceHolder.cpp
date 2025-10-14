@@ -227,6 +227,17 @@ void InstanceHolder::initExtensions()
 		XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME, // Used to get current time.
 		XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
 
+	if (hasExtension(this->mExtensions, XR_META_HEADSET_ID_EXTENSION_NAME))
+	{
+		this->mEnabledExtensions.push_back(XR_META_HEADSET_ID_EXTENSION_NAME);
+	}
+
+	if (hasExtension(this->mExtensions, XR_META_SIMULTANEOUS_HANDS_AND_CONTROLLERS_EXTENSION_NAME))
+	{
+		this->mEnabledExtensions.push_back(
+			XR_META_SIMULTANEOUS_HANDS_AND_CONTROLLERS_EXTENSION_NAME);
+	}
+
 	if (hasExtension(this->mExtensions, XR_MND_HEADLESS_EXTENSION_NAME))
 	{
 		std::cout << "Runtime supports headless extension, running in headless mode" << std::endl;

@@ -29,10 +29,16 @@ public:
 								  XrTime time,
 								  XrBodyJointLocationFB* bodyJointLocationsOut);
 
+	// Multimodal
+	static void resumeMultimodal(xr::UniqueDynamicSession& session);
+
 private:
 	static PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT_;
 	static PFN_xrDestroyHandTrackerEXT xrDestroyHandTrackerEXT_;
 	static PFN_xrLocateHandJointsEXT xrLocateHandJointsEXT_;
+
+	static PFN_xrResumeSimultaneousHandsAndControllersTrackingMETA
+		xrResumEsimultaneousHandsAndControllersTrackingMETA_;
 
 	static PFN_xrCreateBodyTrackerFB xrCreateBodyTrackerFB_;
 	static PFN_xrDestroyBodyTrackerFB xrDestroyBodyTrackerFB_;

@@ -39,5 +39,6 @@ namespace HOL
 		extern OpenXR::OpenXrState OpenXrInstanceState;
 		extern std::string OpenXrRuntimeName;
 		extern bool IsVDXR;
+		extern bool IsOVR;
 	} // namespace display
 } // namespace HOL

@@ -11,5 +11,6 @@ namespace HOL::display
 	OpenXR::OpenXrState OpenXrInstanceState = OpenXR::OpenXrState::Uninitialized;
 	std::string OpenXrRuntimeName = "Unknown";
 	bool IsVDXR = false;
+	bool isOVR = false;
 
 } // namespace HOL::display

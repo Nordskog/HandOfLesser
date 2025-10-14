@@ -6,6 +6,10 @@ PFN_xrCreateHandTrackerEXT HandTrackingInterface::xrCreateHandTrackerEXT_ = null
 PFN_xrDestroyHandTrackerEXT HandTrackingInterface::xrDestroyHandTrackerEXT_ = nullptr;
 PFN_xrLocateHandJointsEXT HandTrackingInterface::xrLocateHandJointsEXT_ = nullptr;
 
+PFN_xrResumeSimultaneousHandsAndControllersTrackingMETA
+	HandTrackingInterface::xrResumEsimultaneousHandsAndControllersTrackingMETA_
+	= nullptr;
+
 XrPath LeftHandInteractionPath;
 XrPath RightHandInteractionPath;
 
@@ -134,4 +138,15 @@ float HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
 			 xrLocateBodyJointsFB_(bodyTracker, &locateInfo, &locations));
 
 	return locations.confidence;
+}
+
+void HandTrackingInterface::resumeMultimodal(xr::UniqueDynamicSession& session)
+{
+	XrSimultaneousHandsAndControllersTrackingResumeInfoMETA resumeInfo{
+		XR_TYPE_SIMULTANEOUS_HANDS_AND_CONTROLLERS_TRACKING_RESUME_INFO_META};
+
+	resumeInfo.next = nullptr;
+
+	handleXR("XrSystemSimultaneousHandsAndControllersPropertiesMETA_ call",
+			 xrResumEsimultaneousHandsAndControllersTrackingMETA_(session.get(), &resumeInfo));
 }
