@@ -13,5 +13,6 @@ namespace HOL::hacks
 		);
 
 	void fixOvrSessionStateRestriction();
+	void fixOvrMultimodalSupportCheck();
 	HMODULE getModule(HANDLE hProcess, const TCHAR moduleName[]);
 } // namespace HOL::hacks

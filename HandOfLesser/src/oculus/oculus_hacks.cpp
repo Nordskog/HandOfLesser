@@ -302,4 +302,49 @@ namespace HOL::hacks
 				   std::size(replacementInstruction));
 	}
 
+	/// <summary>
+	/// Modifies XR_EXT_hand_tracking.dll and inverts the clause that
+	/// does god only knows what and concludes that multimodal tracking is not supported
+	/// </summary>
+	void fixOvrMultimodalSupportCheck()
+	{
+		std::cout << "Patching OVR multimodal support check" << std::endl;
+
+		// Pattern of bytes surrounding the instructions we are looking for,.
+		// 0xFF denotes a wildcard
+		BYTE targetBytes[] = {
+			0x0F, 0x85, 0xFF, 0xFF, 0xFF, 0xFF,		  // JNZ rel32
+			0x44, 0x38, 0x25, 0xFF, 0xFF, 0xFF, 0xFF, // CMP byte ptr [RIP+disp32]
+			0x0F, 0x84, 0xFF, 0xFF, 0xFF, 0xFF,		  // JZ  rel32	// Target!
+			0x48, 0x8B, 0x0D, 0xFF, 0xFF, 0xFF, 0xFF, // MOV reg,[RIP+disp32]
+			0x48, 0x83, 0xC1, 0x08,					  // ADD rcx,8  (kept)
+			0x48, 0x8B, 0x01,						  // MOV rax,[rcx]
+			0x4C, 0x8B, 0xC3,						  // MOV r8,rbx
+			0x48, 0x8B, 0x55, 0x80,					  // MOV rdx,[rbp-0x80]  (kept)
+			0xFF, 0x50, 0x08						  // CALL qword ptr [reg+0x08] (kept)
+
+		};
+
+		// First byte we're modifying.
+		// Easier to copy-paste than keep counting the offset when I change things.
+		const BYTE targetInstruction[]
+			= {0x84, 0xFF, 0xFF, 0xFF, 0xFF, 0x48, 0x8B, 0x0D, 0xFF, 0xFF,
+			   0xFF, 0xFF, 0x48, 0x83, 0xC1, 0x08, 0x48, 0x8B, 0x01, 0x4C,
+			   0x8B, 0xC3, 0x48, 0x8B, 0x55, 0x80, 0xFF, 0x50, 0x08};
+
+		const BYTE replacementInstruction[] = {0x85}; // Byte we're replacing it with
+
+		HANDLE currentProcess = GetCurrentProcess();
+		HMODULE hModule = getModule(
+			currentProcess, _T("\XR_EXT_hand_tracking.dll")); // dll loaded into this memory address
+
+		applyPatch(hModule,
+				   targetBytes,
+				   std::size(targetBytes),
+				   targetInstruction,
+				   std::size(targetInstruction),
+				   replacementInstruction,
+				   std::size(replacementInstruction));
+	}
+
 } // namespace HOL::hacks
