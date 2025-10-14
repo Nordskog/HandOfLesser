@@ -16,6 +16,13 @@ namespace HOL
 								  * Eigen::AngleAxisf(z, Eigen::Vector3f::UnitZ()));
 	}
 
+	Eigen::Quaternionf quaternionFromEulerAnglesZYXDegrees(float x, float y, float z) 
+	{
+		 return Eigen::Quaternionf(Eigen::AngleAxisf(degreesToRadians(z), Eigen::Vector3f::UnitZ())
+		 						  * Eigen::AngleAxisf(degreesToRadians(y), Eigen::Vector3f::UnitY())
+		 						  * Eigen::AngleAxisf(degreesToRadians(x), Eigen::Vector3f::UnitX()));
+	} 
+
 	Eigen::Quaternionf quaternionFromEulerAnglesDegrees(float x, float y, float z)
 	{
 		return quaternionFromEulerAngles(
