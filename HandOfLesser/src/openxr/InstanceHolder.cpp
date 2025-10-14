@@ -229,6 +229,47 @@ void InstanceHolder::initExtensions()
 	}
 }
 
+void HOL::OpenXR::InstanceHolder::getHmdPosition()
+{
+	// TODO return actual value. Doesn't work in VD at least.
+
+	XrViewLocateInfo view_locate_info
+		= {.type = XR_TYPE_VIEW_LOCATE_INFO,
+		   .next = NULL,
+		   .viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,
+		   .displayTime = getTime(),
+		   .space = this->mStageSpace.get()};
+
+	// TODO: use actual view count
+	uint32_t view_count = 2;
+	std::vector<XrView> views(view_count);
+	for (uint32_t i = 0; i < view_count; i++)
+	{
+		views[i].type = XR_TYPE_VIEW;
+		views[i].next = NULL;
+	};
+
+	XrViewState view_state = {.type = XR_TYPE_VIEW_STATE, .next = NULL};
+	auto result = xrLocateViews(this->mSession->get(),
+								&view_locate_info,
+								&view_state,
+								view_count,
+								&view_count,
+								views.data());
+	if (handleXR("XrLocateViews", result))
+	{
+		printf("X: %.3f, Y: %.3f, Z: %.3f\n",
+			   views[0].pose.position.x,
+			   views[0].pose.position.y,
+			   views[0].pose.position.z);
+
+				printf("X: %.3f, Y: %.3f, Z: %.3f\n",
+			   views[1].pose.position.x,
+			   views[1].pose.position.y,
+			   views[1].pose.position.z);
+	}
+}
+
 void HOL::OpenXR::InstanceHolder::setupForegroundRendering()
 {
 	///////////////

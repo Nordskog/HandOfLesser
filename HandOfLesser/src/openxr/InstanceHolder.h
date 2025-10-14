@@ -29,6 +29,7 @@ namespace HOL::OpenXR
 		xr::UniqueDynamicSpace mStageSpace;
 		xr::DispatchLoaderDynamic mDispatcher;
 
+		void getHmdPosition();
 
 		// Foreground mode
 		int foregroundRender();
