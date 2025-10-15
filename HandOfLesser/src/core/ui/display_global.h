@@ -17,6 +17,7 @@ namespace HOL
 		bool active;
 		bool positionValid;
 		bool positionTracked;
+		int trackedJointCount = 0;
 		Eigen::Vector3f finalTranslationOffset;
 		Eigen::Vector3f finalOrientationOffset; // In degrees
 		PoseLocation rawPose;

@@ -110,6 +110,7 @@ namespace HOL
 			float linearVelocityMultiplier = 0.f;
 			float angularVelocityMultiplier = 0.f;
 			bool forceInactive = false;
+			int minTrackedJointsForQuality = 26; // Minimum tracked joints to consider tracking valid
 		};
 
 		struct HandPoseSettings

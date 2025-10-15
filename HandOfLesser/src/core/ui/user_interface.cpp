@@ -210,6 +210,9 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	ImGui::SameLine();
 	ImGui::Checkbox("Tracked", &HOL::display::HandTransform[side].positionTracked);
 
+	ImGui::Text("Tracked joints: %d / 26",
+				HOL::display::HandTransform[side].trackedJointCount);
+
 	ImGui::SeparatorText("Position");
 
 	ImGui::Text("Raw   : %.3f, %.3f, %.3f",

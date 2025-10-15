@@ -147,14 +147,26 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 																	this->mJointLocations,
 																	this->mJointVelocities);
 
+	// Count tracked joints IMMEDIATELY after fetching, before any fallback/modification logic
+	int trackedCount = 0;
+	for (int i = 0; i < XR_HAND_JOINT_COUNT_EXT; i++)
+	{
+		if ((this->mJointLocations[i].locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
+			== XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
+		{
+			trackedCount++;
+		}
+	}
+	HOL::display::HandTransform[this->mSide].trackedJointCount = trackedCount;
+
 	auto palmLocation = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 
 	// Orientation is not going to be set without position for hand tracking.
 	this->handPose.poseValid = (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
 							   == XR_SPACE_LOCATION_POSITION_VALID_BIT;
-	this->handPose.poseTracked
-		= (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
-		  == XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
+
+	// Use tracked joint count instead of just palm joint to determine tracking quality
+	this->handPose.poseTracked = (trackedCount >= HOL::Config.general.minTrackedJointsForQuality);
 
 	// Never stale if invalid?
 	this->handPose.poseStale = false;
