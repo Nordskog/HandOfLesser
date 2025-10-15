@@ -4,6 +4,7 @@
 #include "XrUtils.h"
 #include <thread>
 #include "src/core/ui/display_global.h"
+#include <meta_body_tracking_fidelity.h>
 
 using namespace HOL::OpenXR;
 
@@ -234,6 +235,12 @@ void InstanceHolder::initExtensions()
 		XR_EXT_HAND_TRACKING_EXTENSION_NAME,
 		XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME, // Used to get current time.
 		XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
+
+
+	if (hasExtension(this->mExtensions, XR_META_BODY_TRACKING_FIDELITY_EXTENSION_NAME))
+	{
+		this->mEnabledExtensions.push_back(XR_META_BODY_TRACKING_FIDELITY_EXTENSION_NAME);
+	}
 
 	if (hasExtension(this->mExtensions, XR_META_HEADSET_ID_EXTENSION_NAME))
 	{

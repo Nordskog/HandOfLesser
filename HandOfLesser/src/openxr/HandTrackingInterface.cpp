@@ -14,6 +14,9 @@ PFN_xrPauseSimultaneousHandsAndControllersTrackingMETA
 	HandTrackingInterface::xrPauseSimultaneousHandsAndControllersTrackingMETA_
 	= nullptr;
 
+PFN_xrRequestBodyTrackingFidelityMETA HandTrackingInterface::xrRequestBodyTrackingFidelityMETA_
+	= nullptr;
+
 XrPath LeftHandInteractionPath;
 XrPath RightHandInteractionPath;
 
@@ -71,6 +74,12 @@ void HandTrackingInterface::initFunctions(xr::UniqueDynamicInstance& instance)
 				 inst,
 				 "xrPauseSimultaneousHandsAndControllersTrackingMETA",
 				 (PFN_xrVoidFunction*)(&xrPauseSimultaneousHandsAndControllersTrackingMETA_)));
+
+	// IOBT
+	handleXR("xrRequestBodyTrackingFidelityMETA get",
+			 xrGetInstanceProcAddr(inst,
+								   "xrRequestBodyTrackingFidelityMETA",
+								   (PFN_xrVoidFunction*)(&xrRequestBodyTrackingFidelityMETA_)));
 }
 
 void HandTrackingInterface::createHandTracker(xr::UniqueDynamicSession& session,
@@ -170,4 +179,11 @@ void HandTrackingInterface::pauseMultimodal(xr::UniqueDynamicSession& session)
 
 	handleXR("xrPauseSimultaneousHandsAndControllersTrackingMETA call",
 			 xrPauseSimultaneousHandsAndControllersTrackingMETA_(session.get(), &pauseInfo));
+}
+
+void HandTrackingInterface::requestBodyTrackingFidelity(XrBodyTrackerFB bodyTracker,
+														XrBodyTrackingFidelityMETA fidelity)
+{
+	handleXR("xrRequestBodyTrackingFidelityMETA call",
+			 xrRequestBodyTrackingFidelityMETA_(bodyTracker, fidelity));
 }

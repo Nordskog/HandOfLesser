@@ -57,6 +57,7 @@ target_link_libraries(HandOfLesser PRIVATE
 	openxr_loader
 	openxr-hpp
 	oscpp
+	meta_openxr_preview
 	${OPENGL_LIBRARY}
 	${OPENVR_LIBRARIES}
 )

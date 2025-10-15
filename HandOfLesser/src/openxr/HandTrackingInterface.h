@@ -3,6 +3,7 @@
 #include <d3d11.h> // Why do you need this??
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr.hpp>
+#include <meta_body_tracking_fidelity.h>
 
 class HandTrackingInterface
 {
@@ -33,6 +34,10 @@ public:
 	static void resumeMultimodal(xr::UniqueDynamicSession& session);
 	static void pauseMultimodal(xr::UniqueDynamicSession& session);
 
+	// IOBT
+	static void requestBodyTrackingFidelity(XrBodyTrackerFB bodyTracker,
+											XrBodyTrackingFidelityMETA fidelity);
+
 private:
 	static PFN_xrCreateHandTrackerEXT xrCreateHandTrackerEXT_;
 	static PFN_xrDestroyHandTrackerEXT xrDestroyHandTrackerEXT_;
@@ -42,6 +47,8 @@ private:
 		xrResumEsimultaneousHandsAndControllersTrackingMETA_;
 	static PFN_xrPauseSimultaneousHandsAndControllersTrackingMETA
 		xrPauseSimultaneousHandsAndControllersTrackingMETA_;
+
+	static PFN_xrRequestBodyTrackingFidelityMETA xrRequestBodyTrackingFidelityMETA_;
 
 	static PFN_xrCreateBodyTrackerFB xrCreateBodyTrackerFB_;
 	static PFN_xrDestroyBodyTrackerFB xrDestroyBodyTrackerFB_;

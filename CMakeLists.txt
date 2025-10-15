@@ -28,6 +28,10 @@ include(GoogleTest)
 add_library(openxr-hpp INTERFACE)
 target_include_directories(openxr-hpp INTERFACE lib/openxr-hpp)
 
+# OpenXR extensions not part of the spec yet
+add_library(meta_openxr_preview INTERFACE)
+target_include_directories(meta_openxr_preview INTERFACE lib/meta_openxr_preview)
+
 # JSON
 add_library(json INTERFACE)
 target_include_directories(json INTERFACE lib/nlohmann)
