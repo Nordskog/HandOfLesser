@@ -86,6 +86,11 @@ XrBodyJointLocationFB* OpenXRBody::getLastJointLocations()
 	return this->mJointLocations;
 }
 
+XrBodyTrackerFB OpenXRBody::getBodyTrackerFB()
+{
+	return this->mBodyTracker;
+}
+
 void OpenXRBody::generatePalmPosition(HandSide side)
 {
 	XrBodyJointLocationFB& lastTwist

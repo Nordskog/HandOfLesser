@@ -586,10 +586,10 @@ void HOL::UserInterface::buildMain()
 	}
 
 	/////////////////
-	// Multimodal tracking
+	// Fancy features
 	/////////////////
 
-	ImGui::SeparatorText("Multimodal tracking");
+	ImGui::SeparatorText("Tracking features");
 
 	if (ImGui::Button("Resume Multimodal"))
 	{
@@ -601,6 +601,20 @@ void HOL::UserInterface::buildMain()
 	if (ImGui::Button("Pause Multimodal"))
 	{
 		HOL::HandOfLesserCore::Current->featuresManager.disableMultimodal();
+	}
+
+	ImGui::SeparatorText("Body tracking fidelity");
+
+	if (ImGui::Button("Request High Fidelity"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.requestHighFidelity();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Request Low Fidelity"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.requestLowFidelity();
 	}
 
 	/////////////////
