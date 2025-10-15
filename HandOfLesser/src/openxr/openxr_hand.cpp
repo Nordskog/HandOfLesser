@@ -171,32 +171,11 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	// Never stale if invalid?
 	this->handPose.poseStale = false;
 
-
-	// Basic freeze-fingers-if-too-close-to-face
-	// This doesn't work too well. Would honestly love to have 
-	// some confidence values, but even if they're a thing we're not 
-	// going to get them via VD.
-	// Edit: Body tracking has a confidence value, it's always 1.
-	XrBodyJointLocationFB& headLocation
-		= bodyTracker.getLastJointLocations()[XR_BODY_JOINT_HEAD_FB];
-	XrBodyJointLocationFB& neckLocation
-		= bodyTracker.getLastJointLocations()[XR_BODY_JOINT_NECK_FB];
-
-	float headDistance
-		= (toEigenVector(headLocation.pose.position)
-							  - toEigenVector(palmLocation.pose.position))
-			  .norm();
-	float neckDistance
-		= (toEigenVector(headLocation.pose.position) - toEigenVector(palmLocation.pose.position))
-			  .norm();
-	bool tooCloseToFace = headDistance < 0.300f;
-	tooCloseToFace |= neckDistance < 0.200f;
-
 	// Replace current data with past, but insert palm position from body tracker
-	// Airlink provides incorrect values for anything but handtracking without controllers, 
+	// Airlink provides incorrect values for anything but handtracking without controllers,
 	// so using the body trackign values actually breaks things.
 	bool alwaysUseUpperBodyTracking = true;	// Add to config later, probably does nothing though.
-	if ((bodyTracker.active) && (!this->handPose.active || tooCloseToFace))
+	if ((bodyTracker.active) && (!this->handPose.active))
 	{
 		XrBodyJointLocationFB& bodyPalmJoint
 			= bodyTracker.getLastJointLocations()[this->mSide == HandSide::LeftHand
