@@ -51,16 +51,9 @@ namespace HOL::hacks
 		HANDLE currentProcess = GetCurrentProcess();
 
 		// Location of target byte relative to first byte of search pattern
-		int targetOffset = 0;
-		for (int i = 0; i < targetByteSize; i++)
-		{
-			if (targetBytes[i] == targetInstruction[0]
-				&& targetBytes[i + 1] == targetInstruction[1])
-			{
-				targetOffset = i;
-				break;
-			}
-		}
+
+
+		int targetOffset = targetByteSize - targetInstructionSize;
 
 		// Look up module size to limit search range
 		MODULEINFO moduleInfo;
@@ -183,9 +176,8 @@ namespace HOL::hacks
 			{
 				targetAddress = bestResultAddress + targetOffset;
 
-				if (*bestResultAddress == targetInstruction[0])
+				if (*targetAddress == targetInstruction[0])
 				{
-					targetAddress = bestResultAddress;
 					found = true;
 
 					std::cout << "Incomplete match but found expected instruction. Fingers crossed."
