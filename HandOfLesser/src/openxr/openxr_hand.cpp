@@ -174,8 +174,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	// Replace current data with past, but insert palm position from body tracker
 	// Airlink provides incorrect values for anything but handtracking without controllers,
 	// so using the body trackign values actually breaks things.
-	bool alwaysUseUpperBodyTracking = true;	// Add to config later, probably does nothing though.
-	if ((bodyTracker.active) && (!this->handPose.active))
+	bool alwaysUseUpperBodyTracking = false;	// Add to config later, probably does nothing though.
+	if ((bodyTracker.active) && (!this->handPose.poseTracked))
 	{
 		XrBodyJointLocationFB& bodyPalmJoint
 			= bodyTracker.getLastJointLocations()[this->mSide == HandSide::LeftHand
