@@ -31,54 +31,41 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	generateMissingPalmJoint(HandSide::LeftHand);
 	generateMissingPalmJoint(HandSide::RightHand);
 
-	// Terrible but good enough for now
-	auto& torsoJoint = this->mJointLocations[XR_BODY_JOINT_CHEST_FB];
-	auto& prevTorsoJoint = this->mPreviousJointLocations[XR_BODY_JOINT_CHEST_FB];
-
-	auto& wristJointLeft = this->mJointLocations[XR_BODY_JOINT_LEFT_HAND_WRIST_FB];
-	auto& prevWristJointLeft = this->mPreviousJointLocations[XR_BODY_JOINT_LEFT_HAND_WRIST_FB];
-
-	auto& wristJointRight = this->mJointLocations[XR_BODY_JOINT_RIGHT_HAND_WRIST_FB];
-	auto& prevWristJointRight = this->mPreviousJointLocations[XR_BODY_JOINT_RIGHT_HAND_WRIST_FB];
-
-	// VDXR workaround
+	// Preserve wrist rotation when hand tracking is lost
+	// Use metacarpal tracking state to detect loss - fingers remain tracked until fully lost
+	// VDXR marks wrist onwards as tracked when tracked, rest untracked.
+	// Oculus only marks metacarpal and onwards.
 	{
-		// Ensure data has been updated, torso should always change
-		if (torsoJoint.pose.position.x != prevTorsoJoint.pose.position.x
-			&& torsoJoint.pose.position.y != prevTorsoJoint.pose.position.y)
+		// Left hand
+		auto& leftMetacarpal = mJointLocations[XR_BODY_JOINT_LEFT_HAND_MIDDLE_METACARPAL_FB];
+		if (leftMetacarpal.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 		{
-			// VD freezes values starting from wrist when hand tracking is lost.
-			// We base controller hand/controller position on palm position last wrist transform
-			// and current wrist twist bone transform to calculate where it should be.
-			if (wristJointLeft.pose.position.x == prevWristJointLeft.pose.position.x
-				&& wristJointLeft.pose.position.y == prevWristJointLeft.pose.position.y)
-			{
-				// std::printf("Wrist is GONE!!\n");
-				generatePalmPosition(HandSide::LeftHand);
-			}
-			else
-			{
-				// Only ones we care about.
-				mLastWithTrackedHands[XR_BODY_JOINT_LEFT_HAND_PALM_FB]
-					= mJointLocations[XR_BODY_JOINT_LEFT_HAND_PALM_FB];
-				mLastWithTrackedHands[XR_BODY_JOINT_LEFT_ARM_LOWER_FB]
-					= mJointLocations[XR_BODY_JOINT_LEFT_ARM_LOWER_FB];
-			}
+			// Hand tracking is active - save current palm and forearm positions
+			mLastWithTrackedHands[XR_BODY_JOINT_LEFT_HAND_PALM_FB]
+				= mJointLocations[XR_BODY_JOINT_LEFT_HAND_PALM_FB];
+			mLastWithTrackedHands[XR_BODY_JOINT_LEFT_ARM_LOWER_FB]
+				= mJointLocations[XR_BODY_JOINT_LEFT_ARM_LOWER_FB];
+		}
+		else
+		{
+			// Hand tracking lost - preserve wrist rotation relative to forearm
+			preserveWristRotation(HandSide::LeftHand);
+		}
 
-			if (wristJointRight.pose.position.x == prevWristJointRight.pose.position.x
-				&& wristJointRight.pose.position.y == prevWristJointRight.pose.position.y)
-			{
-				// std::printf("Wrist is GONE!!\n");
-				generatePalmPosition(HandSide::RightHand);
-			}
-			else
-			{
-				// Only ones we care about.
-				mLastWithTrackedHands[XR_BODY_JOINT_RIGHT_HAND_PALM_FB]
-					= mJointLocations[XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
-				mLastWithTrackedHands[XR_BODY_JOINT_RIGHT_ARM_LOWER_FB]
-					= mJointLocations[XR_BODY_JOINT_RIGHT_ARM_LOWER_FB];
-			}
+		// Right hand
+		auto& rightMetacarpal = mJointLocations[XR_BODY_JOINT_RIGHT_HAND_MIDDLE_METACARPAL_FB];
+		if (rightMetacarpal.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
+		{
+			// Hand tracking is active - save current palm and forearm positions
+			mLastWithTrackedHands[XR_BODY_JOINT_RIGHT_HAND_PALM_FB]
+				= mJointLocations[XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
+			mLastWithTrackedHands[XR_BODY_JOINT_RIGHT_ARM_LOWER_FB]
+				= mJointLocations[XR_BODY_JOINT_RIGHT_ARM_LOWER_FB];
+		}
+		else
+		{
+			// Hand tracking lost - preserve wrist rotation relative to forearm
+			preserveWristRotation(HandSide::RightHand);
 		}
 	}
 
@@ -96,7 +83,7 @@ XrBodyTrackerFB OpenXRBody::getBodyTrackerFB()
 	return this->mBodyTracker;
 }
 
-void OpenXRBody::generatePalmPosition(HandSide side)
+void OpenXRBody::preserveWristRotation(HandSide side)
 {
 	XrBodyJointLocationFB& lastTwist
 		= this->mLastWithTrackedHands[side == HandSide::LeftHand
@@ -230,9 +217,7 @@ void OpenXRBody::generateMissingPalmJoint(HandSide side)
 	palm.pose.orientation.y = palmRot.y();
 	palm.pose.orientation.z = palmRot.z();
 
-	// Mark as valid and tracked
-	palm.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT
-						 | XR_SPACE_LOCATION_POSITION_TRACKED_BIT
-						 | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT;
+	// Inherit tracking state directly from metacarpal joint
+	palm.locationFlags = metacarpal.locationFlags;
 }
 

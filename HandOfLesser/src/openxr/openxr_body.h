@@ -27,7 +27,7 @@ private:
 								const Eigen::Vector3f& relativePos,
 								const Eigen::Quaternionf& relativeRot);
 
-	void generatePalmPosition(HandSide side);
+	void preserveWristRotation(HandSide side);
 	void generateMissingPalmJoint(HandSide side);
 
 	XrBodyJointLocationFB mLastWithTrackedHands[XR_BODY_JOINT_COUNT_FB];
