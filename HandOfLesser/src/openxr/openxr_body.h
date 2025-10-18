@@ -28,6 +28,7 @@ private:
 								const Eigen::Quaternionf& relativeRot);
 
 	void generatePalmPosition(HandSide side);
+	void generateMissingPalmJoint(HandSide side);
 
 	XrBodyJointLocationFB mLastWithTrackedHands[XR_BODY_JOINT_COUNT_FB];
 
