@@ -24,6 +24,7 @@ namespace HOL
 		if (mInstanceHolder && mInstanceHolder->mSession)
 		{
 			HandTrackingInterface::resumeMultimodal(mInstanceHolder->mSession);
+			mMultimodalEnabled = true;
 		}
 	}
 
@@ -32,6 +33,7 @@ namespace HOL
 		if (mInstanceHolder && mInstanceHolder->mSession)
 		{
 			HandTrackingInterface::pauseMultimodal(mInstanceHolder->mSession);
+			mMultimodalEnabled = false;
 		}
 	}
 

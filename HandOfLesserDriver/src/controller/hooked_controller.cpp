@@ -1,9 +1,8 @@
-#pragma once
-
 #include "src/core/hand_of_lesser.h"
 #include "hooked_controller.h"
 #include "controller_common.h"
 #include "src/hooking/hooks.h"
+#include <driverlog.h>
 
 namespace HOL
 {
@@ -82,8 +81,8 @@ namespace HOL
 			// because vrchat is stupid and ignores all the status information steamvr provides.
 			const auto& pose
 				= (this->mLastTransformPacket.valid || !config.steamvr.jitterLastPoseOnTrackingLoss)
-								   ? this->mLastPose
-								   : HOL::ControllerCommon::addJitter(this->mLastPose);
+					  ? this->mLastPose
+					  : HOL::ControllerCommon::addJitter(this->mLastPose);
 
 			HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
 				this->mHookedHost, this->mDeviceId, pose, sizeof(vr::DriverPose_t));
@@ -105,6 +104,12 @@ namespace HOL
 	// Can, not should.
 	bool HookedController::canPossess()
 	{
+		// Only controllers should ever be possessed - never HMD or other tracked devices
+		if (mDeviceClass != vr::TrackedDeviceClass_Controller)
+		{
+			return false;
+		}
+
 		// Whether or not the pose is valid pretty much.
 		return this->mLastTransformPacket.valid;
 	}
@@ -112,8 +117,49 @@ namespace HOL
 	// Assuming other external conditions also say it should.
 	bool HookedController::shouldPossess()
 	{
+		// Only controllers should ever be possessed - never HMD or other tracked devices
+		if (mDeviceClass != vr::TrackedDeviceClass_Controller)
+		{
+			return false;
+		}
+
+		// When using multimodal mode on OVR, use position-based detection
+		if (HOL::HandOfLesser::Current->mIsOVR && HOL::HandOfLesser::Current->mIsMultimodalEnabled)
+		{
+			// Get diagnostic info
+			HandSide side = this->getSide();
+			bool bodyTrackingValid = (side == HandSide::LeftHand)
+										 ? HOL::HandOfLesser::Current->mBodyTrackingLeftHandValid
+										 : HOL::HandOfLesser::Current->mBodyTrackingRightHandValid;
+
+			// Get distance for logging
+			float distance = HOL::HandOfLesser::Current->getControllerToHandDistance(this);
+			bool isHeld = HOL::HandOfLesser::Current->isControllerHeldByPosition(this);
+
+			// Possess when controller is NOT held (hands are free)
+			bool shouldPossess = !isHeld;
+
+			// Log state changes with diagnostics. TODO: replace with UI display
+			if (shouldPossess != mLastPossessionState)
+			{
+				const char* newState
+					= shouldPossess ? "POSSESSING (hands free)" : "RELEASED (controller held)";
+				DriverLog("[Multimodal LEFT] %s (distance: %.3fm, threshold: 0.10m, isHeld: "
+							"%d, bodyValid: %d, ctrlValid: %d)",
+							newState,
+							distance,
+							isHeld,
+							bodyTrackingValid,
+							mLastOriginalPoseValid);
+				mLastPossessionState = shouldPossess;
+			}		
+
+			return shouldPossess;
+		}
+
+		// Original logic for non-multimodal mode
 		bool canPoss = canPossess();
-		if (!mLastOriginalPoseValid && canPoss)	// All this needs to be reconsidered.
+		if (!mLastOriginalPoseValid && canPoss) // All this needs to be reconsidered.
 		{
 			// We want to continue possessing while the real controllers
 			// are inactive, so it doesn't immediatley jump to their pose instead.
@@ -137,9 +183,10 @@ namespace HOL
 		// Ideally we would ask OpenXR for this, but we cannot do this properly
 		// in headless mode with VDXR, and it also emulates the controllers using handtracking.
 		// Our conditions are therefor:
-		// # if hands are tracked OR if original pose invalid. 
-		return this->mLastTransformPacket.tracked || (canPoss && (!mLastOriginalPoseValid || originalSubmitStale))
-			   || this->mValidWhileOriginalInvalid;	
+		// # if hands are tracked OR if original pose invalid.
+		return this->mLastTransformPacket.tracked
+			   || (canPoss && (!mLastOriginalPoseValid || originalSubmitStale))
+			   || this->mValidWhileOriginalInvalid;
 	}
 
 	void HookedController::setSide(HandSide side)
@@ -158,7 +205,7 @@ namespace HOL
 		// also have no way of telling which side they've been assigned to.
 		// Best you can do is ask SteamVR what the current controller for whichever side
 		// is, and check if that corresponds to any given controller.
-		
+
 		// Get the role
 		auto props = vr::VRProperties();
 		vr::PropertyContainerHandle_t container
@@ -167,7 +214,7 @@ namespace HOL
 		// Now we can get the role ( except for vive wands maybe )
 		vr::ETrackedControllerRole role = (vr::ETrackedControllerRole)props->GetInt32Property(
 			container, vr::Prop_ControllerRoleHint_Int32);
-			
+
 		HandSide side = HandSide::HandSide_MAX;
 		switch (role)
 		{

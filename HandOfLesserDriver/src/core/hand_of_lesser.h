@@ -16,8 +16,8 @@ namespace HOL
 		void addEmulatedControllers();
 		void removeEmulatedControllers();
 		HookedController* addHookedController(uint32_t id,
-								 vr::IVRServerDriverHost* host,
-								 vr::ITrackedDeviceServerDriver* driver,
+											  vr::IVRServerDriverHost* host,
+											  vr::ITrackedDeviceServerDriver* driver,
 											  vr::PropertyContainerHandle_t propertyContainer);
 
 		void removeDuplicateDevices();
@@ -43,13 +43,22 @@ namespace HOL
 
 		void requestEstimateControllerSide();
 
+		// Controller detection via position comparison
+		bool isControllerHeldByPosition(HookedController* controller);
+		float getControllerToHandDistance(HookedController* controller);
+
+		// Body tracking hand pose data (for UI display)
+		bool mIsOVR = false;
+		bool mIsMultimodalEnabled = false;
+		bool mBodyTrackingLeftHandValid = false;
+		bool mBodyTrackingRightHandValid = false;
+
 	private:
 		void ReceiveDataThread();
 		void estimateControllerSide();
 
 		bool mActive;
 		int mControllerSideEstimationAttemptCount = 0;
-
 
 		bool mEstimateControllerSideWhenPositionValid = false;
 
@@ -60,5 +69,9 @@ namespace HOL
 
 		std::unique_ptr<EmulatedControllerDriver> mEmulatedControllers[2];
 		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
+
+		// Body tracking hand positions for controller detection
+		HOL::PoseLocation mBodyTrackingLeftHandPose;
+		HOL::PoseLocation mBodyTrackingRightHandPose;
 	};
 } // namespace HOL

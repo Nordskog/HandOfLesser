@@ -14,6 +14,7 @@ namespace HOL
 		FloatInput = 601,
 		BoolInput = 602,
 		SkeletalInput = 603,
+		BodyTrackingHandPose = 604,
 		Settings = 700
 	};
 
@@ -75,15 +76,32 @@ namespace HOL
 			locations[SteamVR::HandSkeletonBone::eBone_Count]; // HandSkeletonBone::eBone_Count
 	};
 
+	struct BodyTrackingHandPosePacket
+	{
+		NativePacketType packetType = NativePacketType::BodyTrackingHandPose;
+
+		// Body tracking hand positions (wrist positions from body tracking)
+		HOL::PoseLocation leftHandPose;
+		HOL::PoseLocation rightHandPose;
+
+		// Runtime information
+		bool isOVR = false;				  // Is Oculus runtime active
+		bool isMultimodalEnabled = false; // Is multimodal tracking enabled
+
+		// Validity flags
+		bool leftHandValid = false;
+		bool rightHandValid = false;
+	};
+
 	// Mimics vr::DriverPose_t, but only contains the bits we care about.
 	// Subject to change.
 	// include packet type in packet itself so we can just memcpy the whole thing
 	struct HandTransformPacket
 	{
 		NativePacketType packetType = NativePacketType::HandTransform;
-		bool active = false;	// Got a result
-		bool valid = false;		// Is a proper pose of some kind
-		bool tracked = false;	// Is directly tracked instead of inferred or frozen
+		bool active = false;  // Got a result
+		bool valid = false;	  // Is a proper pose of some kind
+		bool tracked = false; // Is directly tracked instead of inferred or frozen
 		bool stale = false;
 		HOL::HandSide side;
 		HOL::PoseLocation location;

@@ -11,15 +11,13 @@ namespace HOL
 	public:
 		HookedController(uint32_t id,
 						 HandSide side,
-						 vr::IVRServerDriverHost* host, 
+						 vr::IVRServerDriverHost* host,
 						 vr::ITrackedDeviceServerDriver* driver,
-						 vr::PropertyContainerHandle_t propertyContainer
-			);
+						 vr::PropertyContainerHandle_t propertyContainer);
 
 		void lateInit(std::string serial,
 					  vr::ETrackedDeviceClass deviceClass,
 					  vr::ETrackedControllerRole role);
-
 
 		void UpdatePose(HOL::HandTransformPacket* packet) override;
 		void UpdateInput(HOL::ControllerInputPacket* packet) override;
@@ -54,7 +52,6 @@ namespace HOL
 		// Reset every time there's an update, if we are possessing or offsetting.
 		int32_t framesSinceLastPoseUpdate = 0;
 
-
 	private:
 		vr::DriverPose_t mLastPose;
 
@@ -67,5 +64,9 @@ namespace HOL
 		vr::IVRServerDriverHost* mHookedHost;
 		vr::ITrackedDeviceServerDriver* mHookedDriver;
 		uint32_t mDeviceId;
+
+		// State tracking for logging
+		bool mLastPossessionState = false;
+		int32_t mFramesSinceLastDistanceLog = 0;
 	};
-}
+} // namespace HOL

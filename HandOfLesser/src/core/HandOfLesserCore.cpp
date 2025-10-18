@@ -22,7 +22,8 @@ void HandOfLesserCore::init(int serverPort)
 	HOL::display::OpenXrRuntimeName = runtimeName;
 
 	std::cout << "OpenXR SDK version: " << xr::Version::current().major() << "."
-			  << xr::Version::current().minor() << "." << xr::Version::current().patch() <<  std::endl;
+			  << xr::Version::current().minor() << "." << xr::Version::current().patch()
+			  << std::endl;
 
 	if (runtimeName.find("virtualdesktop") != std::string::npos)
 	{
@@ -56,7 +57,7 @@ void HandOfLesserCore::init(int serverPort)
 			// As of writing, the only other supported runtime is VDXR
 			if (this->mInstanceHolder.fullForegroundMode())
 			{
-				std::cout << "Running in full foreground mode for testing only!" << std::endl; 
+				std::cout << "Running in full foreground mode for testing only!" << std::endl;
 			}
 
 			if (HOL::display::IsOVR)
@@ -65,7 +66,6 @@ void HandOfLesserCore::init(int serverPort)
 				HOL::hacks::fixOvrSessionStateRestriction();
 				HOL::hacks::fixOvrMultimodalSupportCheck();
 			}
-
 		}
 	}
 	this->mTransport.init(serverPort);
@@ -157,9 +157,10 @@ void HandOfLesserCore::doOpenXRStuff()
 		this->mInstanceHolder.foregroundRender();
 	}
 
-	//this->mInstanceHolder.getHmdPosition();
+	// this->mInstanceHolder.getHmdPosition();
 	this->mBodyTracking.updateBody(this->mInstanceHolder.mStageSpace, time);
-	this->mHandTracking.updateHands(this->mInstanceHolder.mStageSpace, time, this->mBodyTracking.getBodyTracker());
+	this->mHandTracking.updateHands(
+		this->mInstanceHolder.mStageSpace, time, this->mBodyTracking.getBodyTracker());
 	this->mHandTracking.updateInputs();
 
 	this->sendUpdate();
@@ -181,7 +182,6 @@ void HOL::HandOfLesserCore::sendOscData()
 			this->mHandTracking.getHandPose(HandSide::LeftHand),
 			this->mHandTracking.getHandPose(HandSide::RightHand));
 	}
-
 
 	size_t size = 0;
 
@@ -266,13 +266,23 @@ void HandOfLesserCore::sendUpdate()
 		for (int i = 0; i < HandSide_MAX; i++)
 		{
 			OpenXRHand& hand = this->mHandTracking.getHand((HandSide)i);
-			if (hand.handPose.poseValid)	// Only update if valid
+			if (hand.handPose.poseValid) // Only update if valid
 			{
 				SkeletalPacket& packet = this->mSkeletalInput.getSkeletalPacket(hand, (HandSide)i);
 				this->mTransport.send(9006, (char*)&packet, sizeof(HOL::SkeletalPacket));
 			}
-
 		}
+	}
+
+	// Send body tracking hand positions for controller detection in driver
+	if (HOL::display::IsOVR
+		&& Config.handPose.controllerMode == ControllerMode::HookedControllerMode)
+	{
+		BodyTrackingHandPosePacket bodyPosePacket
+			= this->mBodyTracking.getBodyTrackingHandPosePacket(
+				true, featuresManager.isMultimodalEnabled());
+		this->mTransport.send(
+			9006, (char*)&bodyPosePacket, sizeof(HOL::BodyTrackingHandPosePacket));
 	}
 
 	SteamVR::SteamVRInput::Current->clear();

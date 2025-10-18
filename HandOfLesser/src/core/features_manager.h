@@ -22,8 +22,11 @@ namespace HOL
 		void requestHighFidelity();
 		void requestLowFidelity();
 
+		bool isMultimodalEnabled() const { return mMultimodalEnabled; }
+
 	private:
 		OpenXR::InstanceHolder* mInstanceHolder;
 		OpenXR::BodyTracking* mBodyTracking;
+		bool mMultimodalEnabled = false;
 	};
 } // namespace HOL

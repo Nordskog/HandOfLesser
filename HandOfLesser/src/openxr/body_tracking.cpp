@@ -41,3 +41,33 @@ OpenXRBody& HOL::OpenXR::BodyTracking::getBodyTracker()
 {
 	return mBodyTracker;
 }
+
+HOL::BodyTrackingHandPosePacket
+HOL::OpenXR::BodyTracking::getBodyTrackingHandPosePacket(bool isOVR, bool isMultimodalEnabled)
+{
+	BodyTrackingHandPosePacket packet;
+	packet.isOVR = isOVR;
+	packet.isMultimodalEnabled = isMultimodalEnabled;
+
+	auto* bodyJoints = mBodyTracker.getLastJointLocations();
+
+	// Left hand wrist (body tracking index 19)
+	auto& leftWrist = bodyJoints[XR_BODY_JOINT_LEFT_HAND_WRIST_FB];
+	if (leftWrist.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+	{
+		packet.leftHandPose.position = OpenXR::toEigenVector(leftWrist.pose.position);
+		packet.leftHandPose.orientation = OpenXR::toEigenQuaternion(leftWrist.pose.orientation);
+		packet.leftHandValid = true;
+	}
+
+	// Right hand wrist (body tracking index 45)
+	auto& rightWrist = bodyJoints[XR_BODY_JOINT_RIGHT_HAND_WRIST_FB];
+	if (rightWrist.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+	{
+		packet.rightHandPose.position = OpenXR::toEigenVector(rightWrist.pose.position);
+		packet.rightHandPose.orientation = OpenXR::toEigenQuaternion(rightWrist.pose.orientation);
+		packet.rightHandValid = true;
+	}
+
+	return packet;
+}

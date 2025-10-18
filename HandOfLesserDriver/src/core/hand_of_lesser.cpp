@@ -105,6 +105,20 @@ namespace HOL
 					break;
 				}
 
+				case HOL::NativePacketType::BodyTrackingHandPose: {
+					HOL::BodyTrackingHandPosePacket* packet
+						= (HOL::BodyTrackingHandPosePacket*)rawPacket;
+
+					this->mIsOVR = packet->isOVR;
+					this->mIsMultimodalEnabled = packet->isMultimodalEnabled;
+					this->mBodyTrackingLeftHandPose = packet->leftHandPose;
+					this->mBodyTrackingRightHandPose = packet->rightHandPose;
+					this->mBodyTrackingLeftHandValid = packet->leftHandValid;
+					this->mBodyTrackingRightHandValid = packet->rightHandValid;
+
+					break;
+				}
+
 				default: {
 					// Invalid packet type!
 				}
@@ -135,7 +149,6 @@ namespace HOL
 			// We only add controllers once, and then enable/disable them.
 			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(true);
 			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(true);
-
 		}
 		else
 		{
@@ -176,7 +189,6 @@ namespace HOL
 		}
 	}
 
-	
 	void HandOfLesser::removeEmulatedControllers()
 	{
 		// If no pointer, then we never even added the controllers.
@@ -186,7 +198,6 @@ namespace HOL
 			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(false);
 			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(false);
 		}
-
 	}
 
 	HookedController*
@@ -635,5 +646,55 @@ namespace HOL
 		// Our controller devices will have already deactivated. Let's now destroy them.
 		this->mEmulatedControllers[HandSide::LeftHand].reset();
 		this->mEmulatedControllers[HandSide::RightHand].reset();
+	}
+
+	float HandOfLesser::getControllerToHandDistance(HookedController* controller)
+	{
+		if (controller == nullptr)
+		{
+			return (std::numeric_limits<float>::max)();
+		}
+
+		// Get controller side
+		HandSide side = controller->getSide();
+		if (side == HandSide::HandSide_MAX)
+		{
+			return (std::numeric_limits<float>::max)();
+		}
+
+		// Check if we have valid body tracking data for this hand
+		bool handValid = (side == HandSide::LeftHand) ? mBodyTrackingLeftHandValid
+													  : mBodyTrackingRightHandValid;
+		if (!handValid)
+		{
+			return (std::numeric_limits<float>::max)();
+		}
+
+		// Get body tracking hand pose
+		HOL::PoseLocation& bodyHandPose
+			= (side == HandSide::LeftHand) ? mBodyTrackingLeftHandPose : mBodyTrackingRightHandPose;
+
+		// Check if controller pose is valid
+		if (!controller->mLastOriginalPoseValid)
+		{
+			return (std::numeric_limits<float>::max)();
+		}
+
+		// Convert positions to Eigen vectors
+		Eigen::Vector3f controllerPos
+			= HOL::ovrVectorToEigen(controller->lastOriginalPose.vecPosition);
+		Eigen::Vector3f bodyHandPos = bodyHandPose.position;
+
+		// Calculate and return distance
+		return (controllerPos - bodyHandPos).norm();
+	}
+
+	bool HandOfLesser::isControllerHeldByPosition(HookedController* controller)
+	{
+		const float HELD_THRESHOLD = 0.2f; // 10cm
+
+		float distance = getControllerToHandDistance(controller);
+
+		return distance < HELD_THRESHOLD;
 	}
 } // namespace HOL
