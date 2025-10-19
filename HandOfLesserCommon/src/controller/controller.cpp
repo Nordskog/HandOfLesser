@@ -31,7 +31,7 @@ namespace HOL
 		switch (type)
 		{
 			case ControllerOffsetPreset::RoughyVRChatHand: {
-				return {Eigen::Vector3f(-0.019, -0.022, 0.003),
+				return {Eigen::Vector3f(-0.019, -0.014, -0.006),
 						Eigen::Vector3f(169.963f, 175.076f, -179.130f)};
 			}
 
