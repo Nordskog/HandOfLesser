@@ -34,6 +34,8 @@ namespace HOL
 		void updateSideFromRole();
 
 		void setLastOriginalPoseState(bool valid);
+		bool isHeld();
+		Eigen::Vector3f getWorldPosition();
 
 		vr::PropertyContainerHandle_t propertyContainer = 0;
 		vr::ETrackedControllerRole role = vr::ETrackedControllerRole::TrackedControllerRole_Max;
@@ -54,6 +56,7 @@ namespace HOL
 
 	private:
 		vr::DriverPose_t mLastPose;
+		bool mLastHeldState = true; // Controllers not added until held, so should be true on activate
 
 		HOL::HandTransformPacket mLastTransformPacket;
 		HOL::ControllerInputPacket mLastInputPacket;

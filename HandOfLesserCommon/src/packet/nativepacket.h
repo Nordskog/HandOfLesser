@@ -14,7 +14,7 @@ namespace HOL
 		FloatInput = 601,
 		BoolInput = 602,
 		SkeletalInput = 603,
-		BodyTrackingHandPose = 604,
+		MultimodalPose = 604,
 		Settings = 700
 	};
 
@@ -76,11 +76,11 @@ namespace HOL
 			locations[SteamVR::HandSkeletonBone::eBone_Count]; // HandSkeletonBone::eBone_Count
 	};
 
-	struct BodyTrackingHandPosePacket
+	struct MultimodalPosePacket
 	{
-		NativePacketType packetType = NativePacketType::BodyTrackingHandPose;
+		NativePacketType packetType = NativePacketType::MultimodalPose;
 
-		// Body tracking hand positions (wrist positions from body tracking)
+		// Controller pose, transformed from palm position
 		HOL::PoseLocation leftHandPose;
 		HOL::PoseLocation rightHandPose;
 
@@ -88,9 +88,9 @@ namespace HOL
 		bool isOVR = false;				  // Is Oculus runtime active
 		bool isMultimodalEnabled = false; // Is multimodal tracking enabled
 
-		// Validity flags
-		bool leftHandValid = false;
-		bool rightHandValid = false;
+		// Tracked flags
+		bool leftHandTracked = false;
+		bool rightHandTracked = false;
 	};
 
 	// Mimics vr::DriverPose_t, but only contains the bits we care about.

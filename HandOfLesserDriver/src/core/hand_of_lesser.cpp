@@ -105,16 +105,8 @@ namespace HOL
 					break;
 				}
 
-				case HOL::NativePacketType::BodyTrackingHandPose: {
-					HOL::BodyTrackingHandPosePacket* packet
-						= (HOL::BodyTrackingHandPosePacket*)rawPacket;
-
-					this->mIsOVR = packet->isOVR;
-					this->mIsMultimodalEnabled = packet->isMultimodalEnabled;
-					this->mBodyTrackingLeftHandPose = packet->leftHandPose;
-					this->mBodyTrackingRightHandPose = packet->rightHandPose;
-					this->mBodyTrackingLeftHandValid = packet->leftHandValid;
-					this->mBodyTrackingRightHandValid = packet->rightHandValid;
+				case HOL::NativePacketType::MultimodalPose: {
+					mLastMultimodalPosePacket = *(HOL::MultimodalPosePacket*)rawPacket;
 
 					break;
 				}
@@ -662,17 +654,19 @@ namespace HOL
 			return (std::numeric_limits<float>::max)();
 		}
 
-		// Check if we have valid body tracking data for this hand
-		bool handValid = (side == HandSide::LeftHand) ? mBodyTrackingLeftHandValid
-													  : mBodyTrackingRightHandValid;
+		auto& multimodal = HOL::HandOfLesser::Current->mLastMultimodalPosePacket;
+
+		// You would think upper-body tracking would be used to augment controller tracker
+		// when it gives up tracking the controller, but no. Likewise, Controller rotation, which
+		// remains available, is not used to augment the body tracking.
+		// For this reason the two go out of sync when this happens, but at least they
+		// mark the hand as not being tracked anymore.
+		bool handValid = (side == HandSide::LeftHand) ? multimodal.leftHandTracked
+													  : multimodal.rightHandTracked;
 		if (!handValid)
 		{
 			return (std::numeric_limits<float>::max)();
 		}
-
-		// Get body tracking hand pose
-		HOL::PoseLocation& bodyHandPose
-			= (side == HandSide::LeftHand) ? mBodyTrackingLeftHandPose : mBodyTrackingRightHandPose;
 
 		// Check if controller pose is valid
 		if (!controller->mLastOriginalPoseValid)
@@ -680,21 +674,11 @@ namespace HOL
 			return (std::numeric_limits<float>::max)();
 		}
 
-		// Convert positions to Eigen vectors
-		Eigen::Vector3f controllerPos
-			= HOL::ovrVectorToEigen(controller->lastOriginalPose.vecPosition);
-		Eigen::Vector3f bodyHandPos = bodyHandPose.position;
+		// Get body tracking hand pose
+		HOL::PoseLocation& bodyHandPose
+			= (side == HandSide::LeftHand) ? multimodal.leftHandPose : multimodal.rightHandPose;
 
 		// Calculate and return distance
-		return (controllerPos - bodyHandPos).norm();
-	}
-
-	bool HandOfLesser::isControllerHeldByPosition(HookedController* controller)
-	{
-		const float HELD_THRESHOLD = 0.2f; // 10cm
-
-		float distance = getControllerToHandDistance(controller);
-
-		return distance < HELD_THRESHOLD;
+		return (controller->getWorldPosition() - bodyHandPose.position).norm();
 	}
 } // namespace HOL

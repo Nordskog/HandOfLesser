@@ -3,6 +3,7 @@
 #include "controller_common.h"
 #include "src/hooking/hooks.h"
 #include <driverlog.h>
+#include <src/utils/math_utils.h>
 
 namespace HOL
 {
@@ -101,6 +102,25 @@ namespace HOL
 		}
 	}
 
+	bool HookedController::isHeld()
+	{
+		const float HELD_THRESHOLD = 0.15f; // 10cm
+
+		// TODO: Require a few consecutive frames to make switch
+		float distance = HOL::HandOfLesser::Current->getControllerToHandDistance(this);
+
+		if (distance > 99999) // Invalid
+		{
+			// If we don't know, we don't know.
+			// Retain current value.
+			return mLastHeldState;
+		}
+
+		mLastHeldState = distance < HELD_THRESHOLD;
+
+		return mLastHeldState;
+	}
+
 	// Can, not should.
 	bool HookedController::canPossess()
 	{
@@ -123,37 +143,19 @@ namespace HOL
 			return false;
 		}
 
-		// When using multimodal mode on OVR, use position-based detection
-		if (HOL::HandOfLesser::Current->mIsOVR && HOL::HandOfLesser::Current->mIsMultimodalEnabled)
-		{
-			// Get diagnostic info
-			HandSide side = this->getSide();
-			bool bodyTrackingValid = (side == HandSide::LeftHand)
-										 ? HOL::HandOfLesser::Current->mBodyTrackingLeftHandValid
-										 : HOL::HandOfLesser::Current->mBodyTrackingRightHandValid;
+		auto& multimodal = HOL::HandOfLesser::Current->mLastMultimodalPosePacket;
 
+		// When using multimodal mode on OVR, use position-based detection
+		if (multimodal.isOVR && multimodal.isMultimodalEnabled)
+		{
 			// Get distance for logging
 			float distance = HOL::HandOfLesser::Current->getControllerToHandDistance(this);
-			bool isHeld = HOL::HandOfLesser::Current->isControllerHeldByPosition(this);
+			bool isHeld = this->isHeld();
 
 			// Possess when controller is NOT held (hands are free)
 			bool shouldPossess = !isHeld;
 
-			// Log state changes with diagnostics. TODO: replace with UI display
-			if (shouldPossess != mLastPossessionState)
-			{
-				const char* newState
-					= shouldPossess ? "POSSESSING (hands free)" : "RELEASED (controller held)";
-				DriverLog("[Multimodal LEFT] %s (distance: %.3fm, threshold: 0.10m, isHeld: "
-							"%d, bodyValid: %d, ctrlValid: %d)",
-							newState,
-							distance,
-							isHeld,
-							bodyTrackingValid,
-							mLastOriginalPoseValid);
-				mLastPossessionState = shouldPossess;
-			}		
-
+			mLastPossessionState = shouldPossess;
 			return shouldPossess;
 		}
 
@@ -245,6 +247,19 @@ namespace HOL
 	void HookedController::setLastOriginalPoseState(bool valid)
 	{
 		this->mLastOriginalPoseValid = valid;
+	}
+
+	Eigen::Vector3f HookedController::getWorldPosition()
+	{
+		// The position in the pose is before driver offsets have been applied.
+		// Apply them to get the world position so we can more easily compare it.
+		Eigen::Vector3f position = HOL::ovrVectorToEigen(lastOriginalPose.vecPosition);
+		Eigen::Quaternionf rotation = HOL::ovrQuaternionToEigen(lastOriginalPose.qRotation);
+
+		// TODO: Check pose validity?
+		ControllerCommon::applyDriverOffset(position, rotation, mLastPose);
+
+		return position;
 	}
 
 	uint32_t HookedController::getDeviceId()

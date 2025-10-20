@@ -14,7 +14,7 @@ namespace HOL::OpenXR
 		void updateBody(xr::UniqueDynamicSpace& space, XrTime time);
 		void drawBody();
 		OpenXRBody& getBodyTracker();
-		HOL::BodyTrackingHandPosePacket getBodyTrackingHandPosePacket(bool isOVR,
+		HOL::MultimodalPosePacket getMultimodalPosePacket(bool isOVR,
 																	  bool isMultimodalEnabled);
 
 	private:

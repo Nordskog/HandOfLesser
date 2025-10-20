@@ -43,15 +43,9 @@ namespace HOL
 
 		void requestEstimateControllerSide();
 
-		// Controller detection via position comparison
-		bool isControllerHeldByPosition(HookedController* controller);
 		float getControllerToHandDistance(HookedController* controller);
 
-		// Body tracking hand pose data (for UI display)
-		bool mIsOVR = false;
-		bool mIsMultimodalEnabled = false;
-		bool mBodyTrackingLeftHandValid = false;
-		bool mBodyTrackingRightHandValid = false;
+		HOL::MultimodalPosePacket mLastMultimodalPosePacket;
 
 	private:
 		void ReceiveDataThread();
@@ -69,9 +63,5 @@ namespace HOL
 
 		std::unique_ptr<EmulatedControllerDriver> mEmulatedControllers[2];
 		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
-
-		// Body tracking hand positions for controller detection
-		HOL::PoseLocation mBodyTrackingLeftHandPose;
-		HOL::PoseLocation mBodyTrackingRightHandPose;
 	};
 } // namespace HOL

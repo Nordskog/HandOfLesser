@@ -1,6 +1,7 @@
 #include "body_tracking.h"
 #include "src/core/ui/user_interface.h"
 #include "XrUtils.h"
+#include <src/core/settings_global.h>
 
 void HOL::OpenXR::BodyTracking::init(xr::UniqueDynamicInstance& instance,
 									 xr::UniqueDynamicSession& session)
@@ -42,31 +43,61 @@ OpenXRBody& HOL::OpenXR::BodyTracking::getBodyTracker()
 	return mBodyTracker;
 }
 
-HOL::BodyTrackingHandPosePacket
-HOL::OpenXR::BodyTracking::getBodyTrackingHandPosePacket(bool isOVR, bool isMultimodalEnabled)
+HOL::MultimodalPosePacket
+HOL::OpenXR::BodyTracking::getMultimodalPosePacket(bool isOVR, bool isMultimodalEnabled)
 {
-	BodyTrackingHandPosePacket packet;
+	MultimodalPosePacket packet;
 	packet.isOVR = isOVR;
 	packet.isMultimodalEnabled = isMultimodalEnabled;
 
 	auto* bodyJoints = mBodyTracker.getLastJointLocations();
 
-	// Left hand wrist 
-	auto& leftWrist = bodyJoints[XR_BODY_JOINT_LEFT_HAND_PALM_FB];
-	if (leftWrist.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+	/////////////
+	// Offsets
+	/////////////
+
+	// We have a base offset for each controller type, which for the time being
+	// has been configured to match what VD handtracking gives you.
+	// The user-configurable offset is applied in addition to this.
+	auto controllerOffset = HOL::getControllerBaseOffset(Config.handPose.controllerType);
+
+	// Matches to controller position, matching what VD does
+	Eigen::Vector3f controllerRotationOffset = controllerOffset.orientation;
+	Eigen::Vector3f controllerTranslationOffset = controllerOffset.position;
+
+	// Left hand palm
+	auto& leftPalm = bodyJoints[XR_BODY_JOINT_LEFT_HAND_PALM_FB];
 	{
-		packet.leftHandPose.position = OpenXR::toEigenVector(leftWrist.pose.position);
-		packet.leftHandPose.orientation = OpenXR::toEigenQuaternion(leftWrist.pose.orientation);
-		packet.leftHandValid = true;
+		Eigen::Vector3f position = OpenXR::toEigenVector(leftPalm.pose.position);
+		Eigen::Quaternionf rotation = OpenXR::toEigenQuaternion(leftPalm.pose.orientation);
+		/*
+		position = HOL::translateLocal(position, rotation, controllerTranslationOffset);
+		rotation = HOL::rotateLocal(
+			rotation, HOL::quaternionFromEulerAnglesDegrees(controllerRotationOffset));
+		*/
+		packet.leftHandPose.position = position;
+		packet.leftHandPose.orientation = rotation;
+		packet.leftHandTracked = leftPalm.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
 	}
 
-	// Right hand wrist
-	auto& rightWrist = bodyJoints[XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
-	if (rightWrist.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+	// Flip for right hand
+	controllerRotationOffset = flipHandRotation(controllerRotationOffset);
+	controllerTranslationOffset = flipHandTranslation(controllerTranslationOffset);
+
+	// Right hand palm
+	auto& rightPalm = bodyJoints[XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
 	{
-		packet.rightHandPose.position = OpenXR::toEigenVector(rightWrist.pose.position);
-		packet.rightHandPose.orientation = OpenXR::toEigenQuaternion(rightWrist.pose.orientation);
-		packet.rightHandValid = true;
+		Eigen::Vector3f position = OpenXR::toEigenVector(rightPalm.pose.position);
+		Eigen::Quaternionf rotation = OpenXR::toEigenQuaternion(rightPalm.pose.orientation);
+		/*
+		position = HOL::translateLocal(position, rotation, controllerTranslationOffset);
+		rotation = HOL::rotateLocal(
+			rotation, HOL::quaternionFromEulerAnglesDegrees(controllerRotationOffset));
+		*/
+
+		packet.rightHandPose.position = position;
+		packet.rightHandPose.orientation = rotation;
+		packet.rightHandTracked = rightPalm.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
 	}
 
 	return packet;

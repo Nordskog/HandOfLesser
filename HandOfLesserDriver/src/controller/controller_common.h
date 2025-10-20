@@ -17,6 +17,10 @@ namespace HOL::ControllerCommon
 						   Eigen::Vector3f translationOffset,
 						   Eigen::Vector3f rotationOffset);
 
+	extern void applyDriverOffset(Eigen::Vector3f& position,
+											 Eigen::Quaternionf& rotation,
+											 const vr::DriverPose_t& pose);
+
 	vr::VRBoneTransform_t poseLocationToBoneTransform(HOL::PoseLocation& location);
 
-}
+} // namespace HOL::ControllerCommon

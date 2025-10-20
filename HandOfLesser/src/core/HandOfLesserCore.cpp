@@ -278,11 +278,9 @@ void HandOfLesserCore::sendUpdate()
 	if (HOL::display::IsOVR
 		&& Config.handPose.controllerMode == ControllerMode::HookedControllerMode)
 	{
-		BodyTrackingHandPosePacket bodyPosePacket
-			= this->mBodyTracking.getBodyTrackingHandPosePacket(
+		MultimodalPosePacket bodyPosePacket = this->mBodyTracking.getMultimodalPosePacket(
 				true, featuresManager.isMultimodalEnabled());
-		this->mTransport.send(
-			9006, (char*)&bodyPosePacket, sizeof(HOL::BodyTrackingHandPosePacket));
+		this->mTransport.send(9006, (char*)&bodyPosePacket, sizeof(HOL::MultimodalPosePacket));
 	}
 
 	SteamVR::SteamVRInput::Current->clear();
