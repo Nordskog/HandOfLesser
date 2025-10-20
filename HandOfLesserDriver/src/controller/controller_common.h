@@ -3,6 +3,7 @@
 #include <HandOfLesserCommon.h>
 #include "openvr_driver.h"
 #include <random>
+#include "src/steamvr/skeletal_input_joints.h"
 
 namespace HOL::ControllerCommon
 {
@@ -18,9 +19,12 @@ namespace HOL::ControllerCommon
 						   Eigen::Vector3f rotationOffset);
 
 	extern void applyDriverOffset(Eigen::Vector3f& position,
-											 Eigen::Quaternionf& rotation,
-											 const vr::DriverPose_t& pose);
+								  Eigen::Quaternionf& rotation,
+								  const vr::DriverPose_t& pose);
 
 	vr::VRBoneTransform_t poseLocationToBoneTransform(HOL::PoseLocation& location);
+	void buildSkeletalPoseFromPacket(
+		const HOL::SkeletalPacket& packet,
+		vr::VRBoneTransform_t outPose[SteamVR::HandSkeletonBone::eBone_Count]);
 
 } // namespace HOL::ControllerCommon

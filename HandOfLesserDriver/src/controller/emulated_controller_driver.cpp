@@ -255,7 +255,7 @@ namespace HOL
 		else
 		{
 			// Disconnect a controller by sending a single update
-			// saying we're disconnected, and preventing 
+			// saying we're disconnected, and preventing
 			// any updates from being sent.
 			mDeviceConnected = false;
 
@@ -264,7 +264,6 @@ namespace HOL
 				ControllerCommon::generateDisconnectedPose(),
 				sizeof(vr::DriverPose_t));
 		}
-
 	}
 
 	vr::VRInputComponentHandle_t
@@ -335,111 +334,11 @@ namespace HOL
 	void EmulatedControllerDriver::UpdateSkeletal(HOL::SkeletalPacket* packet)
 	{
 		if (!mDeviceConnected)
+		{
 			return;
-		
-		// Data submitted to driver should all be in local space, -Z forward.
-		// We handle the weird FBX compatibility garbage here
-
-		// Wrist is weird though, it's space is entirely upside down.
-		// Again I just eye-balled the correct transform from normal space.
-		if (packet->side == HandSide::RightHand)
-		{
-			// Un-mirror, do the upside-down thing steamvr wants
-			HOL::PoseLocation& wristJoint = packet->locations[HandSkeletonBone::eBone_Wrist];
-
-			wristJoint.position.x() *= -1.f;
-			wristJoint.position.y() *= -1.f;
-
-			wristJoint.orientation.x() *= -1.f;
-			wristJoint.orientation.y() *= -1.f;
 		}
 
-		// Make +X forward instead of Z, flip Z, flip Y if left hand.
-		// In what space does that put us? no idea.
-		for (int i = 1; i < HandSkeletonBone::eBone_Count; i++)
-		{
-
-			HOL::PoseLocation& joint = packet->locations[(HandSkeletonBone)i];
-
-			std::swap(joint.position.x(), joint.position.z());
-			joint.position.z() *= -1.f;
-
-			std::swap(joint.orientation.x(), joint.orientation.z());
-			joint.orientation.z() *= -1.f;
-
-			if (packet->side == HandSide::LeftHand)
-			{
-				joint.position.x() *= -1.f;
-				joint.position.y() *= -1.0f;
-
-				joint.orientation.x() *= -1.f;
-				joint.orientation.y() *= -1.f;
-			}
-		}
-
-		const HandSkeletonBone startingJoint[5] = {
-			eBone_Thumb0,		 // thumb
-			eBone_IndexFinger0,	 // index
-			eBone_MiddleFinger0, // middle
-			eBone_RingFinger0,	 // ring
-			eBone_PinkyFinger0,	 // pinky
-		};
-
-		const float fingerJointCount[5] = {
-			4, // thumb
-			5, // index
-			5, // middle
-			5, // ring
-			5, // pinky
-		};
-
-		// Then we do the weird FBX compatibility rotation they required,
-		// metacarpals 90 degrees ( on two axes ) from wrist, so sideways then rolled basically.
-
-		// I just eyeballed these
-		const Eigen::Quaternionf leftMagic(0.5f, 0.5f, -0.5f, 0.5f);
-		const Eigen::Quaternionf rightMagic(-0.5f, 0.5f, -0.5f, -0.5f);
-		for (int i = 0; i < 5; i++)
-		{
-			PoseLocation& joint = packet->locations[startingJoint[i]];
-
-			const Eigen::Quaternionf magic
-				= packet->side == HandSide::LeftHand ? leftMagic : rightMagic;
-
-			joint.orientation = magic * joint.orientation;
-			joint.position = magic * joint.position;
-		}
-
-		// Which brings us to the aux joints, which are defined as: 
-		// > The skeleton has 5 auxiliary bones ('aux bones' for short) for helping in
-		// > the construction of hand poses. These bones have the same position and rotation and
-		// > rotation as the last knuckle bone in each finger, but are direct children of the
-		// Add up all the transforms from wrist to joint-before-tip and we should get that.
-		PoseLocation& wristJoint = packet->locations[HandSkeletonBone::eBone_Wrist];
-		for (int i = 0; i < 5; i++)
-		{
-			HandSkeletonBone firstJoint = startingJoint[i];
-			int childCount = fingerJointCount[i] - 1;	// Skip the tip
-
-			PoseLocation& auxJoint = packet->locations[eBone_Aux_Thumb+i];
-			// Root should always be 0, so just use wrist as starting point.
-			auxJoint.position = wristJoint.position;
-			auxJoint.orientation = wristJoint.orientation;
-
-			// loop through the remaining joints and append transform
-			for (int j = 0; j < childCount; j++)
-			{
-				PoseLocation& child = packet->locations[firstJoint+i];
-				
-				auxJoint.position += auxJoint.orientation * child.position;
-				auxJoint.orientation = auxJoint.orientation * child.orientation;
-			}
-		}
-
-		for (int i = 0; i < HandSkeletonBone::eBone_Count; i++)
-		{
-			mSkeletalPose[i] = ControllerCommon::poseLocationToBoneTransform(packet->locations[i]);
-		}
+		ControllerCommon::buildSkeletalPoseFromPacket(*packet, mSkeletalPose);
 
 		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
 													 vr::VRSkeletalMotionRange_WithController,

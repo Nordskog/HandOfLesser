@@ -227,4 +227,92 @@ namespace HOL::ControllerCommon
 		return trans;
 	}
 
+	void buildSkeletalPoseFromPacket(
+		const HOL::SkeletalPacket& packet,
+		vr::VRBoneTransform_t outPose[SteamVR::HandSkeletonBone::eBone_Count])
+	{
+		HOL::SkeletalPacket workingPacket = packet;
+
+		if (workingPacket.side == HandSide::RightHand)
+		{
+			HOL::PoseLocation& wristJoint
+				= workingPacket.locations[SteamVR::HandSkeletonBone::eBone_Wrist];
+
+			wristJoint.position.x() *= -1.f;
+			wristJoint.position.y() *= -1.f;
+
+			wristJoint.orientation.x() *= -1.f;
+			wristJoint.orientation.y() *= -1.f;
+		}
+
+		for (int i = 1; i < SteamVR::HandSkeletonBone::eBone_Count; i++)
+		{
+			auto bone = static_cast<SteamVR::HandSkeletonBone>(i);
+			auto& joint = workingPacket.locations[bone];
+
+			std::swap(joint.position.x(), joint.position.z());
+			joint.position.z() *= -1.f;
+
+			std::swap(joint.orientation.x(), joint.orientation.z());
+			joint.orientation.z() *= -1.f;
+
+			if (workingPacket.side == HandSide::LeftHand)
+			{
+				joint.position.x() *= -1.f;
+				joint.position.y() *= -1.f;
+
+				joint.orientation.x() *= -1.f;
+				joint.orientation.y() *= -1.f;
+			}
+		}
+
+		const SteamVR::HandSkeletonBone startingJoint[5]
+			= {SteamVR::HandSkeletonBone::eBone_Thumb0,
+			   SteamVR::HandSkeletonBone::eBone_IndexFinger0,
+			   SteamVR::HandSkeletonBone::eBone_MiddleFinger0,
+			   SteamVR::HandSkeletonBone::eBone_RingFinger0,
+			   SteamVR::HandSkeletonBone::eBone_PinkyFinger0};
+
+		const int fingerJointCount[5] = {4, 5, 5, 5, 5};
+
+		const Eigen::Quaternionf leftMagic(0.5f, 0.5f, -0.5f, 0.5f);
+		const Eigen::Quaternionf rightMagic(-0.5f, 0.5f, -0.5f, -0.5f);
+		for (int finger = 0; finger < 5; finger++)
+		{
+			auto& joint = workingPacket.locations[startingJoint[finger]];
+			const Eigen::Quaternionf magic
+				= workingPacket.side == HandSide::LeftHand ? leftMagic : rightMagic;
+
+			joint.orientation = magic * joint.orientation;
+			joint.position = magic * joint.position;
+		}
+
+		auto& wristJoint = workingPacket.locations[SteamVR::HandSkeletonBone::eBone_Wrist];
+		for (int finger = 0; finger < 5; finger++)
+		{
+			SteamVR::HandSkeletonBone firstJoint = startingJoint[finger];
+			int childCount = fingerJointCount[finger] - 1;
+
+			auto auxIndex = static_cast<SteamVR::HandSkeletonBone>(
+				SteamVR::HandSkeletonBone::eBone_Aux_Thumb + finger);
+			auto& auxJoint = workingPacket.locations[auxIndex];
+			auxJoint.position = wristJoint.position;
+			auxJoint.orientation = wristJoint.orientation;
+
+			for (int j = 0; j < childCount; j++)
+			{
+				int childIndex = static_cast<int>(firstJoint) + 1 + j;
+				auto childBone = static_cast<SteamVR::HandSkeletonBone>(childIndex);
+				auto& child = workingPacket.locations[childBone];
+				auxJoint.position += auxJoint.orientation * child.position;
+				auxJoint.orientation = auxJoint.orientation * child.orientation;
+			}
+		}
+
+		for (int i = 0; i < SteamVR::HandSkeletonBone::eBone_Count; i++)
+		{
+			outPose[i] = poseLocationToBoneTransform(workingPacket.locations[i]);
+		}
+	}
+
 } // namespace HOL::ControllerCommon
