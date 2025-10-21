@@ -4,9 +4,6 @@
 #include <Eigen/Geometry>
 #include <HandOfLesserCommon.h>
 
-
-
-
 namespace HOL
 {
 	namespace settings
@@ -16,4 +13,4 @@ namespace HOL
 
 	extern HOL::settings::HandOfLesserSettings Config;
 
-} // namespace HOL::settings
+} // namespace HOL

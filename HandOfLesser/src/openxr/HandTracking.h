@@ -4,6 +4,7 @@
 #include <memory>
 #include "openxr_hand.h"
 #include "openxr_body.h"
+#include <HandOfLesserCommon.h>
 #include "src/hands/gesture/open_hand_pinch_gesture.h"
 #include "src/hands/action/hand_drag_action.h"
 

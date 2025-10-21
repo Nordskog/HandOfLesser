@@ -8,6 +8,7 @@
 	src/openxr/InstanceHolder.cpp
 
 	src/core/settings_global.cpp
+	src/core/state_global.cpp
 	src/openxr/openxr_hand.cpp
 	src/core/ui/user_interface.cpp
 	src/openxr/XrUtils.cpp

@@ -3,6 +3,7 @@
 #include "generic_control_interface.h"
 #include <openvr_driver.h>
 #include "src/input/InputCommons.h"
+#include "src/steamvr/skeletal_input_joints.h"
 
 namespace HOL
 {
@@ -25,6 +26,12 @@ namespace HOL
 		void UpdateFloatInput(const std::string& input, float value) override;
 		void UpdateSkeletal(HOL::SkeletalPacket* packet) override;
 		void SubmitPose() override;
+		void registerSkeletonInput(vr::VRInputComponentHandle_t handle,
+								   vr::EVRSkeletalTrackingLevel level,
+								   const std::string& path);
+		void clearAugmentedSkeleton();
+		bool isAugmentedSkeletonActive() const;
+		void resetPossessionHints();
 
 		bool canPossess();
 		bool shouldPossess();
@@ -56,7 +63,8 @@ namespace HOL
 
 	private:
 		vr::DriverPose_t mLastPose;
-		bool mLastHeldState = true; // Controllers not added until held, so should be true on activate
+		bool mLastHeldState
+			= true; // Controllers not added until held, so should be true on activate
 
 		HOL::HandTransformPacket mLastTransformPacket;
 		HOL::ControllerInputPacket mLastInputPacket;
@@ -71,5 +79,10 @@ namespace HOL
 		// State tracking for logging
 		bool mLastPossessionState = false;
 		int32_t mFramesSinceLastDistanceLog = 0;
+		vr::VRInputComponentHandle_t mSkeletonHandle = 0;
+		vr::EVRSkeletalTrackingLevel mSkeletonTrackingLevel = vr::VRSkeletalTracking_Estimated;
+		std::string mSkeletonInputPath;
+		bool mLoggedMissingSkeletonHandle = false;
+		vr::VRBoneTransform_t mSkeletalPose[SteamVR::HandSkeletonBone::eBone_Count]{};
 	};
 } // namespace HOL

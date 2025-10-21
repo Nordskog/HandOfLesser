@@ -53,14 +53,29 @@ namespace HOL::hooks
 	namespace CreateScalarComponent
 	{
 		using Signature = vr::EVRInputError (*)(vr::IVRDriverInput*,
-												vr::PropertyContainerHandle_t  ulContainer, 
-												const char *pchName, 
-												vr::VRInputComponentHandle_t *pHandle,
-												vr::EVRScalarType eType, 
+												vr::PropertyContainerHandle_t ulContainer,
+												const char* pchName,
+												vr::VRInputComponentHandle_t* pHandle,
+												vr::EVRScalarType eType,
 												vr::EVRScalarUnits eUnits);
 
 		extern Hook<Signature> FunctionHook;
 	} // namespace CreateScalarComponent
+
+	namespace CreateSkeletonComponent
+	{
+		using Signature = vr::EVRInputError (*)(vr::IVRDriverInput*,
+												vr::PropertyContainerHandle_t ulContainer,
+												const char* pchName,
+												const char* pchSkeletonPath,
+												const char* pchBasePosePath,
+												vr::EVRSkeletalTrackingLevel eSkeletalTrackingLevel,
+												const vr::VRBoneTransform_t* pGripLimitTransforms,
+												uint32_t unGripLimitTransformCount,
+												vr::VRInputComponentHandle_t* pHandle);
+
+		extern Hook<Signature> FunctionHook;
+	} // namespace CreateSkeletonComponent
 
 	namespace UpdateScalarComponent
 	{
@@ -72,6 +87,17 @@ namespace HOL::hooks
 		extern Hook<Signature> FunctionHook;
 	} // namespace UpdateScalarComponent
 
+	namespace UpdateSkeletonComponent
+	{
+		using Signature = vr::EVRInputError (*)(vr::IVRDriverInput*,
+												vr::VRInputComponentHandle_t ulComponent,
+												vr::EVRSkeletalMotionRange eMotionRange,
+												const vr::VRBoneTransform_t* pTransforms,
+												uint32_t unTransformCount);
+
+		extern Hook<Signature> FunctionHook;
+	} // namespace UpdateSkeletonComponent
+
 	namespace TrackedDevicePoseUpdated
 	{
 		using Signature
@@ -81,7 +107,7 @@ namespace HOL::hooks
 	} // namespace TrackedDevicePoseUpdated
 
 	namespace PollNextEvent
-	{ 
+	{
 		using Signature = bool (*)(vr::IVRServerDriverHost*, vr::VREvent_t*, uint32_t);
 
 		extern Hook<PollNextEvent::Signature> FunctionHook;

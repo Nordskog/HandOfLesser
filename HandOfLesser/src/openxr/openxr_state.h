@@ -2,13 +2,13 @@
 
 namespace HOL::OpenXR
 {
-	enum OpenXrState
+	enum class OpenXrState
 	{
-		Uninitialized,
+		Uninitialized = 0,
 		Initialized,
 		Running,
 		Failed,
-		Exited,
+		Exited
 	};
 
 	const char* getOpenXrStateString(OpenXrState state);

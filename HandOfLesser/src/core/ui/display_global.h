@@ -1,7 +1,6 @@
 #pragma once
 
 #include <HandOfLesserCommon.h>
-#include "src/openxr/openxr_state.h"
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -36,10 +35,5 @@ namespace HOL
 		extern FingerTrackingDisplay FingerTracking[2];
 		extern HandTransformDisplay HandTransform[2];
 		extern BodyTrackingDisplay BodyTracking;
-
-		extern OpenXR::OpenXrState OpenXrInstanceState;
-		extern std::string OpenXrRuntimeName;
-		extern bool IsVDXR;
-		extern bool IsOVR;
 	} // namespace display
 } // namespace HOL

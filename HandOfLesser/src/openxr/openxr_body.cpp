@@ -21,9 +21,8 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 			  std::end(mJointLocations),
 			  std::begin(mPreviousJointLocations));
 
-
-
-	this->confidence = HandTrackingInterface::locateBodyJoints(this->mBodyTracker, space, time, this->mJointLocations);
+	this->confidence = HandTrackingInterface::locateBodyJoints(
+		this->mBodyTracker, space, time, this->mJointLocations);
 	this->active = confidence > 0.0f;
 
 	// Generate our own palm joints from body tracking.
@@ -88,30 +87,26 @@ void OpenXRBody::preserveWristRotation(HandSide side)
 	XrBodyJointLocationFB& lastTwist
 		= this->mLastWithTrackedHands[side == HandSide::LeftHand
 										  ? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
-																 : XR_BODY_JOINT_RIGHT_ARM_LOWER_FB];
+										  : XR_BODY_JOINT_RIGHT_ARM_LOWER_FB];
 	XrBodyJointLocationFB& lastPalm
 		= this->mLastWithTrackedHands[side == HandSide::LeftHand
 										  ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
 										  : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
 
 	XrBodyJointLocationFB& currentTwist
-		= this->mJointLocations[side == HandSide::LeftHand
-									? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
+		= this->mJointLocations[side == HandSide::LeftHand ? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
 														   : XR_BODY_JOINT_RIGHT_ARM_LOWER_FB];
 
 	XrBodyJointLocationFB& currentPalm
-		= this->mJointLocations[side == HandSide::LeftHand
-											? XR_BODY_JOINT_LEFT_HAND_PALM_FB
-											: XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
+		= this->mJointLocations[side == HandSide::LeftHand ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
+														   : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
 
 	Eigen::Vector3f relativePos;
 	Eigen::Quaternionf relativeRot;
 
 	calculateRelativeTransform(lastTwist, lastPalm, relativePos, relativeRot);
 	applyRelativeTransform(currentTwist, currentPalm, relativePos, relativeRot);
-
 }
-
 
 void OpenXRBody::calculateRelativeTransform(const XrBodyJointLocationFB& baseJoint,
 											const XrBodyJointLocationFB& childJoint,
@@ -124,7 +119,6 @@ void OpenXRBody::calculateRelativeTransform(const XrBodyJointLocationFB& baseJoi
 	auto childPos = OpenXR::toEigenVector(childJoint.pose.position);
 	auto childRot = OpenXR::toEigenQuaternion(childJoint.pose.orientation);
 
-
 	relativePos = baseRot.inverse() * (childPos - basePos);
 	relativeRot = baseRot.inverse() * childRot;
 }
@@ -136,7 +130,6 @@ void OpenXRBody::applyRelativeTransform(const XrBodyJointLocationFB& baseJoint,
 {
 	auto basePos = OpenXR::toEigenVector(baseJoint.pose.position);
 	auto baseRot = OpenXR::toEigenQuaternion(baseJoint.pose.orientation);
-
 
 	Eigen::Vector3f childPos = basePos + baseRot * relativePos;
 	Eigen::Quaternionf childRot = baseRot * relativeRot;
@@ -165,8 +158,8 @@ void OpenXRBody::generateMissingPalmJoint(HandSide side)
 									  ? XR_BODY_JOINT_LEFT_HAND_MIDDLE_PROXIMAL_FB
 									  : XR_BODY_JOINT_RIGHT_HAND_MIDDLE_PROXIMAL_FB;
 
-	XrBodyJointFB palmJoint
-		= (side == HandSide::LeftHand) ? XR_BODY_JOINT_LEFT_HAND_PALM_FB : XR_BODY_JOINT_RIGHT_HAND_PALM_FB;
+	XrBodyJointFB palmJoint = (side == HandSide::LeftHand) ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
+														   : XR_BODY_JOINT_RIGHT_HAND_PALM_FB;
 
 	// Check if joints are valid
 	auto& metacarpal = mJointLocations[metacarpalJoint];
@@ -188,7 +181,8 @@ void OpenXRBody::generateMissingPalmJoint(HandSide side)
 	// +Y points towards back of hand (perpendicular to palm surface)
 	// +X follows right-hand rule
 
-	Eigen::Vector3f zAxis = (metacarpalPos - proximalPos).normalized(); // Points from finger to wrist
+	Eigen::Vector3f zAxis
+		= (metacarpalPos - proximalPos).normalized(); // Points from finger to wrist
 
 	// Use metacarpal orientation's Y axis as reference for hand back direction
 	Eigen::Quaternionf metacarpalRot = OpenXR::toEigenQuaternion(metacarpal.pose.orientation);
@@ -220,4 +214,3 @@ void OpenXRBody::generateMissingPalmJoint(HandSide side)
 	// Inherit tracking state directly from metacarpal joint
 	palm.locationFlags = metacarpal.locationFlags;
 }
-

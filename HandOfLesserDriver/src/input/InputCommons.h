@@ -7,7 +7,10 @@ namespace HOL
 {
 	enum ControllerInputType
 	{
-		Boolean, Scalar, ControllerInputType_MAX
+		Boolean,
+		Scalar,
+		Skeleton,
+		ControllerInputType_MAX
 	};
 
 	struct ControllerInputHandle
@@ -17,4 +20,4 @@ namespace HOL
 		vr::VRInputComponentHandle_t handle = 0;
 	};
 
-}
+} // namespace HOL

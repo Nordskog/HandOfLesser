@@ -148,7 +148,7 @@ namespace HOL
 		std::array<vr::VRInputComponentHandle_t, InputHandleType::MAX> mInputHandles;
 
 		std::atomic<bool> is_active_ = false;
-		std::atomic<bool> mDeviceConnected = true;	
+		std::atomic<bool> mDeviceConnected = true;
 
 		vr::VRBoneTransform_t mSkeletalPose[eBone_Count];
 

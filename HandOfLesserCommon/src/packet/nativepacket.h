@@ -3,6 +3,7 @@
 #include "src/hand/hand.h"
 #include <src/settings/settings.h>
 #include "src/steamvr/skeletal_input_joints.h"
+#include "src/tracking_state.h"
 
 namespace HOL
 {
@@ -15,7 +16,8 @@ namespace HOL
 		BoolInput = 602,
 		SkeletalInput = 603,
 		MultimodalPose = 604,
-		Settings = 700
+		Settings = 700,
+		State = 701
 	};
 
 	struct NativePacket
@@ -84,10 +86,6 @@ namespace HOL
 		HOL::PoseLocation leftHandPose;
 		HOL::PoseLocation rightHandPose;
 
-		// Runtime information
-		bool isOVR = false;				  // Is Oculus runtime active
-		bool isMultimodalEnabled = false; // Is multimodal tracking enabled
-
 		// Tracked flags
 		bool leftHandTracked = false;
 		bool rightHandTracked = false;
@@ -106,6 +104,12 @@ namespace HOL
 		HOL::HandSide side;
 		HOL::PoseLocation location;
 		HOL::PoseVelocity velocity;
+	};
+
+	struct StatePacket
+	{
+		NativePacketType packetType = NativePacketType::State;
+		HOL::state::TrackingState state;
 	};
 
 } // namespace HOL

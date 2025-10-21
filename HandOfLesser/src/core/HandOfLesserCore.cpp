@@ -3,9 +3,10 @@
 #include "src/oculus/oculus_hacks.h"
 #include "src/openxr/XrUtils.h"
 #include "src/core/settings_global.h"
-#include "src/core/ui/display_global.h"
+#include "src/core/state_global.h"
 #include "src/vrchat/vrchat_osc.h"
 #include <fstream>
+#include <cstring>
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -19,7 +20,18 @@ void HandOfLesserCore::init(int serverPort)
 	std::string runtimePath = HOL::OpenXR::getActiveOpenXRRuntimePath(1);
 	std::string runtimeName = HOL::OpenXR::getActiveOpenXRRuntimeName(1);
 	std::cout << "Active OpenXR Runtime is: " << runtimePath << std::endl;
-	HOL::display::OpenXrRuntimeName = runtimeName;
+
+	auto& runtimeState = state::Runtime;
+	auto& trackingState = state::Tracking;
+
+	std::memset(runtimeState.runtimeName, 0, sizeof(runtimeState.runtimeName));
+	std::strncpy(
+		runtimeState.runtimeName, runtimeName.c_str(), sizeof(runtimeState.runtimeName) - 1);
+	runtimeState.isVDXR = false;
+	runtimeState.isOVR = false;
+	runtimeState.openxrState = HOL::OpenXR::OpenXrState::Uninitialized;
+	trackingState.isMultimodalEnabled = false;
+	trackingState.isHighFidelityEnabled = false;
 
 	std::cout << "OpenXR SDK version: " << xr::Version::current().major() << "."
 			  << xr::Version::current().minor() << "." << xr::Version::current().patch()
@@ -27,17 +39,18 @@ void HandOfLesserCore::init(int serverPort)
 
 	if (runtimeName.find("virtualdesktop") != std::string::npos)
 	{
-		HOL::display::IsVDXR = true;
+		runtimeState.isVDXR = true;
 		std::cout << "Runtime is VDXR, will expect being fed lies" << std::endl;
 	}
 
 	if (runtimeName.find("oculus_openxr") != std::string::npos)
 	{
-		HOL::display::IsOVR = true;
+		runtimeState.isOVR = true;
 		std::cout << "Runtime is Oculus, will support multimodal and stuff" << std::endl;
 	}
 
 	this->mInstanceHolder.init();
+	runtimeState.openxrState = this->mInstanceHolder.getState();
 
 	if (this->mInstanceHolder.getState() != OpenXrState::Failed)
 	{
@@ -60,7 +73,7 @@ void HandOfLesserCore::init(int serverPort)
 				std::cout << "Running in full foreground mode for testing only!" << std::endl;
 			}
 
-			if (HOL::display::IsOVR)
+			if (runtimeState.isOVR)
 			{
 				// Hacks to make OVR actually work
 				HOL::hacks::fixOvrSessionStateRestriction();
@@ -71,6 +84,7 @@ void HandOfLesserCore::init(int serverPort)
 	this->mTransport.init(serverPort);
 	this->featuresManager.setInstanceHolder(&this->mInstanceHolder);
 	this->featuresManager.setBodyTracking(&this->mBodyTracking);
+	this->syncState();
 }
 
 void HandOfLesserCore::start()
@@ -261,7 +275,7 @@ void HandOfLesserCore::sendUpdate()
 		}
 	}
 
-	if (Config.skeletal.sendSkeletalInput)
+	if (Config.skeletal.sendSkeletalInput || Config.skeletal.augmentHookedControllers)
 	{
 		for (int i = 0; i < HandSide_MAX; i++)
 		{
@@ -275,11 +289,11 @@ void HandOfLesserCore::sendUpdate()
 	}
 
 	// Send body tracking hand positions for controller detection in driver
-	if (HOL::display::IsOVR
-		&& Config.handPose.controllerMode == ControllerMode::HookedControllerMode)
+	if (state::Tracking.isMultimodalEnabled
+		&& (Config.handPose.controllerMode == ControllerMode::HookedControllerMode
+			|| Config.handPose.controllerMode == ControllerMode::OffsetControllerMode))
 	{
-		MultimodalPosePacket bodyPosePacket = this->mBodyTracking.getMultimodalPosePacket(
-				true, featuresManager.isMultimodalEnabled());
+		MultimodalPosePacket bodyPosePacket = this->mBodyTracking.getMultimodalPosePacket();
 		this->mTransport.send(9006, (char*)&bodyPosePacket, sizeof(HOL::MultimodalPosePacket));
 	}
 
@@ -291,6 +305,15 @@ void HOL::HandOfLesserCore::syncSettings()
 	HOL::SettingsPacket packet;
 	packet.config = HOL::Config;
 	this->mTransport.send(9006, (char*)&packet, sizeof(HOL::SettingsPacket));
+}
+
+void HOL::HandOfLesserCore::syncState()
+{
+	state::Runtime.openxrState = this->mInstanceHolder.getState();
+
+	HOL::StatePacket packet;
+	packet.state = state::Tracking;
+	this->mTransport.send(9006, (char*)&packet, sizeof(HOL::StatePacket));
 }
 
 void HOL::HandOfLesserCore::saveSettings()
@@ -311,4 +334,5 @@ void HOL::HandOfLesserCore::loadSettings()
 		Config = j.get<HOL::settings::HandOfLesserSettings>();
 	}
 	syncSettings();
+	syncState();
 }

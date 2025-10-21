@@ -8,6 +8,7 @@ add_library(HandOfLesserCommon STATIC
 	src/hand/finger_bend.cpp
 	src/controller/controller.cpp
 	src/steamvr/input_wrapper.cpp
+	src/tracking_state.cpp
 )
 
 target_link_libraries(HandOfLesserCommon PUBLIC
@@ -19,7 +20,7 @@ target_link_libraries(HandOfLesserCommon PUBLIC
 
 target_include_directories(HandOfLesserCommon
 	INTERFACE include
-	PRIVATE ${OPENVR_INCLUDE_DIR}
+	PRIVATE include ${OPENVR_INCLUDE_DIR}
 )
 
 # Allow us to include from src dir path instead of using relative paths

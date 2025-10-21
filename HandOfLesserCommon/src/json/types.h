@@ -56,6 +56,7 @@ namespace HOL
 		NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SkeletalInput,
 										   jointLengthMultiplier,
 										   sendSkeletalInput,
+										   augmentHookedControllers,
 										   positionOffset,
 										   orientationOffset);
 
@@ -74,7 +75,8 @@ namespace HOL
 										   handPose,
 										   vrchat,
 										   input,
-										   steamvr);
+										   steamvr,
+										   skeletal);
 	} // namespace settings
 
 } // namespace HOL

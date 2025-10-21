@@ -8,9 +8,4 @@ namespace HOL::display
 	FingerTrackingDisplay FingerTracking[2];
 	BodyTrackingDisplay BodyTracking;
 
-	OpenXR::OpenXrState OpenXrInstanceState = OpenXR::OpenXrState::Uninitialized;
-	std::string OpenXrRuntimeName = "Unknown";
-	bool IsVDXR = false;
-	bool IsOVR = false;
-
 } // namespace HOL::display

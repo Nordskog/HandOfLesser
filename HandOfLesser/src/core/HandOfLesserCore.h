@@ -13,6 +13,7 @@
 #include "src/steamvr/skeletal_input.h"
 #include "src/openxr/body_tracking.h"
 #include "src/core/features_manager.h"
+#include "src/core/state_global.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -28,6 +29,7 @@ namespace HOL
 		static HandOfLesserCore* Current; // Time to commit sinss
 
 		void syncSettings();
+		void syncState();
 		void saveSettings();
 		void loadSettings();
 

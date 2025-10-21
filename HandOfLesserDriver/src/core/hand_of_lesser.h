@@ -46,6 +46,7 @@ namespace HOL
 		float getControllerToHandDistance(HookedController* controller);
 
 		HOL::MultimodalPosePacket mLastMultimodalPosePacket;
+		static HOL::state::TrackingState Tracking;
 
 	private:
 		void ReceiveDataThread();
@@ -57,6 +58,7 @@ namespace HOL
 		bool mEstimateControllerSideWhenPositionValid = false;
 
 		void handleConfigurationChange(HOL::settings::HandOfLesserSettings& newConfig);
+		void applyTrackingState(const HOL::state::TrackingState& newState);
 
 		std::thread my_pose_update_thread_;
 		HOL::NativeTransport mTransport;

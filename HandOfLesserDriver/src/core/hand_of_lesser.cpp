@@ -8,6 +8,7 @@ namespace HOL
 
 	HandOfLesser* HandOfLesser::Current = nullptr;
 	HOL::settings::HandOfLesserSettings HandOfLesser::Config;
+	HOL::state::TrackingState HandOfLesser::Tracking;
 
 	void HandOfLesser::init()
 	{
@@ -111,6 +112,12 @@ namespace HOL
 					break;
 				}
 
+				case HOL::NativePacketType::State: {
+					HOL::StatePacket* packet = (HOL::StatePacket*)rawPacket;
+					applyTrackingState(packet->state);
+					break;
+				}
+
 				default: {
 					// Invalid packet type!
 				}
@@ -192,6 +199,24 @@ namespace HOL
 		}
 	}
 
+	void HandOfLesser::applyTrackingState(const HOL::state::TrackingState& newState)
+	{
+		auto oldState = Tracking;
+		Tracking = newState;
+
+		if (oldState.isMultimodalEnabled && !Tracking.isMultimodalEnabled)
+		{
+			for (auto& controller : mHookedControllers)
+			{
+				if (controller)
+				{
+					controller->clearAugmentedSkeleton();
+					controller->resetPossessionHints();
+				}
+			}
+		}
+	}
+
 	HookedController*
 	HandOfLesser::addHookedController(uint32_t id,
 									  vr::IVRServerDriverHost* host,
@@ -237,8 +262,6 @@ namespace HOL
 			}
 		}
 	}
-
-	static bool lastPossessState = false;
 
 	bool HandOfLesser::shouldPossess(uint32_t deviceId)
 	{
@@ -643,6 +666,11 @@ namespace HOL
 	float HandOfLesser::getControllerToHandDistance(HookedController* controller)
 	{
 		if (controller == nullptr)
+		{
+			return (std::numeric_limits<float>::max)();
+		}
+
+		if (!Tracking.isMultimodalEnabled)
 		{
 			return (std::numeric_limits<float>::max)();
 		}

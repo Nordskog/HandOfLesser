@@ -43,12 +43,9 @@ OpenXRBody& HOL::OpenXR::BodyTracking::getBodyTracker()
 	return mBodyTracker;
 }
 
-HOL::MultimodalPosePacket
-HOL::OpenXR::BodyTracking::getMultimodalPosePacket(bool isOVR, bool isMultimodalEnabled)
+HOL::MultimodalPosePacket HOL::OpenXR::BodyTracking::getMultimodalPosePacket()
 {
 	MultimodalPosePacket packet;
-	packet.isOVR = isOVR;
-	packet.isMultimodalEnabled = isMultimodalEnabled;
 
 	auto* bodyJoints = mBodyTracker.getLastJointLocations();
 

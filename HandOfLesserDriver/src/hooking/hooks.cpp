@@ -16,9 +16,10 @@ namespace HOL::hooks
 
 			if (HandOfLesser::Current->isEmulatedController(_this))
 			{
-				// Do not hook our own controllers. In theory we never evne add the hook to our own driver
-				// so this should never be called, but just in case.
-				DriverLog("Activate hooked on emulated controller, this probably shouldn't happen but skipping anyway.");
+				// Do not hook our own controllers. In theory we never evne add the hook to our own
+				// driver so this should never be called, but just in case.
+				DriverLog("Activate hooked on emulated controller, this probably shouldn't happen "
+						  "but skipping anyway.");
 				return TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
 			}
 
@@ -30,7 +31,7 @@ namespace HOL::hooks
 			// Add controller, get a pointer so we can set side later.
 			HookedController* controller = HOL::HandOfLesser::Current->addHookedController(
 				unWhichDevice, HOL::hooks::mLastDeviceDriverHost, _this, container);
-			
+
 			// Let original function run. This will add all the inputs, which is why
 			// we need to add the controller first.
 			auto ret = TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
@@ -86,7 +87,6 @@ namespace HOL::hooks
 
 			HandOfLesser::Current->removeDuplicateDevices();
 
-
 			return ret;
 		}
 	} // namespace TrackedDeviceActivate
@@ -98,14 +98,15 @@ namespace HOL::hooks
 		static bool
 		Detour(vr::IVRServerDriverHost* _this, vr::VREvent_t* pEvent, uint32_t uncbVREvent)
 		{
-			//DriverLog("PollNextEvent!");
+			// DriverLog("PollNextEvent!");
 			auto ret = PollNextEvent::FunctionHook.originalFunc(_this, pEvent, uncbVREvent);
 
 			if (ret)
 			{
 				if (pEvent->eventType == vr::EVREventType::VREvent_TrackedDeviceRoleChanged)
 				{
-					DriverLog("Received TrackedDeviceRoleChanged event, updating unhanded controllers");
+					DriverLog(
+						"Received TrackedDeviceRoleChanged event, updating unhanded controllers");
 					HandOfLesser::Current->requestEstimateControllerSide();
 				}
 			}
@@ -190,7 +191,7 @@ namespace HOL::hooks
 
 				// reset frame counter
 				controller->framesSinceLastPoseUpdate = 0;
-				
+
 				auto controllerMode = config.handPose.controllerMode;
 				if (controllerMode == ControllerMode::HookedControllerMode
 					|| controllerMode == ControllerMode::OffsetControllerMode)
@@ -217,7 +218,6 @@ namespace HOL::hooks
 					}
 				}
 			}
-
 
 			// Make sure to return early if we don't want to call the original function
 			return TrackedDevicePoseUpdated::FunctionHook.originalFunc(
@@ -307,6 +307,50 @@ namespace HOL::hooks
 		};
 	} // namespace CreateScalarComponent
 
+	namespace CreateSkeletonComponent
+	{
+		Hook<CreateSkeletonComponent::Signature>
+			FunctionHook("IVRDriverInput003::CreateSkeletonComponent");
+
+		static vr::EVRInputError Detour(vr::IVRDriverInput* _this,
+										vr::PropertyContainerHandle_t ulContainer,
+										const char* pchName,
+										const char* pchSkeletonPath,
+										const char* pchBasePosePath,
+										vr::EVRSkeletalTrackingLevel eSkeletalTrackingLevel,
+										const vr::VRBoneTransform_t* pGripLimitTransforms,
+										uint32_t unGripLimitTransformCount,
+										vr::VRInputComponentHandle_t* pHandle)
+		{
+			auto ret = CreateSkeletonComponent::FunctionHook.originalFunc(_this,
+																		  ulContainer,
+																		  pchName,
+																		  pchSkeletonPath,
+																		  pchBasePosePath,
+																		  eSkeletalTrackingLevel,
+																		  pGripLimitTransforms,
+																		  unGripLimitTransformCount,
+																		  pHandle);
+
+			HOL::HookedController* controller
+				= HOL::HandOfLesser::Current->getHookedControllerByPropertyContainer(ulContainer);
+			if (controller != nullptr)
+			{
+				controller->driverInput = _this;
+
+				controller->registerSkeletonInput(*pHandle, eSkeletalTrackingLevel, pchName);
+
+				ControllerInputHandle input = {.inputPath = pchName,
+											   .type = ControllerInputType::Skeleton,
+											   .handle = *pHandle};
+				controller->inputHandles[*pHandle] = input;
+				controller->inputHandlesByName[pchName] = *pHandle;
+			}
+
+			return ret;
+		};
+	} // namespace CreateSkeletonComponent
+
 	namespace UpdateBooleanComponent
 	{
 		Hook<UpdateBooleanComponent::Signature>
@@ -321,8 +365,8 @@ namespace HOL::hooks
 			HookedController* controller
 				= HandOfLesser::Current->getHookedControllerByInputHandle(ulComponent);
 
-			//TODO we shouldn't do anything here if we're not... doing stuff.
-			// Kinda wasteful.
+			// TODO we shouldn't do anything here if we're not... doing stuff.
+			//  Kinda wasteful.
 
 			if (controller != nullptr)
 			{
@@ -331,12 +375,12 @@ namespace HOL::hooks
 				// For the time being allow system gesture
 				if (inputHandle.inputPath.find("system") == std::string::npos)
 				{
-									/*
-				DriverLog("Controller: %s, Button: %s, value: %s",
-							controller->serial.c_str(),
-							inputHandle.inputPath.c_str(),
-							bNewValue ? "True" : "False");
-							*/
+					/*
+DriverLog("Controller: %s, Button: %s, value: %s",
+			controller->serial.c_str(),
+			inputHandle.inputPath.c_str(),
+			bNewValue ? "True" : "False");
+			*/
 					auto controllerMode = config.handPose.controllerMode;
 					if (controller->shouldPossess())
 					{
@@ -350,11 +394,11 @@ namespace HOL::hooks
 							}
 						}
 					}
-				}	
+				}
 			}
 			else
 			{
-				//DriverLog("Button on unknown controller!");
+				// DriverLog("Button on unknown controller!");
 			}
 
 			// Make sure to return early if we don't want to call the original function
@@ -398,16 +442,15 @@ namespace HOL::hooks
 					{
 						if (config.steamvr.blockControllerInputWhileHandTracking)
 						{
-							//DriverLog("Blocked!");
+							// DriverLog("Blocked!");
 							return vr::EVRInputError::VRInputError_None;
 						}
 					}
 				}
-				
 			}
 			else
 			{
-				//DriverLog("Scalar on unknown controller!");
+				// DriverLog("Scalar on unknown controller!");
 			}
 
 			// Make sure to return early if we don't want to call the original function
@@ -415,6 +458,30 @@ namespace HOL::hooks
 				_this, ulComponent, fNewValue, fTimeOffset);
 		};
 	} // namespace UpdateScalarComponent
+
+	namespace UpdateSkeletonComponent
+	{
+		Hook<UpdateSkeletonComponent::Signature>
+			FunctionHook("IVRDriverInput003::UpdateSkeletonComponent");
+
+		static vr::EVRInputError Detour(vr::IVRDriverInput* _this,
+										vr::VRInputComponentHandle_t ulComponent,
+										vr::EVRSkeletalMotionRange eMotionRange,
+										const vr::VRBoneTransform_t* pTransforms,
+										uint32_t unTransformCount)
+		{
+			HookedController* controller
+				= HandOfLesser::Current->getHookedControllerByInputHandle(ulComponent);
+
+			if (controller != nullptr && controller->isAugmentedSkeletonActive())
+			{
+				return vr::VRInputError_None;
+			}
+
+			return UpdateSkeletonComponent::FunctionHook.originalFunc(
+				_this, ulComponent, eMotionRange, pTransforms, unTransformCount);
+		};
+	} // namespace UpdateSkeletonComponent
 
 	namespace GetGenericInterface
 	{
@@ -483,6 +550,15 @@ namespace HOL::hooks
 					IHook::Register(&UpdateScalarComponent::FunctionHook);
 				}
 
+				if (!IHook::Exists(UpdateSkeletonComponent::FunctionHook.name))
+				{
+					DriverLog("Adding UpdateSkeletonComponent hook");
+
+					UpdateSkeletonComponent::FunctionHook.CreateHookInObjectVTable(
+						originalInterface, 6, &UpdateSkeletonComponent::Detour);
+					IHook::Register(&UpdateSkeletonComponent::FunctionHook);
+				}
+
 				if (!IHook::Exists(CreateBooleanComponent::FunctionHook.name))
 				{
 					DriverLog("Adding CreateBooleanComponent hook");
@@ -499,6 +575,15 @@ namespace HOL::hooks
 					CreateScalarComponent::FunctionHook.CreateHookInObjectVTable(
 						originalInterface, 2, &CreateScalarComponent::Detour);
 					IHook::Register(&CreateScalarComponent::FunctionHook);
+				}
+
+				if (!IHook::Exists(CreateSkeletonComponent::FunctionHook.name))
+				{
+					DriverLog("Adding CreateSkeletonComponent hook");
+
+					CreateSkeletonComponent::FunctionHook.CreateHookInObjectVTable(
+						originalInterface, 5, &CreateSkeletonComponent::Detour);
+					IHook::Register(&CreateSkeletonComponent::FunctionHook);
 				}
 			}
 

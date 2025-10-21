@@ -13,6 +13,7 @@
 
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
+#include "src/core/state_global.h"
 #include <HandOfLesserCommon.h>
 #include "src/core/HandOfLesserCore.h"
 
@@ -125,10 +126,10 @@ bool HOL::UserInterface::rightAlignButton(const char* label, int verticalLineOff
 
 	if (verticalLineOffset != 0)
 	{
-		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + (ImGui::GetTextLineHeight() + (ImGui::GetStyle().FramePadding.x * 2 ) * verticalLineOffset));
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY()
+							 + (ImGui::GetTextLineHeight()
+								+ (ImGui::GetStyle().FramePadding.x * 2) * verticalLineOffset));
 	}
-
-
 
 	return ImGui::Button(label);
 }
@@ -210,8 +211,7 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	ImGui::SameLine();
 	ImGui::Checkbox("Tracked", &HOL::display::HandTransform[side].positionTracked);
 
-	ImGui::Text("Tracked joints: %d / 26",
-				HOL::display::HandTransform[side].trackedJointCount);
+	ImGui::Text("Tracked joints: %d / 26", HOL::display::HandTransform[side].trackedJointCount);
 
 	ImGui::SeparatorText("Position");
 
@@ -426,10 +426,7 @@ void HOL::UserInterface::buildMisc()
 
 		ImGui::EndPopup();
 	}
-
-
 }
-
 
 void HOL::UserInterface::buildSteamVR()
 {
@@ -444,11 +441,14 @@ void HOL::UserInterface::buildSteamVR()
 
 	ImGui::SeparatorText("Transmission");
 
-	ImGui::Checkbox("Transmit Controller position", &Config.steamvr.sendSteamVRControllerPosition);
+	syncSettings |= ImGui::Checkbox("Transmit Controller position",
+									&Config.steamvr.sendSteamVRControllerPosition);
 
-	ImGui::Checkbox("Transmit skeletal input", &Config.skeletal.sendSkeletalInput);
+	syncSettings |= ImGui::Checkbox("Transmit skeletal input", &Config.skeletal.sendSkeletalInput);
+	syncSettings |= ImGui::Checkbox("Augment controller skeleton with hand tracking",
+									&Config.skeletal.augmentHookedControllers);
 
-	ImGui::Checkbox("Transmit SteamVR Input", &Config.steamvr.sendSteamVRInput);
+	syncSettings |= ImGui::Checkbox("Transmit SteamVR Input", &Config.steamvr.sendSteamVRInput);
 
 	ImGui::SeparatorText("Input");
 
@@ -457,10 +457,11 @@ void HOL::UserInterface::buildSteamVR()
 
 	ImGui::SeparatorText("General");
 
-	syncSettings |= ImGui::InputFloat("Steam Pose offset (s)", &Config.steamvr.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f");
+	syncSettings |= ImGui::InputFloat(
+		"Steam Pose offset (s)", &Config.steamvr.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f");
 
 	/////////////////
-	// Skeletal 
+	// Skeletal
 	/////////////////
 
 	ImGui::SeparatorText("Skeletal Input");
@@ -474,11 +475,7 @@ void HOL::UserInterface::buildSteamVR()
 	bool lengthChanged = false;
 
 	syncSettings |= ImGui::InputFloat(
-		"Length multiplier",
-					&Config.skeletal.jointLengthMultiplier,
-					0.01f,
-					0.1f,
-					"%.3f");
+		"Length multiplier", &Config.skeletal.jointLengthMultiplier, 0.01f, 0.1f, "%.3f");
 
 	/////////////////
 	// Skeletal Offset
@@ -516,7 +513,6 @@ void HOL::UserInterface::buildSteamVR()
 	}
 }
 
-
 void HOL::UserInterface::buildMain()
 {
 	ImGui::BeginChild(
@@ -528,10 +524,10 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::SeparatorText("State");
 
-	ImGui::Text("OpenXR Runtime: %s", HOL::display::OpenXrRuntimeName.c_str());
+	ImGui::Text("OpenXR Runtime: %s", HOL::state::Runtime.runtimeName);
 
 	ImGui::Text("OpenXR Session state: %s",
-				HOL::OpenXR::getOpenXrStateString(HOL::display::OpenXrInstanceState));
+				HOL::OpenXR::getOpenXrStateString(HOL::state::Runtime.openxrState));
 
 	//////////////////
 	// Mode

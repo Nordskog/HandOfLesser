@@ -22,7 +22,10 @@ namespace HOL
 		void requestHighFidelity();
 		void requestLowFidelity();
 
-		bool isMultimodalEnabled() const { return mMultimodalEnabled; }
+		bool isMultimodalEnabled() const
+		{
+			return mMultimodalEnabled;
+		}
 
 	private:
 		OpenXR::InstanceHolder* mInstanceHolder;

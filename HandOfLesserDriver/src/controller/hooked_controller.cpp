@@ -7,6 +7,17 @@
 
 namespace HOL
 {
+	void HookedController::clearAugmentedSkeleton()
+	{
+		mSkeletonHandle = 0;
+	}
+
+	void HookedController::resetPossessionHints()
+	{
+		mValidWhileOriginalInvalid = false;
+		mLastPossessionState = false;
+	}
+
 	HookedController::HookedController(uint32_t id,
 									   HandSide side,
 									   vr::IVRServerDriverHost* host,
@@ -27,6 +38,18 @@ namespace HOL
 		this->serial = serial;
 		this->mDeviceClass = deviceClass;
 		this->role = role;
+	}
+
+	void HookedController::registerSkeletonInput(vr::VRInputComponentHandle_t handle,
+												 vr::EVRSkeletalTrackingLevel level,
+												 const std::string& path)
+	{
+		mSkeletonHandle = handle;
+		mSkeletonTrackingLevel = level;
+		mSkeletonInputPath = path;
+		mLoggedMissingSkeletonHandle = false;
+		DriverLog(
+			"Hooked controller %s registered skeleton input %s", serial.c_str(), path.c_str());
 	}
 
 	void HookedController::UpdatePose(HOL::HandTransformPacket* packet)
@@ -67,6 +90,98 @@ namespace HOL
 
 	void HookedController::UpdateSkeletal(HOL::SkeletalPacket* packet)
 	{
+		auto& config = HOL::HandOfLesser::Current->Config;
+		const auto& trackingState = HOL::HandOfLesser::Tracking;
+
+		if (!config.skeletal.augmentHookedControllers)
+		{
+			clearAugmentedSkeleton();
+			return;
+		}
+
+		if (!trackingState.isMultimodalEnabled)
+		{
+			clearAugmentedSkeleton();
+			return;
+		}
+
+		if (packet == nullptr || packet->side != mSide)
+		{
+			clearAugmentedSkeleton();
+			return;
+		}
+
+		if (this->driverInput == nullptr)
+		{
+			clearAugmentedSkeleton();
+			return;
+		}
+
+		if (mSkeletonHandle == 0)
+		{
+			for (auto& [handle, input] : inputHandles)
+			{
+				if (input.type == ControllerInputType::Skeleton)
+				{
+					mSkeletonHandle = handle;
+					mSkeletonInputPath = input.inputPath;
+					break;
+				}
+			}
+		}
+
+		if (mSkeletonHandle == 0)
+		{
+			if (!mLoggedMissingSkeletonHandle)
+			{
+				DriverLog("Hooked controller %s missing skeleton handle", serial.c_str());
+				mLoggedMissingSkeletonHandle = true;
+			}
+			clearAugmentedSkeleton();
+			return;
+		}
+
+		mLoggedMissingSkeletonHandle = false;
+
+		HOL::ControllerCommon::buildSkeletalPoseFromPacket(*packet, mSkeletalPose);
+
+		if (hooks::UpdateSkeletonComponent::FunctionHook.originalFunc != nullptr)
+		{
+			hooks::UpdateSkeletonComponent::FunctionHook.originalFunc(
+				this->driverInput,
+				mSkeletonHandle,
+				vr::VRSkeletalMotionRange_WithoutController,
+				mSkeletalPose,
+				SteamVR::HandSkeletonBone::eBone_Count);
+		}
+		else
+		{
+			this->driverInput->UpdateSkeletonComponent(mSkeletonHandle,
+													   vr::VRSkeletalMotionRange_WithoutController,
+													   mSkeletalPose,
+													   SteamVR::HandSkeletonBone::eBone_Count);
+		}
+	}
+
+	bool HookedController::isAugmentedSkeletonActive() const
+	{
+		const auto& config = HOL::HandOfLesser::Current->Config;
+		if (!config.skeletal.augmentHookedControllers)
+		{
+			return false;
+		}
+
+		if (!HOL::HandOfLesser::Tracking.isMultimodalEnabled)
+		{
+			return false;
+		}
+
+		if (this->driverInput == nullptr || mSkeletonHandle == 0)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	void HookedController::SubmitPose()
@@ -143,10 +258,10 @@ namespace HOL
 			return false;
 		}
 
-		auto& multimodal = HOL::HandOfLesser::Current->mLastMultimodalPosePacket;
+		const auto& trackingState = HOL::HandOfLesser::Tracking;
 
-		// When using multimodal mode on OVR, use position-based detection
-		if (multimodal.isOVR && multimodal.isMultimodalEnabled)
+		// When using multimodal mode, use position-based detection
+		if (trackingState.isMultimodalEnabled)
 		{
 			// Get distance for logging
 			float distance = HOL::HandOfLesser::Current->getControllerToHandDistance(this);

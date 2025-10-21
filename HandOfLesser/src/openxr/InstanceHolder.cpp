@@ -3,7 +3,8 @@
 #include <iostream>
 #include "XrUtils.h"
 #include <thread>
-#include "src/core/ui/display_global.h"
+#include "src/core/state_global.h"
+#include "src/core/HandOfLesserCore.h"
 #include <meta_body_tracking_fidelity.h>
 
 using namespace HOL::OpenXR;
@@ -47,7 +48,7 @@ void InstanceHolder::initInstance()
 
 	// Should probably query the runtime for its min but good enough for now
 	xr::Version openXRVersion = xr::Version::current();
-	if (HOL::display::IsVDXR)
+	if (HOL::state::Runtime.isVDXR)
 	{
 		// Explicitly only suports 1.0
 		openXRVersion = xr::Version(1, 0, 0);
@@ -152,7 +153,6 @@ void HOL::OpenXR::InstanceHolder::getSystemProperties()
 	XrSystemSimultaneousHandsAndControllersPropertiesMETA modalProperties{
 		XR_TYPE_SYSTEM_SIMULTANEOUS_HANDS_AND_CONTROLLERS_PROPERTIES_META};
 
-
 	xr::SystemProperties systemProperties;
 	systemProperties.type = xr::StructureType::SystemProperties;
 	systemProperties.next = &modalProperties;
@@ -162,7 +162,6 @@ void HOL::OpenXR::InstanceHolder::getSystemProperties()
 	// META lies
 	std::cout << "Supported multimodal: " << modalProperties.supportsSimultaneousHandsAndControllers
 			  << "\n";
-
 }
 
 void InstanceHolder::pollEvent()
@@ -216,8 +215,8 @@ void InstanceHolder::enumerateLayers()
 
 void InstanceHolder::enumerateExtensions()
 {
-	// enumerateInstanceExtensionPropertiesToVector() may get stuck if the HMD is not connected properly
-	// Observed with airlink, probably means you've been booted back to the menu
+	// enumerateInstanceExtensionPropertiesToVector() may get stuck if the HMD is not connected
+	// properly Observed with airlink, probably means you've been booted back to the menu
 	this->mExtensions
 		= xr::enumerateInstanceExtensionPropertiesToVector(nullptr, this->mDispatcher);
 	std::cout << "Enumerating extensions:" << std::endl;
@@ -235,7 +234,6 @@ void InstanceHolder::initExtensions()
 		XR_EXT_HAND_TRACKING_EXTENSION_NAME,
 		XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME, // Used to get current time.
 		XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
-
 
 	if (hasExtension(this->mExtensions, XR_META_BODY_TRACKING_FIDELITY_EXTENSION_NAME))
 	{
@@ -261,7 +259,8 @@ void InstanceHolder::initExtensions()
 	}
 	else
 	{
-		std::cout << "Runtime does not support headless extension, running as foreground app" << std::endl;
+		std::cout << "Runtime does not support headless extension, running as foreground app"
+				  << std::endl;
 		this->mHeadless = false;
 	}
 
@@ -308,7 +307,7 @@ void HOL::OpenXR::InstanceHolder::getHmdPosition()
 			   views[0].pose.position.y,
 			   views[0].pose.position.z);
 
-				printf("X: %.3f, Y: %.3f, Z: %.3f\n",
+		printf("X: %.3f, Y: %.3f, Z: %.3f\n",
 			   views[1].pose.position.x,
 			   views[1].pose.position.y,
 			   views[1].pose.position.z);
@@ -397,8 +396,6 @@ void HOL::OpenXR::InstanceHolder::setupForegroundRendering()
 											  this->mSystemId.get(),
 											  supportedViewConfigType,
 											  &this->mViewportConfiguration));
-
-
 }
 
 bool HOL::OpenXR::InstanceHolder::fullForegroundMode()
@@ -421,7 +418,8 @@ XrTime InstanceHolder::getTime()
 void InstanceHolder::updateState(OpenXrState newState)
 {
 	this->mState = newState;
-	HOL::display::OpenXrInstanceState = newState;
+	HOL::state::Runtime.openxrState = newState;
+	HandOfLesserCore::Current->syncState();
 }
 
 OpenXrState InstanceHolder::getState()
@@ -436,37 +434,36 @@ bool HOL::OpenXR::InstanceHolder::isHeadless()
 
 int InstanceHolder::foregroundRender()
 {
-		xr::Time time = getXrTimeNow(this->mInstance.get(), this->mDispatcher);
+	xr::Time time = getXrTimeNow(this->mInstance.get(), this->mDispatcher);
 
-		if (this->mSessionState != xr::SessionState::Stopping)
-		{
-			XrFrameWaitInfo waitFrameInfo = {XR_TYPE_FRAME_WAIT_INFO};
-			XrFrameState frameState = {XR_TYPE_FRAME_STATE};
-			handleXR("xrWaitFrame call",
-						xrWaitFrame(this->mSession.get(), &waitFrameInfo, &frameState));
+	if (this->mSessionState != xr::SessionState::Stopping)
+	{
+		XrFrameWaitInfo waitFrameInfo = {XR_TYPE_FRAME_WAIT_INFO};
+		XrFrameState frameState = {XR_TYPE_FRAME_STATE};
+		handleXR("xrWaitFrame call",
+				 xrWaitFrame(this->mSession.get(), &waitFrameInfo, &frameState));
 
-			////////////////
-			// Begin frame
-			////////////////
+		////////////////
+		// Begin frame
+		////////////////
 
-			XrFrameBeginInfo beginFrameDesc = {XR_TYPE_FRAME_BEGIN_INFO};
-			handleXR("xrBeginFrame call",
-						(xrBeginFrame(this->mSession.get(), &beginFrameDesc)));
+		XrFrameBeginInfo beginFrameDesc = {XR_TYPE_FRAME_BEGIN_INFO};
+		handleXR("xrBeginFrame call", (xrBeginFrame(this->mSession.get(), &beginFrameDesc)));
 
-			doForegroundRendering(frameState);
+		doForegroundRendering(frameState);
 
-			///////////////////
-			// Frame stuff
-			//////////////////////
+		///////////////////
+		// Frame stuff
+		//////////////////////
 
-			XrFrameEndInfo endFrameInfo = {XR_TYPE_FRAME_END_INFO};
-			endFrameInfo.displayTime = frameState.predictedDisplayTime;
-			endFrameInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
-			endFrameInfo.layerCount = 0;
-			endFrameInfo.layers = nullptr;
+		XrFrameEndInfo endFrameInfo = {XR_TYPE_FRAME_END_INFO};
+		endFrameInfo.displayTime = frameState.predictedDisplayTime;
+		endFrameInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+		endFrameInfo.layerCount = 0;
+		endFrameInfo.layers = nullptr;
 
-			handleXR("xrEndFrame call", xrEndFrame(this->mSession.get(), &endFrameInfo));
-		}
+		handleXR("xrEndFrame call", xrEndFrame(this->mSession.get(), &endFrameInfo));
+	}
 
 	return 0;
 }

@@ -8,6 +8,7 @@
 #include "src/math/math_utils.h"
 #include "src/controller/controller.h"
 #include "src/settings/settings.h"
+#include "src/tracking_state.h"
 #include "src/json/types.h"
 #include "src/steamvr/input_wrapper.h"
 #include "src/steamvr/skeletal_input_joints.h"

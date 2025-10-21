@@ -6,18 +6,18 @@ namespace HOL::OpenXR
 	{
 		switch (state)
 		{
-			case HOL::OpenXR::Uninitialized:
+			case OpenXrState::Uninitialized:
 				return "Uninitialized";
-			case HOL::OpenXR::Initialized:
+			case OpenXrState::Initialized:
 				return "Initialized";
-			case HOL::OpenXR::Running:
+			case OpenXrState::Running:
 				return "Running";
-			case HOL::OpenXR::Failed:
+			case OpenXrState::Failed:
 				return "Failed";
-			case HOL::OpenXR::Exited:
+			case OpenXrState::Exited:
 				return "Exited";
 			default:
 				return "Unknown";
 		}
 	}
-}
+} // namespace HOL::OpenXR
