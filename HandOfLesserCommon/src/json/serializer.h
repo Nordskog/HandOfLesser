@@ -4,12 +4,18 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-// Defines specializations so nlohmann can serialize third-party types
-
 namespace nlohmann
 {
-	template <> 
-	struct adl_serializer<Eigen::Vector3f>
+	template <typename T>
+	void get_to_if_present(const nlohmann::json& j, const std::string& key, T& value)
+	{
+		if (j.contains(key))
+		{
+			j.at(key).get_to(value);
+		}
+	}
+
+	template <> struct adl_serializer<Eigen::Vector3f>
 	{
 		static void to_json(json& j, const Eigen::Vector3f& vec)
 		{

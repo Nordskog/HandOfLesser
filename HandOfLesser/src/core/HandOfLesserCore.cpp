@@ -329,9 +329,25 @@ void HOL::HandOfLesserCore::loadSettings()
 	std::ifstream file("settings.json");
 	if (file.is_open())
 	{
-		nlohmann::json j;
-		file >> j;
-		Config = j.get<HOL::settings::HandOfLesserSettings>();
+		try
+		{
+			nlohmann::json j;
+			file >> j;
+			Config = j.get<HOL::settings::HandOfLesserSettings>();
+		}
+		catch (const std::exception& ex)
+		{
+			std::cerr << "Failed to parse settings.json: " << ex.what() << std::endl;
+		}
+		catch (...)
+		{
+			std::cerr << "Failed to parse settings.json due to an unknown error." << std::endl;
+		}
+		file.close();
+	}
+	else
+	{
+		std::cout << "No settings.json found, using defaults." << std::endl;
 	}
 	syncSettings();
 	syncState();
