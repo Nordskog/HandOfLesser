@@ -18,6 +18,28 @@ namespace HOL
 		mLastPossessionState = false;
 	}
 
+	bool HookedController::isSuppressed() const
+	{
+		return mSuppressed;
+	}
+
+	void HookedController::setSuppressed(bool suppressed)
+	{
+		if (mSuppressed == suppressed)
+		{
+			return;
+		}
+
+		mSuppressed = suppressed;
+
+		if (suppressed)
+		{
+			vr::DriverPose_t disconnectPose = HOL::ControllerCommon::generateDisconnectedPose();
+			HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
+				this->mHookedHost, this->mDeviceId, disconnectPose, sizeof(vr::DriverPose_t));
+		}
+	}
+
 	HookedController::HookedController(uint32_t id,
 									   HandSide side,
 									   vr::IVRServerDriverHost* host,
@@ -258,52 +280,7 @@ namespace HOL
 			return false;
 		}
 
-		const auto& trackingState = HOL::HandOfLesser::Tracking;
-
-		// When using multimodal mode, use position-based detection
-		if (trackingState.isMultimodalEnabled)
-		{
-			// Get distance for logging
-			float distance = HOL::HandOfLesser::Current->getControllerToHandDistance(this);
-			bool isHeld = this->isHeld();
-
-			// Possess when controller is NOT held (hands are free)
-			bool shouldPossess = !isHeld;
-
-			mLastPossessionState = shouldPossess;
-			return shouldPossess;
-		}
-
-		// Original logic for non-multimodal mode
-		bool canPoss = canPossess();
-		if (!mLastOriginalPoseValid && canPoss) // All this needs to be reconsidered.
-		{
-			// We want to continue possessing while the real controllers
-			// are inactive, so it doesn't immediatley jump to their pose instead.
-			// This is of course meaningless for VD, since the controllers are always active.
-			this->mValidWhileOriginalInvalid = true;
-		}
-
-		if (mLastOriginalPoseValid)
-		{
-			// Only keep posessing while handtracking invalid
-			// until original pose becomes valid.
-			mValidWhileOriginalInvalid = false;
-		}
-
-		// Oculus doesn't send a disconnect signal, they just stop submitting.
-		bool originalSubmitStale = framesSinceLastPoseUpdate > 30;
-
-		// As of Quest3, we will have a valid pose despite it being un-tracked.
-		// All we care about is whether or not the pose is valid.
-		// We should possess anytime the controller is not being tracked.
-		// Ideally we would ask OpenXR for this, but we cannot do this properly
-		// in headless mode with VDXR, and it also emulates the controllers using handtracking.
-		// Our conditions are therefor:
-		// # if hands are tracked OR if original pose invalid.
-		return this->mLastTransformPacket.tracked
-			   || (canPoss && (!mLastOriginalPoseValid || originalSubmitStale))
-			   || this->mValidWhileOriginalInvalid;
+		return HOL::HandOfLesser::Current->isHandTrackingPrimary(this->mSide);
 	}
 
 	void HookedController::setSide(HandSide side)

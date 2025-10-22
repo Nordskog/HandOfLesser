@@ -312,7 +312,8 @@ void HOL::HandOfLesserCore::syncState()
 	state::Runtime.openxrState = this->mInstanceHolder.getState();
 
 	HOL::StatePacket packet;
-	packet.state = state::Tracking;
+	packet.tracking = state::Tracking;
+	packet.runtime = state::Runtime;
 	this->mTransport.send(9006, (char*)&packet, sizeof(HOL::StatePacket));
 }
 

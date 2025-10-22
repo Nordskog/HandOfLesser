@@ -3,7 +3,7 @@
 #include "src/hand/hand.h"
 #include <src/settings/settings.h>
 #include "src/steamvr/skeletal_input_joints.h"
-#include "src/tracking_state.h"
+#include "src/state/state.h"
 
 namespace HOL
 {
@@ -101,7 +101,7 @@ namespace HOL
 		bool valid = false;	  // Is a proper pose of some kind
 		bool tracked = false; // Is directly tracked instead of inferred or frozen
 		bool stale = false;
-		HOL::HandSide side;
+		HOL::HandSide side = HandSide::HandSide_MAX;
 		HOL::PoseLocation location;
 		HOL::PoseVelocity velocity;
 	};
@@ -109,7 +109,8 @@ namespace HOL
 	struct StatePacket
 	{
 		NativePacketType packetType = NativePacketType::State;
-		HOL::state::TrackingState state;
+		HOL::state::TrackingState tracking;
+		HOL::state::RuntimeState runtime;
 	};
 
 } // namespace HOL

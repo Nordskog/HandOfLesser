@@ -247,18 +247,14 @@ namespace HOL
 
 	void EmulatedControllerDriver::setConnectedState(bool connected)
 	{
-		if (connected)
+		if (mDeviceConnected == connected)
 		{
-			// We don't send any updates when disconnected.
-			mDeviceConnected = true;
+			return;
 		}
-		else
-		{
-			// Disconnect a controller by sending a single update
-			// saying we're disconnected, and preventing
-			// any updates from being sent.
-			mDeviceConnected = false;
 
+		mDeviceConnected = connected;
+		if (!connected)
+		{
 			vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
 				my_controller_index_,
 				ControllerCommon::generateDisconnectedPose(),
@@ -341,11 +337,6 @@ namespace HOL
 		ControllerCommon::buildSkeletalPoseFromPacket(*packet, mSkeletalPose);
 
 		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
-													 vr::VRSkeletalMotionRange_WithController,
-													 mSkeletalPose,
-													 eBone_Count);
-
-		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
 													 vr::VRSkeletalMotionRange_WithoutController,
 													 mSkeletalPose,
 													 eBone_Count);
@@ -355,9 +346,6 @@ namespace HOL
 	{
 		if (this->is_active_ && mDeviceConnected)
 		{
-			// UpdateSkeleton(); // TODO: this sends dummy data, needs actual implementation
-			// Inform the vrserver that our tracked device's pose has updated, giving it the pose
-			// returned by our GetPose().
 			vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
 				my_controller_index_, GetPose(), sizeof(vr::DriverPose_t));
 		}
@@ -517,60 +505,6 @@ namespace HOL
 	const std::string& EmulatedControllerDriver::MyGetSerialNumber()
 	{
 		return my_controller_serial_number_;
-	}
-
-	void EmulatedControllerDriver::UpdateSkeleton()
-	{
-		if (frame_ >= 4000)
-		{
-			frame_ = 0;
-		}
-
-		const int op = frame_ % 4000;
-		// DriverLog("Input thread frame: %d", op);
-		if (op < 1000) // curl 0 -> 1
-		{
-			last_curl_ = last_curl_ + 0.001f;
-		}
-		else if (op < 2000) // curl 1 -> 0
-		{
-			last_curl_ = last_curl_ - 0.001f;
-		}
-		else if (op < 2500) // splay 0 -> 1
-		{
-			last_splay_ = last_splay_ + 0.002f;
-		}
-		else if (op < 3500) // splay 1 -> -1
-		{
-			last_splay_ = last_splay_ - 0.002f;
-		}
-		else // splay -1 -> 0
-		{
-			last_splay_ = last_splay_ + 0.002f;
-		}
-
-		vr::VRBoneTransform_t transforms[eBone_Count];
-		// Pass our calculated curl and splay values to our skeleton simulation model to compute the
-		// bone transforms for.
-		my_hand_simulation_->ComputeSkeletonTransforms(
-			my_controller_role_,
-			{last_curl_, last_curl_, last_curl_, last_curl_, last_curl_},
-			{last_splay_, last_splay_, last_splay_, last_splay_, last_splay_},
-			transforms);
-		// Update the skeleton components.
-		// Applications can choose between using a skeleton as if it's holding a controller, or an
-		// interpretation with having it without one. As ours is just a simulation, let's just set
-		// them to the same transforms.
-		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
-													 vr::VRSkeletalMotionRange_WithController,
-													 transforms,
-													 eBone_Count);
-		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
-													 vr::VRSkeletalMotionRange_WithoutController,
-													 transforms,
-													 eBone_Count);
-
-		frame_++;
 	}
 
 } // namespace HOL

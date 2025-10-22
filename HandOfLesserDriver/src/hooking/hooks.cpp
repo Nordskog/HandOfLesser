@@ -181,16 +181,24 @@ namespace HOL::hooks
 
 			if (controller != nullptr)
 			{
-				controller->setLastOriginalPoseState(newPose.deviceIsConnected
-													 && newPose.poseIsValid);
+				bool newPoseValid = newPose.deviceIsConnected && newPose.poseIsValid;
 
-				if (newPose.poseIsValid && newPose.deviceIsConnected)
+				controller->setLastOriginalPoseState(newPoseValid);
+
+				if (newPoseValid)
 				{
 					controller->lastOriginalPose = newPose;
 				}
 
 				// reset frame counter
 				controller->framesSinceLastPoseUpdate = 0;
+
+				if (controller->isSuppressed())
+				{
+					// We've sent a disconnect message,
+					// prevent any future pose submits.
+					return;
+				}
 
 				auto controllerMode = config.handPose.controllerMode;
 				if (controllerMode == ControllerMode::HookedControllerMode

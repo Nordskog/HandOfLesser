@@ -44,9 +44,12 @@ namespace HOL
 		void requestEstimateControllerSide();
 
 		float getControllerToHandDistance(HookedController* controller);
+		bool isHandTrackingPrimary(HOL::HandSide side);
+		bool shouldUseHandTracking(HookedController* controller);
 
 		HOL::MultimodalPosePacket mLastMultimodalPosePacket;
 		static HOL::state::TrackingState Tracking;
+		static HOL::state::RuntimeState Runtime;
 
 	private:
 		void ReceiveDataThread();
@@ -58,12 +61,16 @@ namespace HOL
 		bool mEstimateControllerSideWhenPositionValid = false;
 
 		void handleConfigurationChange(HOL::settings::HandOfLesserSettings& newConfig);
+		void updateControllerConnectionStates();
 		void applyTrackingState(const HOL::state::TrackingState& newState);
+		void applyRuntimeState(const HOL::state::RuntimeState& newState);
 
 		std::thread my_pose_update_thread_;
 		HOL::NativeTransport mTransport;
 
 		std::unique_ptr<EmulatedControllerDriver> mEmulatedControllers[2];
 		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
+		HOL::HandTransformPacket mLastHandTransforms[HOL::HandSide_MAX]{};
+		bool mHasHandTransform[HOL::HandSide_MAX]{false, false};
 	};
 } // namespace HOL

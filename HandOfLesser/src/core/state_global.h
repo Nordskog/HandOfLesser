@@ -1,6 +1,5 @@
 #pragma once
 
-#include "runtime_state.h"
 #include <HandOfLesserCommon.h>
 
 namespace HOL::state

@@ -9,6 +9,7 @@ namespace HOL
 	HandOfLesser* HandOfLesser::Current = nullptr;
 	HOL::settings::HandOfLesserSettings HandOfLesser::Config;
 	HOL::state::TrackingState HandOfLesser::Tracking;
+	HOL::state::RuntimeState HandOfLesser::Runtime;
 
 	void HandOfLesser::init()
 	{
@@ -33,6 +34,23 @@ namespace HOL
 				case HOL::NativePacketType::HandTransform: {
 					HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*)rawPacket;
 
+					// Ehhh something might send garbage data and get lucky
+					if (packet->side == HOL::HandSide::LeftHand
+						|| packet->side == HOL::HandSide::RightHand)
+					{
+						mLastHandTransforms[packet->side] = *packet;
+						mHasHandTransform[packet->side] = packet->valid;
+					}
+
+					if (Config.handPose.controllerMode != ControllerMode::HookedControllerMode
+						&& Config.handPose.controllerMode != ControllerMode::OffsetControllerMode)
+					{
+						if (auto hooked = getHookedController(packet->side))
+						{
+							hooked->UpdatePose(packet);
+						}
+					}
+
 					GenericControllerInterface* controller
 						= this->GetActiveController(packet->side);
 					if (controller != nullptr)
@@ -40,6 +58,8 @@ namespace HOL
 						controller->UpdatePose(packet);
 						controller->SubmitPose();
 					}
+
+					updateControllerConnectionStates();
 
 					break;
 				}
@@ -114,7 +134,8 @@ namespace HOL
 
 				case HOL::NativePacketType::State: {
 					HOL::StatePacket* packet = (HOL::StatePacket*)rawPacket;
-					applyTrackingState(packet->state);
+					applyRuntimeState(packet->runtime);
+					applyTrackingState(packet->tracking);
 					break;
 				}
 
@@ -139,6 +160,8 @@ namespace HOL
 				removeEmulatedControllers();
 			}
 		}
+
+		updateControllerConnectionStates();
 	}
 
 	void HandOfLesser::addEmulatedControllers()
@@ -186,6 +209,8 @@ namespace HOL
 				}
 			}
 		}
+
+		updateControllerConnectionStates();
 	}
 
 	void HandOfLesser::removeEmulatedControllers()
@@ -196,6 +221,37 @@ namespace HOL
 			// We only add controllers once, and then enable/disable them.
 			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(false);
 			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(false);
+		}
+	}
+
+	void HandOfLesser::updateControllerConnectionStates()
+	{
+		for (int i = 0; i < HOL::HandSide_MAX; ++i)
+		{
+			auto side = static_cast<HOL::HandSide>(i);
+
+			if (Config.handPose.controllerMode == ControllerMode::EmulateControllerMode)
+			{
+				bool handTrackingPrimary = isHandTrackingPrimary(side);
+
+				// Just sets an internal bool to enabled so it accepts data,
+				// and we can tell whether or not it was active when we disable it.
+				if (auto emulated = getEmulatedController(side))
+				{
+					emulated->setConnectedState(handTrackingPrimary);
+				}
+
+				// VD will emulated controllers using hand tracking,
+				// so we need to suppress that controller when emulating another.
+				// May also need to do this for other configurations later.
+				if (Runtime.isVDXR)
+				{
+					if (auto hooked = getHookedController(side))
+					{
+						hooked->setSuppressed(handTrackingPrimary);
+					}
+				}
+			}
 		}
 	}
 
@@ -215,6 +271,14 @@ namespace HOL
 				}
 			}
 		}
+
+		updateControllerConnectionStates();
+	}
+
+	void HandOfLesser::applyRuntimeState(const HOL::state::RuntimeState& newState)
+	{
+		Runtime = newState;
+		updateControllerConnectionStates();
 	}
 
 	HookedController*
@@ -293,7 +357,7 @@ namespace HOL
 			// Only possess the controllers we are hooking
 			if (controller != nullptr)
 			{
-				return controller->shouldPossess();
+				return shouldUseHandTracking(controller);
 			}
 		}
 
@@ -304,6 +368,71 @@ namespace HOL
 	{
 		return HandOfLesser::Current->Config.handPose.controllerMode
 			   == ControllerMode::EmulateControllerMode;
+	}
+
+	bool HandOfLesser::shouldUseHandTracking(HookedController* controller)
+	{
+		if (controller == nullptr)
+		{
+			return false;
+		}
+
+		if (controller->mDeviceClass != vr::TrackedDeviceClass_Controller)
+		{
+			return false;
+		}
+
+		const auto& trackingState = HOL::HandOfLesser::Tracking;
+
+		if (trackingState.isMultimodalEnabled)
+		{
+			bool shouldPossess = !controller->isHeld();
+			controller->mLastPossessionState = shouldPossess;
+			return shouldPossess;
+		}
+
+		bool canPoss = controller->canPossess();
+		if (!controller->mLastOriginalPoseValid && canPoss)
+		{
+			controller->mValidWhileOriginalInvalid = true;
+		}
+
+		if (controller->mLastOriginalPoseValid)
+		{
+			controller->mValidWhileOriginalInvalid = false;
+		}
+
+		bool originalSubmitStale = controller->framesSinceLastPoseUpdate > 30;
+
+		bool shouldPossess
+			= controller->mLastTransformPacket.tracked
+			  || (canPoss && (!controller->mLastOriginalPoseValid || originalSubmitStale))
+			  || controller->mValidWhileOriginalInvalid;
+
+		controller->mLastPossessionState = shouldPossess;
+		return shouldPossess;
+	}
+
+	bool HandOfLesser::isHandTrackingPrimary(HOL::HandSide side)
+	{
+		HookedController* hooked = getHookedController(side);
+		if (hooked != nullptr)
+		{
+			return shouldUseHandTracking(hooked);
+		}
+
+		if (side < 0 || side >= HOL::HandSide_MAX)
+		{
+			return false;
+		}
+
+		if (!mHasHandTransform[side])
+		{
+			return false;
+		}
+
+		const HOL::HandTransformPacket& packet = mLastHandTransforms[side];
+		return packet.valid && packet.tracked;
 	}
 
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)

@@ -9,6 +9,8 @@ namespace HOL
 {
 	class HookedController : public GenericControllerInterface
 	{
+		friend class HandOfLesser;
+
 	public:
 		HookedController(uint32_t id,
 						 HandSide side,
@@ -32,6 +34,8 @@ namespace HOL
 		void clearAugmentedSkeleton();
 		bool isAugmentedSkeletonActive() const;
 		void resetPossessionHints();
+		bool isSuppressed() const;
+		void setSuppressed(bool suppressed);
 
 		bool canPossess();
 		bool shouldPossess();
@@ -84,5 +88,6 @@ namespace HOL
 		std::string mSkeletonInputPath;
 		bool mLoggedMissingSkeletonHandle = false;
 		vr::VRBoneTransform_t mSkeletalPose[SteamVR::HandSkeletonBone::eBone_Count]{};
+		bool mSuppressed = false;
 	};
 } // namespace HOL
