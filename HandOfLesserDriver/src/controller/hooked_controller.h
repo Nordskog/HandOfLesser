@@ -31,9 +31,7 @@ namespace HOL
 		void registerSkeletonInput(vr::VRInputComponentHandle_t handle,
 								   vr::EVRSkeletalTrackingLevel level,
 								   const std::string& path);
-		void clearAugmentedSkeleton();
 		bool isAugmentedSkeletonActive() const;
-		void resetPossessionHints();
 		bool isSuppressed() const;
 		void setSuppressed(bool suppressed);
 
@@ -81,7 +79,6 @@ namespace HOL
 		uint32_t mDeviceId;
 
 		// State tracking for logging
-		bool mLastPossessionState = false;
 		int32_t mFramesSinceLastDistanceLog = 0;
 		vr::VRInputComponentHandle_t mSkeletonHandle = 0;
 		vr::EVRSkeletalTrackingLevel mSkeletonTrackingLevel = vr::VRSkeletalTracking_Estimated;

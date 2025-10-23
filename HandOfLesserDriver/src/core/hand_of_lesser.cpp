@@ -134,8 +134,10 @@ namespace HOL
 
 				case HOL::NativePacketType::State: {
 					HOL::StatePacket* packet = (HOL::StatePacket*)rawPacket;
-					applyRuntimeState(packet->runtime);
-					applyTrackingState(packet->tracking);
+
+					Tracking = packet->tracking;
+					Runtime = packet->runtime;
+					updateControllerConnectionStates();
 					break;
 				}
 
@@ -255,32 +257,6 @@ namespace HOL
 		}
 	}
 
-	void HandOfLesser::applyTrackingState(const HOL::state::TrackingState& newState)
-	{
-		auto oldState = Tracking;
-		Tracking = newState;
-
-		if (oldState.isMultimodalEnabled && !Tracking.isMultimodalEnabled)
-		{
-			for (auto& controller : mHookedControllers)
-			{
-				if (controller)
-				{
-					controller->clearAugmentedSkeleton();
-					controller->resetPossessionHints();
-				}
-			}
-		}
-
-		updateControllerConnectionStates();
-	}
-
-	void HandOfLesser::applyRuntimeState(const HOL::state::RuntimeState& newState)
-	{
-		Runtime = newState;
-		updateControllerConnectionStates();
-	}
-
 	HookedController*
 	HandOfLesser::addHookedController(uint32_t id,
 									  vr::IVRServerDriverHost* host,
@@ -387,7 +363,6 @@ namespace HOL
 		if (trackingState.isMultimodalEnabled)
 		{
 			bool shouldPossess = !controller->isHeld();
-			controller->mLastPossessionState = shouldPossess;
 			return shouldPossess;
 		}
 
@@ -409,7 +384,6 @@ namespace HOL
 			  || (canPoss && (!controller->mLastOriginalPoseValid || originalSubmitStale))
 			  || controller->mValidWhileOriginalInvalid;
 
-		controller->mLastPossessionState = shouldPossess;
 		return shouldPossess;
 	}
 

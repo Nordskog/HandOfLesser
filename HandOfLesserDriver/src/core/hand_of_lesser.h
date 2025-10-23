@@ -62,8 +62,6 @@ namespace HOL
 
 		void handleConfigurationChange(HOL::settings::HandOfLesserSettings& newConfig);
 		void updateControllerConnectionStates();
-		void applyTrackingState(const HOL::state::TrackingState& newState);
-		void applyRuntimeState(const HOL::state::RuntimeState& newState);
 
 		std::thread my_pose_update_thread_;
 		HOL::NativeTransport mTransport;

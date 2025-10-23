@@ -7,17 +7,6 @@
 
 namespace HOL
 {
-	void HookedController::clearAugmentedSkeleton()
-	{
-		mSkeletonHandle = 0;
-	}
-
-	void HookedController::resetPossessionHints()
-	{
-		mValidWhileOriginalInvalid = false;
-		mLastPossessionState = false;
-	}
-
 	bool HookedController::isSuppressed() const
 	{
 		return mSuppressed;
@@ -117,25 +106,21 @@ namespace HOL
 
 		if (!config.skeletal.augmentHookedControllers)
 		{
-			clearAugmentedSkeleton();
 			return;
 		}
 
 		if (!trackingState.isMultimodalEnabled)
 		{
-			clearAugmentedSkeleton();
 			return;
 		}
 
 		if (packet == nullptr || packet->side != mSide)
 		{
-			clearAugmentedSkeleton();
 			return;
 		}
 
 		if (this->driverInput == nullptr)
 		{
-			clearAugmentedSkeleton();
 			return;
 		}
 
@@ -159,7 +144,6 @@ namespace HOL
 				DriverLog("Hooked controller %s missing skeleton handle", serial.c_str());
 				mLoggedMissingSkeletonHandle = true;
 			}
-			clearAugmentedSkeleton();
 			return;
 		}
 
