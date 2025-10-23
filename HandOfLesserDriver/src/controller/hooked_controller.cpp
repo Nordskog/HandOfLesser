@@ -338,7 +338,7 @@ namespace HOL
 		Eigen::Quaternionf rotation = HOL::ovrQuaternionToEigen(lastOriginalPose.qRotation);
 
 		// TODO: Check pose validity?
-		ControllerCommon::applyDriverOffset(position, rotation, mLastPose);
+		ControllerCommon::applyDriverOffset(position, rotation, lastOriginalPose);
 
 		return position;
 	}
