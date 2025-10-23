@@ -163,7 +163,8 @@ namespace HOL
 			}
 		}
 
-		updateControllerConnectionStates();
+		// Update logic wouldn't normally run unless in certain modes, so force upon config change.
+		updateControllerConnectionStates(true);
 	}
 
 	void HandOfLesser::addEmulatedControllers()
@@ -226,15 +227,39 @@ namespace HOL
 		}
 	}
 
-	void HandOfLesser::updateControllerConnectionStates()
+	void HandOfLesser::updateControllerConnectionStates(bool forceUpdate)
 	{
 		for (int i = 0; i < HOL::HandSide_MAX; ++i)
 		{
 			auto side = static_cast<HOL::HandSide>(i);
 
-			if (Config.handPose.controllerMode == ControllerMode::EmulateControllerMode)
+			bool emulationMode
+				= Config.handPose.controllerMode == ControllerMode::EmulateControllerMode;
+
+			if (forceUpdate || emulationMode)
 			{
-				bool handTrackingPrimary = isHandTrackingPrimary(side);
+				bool handTrackingPrimary = emulationMode && isHandTrackingPrimary(side);
+
+				// TODO: Add bool to determine if we should suppress existing controllers
+				if (auto hooked = getHookedController(side))
+				{
+					// We don't want to spam disconnect signals, but we want to ensure that the
+					// hooked controllers are reset to their original state after we've
+					// possess or suppressed them. If the controllers are connected and active
+					// their next pose submission will connect them again, so we can safely send
+					// a disconnect here, cover the case when the controller is should be inactive.
+					if (forceUpdate)
+					{
+						hooked->sendDisconnectState();
+					}
+
+					// This will set suppressed state and a disconnect event depending on the existing
+					// suppression state, meaning it may not trigger if we've been submitting poses
+					// on its behalf in possession or offset modes.
+					// With multimodal enabled all
+					hooked->setSuppressed(handTrackingPrimary );
+				}
+				
 
 				// Just sets an internal bool to enabled so it accepts data,
 				// and we can tell whether or not it was active when we disable it.
@@ -242,18 +267,8 @@ namespace HOL
 				{
 					emulated->setConnectedState(handTrackingPrimary);
 				}
-
-				// VD will emulated controllers using hand tracking,
-				// so we need to suppress that controller when emulating another.
-				// May also need to do this for other configurations later.
-				if (Runtime.isVDXR)
-				{
-					if (auto hooked = getHookedController(side))
-					{
-						hooked->setSuppressed(handTrackingPrimary);
-					}
-				}
 			}
+
 		}
 	}
 

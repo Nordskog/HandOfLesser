@@ -61,7 +61,7 @@ namespace HOL
 		bool mEstimateControllerSideWhenPositionValid = false;
 
 		void handleConfigurationChange(HOL::settings::HandOfLesserSettings& newConfig);
-		void updateControllerConnectionStates();
+		void updateControllerConnectionStates(bool forceUpdate = false);
 
 		std::thread my_pose_update_thread_;
 		HOL::NativeTransport mTransport;

@@ -35,6 +35,8 @@ namespace HOL
 		bool isSuppressed() const;
 		void setSuppressed(bool suppressed);
 
+		void sendDisconnectState();
+
 		bool canPossess();
 		bool shouldPossess();
 

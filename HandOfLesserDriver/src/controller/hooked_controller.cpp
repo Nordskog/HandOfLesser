@@ -23,10 +23,15 @@ namespace HOL
 
 		if (suppressed)
 		{
-			vr::DriverPose_t disconnectPose = HOL::ControllerCommon::generateDisconnectedPose();
-			HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
-				this->mHookedHost, this->mDeviceId, disconnectPose, sizeof(vr::DriverPose_t));
+			this->sendDisconnectState();
 		}
+	}
+
+	void HookedController::sendDisconnectState()
+	{
+		vr::DriverPose_t disconnectPose = HOL::ControllerCommon::generateDisconnectedPose();
+		HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
+			this->mHookedHost, this->mDeviceId, disconnectPose, sizeof(vr::DriverPose_t));
 	}
 
 	HookedController::HookedController(uint32_t id,
