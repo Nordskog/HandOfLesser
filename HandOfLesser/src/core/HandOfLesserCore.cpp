@@ -290,8 +290,7 @@ void HandOfLesserCore::sendUpdate()
 
 	// Send body tracking hand positions for controller detection in driver
 	if (state::Tracking.isMultimodalEnabled
-		&& (Config.handPose.controllerMode == ControllerMode::HookedControllerMode
-			|| Config.handPose.controllerMode == ControllerMode::OffsetControllerMode))
+		&& Config.handPose.controllerMode != ControllerMode::NoControllerMode)
 	{
 		MultimodalPosePacket bodyPosePacket = this->mBodyTracking.getMultimodalPosePacket();
 		this->mTransport.send(9006, (char*)&bodyPosePacket, sizeof(HOL::MultimodalPosePacket));
