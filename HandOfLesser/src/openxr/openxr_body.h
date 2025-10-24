@@ -19,9 +19,10 @@ public:
 	bool active = false;
 
 private:
-
 	void calculateRelativeTransform(const XrBodyJointLocationFB& baseJoint,
-									const XrBodyJointLocationFB& childJoint, Eigen::Vector3f& relativePos, Eigen::Quaternionf& relativeRot);
+									const XrBodyJointLocationFB& childJoint,
+									Eigen::Vector3f& relativePos,
+									Eigen::Quaternionf& relativeRot);
 	void applyRelativeTransform(const XrBodyJointLocationFB& baseJoint,
 								XrBodyJointLocationFB& childJoint,
 								const Eigen::Vector3f& relativePos,
@@ -30,8 +31,11 @@ private:
 	void preserveWristRotation(HandSide side);
 	void generateMissingPalmJoint(HandSide side);
 
-	XrBodyJointLocationFB mLastWithTrackedHands[XR_BODY_JOINT_COUNT_FB];
+	Eigen::Quaternionf fixOculusJointOrientation(const Eigen::Vector3f& currentJointPos,
+												 const Eigen::Vector3f& nextJointPos,
+												 const Eigen::Quaternionf& bogusOrientation);
 
+	XrBodyJointLocationFB mLastWithTrackedHands[XR_BODY_JOINT_COUNT_FB];
 
 	XrBodyTrackerFB mBodyTracker;
 	XrPath mInputSourcePath;

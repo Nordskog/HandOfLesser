@@ -51,6 +51,8 @@ namespace HOL::OpenXR
 
 	Eigen::Quaternionf toEigenQuaternion(const XrQuaternionf& xrQuat);
 
+	XrQuaternionf toXrQuaternion(const Eigen::Quaternionf& eigenQuat);
+
 	XrHandEXT toOpenXRHandSide(HOL::HandSide side);
 
 	std::string getActiveOpenXRRuntimePath(int majorApiVersion);

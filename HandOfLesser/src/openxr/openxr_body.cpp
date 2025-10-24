@@ -4,8 +4,32 @@
 #include "XrUtils.h"
 
 #include "src/core/ui/display_global.h"
+#include "src/core/state_global.h"
 
 #include <iostream>
+
+// Oculus runtime returns bogus orientations for body tracking.
+// They're not OVR-style either, no idea. Fix them as needed.
+Eigen::Quaternionf OpenXRBody::fixOculusJointOrientation(const Eigen::Vector3f& currentJointPos,
+														 const Eigen::Vector3f& nextJointPos,
+														 const Eigen::Quaternionf& bogusOrientation)
+{
+	// -Z forward
+	Eigen::Vector3f zAxis = -((nextJointPos - currentJointPos).normalized());
+
+	// Existing Z is where X should be, roughly.
+	Eigen::Vector3f xAxis = (bogusOrientation * Eigen::Vector3f::UnitZ()).normalized();
+
+	// Y is their cross product
+	Eigen::Vector3f yAxis = zAxis.cross(xAxis).normalized();
+
+	Eigen::Matrix3f rotMatrix;
+	rotMatrix.col(0) = xAxis;
+	rotMatrix.col(1) = yAxis;
+	rotMatrix.col(2) = zAxis;
+
+	return Eigen::Quaternionf(rotMatrix);
+}
 
 void OpenXRBody::init(xr::UniqueDynamicSession& session)
 {
@@ -184,21 +208,22 @@ void OpenXRBody::generateMissingPalmJoint(HandSide side)
 	Eigen::Vector3f zAxis
 		= (metacarpalPos - proximalPos).normalized(); // Points from finger to wrist
 
-	// Use metacarpal orientation's Y axis as reference for hand back direction
-	Eigen::Quaternionf metacarpalRot = OpenXR::toEigenQuaternion(metacarpal.pose.orientation);
-	Eigen::Vector3f metacarpalY = metacarpalRot * Eigen::Vector3f(0, 1, 0);
+	// Just reuse metacarpal for orientation
+	Eigen::Quaternionf palmOrientation = OpenXR::toEigenQuaternion(metacarpal.pose.orientation);
 
-	// Calculate Y axis (perpendicular to palm, pointing to back of hand)
-	Eigen::Vector3f xAxis = metacarpalY.cross(zAxis).normalized();
-	Eigen::Vector3f yAxis = zAxis.cross(xAxis).normalized();
+	// OVR returns bad body tracking orientations
+	if (HOL::state::Runtime.isOVR)
+	{
+		// But they may fix it some day, so check if existing orientation is within
+		// 45 degrees of currentJoint->NextJoint orientation and only apply if it's off.
+		Eigen::Vector3f expectedForward = (proximalPos - palmPos).normalized();
+		Eigen::Vector3f currentForward = -(palmOrientation * Eigen::Vector3f::UnitZ());
 
-	// Construct rotation matrix from axes
-	Eigen::Matrix3f rotMatrix;
-	rotMatrix.col(0) = xAxis;
-	rotMatrix.col(1) = yAxis;
-	rotMatrix.col(2) = zAxis;
-
-	Eigen::Quaternionf palmRot(rotMatrix);
+		if (expectedForward.dot(currentForward) < 0.707f) // 45 degrees'ish
+		{
+			palmOrientation = fixOculusJointOrientation(palmPos, proximalPos, palmOrientation);
+		}
+	}
 
 	// Set palm joint location
 	auto& palm = mJointLocations[palmJoint];
@@ -206,10 +231,10 @@ void OpenXRBody::generateMissingPalmJoint(HandSide side)
 	palm.pose.position.y = palmPos.y();
 	palm.pose.position.z = palmPos.z();
 
-	palm.pose.orientation.w = palmRot.w();
-	palm.pose.orientation.x = palmRot.x();
-	palm.pose.orientation.y = palmRot.y();
-	palm.pose.orientation.z = palmRot.z();
+	palm.pose.orientation.w = palmOrientation.w();
+	palm.pose.orientation.x = palmOrientation.x();
+	palm.pose.orientation.y = palmOrientation.y();
+	palm.pose.orientation.z = palmOrientation.z();
 
 	// Inherit tracking state directly from metacarpal joint
 	palm.locationFlags = metacarpal.locationFlags;

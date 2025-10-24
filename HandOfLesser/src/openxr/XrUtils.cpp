@@ -38,6 +38,16 @@ namespace HOL::OpenXR
 		return Eigen::Quaternionf(xrQuat.w, xrQuat.x, xrQuat.y, xrQuat.z);
 	}
 
+	XrQuaternionf toXrQuaternion(const Eigen::Quaternionf& eigenQuat)
+	{
+		XrQuaternionf xrQuat;
+		xrQuat.w = eigenQuat.w();
+		xrQuat.x = eigenQuat.x();
+		xrQuat.y = eigenQuat.y();
+		xrQuat.z = eigenQuat.z();
+		return xrQuat;
+	}
+
 	XrHandEXT toOpenXRHandSide(HOL::HandSide side)
 	{
 		switch (side)
