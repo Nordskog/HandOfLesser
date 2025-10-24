@@ -36,6 +36,30 @@ void HOL::OpenXR::BodyTracking::drawBody()
 		// WIll replace this later anyway so nevermind wasteful conversion
 		vis->submitPoint(OpenXR::toEigenVector(joint.pose.position), color, 7);
 	}
+
+	// Visualize palm orientation axes if enabled
+	if (Config.visualizer.showBodyTrackingPalmAxes)
+	{
+		// Left palm
+		auto& leftPalm = jointLocations[XR_BODY_JOINT_LEFT_HAND_PALM_FB];
+		if (leftPalm.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+		{
+			vis->submitOrientationAxes(OpenXR::toEigenVector(leftPalm.pose.position),
+									   OpenXR::toEigenQuaternion(leftPalm.pose.orientation),
+									   0.120f,
+									   6.0f);
+		}
+
+		// Right palm
+		auto& rightPalm = jointLocations[XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
+		if (rightPalm.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+		{
+			vis->submitOrientationAxes(OpenXR::toEigenVector(rightPalm.pose.position),
+									   OpenXR::toEigenQuaternion(rightPalm.pose.orientation),
+									   0.120f,
+									   6.0f);
+		}
+	}
 }
 
 OpenXRBody& HOL::OpenXR::BodyTracking::getBodyTracker()

@@ -115,6 +115,11 @@ namespace HOL
 			}
 		}
 
+		// Palm axes visualization controls
+		ImGui::Checkbox("Show Body Palm Axes", &HOL::Config.visualizer.showBodyTrackingPalmAxes);
+		ImGui::SameLine();
+		ImGui::Checkbox("Show Hand Palm Axes", &HOL::Config.visualizer.showHandTrackingPalmAxes);
+
 		ImVec2 uiBounds = ImVec2(0, ImGui::GetCursorScreenPos().y);
 		ImGui::SameLine(); // so we get the actual end position of the slider
 		uiBounds.x = ImGui::GetCursorScreenPos().x;
@@ -460,6 +465,27 @@ namespace HOL
 		DrawQueue* queue = getDrawQueueForSubmit();
 
 		queue->lines.push_back({start, end, color, width});
+	}
+
+	void Visualizer::submitOrientationAxes(const Eigen::Vector3f& position,
+										   const Eigen::Quaternionf& orientation,
+										   float axisLength,
+										   float lineWidth)
+	{
+		// Standard RGB color scheme: Red=X, Green=Y, Blue=Z
+		auto colorRed = IM_COL32(255, 0, 0, 255);
+		auto colorGreen = IM_COL32(0, 255, 0, 255);
+		auto colorBlue = IM_COL32(23, 139, 255, 255);
+
+		// Calculate end points for each axis
+		Eigen::Vector3f xEnd = position + (orientation * Eigen::Vector3f(axisLength, 0, 0));
+		Eigen::Vector3f yEnd = position + (orientation * Eigen::Vector3f(0, axisLength, 0));
+		Eigen::Vector3f zEnd = position + (orientation * Eigen::Vector3f(0, 0, axisLength));
+
+		// Submit the three axis lines
+		submitLine(position, xEnd, colorRed, lineWidth);	// X axis - Red
+		submitLine(position, yEnd, colorGreen, lineWidth);	// Y axis - Green
+		submitLine(position, zEnd, colorBlue, lineWidth);	// Z axis - Blue
 	}
 
 } // namespace HOL

@@ -410,6 +410,18 @@ void HOL::OpenXR::HandTracking::drawHands()
 
 		XrHandJointLocationEXT& palm = jointLocations[XR_HAND_JOINT_PALM_EXT];
 
+		// Visualize palm orientation axes if enabled
+		if (Config.visualizer.showHandTrackingPalmAxes)
+		{
+			if (palm.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+			{
+				vis->submitOrientationAxes(OpenXR::toEigenVector(palm.pose.position),
+										   OpenXR::toEigenQuaternion(palm.pose.orientation),
+										   0.120f,
+										   6.0f);
+			}
+		}
+
 		// This doesn't super go here but it's a good place for it.
 		if (i == HandSide::LeftHand && HOL::Config.visualizer.followLeftHand)
 		{

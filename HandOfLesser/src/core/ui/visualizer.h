@@ -39,6 +39,10 @@ namespace HOL
 						const Eigen::Vector3f& end,
 						ImU32 color,
 						float width);
+		void submitOrientationAxes(const Eigen::Vector3f& position,
+								   const Eigen::Quaternionf& orientation,
+								   float axisLength = 0.05f,
+								   float lineWidth = 2.0f);
 
 		Visualizer();
 		void init(); // Call on UI thread!!
