@@ -1,6 +1,7 @@
 #pragma once
 
-#include "src/transport/nativetransport.h"
+#include "src/transport/namedpipetransport.h"
+#include "src/transport/udptransport.h"
 #include "src/packet/nativepacket.h"
 #include "src/hand/hand.h"
 #include "src//hand/finger_bend.h"

@@ -19,7 +19,11 @@ namespace HOL
 		MultimodalPose = 604,
 		BodyTrackerPose = 605,
 		Settings = 700,
-		State = 701
+		State = 701,
+
+		// Driver → App messages (800+)
+		DriverInitialized = 800,
+		DriverStatus = 801
 	};
 
 	struct NativePacket
@@ -124,6 +128,21 @@ namespace HOL
 		NativePacketType packetType = NativePacketType::State;
 		HOL::state::TrackingState tracking;
 		HOL::state::RuntimeState runtime;
+	};
+
+	struct DriverInitializedPacket
+	{
+		NativePacketType packetType = NativePacketType::DriverInitialized;
+		char driverVersion[64] = "0.1.0"; // For future version checks
+		uint32_t capabilities = 0;		  // Bitfield for future features
+	};
+
+	struct DriverStatusPacket
+	{
+		NativePacketType packetType = NativePacketType::DriverStatus;
+		bool emulatedControllersActive = false;
+		int hookedControllerCount = 0;
+		int emulatedTrackerCount = 0;
 	};
 
 } // namespace HOL

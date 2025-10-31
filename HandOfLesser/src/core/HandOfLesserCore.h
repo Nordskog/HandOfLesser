@@ -24,6 +24,7 @@ namespace HOL
 	class HandOfLesserCore // : public XrEventsInterface
 	{
 	public:
+		HandOfLesserCore();
 		void init(int serverPort);
 		void start();
 		static HandOfLesserCore* Current; // Time to commit sinss
@@ -32,6 +33,7 @@ namespace HOL
 		void syncState();
 		void saveSettings();
 		void loadSettings();
+		bool isDriverConnected() const;
 
 		virtual std::vector<const char*> getRequiredExtensions();
 
@@ -46,10 +48,15 @@ namespace HOL
 		VRChatInput mVrchatInput;
 		SteamVR::SkeletalInput mSkeletalInput;
 		SteamVR::SteamVRInput mSteamVRInput;
-		NativeTransport mTransport;
+		NamedPipeTransport mDriverTransport;
+		UdpTransport mOscTransport;
 
 		std::thread mUserInterfaceThread;
+		std::thread mReceiveThread;
+		bool mActive = false;
+
 		void userInterfaceLoop();
+		void receiveDataThread();
 
 		void mainLoop();
 		void doOpenXRStuff();

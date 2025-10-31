@@ -12,6 +12,7 @@ namespace HOL
 	class HandOfLesser
 	{
 	public:
+		HandOfLesser();
 		void init();
 		void cleanup();
 		void runFrame();
@@ -59,6 +60,7 @@ namespace HOL
 	private:
 		void ReceiveDataThread();
 		void estimateControllerSide();
+		void sendStatus();
 
 		bool mActive;
 		int mControllerSideEstimationAttemptCount = 0;
@@ -69,7 +71,7 @@ namespace HOL
 		void updateControllerConnectionStates(bool forceUpdate = false);
 
 		std::thread my_pose_update_thread_;
-		HOL::NativeTransport mTransport;
+		HOL::NamedPipeTransport mTransport;
 
 		std::unique_ptr<EmulatedControllerDriver> mEmulatedControllers[2];
 		std::vector<std::unique_ptr<HookedController>> mHookedControllers;

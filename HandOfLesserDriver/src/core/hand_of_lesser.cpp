@@ -11,22 +11,60 @@ namespace HOL
 	HOL::state::TrackingState HandOfLesser::Tracking;
 	HOL::state::RuntimeState HandOfLesser::Runtime;
 
+	HandOfLesser::HandOfLesser()
+	{
+	}
+
 	void HandOfLesser::init()
 	{
 		this->mActive = true;
 		HandOfLesser::Current = this;
-		this->mTransport.init(9006); // Hardcoded for now, needs to be negotaited somehow
+
+		// Initialize transport as server (creates named pipe and waits for client)
+		this->mTransport.init(PipeRole::Server, R"(\\.\pipe\HandOfLesser)");
+
 		my_pose_update_thread_ = std::thread(&HandOfLesser::ReceiveDataThread, this);
 	}
 
 	void HandOfLesser::ReceiveDataThread()
 	{
 		DriverLog("ReceiveDataThread() start, active: %s", this->mActive ? "true" : "false");
+
+		// Wait for client connection (app to connect to our pipe)
+		DriverLog("Waiting for app to connect...");
+		while (this->mActive && !this->mTransport.isConnected())
+		{
+			if (this->mTransport.waitForConnection(1000))
+			{
+				DriverLog("App connected!");
+
+				// Send initialization message
+				DriverInitializedPacket initPacket;
+				this->mTransport.send((char*)&initPacket, sizeof(initPacket));
+				DriverLog("Sent DriverInitialized packet");
+				break;
+			}
+		}
+
 		while (this->mActive)
 		{
-			HOL::NativePacket* rawPacket = this->mTransport.receive();
+			HOL::NativePacket* rawPacket = this->mTransport.receivePacket();
 			if (rawPacket == nullptr)
 			{
+				// Check if disconnected
+				if (!this->mTransport.isConnected())
+				{
+					DriverLog("App disconnected, waiting for reconnection...");
+					if (this->mTransport.waitForConnection(5000))
+					{
+						DriverLog("App reconnected!");
+
+						// Send initialization message again
+						DriverInitializedPacket initPacket;
+						this->mTransport.send((char*)&initPacket, sizeof(initPacket));
+						DriverLog("Sent DriverInitialized packet");
+					}
+				}
 				continue;
 			}
 			switch (rawPacket->packetType)
@@ -203,6 +241,9 @@ namespace HOL
 		// Update logic wouldn't normally run unless in certain modes, so force upon config change.
 		updateControllerConnectionStates(true);
 		updateTrackerConnectionStates();
+
+		// Notify app of status changes
+		sendStatus();
 	}
 
 	void HandOfLesser::addEmulatedControllers()
@@ -410,13 +451,12 @@ namespace HOL
 						hooked->sendDisconnectState();
 					}
 
-					// This will set suppressed state and a disconnect event depending on the existing
-					// suppression state, meaning it may not trigger if we've been submitting poses
-					// on its behalf in possession or offset modes.
-					// With multimodal enabled all
-					hooked->setSuppressed(handTrackingPrimary );
+					// This will set suppressed state and a disconnect event depending on the
+					// existing suppression state, meaning it may not trigger if we've been
+					// submitting poses on its behalf in possession or offset modes. With multimodal
+					// enabled all
+					hooked->setSuppressed(handTrackingPrimary);
 				}
-				
 
 				// Just sets an internal bool to enabled so it accepts data,
 				// and we can tell whether or not it was active when we disable it.
@@ -425,7 +465,6 @@ namespace HOL
 					emulated->setConnectedState(handTrackingPrimary);
 				}
 			}
-
 		}
 	}
 
@@ -983,5 +1022,20 @@ namespace HOL
 
 		// Calculate and return distance
 		return (controller->getWorldPosition() - bodyHandPose.position).norm();
+	}
+
+	void HandOfLesser::sendStatus()
+	{
+		DriverStatusPacket packet;
+		packet.emulatedControllersActive
+			= (mEmulatedControllers[0] != nullptr || mEmulatedControllers[1] != nullptr);
+		packet.hookedControllerCount = (int)mHookedControllers.size();
+		packet.emulatedTrackerCount = (int)mEmulatedTrackers.size();
+
+		this->mTransport.send((char*)&packet, sizeof(packet));
+		DriverLog("Sent driver status: emulated=%d, hooked=%d, trackers=%d",
+				  packet.emulatedControllersActive,
+				  packet.hookedControllerCount,
+				  packet.emulatedTrackerCount);
 	}
 } // namespace HOL

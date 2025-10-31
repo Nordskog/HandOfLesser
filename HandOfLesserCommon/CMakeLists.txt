@@ -1,8 +1,7 @@
 add_library(HandOfLesserCommon STATIC
-	src/transport/nativetransport.cpp
-	src/transport/transport.cpp
 	src/transport/transportutil.cpp
 	src/transport/udptransport.cpp
+	src/transport/namedpipetransport.cpp
 	src/math/fingers.cpp
 	src/math/math_utils.cpp
 	src/hand/finger_bend.cpp
@@ -14,7 +13,7 @@ target_link_libraries(HandOfLesserCommon PUBLIC
 	json
 	eigen
 	openxr_loader
-	wsock32
+	ws2_32
 )
 
 target_include_directories(HandOfLesserCommon

@@ -2,18 +2,28 @@
 #include "udptransport.h"
 
 #include <iostream>
+#include <ws2tcpip.h>
 #include "transportutil.h"
 
 using namespace HOL;
 
-bool UdpTransport::init(int port)
+UdpTransport::~UdpTransport()
 {
+	shutdown();
+}
+
+bool UdpTransport::init(int sendPort, int listenPort, const char* sendAddress)
+{
+	mListenPort = listenPort;
+	mSendPort = sendPort;
+	mSendAddr.sin_family = AF_INET;
+	mSendAddr.sin_port = htons(sendPort);
+	inet_pton(AF_INET, sendAddress, &mSendAddr.sin_addr);
+
 	if (!HOL::ensureWSAStartup())
 	{
 		return false;
 	}
-
-	sockaddr_in addr = getAddress(port);
 
 	this->mSocket = socket(PF_INET, SOCK_DGRAM, 0); // UDP
 	if (this->mSocket == INVALID_SOCKET)
@@ -22,41 +32,65 @@ bool UdpTransport::init(int port)
 		return false;
 	}
 
-	if (bind(this->mSocket, (sockaddr*)&addr, sizeof(sockaddr_in)) != 0)
+	// Only bind if we have a listen port (for receiving)
+	if (mListenPort > 0)
 	{
-		printWSAError("Socket bind failed");
-		return false;
+		sockaddr_in addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(mListenPort);
+		addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+		if (bind(this->mSocket, (sockaddr*)&addr, sizeof(sockaddr_in)) != 0)
+		{
+			printWSAError("Socket bind failed");
+			closesocket(this->mSocket);
+			this->mSocket = INVALID_SOCKET;
+			return false;
+		}
 	}
 
 	// Stuff so we can use select() with a timeout
-	this->mTimeout.tv_sec = 1;	 // Timeout in seconds
+	this->mTimeout.tv_sec = 1;	// Timeout in seconds
 	this->mTimeout.tv_usec = 0; // Microseconds
 
+	mInitialized = true;
 	return true;
 }
 
-size_t UdpTransport::sendPacket(sockaddr_in* to, char* buffer, size_t length)
+void UdpTransport::shutdown()
 {
-	size_t sent = sendto(this->mSocket, buffer, length, 0, (sockaddr*)to, sizeof(sockaddr_in));
+	if (mSocket != INVALID_SOCKET)
+	{
+		closesocket(mSocket);
+		mSocket = INVALID_SOCKET;
+	}
+	mInitialized = false;
+}
+
+size_t UdpTransport::send(const char* buffer, size_t size)
+{
+	if (!mInitialized)
+	{
+		return 0;
+	}
+
+	size_t sent
+		= sendto(this->mSocket, buffer, size, 0, (sockaddr*)&mSendAddr, sizeof(sockaddr_in));
 	if (sent == SOCKET_ERROR)
 	{
 		printWSAError("Socket send failed");
 		return 0;
 	}
+	return sent;
 }
 
-sockaddr_in UdpTransport::getAddress(int port)
+size_t UdpTransport::receive(char* buffer, size_t maxSize)
 {
-	sockaddr_in addr;
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	if (!mInitialized)
+	{
+		return 0;
+	}
 
-	return addr;
-}
-
-size_t UdpTransport::receivePacket(char* buffer, size_t maxlength)
-{
 	// Must be done before every call to select()
 	// If you only do this once, you'll observe a network-wide lag spike
 	// every 5 seconds or so, with a timeout of 1s. Increasing it reduces the symptoms.
@@ -76,6 +110,6 @@ size_t UdpTransport::receivePacket(char* buffer, size_t maxlength)
 	}
 	else
 	{
-		return recv(this->mSocket, buffer, maxlength, 0);
+		return recv(this->mSocket, buffer, maxSize, 0);
 	}
 }

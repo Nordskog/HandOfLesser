@@ -437,7 +437,8 @@ void HOL::UserInterface::buildBodyTrackers()
 
 	ImGui::SeparatorText("Body Trackers");
 
-	syncSettings |= ImGui::Checkbox("Enable Body Trackers", &Config.bodyTrackers.enableBodyTrackers);
+	syncSettings
+		|= ImGui::Checkbox("Enable Body Trackers", &Config.bodyTrackers.enableBodyTrackers);
 
 	ImGui::SeparatorText("Core Trackers");
 
@@ -569,6 +570,17 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::Text("OpenXR Session state: %s",
 				HOL::OpenXR::getOpenXrStateString(HOL::state::Runtime.openxrState));
+
+	// Driver connection status
+	bool connected = HOL::HandOfLesserCore::Current->isDriverConnected();
+	if (connected)
+	{
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Driver: Connected");
+	}
+	else
+	{
+		ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "Driver: Disconnected");
+	}
 
 	//////////////////
 	// Mode

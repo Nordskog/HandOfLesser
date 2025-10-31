@@ -13,6 +13,11 @@ using namespace HOL::OpenXR;
 
 HandOfLesserCore* HandOfLesserCore::Current = nullptr;
 
+HandOfLesserCore::HandOfLesserCore()
+{
+}
+
+
 void HandOfLesserCore::init(int serverPort)
 {
 	this->Current = this;
@@ -81,7 +86,23 @@ void HandOfLesserCore::init(int serverPort)
 			}
 		}
 	}
-	this->mTransport.init(serverPort);
+
+	// Initialize transport as client (connects to driver via named pipe)
+	if (!this->mDriverTransport.init(PipeRole::Client, R"(\\.\pipe\HandOfLesser)"))
+	{
+		std::cerr << "Failed to initialize driver transport" << std::endl;
+	}
+
+	// Initialize OSC transport (send to port 9000, no listening needed)
+	if (!this->mOscTransport.init(9000))
+	{
+		std::cerr << "Failed to initialize OSC transport" << std::endl;
+	}
+
+	// Start receive thread for bidirectional communication
+	this->mActive = true;
+	this->mReceiveThread = std::thread(&HandOfLesserCore::receiveDataThread, this);
+
 	this->featuresManager.setInstanceHolder(&this->mInstanceHolder);
 	this->featuresManager.setBodyTracking(&this->mBodyTracking);
 	this->syncState();
@@ -124,6 +145,98 @@ void HOL::HandOfLesserCore::userInterfaceLoop()
 	this->mUserInterface.terminate();
 }
 
+void HOL::HandOfLesserCore::receiveDataThread()
+{
+	std::cout << "App receive thread started" << std::endl;
+
+	bool wasConnected = false;
+	bool printedReconnecting = false;
+
+	while (this->mActive)
+	{
+		// Check if we need to (re)connect
+		if (!this->mDriverTransport.isConnected())
+		{
+			// Only print once when transitioning to disconnected
+			if (wasConnected && !printedReconnecting)
+			{
+				std::cout << "Driver disconnected, attempting to reconnect..." << std::endl;
+				printedReconnecting = true;
+			}
+
+			wasConnected = false;
+
+			// Close old pipe if any
+			this->mDriverTransport.shutdown();
+
+			// Try to reconnect (silently, no spam)
+			if (this->mDriverTransport.reconnect())
+			{
+				// Wait a bit for connection to establish
+				for (int i = 0; i < 10 && !this->mDriverTransport.isConnected(); i++)
+				{
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				}
+
+				if (this->mDriverTransport.isConnected())
+				{
+					std::cout << "Reconnected to driver!" << std::endl;
+					wasConnected = true;
+					printedReconnecting = false;
+				}
+			}
+
+			// If still not connected, wait before retrying
+			if (!this->mDriverTransport.isConnected())
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+				continue;
+			}
+		}
+		else
+		{
+			wasConnected = true;
+			printedReconnecting = false;
+		}
+
+		HOL::NativePacket* packet = this->mDriverTransport.receivePacket();
+		if (packet == nullptr)
+		{
+			continue; // Timeout, retry
+		}
+
+		switch (packet->packetType)
+		{
+			case NativePacketType::DriverInitialized: {
+				auto* initPacket = (DriverInitializedPacket*)packet;
+				std::cout << "Driver initialized: version " << initPacket->driverVersion
+						  << std::endl;
+
+				// Respond by sending current settings
+				syncSettings();
+				syncState();
+				break;
+			}
+
+			case NativePacketType::DriverStatus: {
+				auto* statusPacket = (DriverStatusPacket*)packet;
+				std::cout << "Driver status: emulated controllers="
+						  << statusPacket->emulatedControllersActive
+						  << ", hooked=" << statusPacket->hookedControllerCount
+						  << ", trackers=" << statusPacket->emulatedTrackerCount << std::endl;
+				// Future: update UI status indicators
+				break;
+			}
+
+			default:
+				std::cerr << "Unknown packet type from driver: " << (int)packet->packetType
+						  << std::endl;
+		}
+	}
+
+	std::cout << "App receive thread stopped" << std::endl;
+}
+
 void HandOfLesserCore::mainLoop()
 {
 	while (1)
@@ -156,7 +269,20 @@ void HandOfLesserCore::mainLoop()
 	}
 
 	std::cout << "Exiting loop" << std::endl;
-	this->mUserInterfaceThread.join();
+
+	// Signal threads to stop
+	this->mActive = false;
+
+	// Wait for threads to finish
+	if (this->mUserInterfaceThread.joinable())
+	{
+		this->mUserInterfaceThread.join();
+	}
+
+	if (this->mReceiveThread.joinable())
+	{
+		this->mReceiveThread.join();
+	}
 }
 
 void HandOfLesserCore::doOpenXRStuff()
@@ -203,13 +329,13 @@ void HOL::HandOfLesserCore::sendOscData()
 	if (Config.vrchat.sendFull)
 	{
 		size = this->mVrchatOSC.generateOscBundleFull();
-		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+		this->mOscTransport.send(this->mVrchatOSC.getPacketBuffer(), size);
 	}
 
 	if (Config.vrchat.sendAlternating)
 	{
 		size = this->mVrchatOSC.generateOscBundleAlternating();
-		this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+		this->mOscTransport.send(this->mVrchatOSC.getPacketBuffer(), size);
 	}
 
 	if (Config.vrchat.sendPacked)
@@ -222,7 +348,7 @@ void HOL::HandOfLesserCore::sendOscData()
 		{
 			this->mVrchatOSC.generateOscOutputPacked();
 			size = this->mVrchatOSC.generateOscBundlePacked();
-			this->mTransport.send(9000, this->mVrchatOSC.getPacketBuffer(), size);
+			this->mOscTransport.send(this->mVrchatOSC.getPacketBuffer(), size);
 		}
 	}
 
@@ -232,7 +358,7 @@ void HOL::HandOfLesserCore::sendOscData()
 	auto [packetPointer, packetSize] = this->mVrchatInput.finalizeInputBundle();
 	if (Config.input.sendOscInput)
 	{
-		this->mTransport.send(9000, packetPointer, packetSize);
+		this->mOscTransport.send(packetPointer, packetSize);
 	}
 }
 
@@ -250,12 +376,12 @@ void HandOfLesserCore::sendUpdate()
 			{
 				HOL::HandTransformPacket transPacket
 					= this->mHandTracking.getTransformPacket((HandSide)i);
-				this->mTransport.send(9006, (char*)&transPacket, sizeof(HOL::HandTransformPacket));
+				this->mDriverTransport.send((char*)&transPacket, sizeof(HOL::HandTransformPacket));
 
 				/*
 				HOL::ControllerInputPacket inputPacket
 					= this->mHandTracking.getInputPacket((HandSide)i);
-				this->mTransport.send(9006, (char*)&inputPacket,
+				this->mDriverTransport.send((char*)&inputPacket,
 				sizeof(HOL::ControllerInputPacket));
 				*/
 			}
@@ -267,11 +393,11 @@ void HandOfLesserCore::sendUpdate()
 		// SteamVR inputs are submitted to a global
 		for (auto& packet : SteamVR::SteamVRInput::Current->floatInputs)
 		{
-			this->mTransport.send(9006, (char*)&packet, sizeof(HOL::FloatInputPacket));
+			this->mDriverTransport.send((char*)&packet, sizeof(HOL::FloatInputPacket));
 		}
 		for (auto& packet : SteamVR::SteamVRInput::Current->boolInputs)
 		{
-			this->mTransport.send(9006, (char*)&packet, sizeof(HOL::BoolInputPacket));
+			this->mDriverTransport.send((char*)&packet, sizeof(HOL::BoolInputPacket));
 		}
 	}
 
@@ -283,7 +409,7 @@ void HandOfLesserCore::sendUpdate()
 			if (hand.handPose.poseValid) // Only update if valid
 			{
 				SkeletalPacket& packet = this->mSkeletalInput.getSkeletalPacket(hand, (HandSide)i);
-				this->mTransport.send(9006, (char*)&packet, sizeof(HOL::SkeletalPacket));
+				this->mDriverTransport.send((char*)&packet, sizeof(HOL::SkeletalPacket));
 			}
 		}
 	}
@@ -293,7 +419,7 @@ void HandOfLesserCore::sendUpdate()
 		&& Config.handPose.controllerMode != ControllerMode::NoControllerMode)
 	{
 		MultimodalPosePacket bodyPosePacket = this->mBodyTracking.getMultimodalPosePacket();
-		this->mTransport.send(9006, (char*)&bodyPosePacket, sizeof(HOL::MultimodalPosePacket));
+		this->mDriverTransport.send((char*)&bodyPosePacket, sizeof(HOL::MultimodalPosePacket));
 	}
 
 	// Send body tracker poses
@@ -313,7 +439,7 @@ void HOL::HandOfLesserCore::sendBodyTrackerData()
 	// Send each packet
 	for (const auto& packet : packets)
 	{
-		this->mTransport.send(9006, (char*)&packet, sizeof(HOL::BodyTrackerPosePacket));
+		this->mDriverTransport.send((char*)&packet, sizeof(HOL::BodyTrackerPosePacket));
 	}
 }
 
@@ -321,7 +447,7 @@ void HOL::HandOfLesserCore::syncSettings()
 {
 	HOL::SettingsPacket packet;
 	packet.config = HOL::Config;
-	this->mTransport.send(9006, (char*)&packet, sizeof(HOL::SettingsPacket));
+	this->mDriverTransport.send((char*)&packet, sizeof(HOL::SettingsPacket));
 }
 
 void HOL::HandOfLesserCore::syncState()
@@ -331,7 +457,7 @@ void HOL::HandOfLesserCore::syncState()
 	HOL::StatePacket packet;
 	packet.tracking = state::Tracking;
 	packet.runtime = state::Runtime;
-	this->mTransport.send(9006, (char*)&packet, sizeof(HOL::StatePacket));
+	this->mDriverTransport.send((char*)&packet, sizeof(HOL::StatePacket));
 }
 
 void HOL::HandOfLesserCore::saveSettings()
@@ -369,4 +495,9 @@ void HOL::HandOfLesserCore::loadSettings()
 	}
 	syncSettings();
 	syncState();
+}
+
+bool HOL::HandOfLesserCore::isDriverConnected() const
+{
+	return this->mDriverTransport.isConnected();
 }
