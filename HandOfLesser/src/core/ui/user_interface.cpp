@@ -446,13 +446,11 @@ void HOL::UserInterface::buildBodyTrackers()
 
 	ImGui::SeparatorText("Left Arm Trackers");
 
-	syncSettings |= ImGui::Checkbox("Left Shoulder", &Config.bodyTrackers.enableLeftShoulder);
 	syncSettings |= ImGui::Checkbox("Left Upper Arm", &Config.bodyTrackers.enableLeftUpperArm);
 	syncSettings |= ImGui::Checkbox("Left Lower Arm", &Config.bodyTrackers.enableLeftLowerArm);
 
 	ImGui::SeparatorText("Right Arm Trackers");
 
-	syncSettings |= ImGui::Checkbox("Right Shoulder", &Config.bodyTrackers.enableRightShoulder);
 	syncSettings |= ImGui::Checkbox("Right Upper Arm", &Config.bodyTrackers.enableRightUpperArm);
 	syncSettings |= ImGui::Checkbox("Right Lower Arm", &Config.bodyTrackers.enableRightLowerArm);
 

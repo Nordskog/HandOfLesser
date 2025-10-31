@@ -47,10 +47,8 @@ namespace HOL
 		{
 			case BodyTrackerRole::Hips: return "Hips";
 			case BodyTrackerRole::Chest: return "Chest";
-			case BodyTrackerRole::LeftShoulder: return "Left Shoulder";
 			case BodyTrackerRole::LeftUpperArm: return "Left Upper Arm";
 			case BodyTrackerRole::LeftLowerArm: return "Left Lower Arm";
-			case BodyTrackerRole::RightShoulder: return "Right Shoulder";
 			case BodyTrackerRole::RightUpperArm: return "Right Upper Arm";
 			case BodyTrackerRole::RightLowerArm: return "Right Lower Arm";
 			default: return "Unknown";
@@ -63,10 +61,8 @@ namespace HOL
 		{
 			case BodyTrackerRole::Hips: return "HOL_hips";
 			case BodyTrackerRole::Chest: return "HOL_chest";
-			case BodyTrackerRole::LeftShoulder: return "HOL_left_shoulder";
 			case BodyTrackerRole::LeftUpperArm: return "HOL_left_upper_arm";
 			case BodyTrackerRole::LeftLowerArm: return "HOL_left_lower_arm";
-			case BodyTrackerRole::RightShoulder: return "HOL_right_shoulder";
 			case BodyTrackerRole::RightUpperArm: return "HOL_right_upper_arm";
 			case BodyTrackerRole::RightLowerArm: return "HOL_right_lower_arm";
 			default: return "HOL_unknown";
@@ -79,10 +75,8 @@ namespace HOL
 		{
 			case BodyTrackerRole::Hips: return XR_BODY_JOINT_HIPS_FB;
 			case BodyTrackerRole::Chest: return XR_BODY_JOINT_CHEST_FB;
-			case BodyTrackerRole::LeftShoulder: return XR_BODY_JOINT_LEFT_SHOULDER_FB;
 			case BodyTrackerRole::LeftUpperArm: return XR_BODY_JOINT_LEFT_ARM_UPPER_FB;
 			case BodyTrackerRole::LeftLowerArm: return XR_BODY_JOINT_LEFT_ARM_LOWER_FB;
-			case BodyTrackerRole::RightShoulder: return XR_BODY_JOINT_RIGHT_SHOULDER_FB;
 			case BodyTrackerRole::RightUpperArm: return XR_BODY_JOINT_RIGHT_ARM_UPPER_FB;
 			case BodyTrackerRole::RightLowerArm: return XR_BODY_JOINT_RIGHT_ARM_LOWER_FB;
 			default: return XR_BODY_JOINT_HIPS_FB; // Fallback
@@ -95,10 +89,8 @@ namespace HOL
 		{
 			case BodyTrackerRole::Hips: return "TrackerRole_Waist";
 			case BodyTrackerRole::Chest: return "TrackerRole_Chest";
-			case BodyTrackerRole::LeftShoulder: return "TrackerRole_LeftShoulder";
 			case BodyTrackerRole::LeftUpperArm: return "TrackerRole_LeftShoulder";
 			case BodyTrackerRole::LeftLowerArm: return "TrackerRole_LeftElbow";
-			case BodyTrackerRole::RightShoulder: return "TrackerRole_RightShoulder";
 			case BodyTrackerRole::RightUpperArm: return "TrackerRole_RightShoulder";
 			case BodyTrackerRole::RightLowerArm: return "TrackerRole_RightElbow";
 			default: return "TrackerRole_Handed";

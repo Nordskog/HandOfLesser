@@ -191,10 +191,8 @@ namespace HOL
 			// Individual tracker enables
 			bool enableHips = false;
 			bool enableChest = false;
-			bool enableLeftShoulder = false;
 			bool enableLeftUpperArm = false;
 			bool enableLeftLowerArm = false;
-			bool enableRightShoulder = false;
 			bool enableRightUpperArm = false;
 			bool enableRightLowerArm = false;
 		};

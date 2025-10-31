@@ -210,10 +210,8 @@ namespace HOL
 			j = {{"enableBodyTrackers", settings.enableBodyTrackers},
 				 {"enableHips", settings.enableHips},
 				 {"enableChest", settings.enableChest},
-				 {"enableLeftShoulder", settings.enableLeftShoulder},
 				 {"enableLeftUpperArm", settings.enableLeftUpperArm},
 				 {"enableLeftLowerArm", settings.enableLeftLowerArm},
-				 {"enableRightShoulder", settings.enableRightShoulder},
 				 {"enableRightUpperArm", settings.enableRightUpperArm},
 				 {"enableRightLowerArm", settings.enableRightLowerArm}};
 		}
@@ -223,10 +221,8 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "enableBodyTrackers", settings.enableBodyTrackers);
 			nlohmann::get_to_if_present(j, "enableHips", settings.enableHips);
 			nlohmann::get_to_if_present(j, "enableChest", settings.enableChest);
-			nlohmann::get_to_if_present(j, "enableLeftShoulder", settings.enableLeftShoulder);
 			nlohmann::get_to_if_present(j, "enableLeftUpperArm", settings.enableLeftUpperArm);
 			nlohmann::get_to_if_present(j, "enableLeftLowerArm", settings.enableLeftLowerArm);
-			nlohmann::get_to_if_present(j, "enableRightShoulder", settings.enableRightShoulder);
 			nlohmann::get_to_if_present(j, "enableRightUpperArm", settings.enableRightUpperArm);
 			nlohmann::get_to_if_present(j, "enableRightLowerArm", settings.enableRightLowerArm);
 		}

@@ -39,13 +39,11 @@ namespace HOL
 	{
 		Hips = 0,
 		Chest = 1,
-		LeftShoulder = 2,
-		LeftUpperArm = 3,
-		LeftLowerArm = 4,
-		RightShoulder = 5,
-		RightUpperArm = 6,
-		RightLowerArm = 7,
-		TrackerRole_MAX = 8
+		LeftUpperArm = 2,
+		LeftLowerArm = 3,
+		RightUpperArm = 4,
+		RightLowerArm = 5,
+		TrackerRole_MAX = 6
 	};
 
 	PoseLocationEuler getControllerBaseOffset(ControllerType type);

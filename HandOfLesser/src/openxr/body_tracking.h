@@ -15,6 +15,7 @@ namespace HOL::OpenXR
 		void drawBody();
 		OpenXRBody& getBodyTracker();
 		HOL::MultimodalPosePacket getMultimodalPosePacket();
+		std::vector<HOL::BodyTrackerPosePacket> getBodyTrackerPackets();
 
 	private:
 		OpenXRBody mBodyTracker;

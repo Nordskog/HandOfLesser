@@ -183,13 +183,6 @@ namespace HOL
 		bool anyTrackerSettingChanged
 			= Config.bodyTrackers.enableHips != oldConfig.bodyTrackers.enableHips
 			  || Config.bodyTrackers.enableChest != oldConfig.bodyTrackers.enableChest
-			  || Config.bodyTrackers.enableLeftShoulder != oldConfig.bodyTrackers.enableLeftShoulder
-			  || Config.bodyTrackers.enableLeftUpperArm
-					 != oldConfig.bodyTrackers.enableLeftUpperArm
-			  || Config.bodyTrackers.enableLeftLowerArm
-					 != oldConfig.bodyTrackers.enableLeftLowerArm
-			  || Config.bodyTrackers.enableRightShoulder
-					 != oldConfig.bodyTrackers.enableRightShoulder
 			  || Config.bodyTrackers.enableRightUpperArm
 					 != oldConfig.bodyTrackers.enableRightUpperArm
 			  || Config.bodyTrackers.enableRightLowerArm
@@ -291,17 +284,11 @@ namespace HOL
 					case BodyTrackerRole::Chest:
 						shouldBeEnabled = Config.bodyTrackers.enableChest;
 						break;
-					case BodyTrackerRole::LeftShoulder:
-						shouldBeEnabled = Config.bodyTrackers.enableLeftShoulder;
-						break;
 					case BodyTrackerRole::LeftUpperArm:
 						shouldBeEnabled = Config.bodyTrackers.enableLeftUpperArm;
 						break;
 					case BodyTrackerRole::LeftLowerArm:
 						shouldBeEnabled = Config.bodyTrackers.enableLeftLowerArm;
-						break;
-					case BodyTrackerRole::RightShoulder:
-						shouldBeEnabled = Config.bodyTrackers.enableRightShoulder;
 						break;
 					case BodyTrackerRole::RightUpperArm:
 						shouldBeEnabled = Config.bodyTrackers.enableRightUpperArm;
@@ -375,17 +362,11 @@ namespace HOL
 					case BodyTrackerRole::Chest:
 						shouldBeConnected = Config.bodyTrackers.enableChest;
 						break;
-					case BodyTrackerRole::LeftShoulder:
-						shouldBeConnected = Config.bodyTrackers.enableLeftShoulder;
-						break;
 					case BodyTrackerRole::LeftUpperArm:
 						shouldBeConnected = Config.bodyTrackers.enableLeftUpperArm;
 						break;
 					case BodyTrackerRole::LeftLowerArm:
 						shouldBeConnected = Config.bodyTrackers.enableLeftLowerArm;
-						break;
-					case BodyTrackerRole::RightShoulder:
-						shouldBeConnected = Config.bodyTrackers.enableRightShoulder;
 						break;
 					case BodyTrackerRole::RightUpperArm:
 						shouldBeConnected = Config.bodyTrackers.enableRightUpperArm;
