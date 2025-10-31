@@ -202,9 +202,12 @@ namespace HOL
 
 	void HandOfLesser::handleConfigurationChange(HOL::settings::HandOfLesserSettings& oldConfig)
 	{
+		bool devicesChanged = false;
+
 		// Add or remove ( or enable/disable ) emulated controllers on controller mode change
 		if (Config.handPose.controllerMode != oldConfig.handPose.controllerMode)
 		{
+			devicesChanged = true;
 			if (Config.handPose.controllerMode == ControllerMode::EmulateControllerMode)
 			{
 				addEmulatedControllers();
@@ -228,6 +231,7 @@ namespace HOL
 
 		if (trackersEnabledChanged || anyTrackerSettingChanged)
 		{
+			devicesChanged = true;
 			if (Config.bodyTrackers.enableBodyTrackers)
 			{
 				addEmulatedTrackers();
@@ -242,8 +246,11 @@ namespace HOL
 		updateControllerConnectionStates(true);
 		updateTrackerConnectionStates();
 
-		// Notify app of status changes
-		sendStatus();
+		// Only notify app if we actually changed the device list
+		if (devicesChanged)
+		{
+			sendStatus();
+		}
 	}
 
 	void HandOfLesser::addEmulatedControllers()
