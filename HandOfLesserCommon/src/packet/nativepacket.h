@@ -4,6 +4,7 @@
 #include <src/settings/settings.h>
 #include "src/steamvr/skeletal_input_joints.h"
 #include "src/state/state.h"
+#include "src/controller/controller.h"
 
 namespace HOL
 {
@@ -16,6 +17,7 @@ namespace HOL
 		BoolInput = 602,
 		SkeletalInput = 603,
 		MultimodalPose = 604,
+		BodyTrackerPose = 605,
 		Settings = 700,
 		State = 701
 	};
@@ -104,6 +106,17 @@ namespace HOL
 		HOL::HandSide side = HandSide::HandSide_MAX;
 		HOL::PoseLocation location;
 		HOL::PoseVelocity velocity;
+	};
+
+	struct BodyTrackerPosePacket
+	{
+		NativePacketType packetType = NativePacketType::BodyTrackerPose;
+		HOL::BodyTrackerRole role;
+		HOL::PoseLocation location;
+		HOL::PoseVelocity velocity;
+		bool active = false;
+		bool valid = false;
+		bool tracked = false;
 	};
 
 	struct StatePacket

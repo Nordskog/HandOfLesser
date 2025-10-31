@@ -1,8 +1,10 @@
 #pragma once
 #include <thread>
+#include <unordered_map>
 #include <HandOfLesserCommon.h>
 #include "src/controller/emulated_controller_driver.h"
 #include "src/controller/hooked_controller.h"
+#include "src/tracker/emulated_tracker_driver.h"
 
 namespace HOL
 {
@@ -15,6 +17,9 @@ namespace HOL
 		void runFrame();
 		void addEmulatedControllers();
 		void removeEmulatedControllers();
+		void addEmulatedTrackers();
+		void removeEmulatedTrackers();
+		void updateTrackerConnectionStates();
 		HookedController* addHookedController(uint32_t id,
 											  vr::IVRServerDriverHost* host,
 											  vr::ITrackedDeviceServerDriver* driver,
@@ -68,6 +73,8 @@ namespace HOL
 
 		std::unique_ptr<EmulatedControllerDriver> mEmulatedControllers[2];
 		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
+		std::unordered_map<HOL::BodyTrackerRole, std::unique_ptr<EmulatedTrackerDriver>>
+			mEmulatedTrackers;
 		HOL::HandTransformPacket mLastHandTransforms[HOL::HandSide_MAX]{};
 		bool mHasHandTransform[HOL::HandSide_MAX]{false, false};
 	};

@@ -205,6 +205,32 @@ namespace HOL
 				j, "jitterLastPoseOnTrackingLoss", settings.jitterLastPoseOnTrackingLoss);
 		}
 
+		inline void to_json(nlohmann::json& j, const BodyTrackerSettings& settings)
+		{
+			j = {{"enableBodyTrackers", settings.enableBodyTrackers},
+				 {"enableHips", settings.enableHips},
+				 {"enableChest", settings.enableChest},
+				 {"enableLeftShoulder", settings.enableLeftShoulder},
+				 {"enableLeftUpperArm", settings.enableLeftUpperArm},
+				 {"enableLeftLowerArm", settings.enableLeftLowerArm},
+				 {"enableRightShoulder", settings.enableRightShoulder},
+				 {"enableRightUpperArm", settings.enableRightUpperArm},
+				 {"enableRightLowerArm", settings.enableRightLowerArm}};
+		}
+
+		inline void from_json(const nlohmann::json& j, BodyTrackerSettings& settings)
+		{
+			nlohmann::get_to_if_present(j, "enableBodyTrackers", settings.enableBodyTrackers);
+			nlohmann::get_to_if_present(j, "enableHips", settings.enableHips);
+			nlohmann::get_to_if_present(j, "enableChest", settings.enableChest);
+			nlohmann::get_to_if_present(j, "enableLeftShoulder", settings.enableLeftShoulder);
+			nlohmann::get_to_if_present(j, "enableLeftUpperArm", settings.enableLeftUpperArm);
+			nlohmann::get_to_if_present(j, "enableLeftLowerArm", settings.enableLeftLowerArm);
+			nlohmann::get_to_if_present(j, "enableRightShoulder", settings.enableRightShoulder);
+			nlohmann::get_to_if_present(j, "enableRightUpperArm", settings.enableRightUpperArm);
+			nlohmann::get_to_if_present(j, "enableRightLowerArm", settings.enableRightLowerArm);
+		}
+
 		inline void to_json(nlohmann::json& j, const HandOfLesserSettings& settings)
 		{
 			j = {{"general", settings.general},
@@ -216,7 +242,8 @@ namespace HOL
 				 {"steamvr", settings.steamvr},
 				 {"visualizer", settings.visualizer},
 				 {"input", settings.input},
-				 {"skeletal", settings.skeletal}};
+				 {"skeletal", settings.skeletal},
+				 {"bodyTrackers", settings.bodyTrackers}};
 		}
 
 		inline void from_json(const nlohmann::json& j, HandOfLesserSettings& settings)
@@ -231,6 +258,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "visualizer", settings.visualizer);
 			nlohmann::get_to_if_present(j, "input", settings.input);
 			nlohmann::get_to_if_present(j, "skeletal", settings.skeletal);
+			nlohmann::get_to_if_present(j, "bodyTrackers", settings.bodyTrackers);
 		}
 	} // namespace settings
 } // namespace HOL

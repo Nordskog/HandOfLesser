@@ -132,6 +132,20 @@ namespace HOL
 					break;
 				}
 
+				case HOL::NativePacketType::BodyTrackerPose: {
+					HOL::BodyTrackerPosePacket* packet = (HOL::BodyTrackerPosePacket*)rawPacket;
+
+					// Find the tracker for this role
+					auto it = mEmulatedTrackers.find(packet->role);
+					if (it != mEmulatedTrackers.end())
+					{
+						it->second->UpdatePose(*packet);
+						it->second->SubmitPose();
+					}
+
+					break;
+				}
+
 				case HOL::NativePacketType::State: {
 					HOL::StatePacket* packet = (HOL::StatePacket*)rawPacket;
 
@@ -163,8 +177,39 @@ namespace HOL
 			}
 		}
 
+		// Handle body tracker changes
+		bool trackersEnabledChanged
+			= Config.bodyTrackers.enableBodyTrackers != oldConfig.bodyTrackers.enableBodyTrackers;
+		bool anyTrackerSettingChanged
+			= Config.bodyTrackers.enableHips != oldConfig.bodyTrackers.enableHips
+			  || Config.bodyTrackers.enableChest != oldConfig.bodyTrackers.enableChest
+			  || Config.bodyTrackers.enableLeftShoulder != oldConfig.bodyTrackers.enableLeftShoulder
+			  || Config.bodyTrackers.enableLeftUpperArm
+					 != oldConfig.bodyTrackers.enableLeftUpperArm
+			  || Config.bodyTrackers.enableLeftLowerArm
+					 != oldConfig.bodyTrackers.enableLeftLowerArm
+			  || Config.bodyTrackers.enableRightShoulder
+					 != oldConfig.bodyTrackers.enableRightShoulder
+			  || Config.bodyTrackers.enableRightUpperArm
+					 != oldConfig.bodyTrackers.enableRightUpperArm
+			  || Config.bodyTrackers.enableRightLowerArm
+					 != oldConfig.bodyTrackers.enableRightLowerArm;
+
+		if (trackersEnabledChanged || anyTrackerSettingChanged)
+		{
+			if (Config.bodyTrackers.enableBodyTrackers)
+			{
+				addEmulatedTrackers();
+			}
+			else
+			{
+				removeEmulatedTrackers();
+			}
+		}
+
 		// Update logic wouldn't normally run unless in certain modes, so force upon config change.
 		updateControllerConnectionStates(true);
+		updateTrackerConnectionStates();
 	}
 
 	void HandOfLesser::addEmulatedControllers()
@@ -224,6 +269,137 @@ namespace HOL
 			// We only add controllers once, and then enable/disable them.
 			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(false);
 			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(false);
+		}
+	}
+
+	void HandOfLesser::addEmulatedTrackers()
+	{
+		// Add trackers for each enabled role
+		for (int i = 0; i < static_cast<int>(BodyTrackerRole::TrackerRole_MAX); i++)
+		{
+			BodyTrackerRole role = static_cast<BodyTrackerRole>(i);
+
+			// Check if this tracker should be enabled (master switch + individual enable)
+			bool shouldBeEnabled = Config.bodyTrackers.enableBodyTrackers;
+			if (shouldBeEnabled)
+			{
+				switch (role)
+				{
+					case BodyTrackerRole::Hips:
+						shouldBeEnabled = Config.bodyTrackers.enableHips;
+						break;
+					case BodyTrackerRole::Chest:
+						shouldBeEnabled = Config.bodyTrackers.enableChest;
+						break;
+					case BodyTrackerRole::LeftShoulder:
+						shouldBeEnabled = Config.bodyTrackers.enableLeftShoulder;
+						break;
+					case BodyTrackerRole::LeftUpperArm:
+						shouldBeEnabled = Config.bodyTrackers.enableLeftUpperArm;
+						break;
+					case BodyTrackerRole::LeftLowerArm:
+						shouldBeEnabled = Config.bodyTrackers.enableLeftLowerArm;
+						break;
+					case BodyTrackerRole::RightShoulder:
+						shouldBeEnabled = Config.bodyTrackers.enableRightShoulder;
+						break;
+					case BodyTrackerRole::RightUpperArm:
+						shouldBeEnabled = Config.bodyTrackers.enableRightUpperArm;
+						break;
+					case BodyTrackerRole::RightLowerArm:
+						shouldBeEnabled = Config.bodyTrackers.enableRightLowerArm;
+						break;
+					default:
+						shouldBeEnabled = false;
+						break;
+				}
+			}
+
+			if (!shouldBeEnabled)
+				continue;
+
+			// Check if tracker already exists
+			if (mEmulatedTrackers.find(role) != mEmulatedTrackers.end())
+			{
+				// Tracker already exists, just ensure it's connected
+				mEmulatedTrackers[role]->setConnectedState(true);
+			}
+			else
+			{
+				// Create new tracker
+				auto tracker = std::make_unique<EmulatedTrackerDriver>(role);
+
+				// Register with SteamVR
+				if (vr::VRServerDriverHost()->TrackedDeviceAdded(
+						tracker->MyGetSerialNumber().c_str(),
+						vr::TrackedDeviceClass_GenericTracker,
+						tracker.get()))
+				{
+					mEmulatedTrackers[role] = std::move(tracker);
+					DriverLog("Added body tracker: %s", bodyTrackerRoleToString(role));
+				}
+				else
+				{
+					DriverLog("Failed to add body tracker: %s", bodyTrackerRoleToString(role));
+				}
+			}
+		}
+
+		updateTrackerConnectionStates();
+	}
+
+	void HandOfLesser::removeEmulatedTrackers()
+	{
+		// Disconnect all trackers
+		for (auto& pair : mEmulatedTrackers)
+		{
+			pair.second->setConnectedState(false);
+		}
+	}
+
+	void HandOfLesser::updateTrackerConnectionStates()
+	{
+		// Update each tracker's connection state based on settings
+		for (auto& pair : mEmulatedTrackers)
+		{
+			BodyTrackerRole role = pair.first;
+			bool shouldBeConnected = Config.bodyTrackers.enableBodyTrackers;
+
+			if (shouldBeConnected)
+			{
+				switch (role)
+				{
+					case BodyTrackerRole::Hips:
+						shouldBeConnected = Config.bodyTrackers.enableHips;
+						break;
+					case BodyTrackerRole::Chest:
+						shouldBeConnected = Config.bodyTrackers.enableChest;
+						break;
+					case BodyTrackerRole::LeftShoulder:
+						shouldBeConnected = Config.bodyTrackers.enableLeftShoulder;
+						break;
+					case BodyTrackerRole::LeftUpperArm:
+						shouldBeConnected = Config.bodyTrackers.enableLeftUpperArm;
+						break;
+					case BodyTrackerRole::LeftLowerArm:
+						shouldBeConnected = Config.bodyTrackers.enableLeftLowerArm;
+						break;
+					case BodyTrackerRole::RightShoulder:
+						shouldBeConnected = Config.bodyTrackers.enableRightShoulder;
+						break;
+					case BodyTrackerRole::RightUpperArm:
+						shouldBeConnected = Config.bodyTrackers.enableRightUpperArm;
+						break;
+					case BodyTrackerRole::RightLowerArm:
+						shouldBeConnected = Config.bodyTrackers.enableRightLowerArm;
+						break;
+					default:
+						shouldBeConnected = false;
+						break;
+				}
+			}
+
+			pair.second->setConnectedState(shouldBeConnected);
 		}
 	}
 

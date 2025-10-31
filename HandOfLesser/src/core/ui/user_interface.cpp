@@ -428,6 +428,49 @@ void HOL::UserInterface::buildMisc()
 	}
 }
 
+void HOL::UserInterface::buildBodyTrackers()
+{
+	bool syncSettings = false;
+
+	ImGui::BeginChild(
+		"BodyTrackersWindow", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
+
+	ImGui::SeparatorText("Body Trackers");
+
+	syncSettings |= ImGui::Checkbox("Enable Body Trackers", &Config.bodyTrackers.enableBodyTrackers);
+
+	ImGui::SeparatorText("Core Trackers");
+
+	syncSettings |= ImGui::Checkbox("Hips", &Config.bodyTrackers.enableHips);
+	syncSettings |= ImGui::Checkbox("Chest", &Config.bodyTrackers.enableChest);
+
+	ImGui::SeparatorText("Left Arm Trackers");
+
+	syncSettings |= ImGui::Checkbox("Left Shoulder", &Config.bodyTrackers.enableLeftShoulder);
+	syncSettings |= ImGui::Checkbox("Left Upper Arm", &Config.bodyTrackers.enableLeftUpperArm);
+	syncSettings |= ImGui::Checkbox("Left Lower Arm", &Config.bodyTrackers.enableLeftLowerArm);
+
+	ImGui::SeparatorText("Right Arm Trackers");
+
+	syncSettings |= ImGui::Checkbox("Right Shoulder", &Config.bodyTrackers.enableRightShoulder);
+	syncSettings |= ImGui::Checkbox("Right Upper Arm", &Config.bodyTrackers.enableRightUpperArm);
+	syncSettings |= ImGui::Checkbox("Right Lower Arm", &Config.bodyTrackers.enableRightLowerArm);
+
+	ImGui::SameLine();
+	if (rightAlignButton("Reset##BodyTrackers"))
+	{
+		Config.bodyTrackers = HOL::settings::BodyTrackerSettings();
+		syncSettings = true;
+	}
+
+	ImGui::EndChild();
+
+	if (syncSettings)
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+}
+
 void HOL::UserInterface::buildSteamVR()
 {
 	bool syncSettings = false;
@@ -969,6 +1012,12 @@ void UserInterface::buildInterface()
 		if (ImGui::BeginTabItem("Visual"))
 		{
 			buildVisual();
+			ImGui::EndTabItem();
+		}
+
+		if (ImGui::BeginTabItem("Body Trackers"))
+		{
+			buildBodyTrackers();
 			ImGui::EndTabItem();
 		}
 

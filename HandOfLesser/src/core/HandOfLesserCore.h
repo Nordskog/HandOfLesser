@@ -55,5 +55,6 @@ namespace HOL
 		void doOpenXRStuff();
 		void sendOscData();
 		void sendUpdate();
+		void sendBodyTrackerData();
 	};
 } // namespace HOL

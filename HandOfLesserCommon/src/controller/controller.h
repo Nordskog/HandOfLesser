@@ -4,6 +4,9 @@
 #include <Eigen/Geometry>
 #include <src/hand/hand.h>
 
+#include <d3d11.h>
+#include <openxr/openxr.h>
+
 namespace HOL
 {
 	enum ControllerType
@@ -32,7 +35,26 @@ namespace HOL
 		ControllerMode_MAX
 	};
 
+	enum class BodyTrackerRole : int
+	{
+		Hips = 0,
+		Chest = 1,
+		LeftShoulder = 2,
+		LeftUpperArm = 3,
+		LeftLowerArm = 4,
+		RightShoulder = 5,
+		RightUpperArm = 6,
+		RightLowerArm = 7,
+		TrackerRole_MAX = 8
+	};
+
 	PoseLocationEuler getControllerBaseOffset(ControllerType type);
 
 	PoseLocationEuler getControllerOffsetPreset(ControllerOffsetPreset type);
+
+	// Body tracker helper functions
+	const char* bodyTrackerRoleToString(BodyTrackerRole role);
+	const char* bodyTrackerRoleToSerial(BodyTrackerRole role);
+	XrBodyJointFB bodyTrackerRoleToJoint(BodyTrackerRole role);
+	const char* bodyTrackerRoleToTrackerRoleString(BodyTrackerRole role);
 } // namespace HOL

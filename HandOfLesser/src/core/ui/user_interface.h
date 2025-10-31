@@ -65,5 +65,6 @@ namespace HOL
 		void buildInput();
 		void buildVisual();
 		void buildMisc();
+		void buildBodyTrackers();
 	};
 } // namespace HOL

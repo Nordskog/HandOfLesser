@@ -183,6 +183,21 @@ namespace HOL
 			bool jitterLastPoseOnTrackingLoss = true;
 		};
 
+		struct BodyTrackerSettings
+		{
+			bool enableBodyTrackers = false;
+
+			// Individual tracker enables
+			bool enableHips = false;
+			bool enableChest = false;
+			bool enableLeftShoulder = false;
+			bool enableLeftUpperArm = false;
+			bool enableLeftLowerArm = false;
+			bool enableRightShoulder = false;
+			bool enableRightUpperArm = false;
+			bool enableRightLowerArm = false;
+		};
+
 		struct HandOfLesserSettings
 		{
 			GeneralSettings general;
@@ -195,6 +210,7 @@ namespace HOL
 			VisualizerSettings visualizer;
 			InputSettings input;
 			SkeletalInput skeletal;
+			BodyTrackerSettings bodyTrackers;
 		};
 	} // namespace settings
 } // namespace HOL
