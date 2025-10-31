@@ -417,6 +417,16 @@ void HOL::HandOfLesserCore::sendBodyTrackerData()
 		packet.location.orientation.y() = location.pose.orientation.y;
 		packet.location.orientation.z() = location.pose.orientation.z;
 
+		// Visualize body tracker axes if enabled
+		if (Config.visualizer.showBodyTrackerAxes && packet.valid)
+		{
+			auto* vis = this->mUserInterface.Current->getVisualizer();
+			vis->submitOrientationAxes(trackerPosition,
+									   packet.location.orientation,
+									   0.060f,	// Half the size of palm axes (0.120f / 2)
+									   3.0f);	// Half the line width (6.0f / 2)
+		}
+
 		// Velocities left at zero (body tracking velocity data is unreliable)
 		packet.velocity.linearVelocity = Eigen::Vector3f::Zero();
 		packet.velocity.angularVelocity = Eigen::Vector3f::Zero();

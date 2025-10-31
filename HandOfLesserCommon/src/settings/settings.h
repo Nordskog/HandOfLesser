@@ -151,6 +151,7 @@ namespace HOL
 			bool followRightHand;
 			bool showBodyTrackingPalmAxes = false;
 			bool showHandTrackingPalmAxes = false;
+			bool showBodyTrackerAxes = false;
 		};
 
 		struct DebugSettings

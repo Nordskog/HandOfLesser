@@ -119,6 +119,7 @@ namespace HOL
 		ImGui::Checkbox("Show Body Palm Axes", &HOL::Config.visualizer.showBodyTrackingPalmAxes);
 		ImGui::SameLine();
 		ImGui::Checkbox("Show Hand Palm Axes", &HOL::Config.visualizer.showHandTrackingPalmAxes);
+		ImGui::Checkbox("Show Body Tracker Axes", &HOL::Config.visualizer.showBodyTrackerAxes);
 
 		ImVec2 uiBounds = ImVec2(0, ImGui::GetCursorScreenPos().y);
 		ImGui::SameLine(); // so we get the actual end position of the slider
