@@ -35,6 +35,11 @@ namespace HOL
 						Eigen::Vector3f(169.963f, 175.076f, -179.130f)};
 			}
 
+			case ControllerOffsetPreset::RoughyVRChatHand2: {
+				return {Eigen::Vector3f(-0.026, -0.004, -0.017),
+						Eigen::Vector3f(174.963f, 170.076f, -172.130f)};
+			}
+
 			case ControllerOffsetPreset::ZERO: {
 				return {Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 0, 0)};
 			}
