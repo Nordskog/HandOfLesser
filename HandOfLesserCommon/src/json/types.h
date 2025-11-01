@@ -229,12 +229,13 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const DeviceConfig& config)
 		{
-			j = {{"serial", config.serial}};
+			j = {{"serial", config.serial}, {"role", config.role}};
 		}
 
 		inline void from_json(const nlohmann::json& j, DeviceConfig& config)
 		{
 			nlohmann::get_to_if_present(j, "serial", config.serial);
+			nlohmann::get_to_if_present(j, "role", config.role);
 		}
 
 		inline void to_json(nlohmann::json& j, const DeviceSettings& settings)

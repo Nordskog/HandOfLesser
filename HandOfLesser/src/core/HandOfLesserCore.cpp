@@ -107,10 +107,6 @@ void HandOfLesserCore::init(int serverPort)
 		std::cerr << "Failed to initialize OSC transport" << std::endl;
 	}
 
-	// Start receive thread for bidirectional communication
-	this->mActive = true;
-	this->mReceiveThread = std::thread(&HandOfLesserCore::receiveDataThread, this);
-
 	this->featuresManager.setInstanceHolder(&this->mInstanceHolder);
 	this->featuresManager.setBodyTracking(&this->mBodyTracking);
 	this->syncState();
@@ -119,7 +115,11 @@ void HandOfLesserCore::init(int serverPort)
 void HandOfLesserCore::start()
 {
 	this->loadSettings();
+
+	this->mActive = true;
 	this->mUserInterfaceThread = std::thread(&HandOfLesserCore::userInterfaceLoop, this);
+	this->mReceiveThread = std::thread(&HandOfLesserCore::receiveDataThread, this);
+
 	this->mainLoop();
 	this->saveSettings();
 }
@@ -242,16 +242,23 @@ void HOL::HandOfLesserCore::receiveDataThread()
 				std::string serial = devicePacket->serial;
 
 				// Add or update device in map
-				if (Config.deviceSettings.devices.find(serial)
-					== Config.deviceSettings.devices.end())
+				auto it = Config.deviceSettings.devices.find(serial);
+				if (it == Config.deviceSettings.devices.end())
 				{
 					// New device
 					settings::DeviceConfig config;
 					config.serial = serial;
+					config.role = devicePacket->role;
+					config.activatedThisSession = true;
 					Config.deviceSettings.devices[serial] = config;
 					std::cout << "Device registered: " << serial << std::endl;
 				}
-				// If already exists, no need to update (serial is the same)
+				else
+				{
+					// Update existing device
+					it->second.role = devicePacket->role;
+					it->second.activatedThisSession = true;
+				}
 
 				break;
 			}
@@ -514,6 +521,12 @@ void HOL::HandOfLesserCore::loadSettings()
 			nlohmann::json j;
 			file >> j;
 			Config = j.get<HOL::settings::HandOfLesserSettings>();
+
+			// Reset runtime-only flag for all devices after loading from JSON
+			for (auto& [serial, device] : Config.deviceSettings.devices)
+			{
+				device.activatedThisSession = false;
+			}
 		}
 		catch (const std::exception& ex)
 		{

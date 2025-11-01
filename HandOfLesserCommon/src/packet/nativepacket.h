@@ -153,6 +153,7 @@ namespace HOL
 	{
 		NativePacketType packetType = NativePacketType::DeviceState;
 		char serial[128] = {};
+		vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
 	};
 
 	struct AppInitializedPacket

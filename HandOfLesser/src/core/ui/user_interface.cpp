@@ -10,6 +10,7 @@
 #include <iostream>
 #include <imgui_impl_win32.h>
 #include <iterator>
+#include <algorithm>
 
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
@@ -548,6 +549,91 @@ void HOL::UserInterface::buildSteamVR()
 
 	ImGui::EndChild();
 	ImGui::EndChild();
+
+	/////////////////
+	// Devices
+	/////////////////
+
+	ImGui::SeparatorText("Devices");
+
+	ImGui::Checkbox("Show all devices", &mShowAllDevices);
+
+	// Helper lambda to convert device class to string
+	auto roleToString = [](vr::ETrackedDeviceClass deviceClass) -> const char*
+	{
+		switch (deviceClass)
+		{
+			case vr::TrackedDeviceClass_HMD:
+				return "HMD";
+			case vr::TrackedDeviceClass_Controller:
+				return "Controller";
+			case vr::TrackedDeviceClass_GenericTracker:
+				return "Tracker";
+			case vr::TrackedDeviceClass_TrackingReference:
+				return "Base Station";
+			case vr::TrackedDeviceClass_DisplayRedirect:
+				return "Display Redirect";
+			default:
+				return "Unknown";
+		}
+	};
+
+	// Collect and sort devices (active first, then inactive)
+	std::vector<std::pair<std::string, HOL::settings::DeviceConfig*>> devices;
+	for (auto& [serial, config] : Config.deviceSettings.devices)
+	{
+		if (mShowAllDevices || config.activatedThisSession)
+		{
+			devices.push_back({serial, &config});
+		}
+	}
+
+	// Sort: activated first, then by serial
+	std::sort(devices.begin(),
+			  devices.end(),
+			  [](const auto& a, const auto& b)
+			  {
+				  if (a.second->activatedThisSession != b.second->activatedThisSession)
+				  {
+					  return a.second->activatedThisSession > b.second->activatedThisSession;
+				  }
+				  return a.first < b.first;
+			  });
+
+	// Display devices in a table
+	if (ImGui::BeginTable("DevicesTable",
+						  2,
+						  ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg
+							  | ImGuiTableFlags_SizingStretchSame))
+	{
+		ImGui::TableSetupColumn("Serial");
+		ImGui::TableSetupColumn("Role");
+		ImGui::TableHeadersRow();
+
+		for (const auto& [serial, config] : devices)
+		{
+			ImGui::TableNextRow();
+
+			// Grey out inactive devices
+			if (!config->activatedThisSession)
+			{
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5f);
+			}
+
+			ImGui::TableNextColumn();
+			ImGui::Text("%s", serial.c_str());
+
+			ImGui::TableNextColumn();
+			ImGui::Text("%s", roleToString(config->role));
+
+			if (!config->activatedThisSession)
+			{
+				ImGui::PopStyleVar();
+			}
+		}
+
+		ImGui::EndTable();
+	}
 
 	if (syncSettings)
 	{

@@ -32,6 +32,9 @@ namespace HOL
 
 		Visualizer mVisualizer;
 
+		// UI state
+		bool mShowAllDevices = false;
+
 		void updateStyles(float scale);
 
 		bool rightAlignButton(const char* label, int verticalLineOffset = 0);

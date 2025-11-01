@@ -5,6 +5,7 @@
 #include <src/controller/controller.h>
 #include <map>
 #include <string>
+#include "openvr_driver.h"
 
 namespace HOL
 {
@@ -203,6 +204,8 @@ namespace HOL
 		struct DeviceConfig
 		{
 			std::string serial;
+			vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
+			bool activatedThisSession = false; // Runtime flag, not saved to JSON
 			// Future: bool actAsTracker, offsets, calibration, etc.
 		};
 

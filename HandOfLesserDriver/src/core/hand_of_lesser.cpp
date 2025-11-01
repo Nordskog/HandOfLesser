@@ -1071,6 +1071,7 @@ namespace HOL
 	{
 		DeviceStatePacket packet;
 		strncpy_s(packet.serial, sizeof(packet.serial), device->serial.c_str(), _TRUNCATE);
+		packet.role = device->mDeviceClass;
 
 		this->mTransport.send((char*)&packet, sizeof(packet));
 	}
