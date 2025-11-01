@@ -7,6 +7,8 @@
 #include "src/vrchat/vrchat_osc.h"
 #include <fstream>
 #include <cstring>
+#include <nlohmann/json.hpp>
+#include <src/json/types.h>
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -237,36 +239,20 @@ void HOL::HandOfLesserCore::receiveDataThread()
 			case NativePacketType::DeviceState: {
 				auto* devicePacket = (DeviceStatePacket*)packet;
 
-				// Find existing entry or first empty slot
-				settings::DeviceConfig* slot = nullptr;
-				for (size_t i = 0; i < settings::MAX_DEVICE_CONFIGS; i++)
-				{
-					if (Config.deviceSettings.devices[i].populated
-						&& strcmp(Config.deviceSettings.devices[i].serial, devicePacket->serial)
-							   == 0)
-					{
-						// Found existing entry
-						slot = &Config.deviceSettings.devices[i];
-						break;
-					}
-					if (slot == nullptr && !Config.deviceSettings.devices[i].populated)
-					{
-						// Found empty slot
-						slot = &Config.deviceSettings.devices[i];
-					}
-				}
+				std::string serial = devicePacket->serial;
 
-				if (slot)
+				// Add or update device in map
+				if (Config.deviceSettings.devices.find(serial)
+					== Config.deviceSettings.devices.end())
 				{
-					slot->populated = true;
-					strncpy_s(slot->serial, sizeof(slot->serial), devicePacket->serial, _TRUNCATE);
-					std::cout << "Device registered: " << devicePacket->serial << std::endl;
+					// New device
+					settings::DeviceConfig config;
+					config.serial = serial;
+					Config.deviceSettings.devices[serial] = config;
+					std::cout << "Device registered: " << serial << std::endl;
 				}
-				else
-				{
-					std::cerr << "Warning: Device config slots full (max "
-							  << settings::MAX_DEVICE_CONFIGS << ")" << std::endl;
-				}
+				// If already exists, no need to update (serial is the same)
+
 				break;
 			}
 
@@ -488,8 +474,16 @@ void HOL::HandOfLesserCore::sendBodyTrackerData()
 void HOL::HandOfLesserCore::syncSettings()
 {
 	HOL::SettingsPacket packet;
-	packet.config = HOL::Config;
-	this->mDriverTransport.send((char*)&packet, sizeof(HOL::SettingsPacket));
+	nlohmann::json j = HOL::Config;
+	std::string jsonStr = j.dump();
+
+	// Copy JSON string to packet buffer
+	std::strncpy(packet.jsonData, jsonStr.c_str(), sizeof(packet.jsonData) - 1);
+	packet.jsonData[sizeof(packet.jsonData) - 1] = '\0'; // Ensure null termination
+
+	// Send only the actual packet size needed (header + string length + null terminator)
+	size_t packetSize = sizeof(packet.packetType) + std::strlen(packet.jsonData) + 1; // +1 for null
+	this->mDriverTransport.send((char*)&packet, packetSize);
 }
 
 void HOL::HandOfLesserCore::syncState()

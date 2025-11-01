@@ -2,6 +2,8 @@
 #include "HandOfLesserCommon.h"
 #include <driverlog.h>
 #include "src/utils/math_utils.h"
+#include <nlohmann/json.hpp>
+#include <src/json/types.h>
 
 namespace HOL
 {
@@ -121,11 +123,21 @@ namespace HOL
 				case HOL::NativePacketType::Settings: {
 					HOL::SettingsPacket* packet = (HOL::SettingsPacket*)rawPacket;
 
-					HOL::settings::HandOfLesserSettings oldSettings = Config;
-					HandOfLesser::Config = packet->config;
+					try
+					{
+						HOL::settings::HandOfLesserSettings oldSettings = Config;
 
-					// Handle any configuration changes
-					handleConfigurationChange(oldSettings);
+						// Parse JSON from packet
+						nlohmann::json j = nlohmann::json::parse(packet->jsonData);
+						HandOfLesser::Config = j.get<HOL::settings::HandOfLesserSettings>();
+
+						// Handle any configuration changes
+						handleConfigurationChange(oldSettings);
+					}
+					catch (const std::exception& ex)
+					{
+						DriverLog("Failed to parse settings JSON: %s", ex.what());
+					}
 
 					break;
 				}

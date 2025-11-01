@@ -77,7 +77,7 @@ namespace HOL
 	struct SettingsPacket
 	{
 		NativePacketType packetType = NativePacketType::Settings;
-		HOL::settings::HandOfLesserSettings config;
+		char jsonData[8192] = {}; // Settings serialized as JSON string
 	};
 
 	struct SkeletalPacket

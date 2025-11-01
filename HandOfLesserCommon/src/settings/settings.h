@@ -3,6 +3,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <src/controller/controller.h>
+#include <map>
+#include <string>
 
 namespace HOL
 {
@@ -110,7 +112,8 @@ namespace HOL
 			float linearVelocityMultiplier = 0.f;
 			float angularVelocityMultiplier = 0.f;
 			bool forceInactive = false;
-			int minTrackedJointsForQuality = 26; // Minimum tracked joints to consider tracking valid
+			int minTrackedJointsForQuality
+				= 26; // Minimum tracked joints to consider tracking valid
 		};
 
 		struct HandPoseSettings
@@ -197,18 +200,15 @@ namespace HOL
 			bool enableRightLowerArm = false;
 		};
 
-		constexpr size_t MAX_DEVICE_CONFIGS = 20;
-
 		struct DeviceConfig
 		{
-			bool populated = false;
-			char serial[128] = {};
+			std::string serial;
 			// Future: bool actAsTracker, offsets, calibration, etc.
 		};
 
 		struct DeviceSettings
 		{
-			DeviceConfig devices[MAX_DEVICE_CONFIGS];
+			std::map<std::string, DeviceConfig> devices;
 		};
 
 		struct HandOfLesserSettings
