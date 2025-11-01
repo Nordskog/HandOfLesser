@@ -667,6 +667,20 @@ namespace HOL
 		return false;
 	}
 
+	bool HandOfLesser::isEmulatedTracker(vr::ITrackedDeviceServerDriver* driver)
+	{
+		for (auto& tracker : mEmulatedTrackers)
+		{
+			EmulatedTrackerDriver* controller = tracker.second.get();
+			if (controller == driver)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	// Only works if a side has been assigned
 	// usually is, just not right after being activated.
 	HookedController* HandOfLesser::getHookedController(HOL::HandSide side)

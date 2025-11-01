@@ -37,6 +37,7 @@ namespace HOL
 
 		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
 		bool isEmulatedController(vr::ITrackedDeviceServerDriver* driver);
+		bool isEmulatedTracker(vr::ITrackedDeviceServerDriver* driver);
 		HookedController* getHookedController(HOL::HandSide side);
 		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
 		HookedController* getHookedControllerBySerial(std::string serial);

@@ -14,11 +14,13 @@ namespace HOL::hooks
 			DriverLog("TrackedDeviceActivate!");
 			DriverLog("Device ID: %lld", (long long)unWhichDevice);
 
-			if (HandOfLesser::Current->isEmulatedController(_this))
+			if (HandOfLesser::Current->isEmulatedController(_this)
+				|| HandOfLesser::Current->isEmulatedController(_this))
 			{
 				// Do not hook our own controllers. In theory we never evne add the hook to our own
 				// driver so this should never be called, but just in case.
-				DriverLog("Activate hooked on emulated controller, this probably shouldn't happen "
+				DriverLog("Activate hooked on emulated controller or tracker, this probably "
+						  "shouldn't happen "
 						  "but skipping anyway.");
 				return TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
 			}
