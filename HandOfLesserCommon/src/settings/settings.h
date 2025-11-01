@@ -197,6 +197,20 @@ namespace HOL
 			bool enableRightLowerArm = false;
 		};
 
+		constexpr size_t MAX_DEVICE_CONFIGS = 20;
+
+		struct DeviceConfig
+		{
+			bool populated = false;
+			char serial[128] = {};
+			// Future: bool actAsTracker, offsets, calibration, etc.
+		};
+
+		struct DeviceSettings
+		{
+			DeviceConfig devices[MAX_DEVICE_CONFIGS];
+		};
+
 		struct HandOfLesserSettings
 		{
 			GeneralSettings general;
@@ -210,6 +224,7 @@ namespace HOL
 			InputSettings input;
 			SkeletalInput skeletal;
 			BodyTrackerSettings bodyTrackers;
+			DeviceSettings deviceSettings;
 		};
 	} // namespace settings
 } // namespace HOL

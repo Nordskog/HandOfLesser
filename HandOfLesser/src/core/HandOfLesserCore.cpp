@@ -17,7 +17,6 @@ HandOfLesserCore::HandOfLesserCore()
 {
 }
 
-
 void HandOfLesserCore::init(int serverPort)
 {
 	this->Current = this;
@@ -91,6 +90,13 @@ void HandOfLesserCore::init(int serverPort)
 	if (!this->mDriverTransport.init(PipeRole::Client, R"(\\.\pipe\HandOfLesser)"))
 	{
 		std::cerr << "Failed to initialize driver transport" << std::endl;
+	}
+	else
+	{
+		// Send initialization packet to notify driver we're connected
+		AppInitializedPacket initPacket;
+		this->mDriverTransport.send((char*)&initPacket, sizeof(HOL::AppInitializedPacket));
+		std::cout << "Sent AppInitialized packet to driver" << std::endl;
 	}
 
 	// Initialize OSC transport (send to port 9000, no listening needed)
@@ -225,6 +231,42 @@ void HOL::HandOfLesserCore::receiveDataThread()
 						  << ", hooked=" << statusPacket->hookedControllerCount
 						  << ", trackers=" << statusPacket->emulatedTrackerCount << std::endl;
 				// Future: update UI status indicators
+				break;
+			}
+
+			case NativePacketType::DeviceState: {
+				auto* devicePacket = (DeviceStatePacket*)packet;
+
+				// Find existing entry or first empty slot
+				settings::DeviceConfig* slot = nullptr;
+				for (size_t i = 0; i < settings::MAX_DEVICE_CONFIGS; i++)
+				{
+					if (Config.deviceSettings.devices[i].populated
+						&& strcmp(Config.deviceSettings.devices[i].serial, devicePacket->serial)
+							   == 0)
+					{
+						// Found existing entry
+						slot = &Config.deviceSettings.devices[i];
+						break;
+					}
+					if (slot == nullptr && !Config.deviceSettings.devices[i].populated)
+					{
+						// Found empty slot
+						slot = &Config.deviceSettings.devices[i];
+					}
+				}
+
+				if (slot)
+				{
+					slot->populated = true;
+					strncpy_s(slot->serial, sizeof(slot->serial), devicePacket->serial, _TRUNCATE);
+					std::cout << "Device registered: " << devicePacket->serial << std::endl;
+				}
+				else
+				{
+					std::cerr << "Warning: Device config slots full (max "
+							  << settings::MAX_DEVICE_CONFIGS << ")" << std::endl;
+				}
 				break;
 			}
 

@@ -50,6 +50,9 @@ namespace HOL::hooks
 
 			controller->lateInit(serial, deviceClass, role);
 
+			// This is a good a time as any to communicate the device state
+			controller->sendDeviceState();
+
 			if (deviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
 			{
 				// TODO: vive wands will probably swap sides after activating

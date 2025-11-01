@@ -193,6 +193,13 @@ namespace HOL
 					break;
 				}
 
+				case HOL::NativePacketType::AppInitialized: {
+					DriverLog("App initialized, sending current device state");
+					sendAllDeviceStates();
+					sendStatus();
+					break;
+				}
+
 				default: {
 					// Invalid packet type!
 				}
@@ -485,7 +492,9 @@ namespace HOL
 		this->mHookedControllers.push_back(std::make_unique<HookedController>(
 			id, HandSide::HandSide_MAX, host, driver, propertyContainer));
 
-		return this->mHookedControllers.back().get();
+		HookedController* newController = this->mHookedControllers.back().get();
+
+		return newController;
 	}
 
 	// We don't bother removing devices when they're deactivated at the moment, since we
@@ -1044,5 +1053,21 @@ namespace HOL
 				  packet.emulatedControllersActive,
 				  packet.hookedControllerCount,
 				  packet.emulatedTrackerCount);
+	}
+
+	void HandOfLesser::sendDeviceState(HookedController* device)
+	{
+		DeviceStatePacket packet;
+		strncpy_s(packet.serial, sizeof(packet.serial), device->serial.c_str(), _TRUNCATE);
+
+		this->mTransport.send((char*)&packet, sizeof(packet));
+	}
+
+	void HandOfLesser::sendAllDeviceStates()
+	{
+		for (auto& controller : mHookedControllers)
+		{
+			sendDeviceState(controller.get());
+		}
 	}
 } // namespace HOL

@@ -227,6 +227,31 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "enableRightLowerArm", settings.enableRightLowerArm);
 		}
 
+		inline void to_json(nlohmann::json& j, const DeviceConfig& config)
+		{
+			j = {{"populated", config.populated}, {"serial", config.serial}};
+		}
+
+		inline void from_json(const nlohmann::json& j, DeviceConfig& config)
+		{
+			nlohmann::get_to_if_present(j, "populated", config.populated);
+			if (j.contains("serial"))
+			{
+				std::string serial = j.at("serial").get<std::string>();
+				std::strncpy(config.serial, serial.c_str(), sizeof(config.serial));
+			}
+		}
+
+		inline void to_json(nlohmann::json& j, const DeviceSettings& settings)
+		{
+			j = {{"devices", settings.devices}};
+		}
+
+		inline void from_json(const nlohmann::json& j, DeviceSettings& settings)
+		{
+			nlohmann::get_to_if_present(j, "devices", settings.devices);
+		}
+
 		inline void to_json(nlohmann::json& j, const HandOfLesserSettings& settings)
 		{
 			j = {{"general", settings.general},
@@ -239,7 +264,8 @@ namespace HOL
 				 {"visualizer", settings.visualizer},
 				 {"input", settings.input},
 				 {"skeletal", settings.skeletal},
-				 {"bodyTrackers", settings.bodyTrackers}};
+				 {"bodyTrackers", settings.bodyTrackers},
+				 {"deviceSettings", settings.deviceSettings}};
 		}
 
 		inline void from_json(const nlohmann::json& j, HandOfLesserSettings& settings)
@@ -255,6 +281,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "input", settings.input);
 			nlohmann::get_to_if_present(j, "skeletal", settings.skeletal);
 			nlohmann::get_to_if_present(j, "bodyTrackers", settings.bodyTrackers);
+			nlohmann::get_to_if_present(j, "deviceSettings", settings.deviceSettings);
 		}
 	} // namespace settings
 } // namespace HOL

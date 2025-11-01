@@ -57,6 +57,7 @@ namespace HOL
 		std::unordered_map<std::string, vr::VRInputComponentHandle_t> inputHandlesByName;
 
 		uint32_t getDeviceId();
+		void sendDeviceState();
 
 		vr::DriverPose_t lastOriginalPose;
 		bool mLastOriginalPoseValid;

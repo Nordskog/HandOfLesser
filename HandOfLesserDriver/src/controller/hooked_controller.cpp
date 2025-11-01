@@ -348,4 +348,9 @@ namespace HOL
 		return this->mDeviceId;
 	}
 
+	void HookedController::sendDeviceState()
+	{
+		HOL::HandOfLesser::Current->sendDeviceState(this);
+	}
+
 } // namespace HOL

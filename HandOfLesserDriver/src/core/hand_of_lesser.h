@@ -57,6 +57,9 @@ namespace HOL
 		static HOL::state::TrackingState Tracking;
 		static HOL::state::RuntimeState Runtime;
 
+		void sendDeviceState(HookedController* device);
+		void sendAllDeviceStates();
+
 	private:
 		void ReceiveDataThread();
 		void estimateControllerSide();

@@ -23,7 +23,11 @@ namespace HOL
 
 		// Driver → App messages (800+)
 		DriverInitialized = 800,
-		DriverStatus = 801
+		DriverStatus = 801,
+		DeviceState = 802,
+
+		// App → Driver messages (900+)
+		AppInitialized = 903
 	};
 
 	struct NativePacket
@@ -143,6 +147,19 @@ namespace HOL
 		bool emulatedControllersActive = false;
 		int hookedControllerCount = 0;
 		int emulatedTrackerCount = 0;
+	};
+
+	struct DeviceStatePacket
+	{
+		NativePacketType packetType = NativePacketType::DeviceState;
+		char serial[128] = {};
+	};
+
+	struct AppInitializedPacket
+	{
+		NativePacketType packetType = NativePacketType::AppInitialized;
+		char appVersion[64] = "0.1.0"; // For future version checks
+		uint32_t capabilities = 0;	   // Bitfield for future features
 	};
 
 } // namespace HOL
