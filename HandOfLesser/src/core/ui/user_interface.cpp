@@ -799,6 +799,14 @@ void HOL::UserInterface::buildMain()
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}
 
+	ImGui::SameLine();
+
+	if (ImGui::Button("Roughy VRC2"))
+	{
+		HOL::settings::restoreDefaultControllerOffset(HOL::RoughyVRChatHand2);
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+
 	ImGui::BeginChild("TranslationInput",
 					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
 					  ImGuiChildFlags_AutoResizeY);
