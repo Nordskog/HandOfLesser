@@ -248,6 +248,20 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "devices", settings.devices);
 		}
 
+		inline void to_json(nlohmann::json& j, const TrackingFeaturesSettings& settings)
+		{
+			j = {{"enableHighFidelityWithSteamVR", settings.enableHighFidelityWithSteamVR},
+				 {"enableMultimodalWithSteamVR", settings.enableMultimodalWithSteamVR}};
+		}
+
+		inline void from_json(const nlohmann::json& j, TrackingFeaturesSettings& settings)
+		{
+			nlohmann::get_to_if_present(
+				j, "enableHighFidelityWithSteamVR", settings.enableHighFidelityWithSteamVR);
+			nlohmann::get_to_if_present(
+				j, "enableMultimodalWithSteamVR", settings.enableMultimodalWithSteamVR);
+		}
+
 		inline void to_json(nlohmann::json& j, const HandOfLesserSettings& settings)
 		{
 			j = {{"general", settings.general},
@@ -261,7 +275,8 @@ namespace HOL
 				 {"input", settings.input},
 				 {"skeletal", settings.skeletal},
 				 {"bodyTrackers", settings.bodyTrackers},
-				 {"deviceSettings", settings.deviceSettings}};
+				 {"deviceSettings", settings.deviceSettings},
+				 {"trackingFeatures", settings.trackingFeatures}};
 		}
 
 		inline void from_json(const nlohmann::json& j, HandOfLesserSettings& settings)
@@ -278,6 +293,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "skeletal", settings.skeletal);
 			nlohmann::get_to_if_present(j, "bodyTrackers", settings.bodyTrackers);
 			nlohmann::get_to_if_present(j, "deviceSettings", settings.deviceSettings);
+			nlohmann::get_to_if_present(j, "trackingFeatures", settings.trackingFeatures);
 		}
 	} // namespace settings
 } // namespace HOL

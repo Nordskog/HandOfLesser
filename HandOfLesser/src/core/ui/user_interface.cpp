@@ -724,10 +724,27 @@ void HOL::UserInterface::buildMain()
 	}
 
 	/////////////////
-	// Fancy features
+	// Tracking features (Oculus only)
+	// Note: High fidelity must be enabled BEFORE multimodal, or multimodal may fail
 	/////////////////
 
 	ImGui::SeparatorText("Tracking features");
+
+	if (ImGui::Button("Request High Fidelity"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.requestHighFidelity();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Request Low Fidelity"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.requestLowFidelity();
+	}
+
+	ImGui::SameLine();
+	ImGui::Checkbox("Enable with SteamVR##HighFidelity",
+					&Config.trackingFeatures.enableHighFidelityWithSteamVR);
 
 	if (ImGui::Button("Resume Multimodal"))
 	{
@@ -741,19 +758,9 @@ void HOL::UserInterface::buildMain()
 		HOL::HandOfLesserCore::Current->featuresManager.disableMultimodal();
 	}
 
-	ImGui::SeparatorText("Body tracking fidelity");
-
-	if (ImGui::Button("Request High Fidelity"))
-	{
-		HOL::HandOfLesserCore::Current->featuresManager.requestHighFidelity();
-	}
-
 	ImGui::SameLine();
-
-	if (ImGui::Button("Request Low Fidelity"))
-	{
-		HOL::HandOfLesserCore::Current->featuresManager.requestLowFidelity();
-	}
+	ImGui::Checkbox("Enable with SteamVR##Multimodal",
+					&Config.trackingFeatures.enableMultimodalWithSteamVR);
 
 	/////////////////
 	// Offset inputs

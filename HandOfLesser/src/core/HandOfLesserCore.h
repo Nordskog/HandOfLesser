@@ -63,5 +63,6 @@ namespace HOL
 		void sendOscData();
 		void sendUpdate();
 		void sendBodyTrackerData();
+		void onDriverConnected();
 	};
 } // namespace HOL

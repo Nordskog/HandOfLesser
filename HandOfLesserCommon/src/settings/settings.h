@@ -214,6 +214,12 @@ namespace HOL
 			std::map<std::string, DeviceConfig> devices;
 		};
 
+		struct TrackingFeaturesSettings
+		{
+			bool enableHighFidelityWithSteamVR = false;
+			bool enableMultimodalWithSteamVR = false;
+		};
+
 		struct HandOfLesserSettings
 		{
 			GeneralSettings general;
@@ -228,6 +234,7 @@ namespace HOL
 			SkeletalInput skeletal;
 			BodyTrackerSettings bodyTrackers;
 			DeviceSettings deviceSettings;
+			TrackingFeaturesSettings trackingFeatures;
 		};
 	} // namespace settings
 } // namespace HOL

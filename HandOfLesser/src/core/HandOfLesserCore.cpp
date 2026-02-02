@@ -223,6 +223,7 @@ void HOL::HandOfLesserCore::receiveDataThread()
 				// Respond by sending current settings
 				syncSettings();
 				syncState();
+				onDriverConnected();
 				break;
 			}
 
@@ -549,4 +550,20 @@ void HOL::HandOfLesserCore::loadSettings()
 bool HOL::HandOfLesserCore::isDriverConnected() const
 {
 	return this->mDriverTransport.isConnected();
+}
+
+void HOL::HandOfLesserCore::onDriverConnected()
+{
+	// High fidelity MUST be enabled before multimodal on Oculus runtime
+	if (Config.trackingFeatures.enableHighFidelityWithSteamVR)
+	{
+		std::cout << "Auto-enabling high fidelity body tracking" << std::endl;
+		featuresManager.requestHighFidelity();
+	}
+
+	if (Config.trackingFeatures.enableMultimodalWithSteamVR)
+	{
+		std::cout << "Auto-enabling multimodal tracking" << std::endl;
+		featuresManager.enableMultimodal();
+	}
 }
