@@ -206,7 +206,10 @@ namespace HOL
 			std::string serial;
 			vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
 			bool activatedThisSession = false; // Runtime flag, not saved to JSON
-			// Future: bool actAsTracker, offsets, calibration, etc.
+
+			// Shadow tracker settings
+			bool actAsTracker = false;   // Make this device appear as a tracker
+			bool alsoWhenHeld = false;   // Act as tracker even when held (multimodal only)
 		};
 
 		struct DeviceSettings

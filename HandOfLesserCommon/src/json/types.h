@@ -229,13 +229,18 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const DeviceConfig& config)
 		{
-			j = {{"serial", config.serial}, {"role", config.role}};
+			j = {{"serial", config.serial},
+				 {"role", config.role},
+				 {"actAsTracker", config.actAsTracker},
+				 {"alsoWhenHeld", config.alsoWhenHeld}};
 		}
 
 		inline void from_json(const nlohmann::json& j, DeviceConfig& config)
 		{
 			nlohmann::get_to_if_present(j, "serial", config.serial);
 			nlohmann::get_to_if_present(j, "role", config.role);
+			nlohmann::get_to_if_present(j, "actAsTracker", config.actAsTracker);
+			nlohmann::get_to_if_present(j, "alsoWhenHeld", config.alsoWhenHeld);
 		}
 
 		inline void to_json(nlohmann::json& j, const DeviceSettings& settings)

@@ -38,6 +38,7 @@ namespace HOL
 		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
 		bool isEmulatedController(vr::ITrackedDeviceServerDriver* driver);
 		bool isEmulatedTracker(vr::ITrackedDeviceServerDriver* driver);
+		bool isShadowTracker(vr::ITrackedDeviceServerDriver* driver);
 		HookedController* getHookedController(HOL::HandSide side);
 		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
 		HookedController* getHookedControllerBySerial(std::string serial);
@@ -61,6 +62,11 @@ namespace HOL
 		void sendDeviceState(HookedController* device);
 		void sendAllDeviceStates();
 
+		// Shadow tracker management
+		void updateShadowTrackerState(HookedController* controller);
+		void updateShadowTrackerStates();
+		EmulatedTrackerDriver* getOrCreateShadowTracker(HookedController* controller);
+
 	private:
 		void ReceiveDataThread();
 		void estimateControllerSide();
@@ -81,6 +87,8 @@ namespace HOL
 		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
 		std::unordered_map<HOL::BodyTrackerRole, std::unique_ptr<EmulatedTrackerDriver>>
 			mEmulatedTrackers;
+		std::unordered_map<std::string, std::unique_ptr<EmulatedTrackerDriver>>
+			mShadowTrackers;  // Keyed by source device serial
 		HOL::HandTransformPacket mLastHandTransforms[HOL::HandSide_MAX]{};
 		bool mHasHandTransform[HOL::HandSide_MAX]{false, false};
 	};

@@ -13,8 +13,20 @@ namespace HOL
 		mRole = role;
 		mSerialNumber = bodyTrackerRoleToSerial(role);
 
-		DriverLog("HandOfLesser tracker created: %s (serial: %s)",
+		DriverLog("HandOfLesser body tracker created: %s (serial: %s)",
 				  bodyTrackerRoleToString(role),
+				  mSerialNumber.c_str());
+	}
+
+	EmulatedTrackerDriver::EmulatedTrackerDriver(const std::string& sourceSerial)
+	{
+		mIsActive = false;
+		mRole = std::nullopt;  // No body role for shadow trackers
+		mSourceSerial = sourceSerial;
+		mSerialNumber = "HOLSHADOW_" + sourceSerial;
+
+		DriverLog("HandOfLesser shadow tracker created for: %s (serial: %s)",
+				  sourceSerial.c_str(),
 				  mSerialNumber.c_str());
 	}
 
@@ -30,7 +42,16 @@ namespace HOL
 			= props->TrackedDeviceToPropertyContainer(mDeviceIndex);
 
 		// Set basic tracker properties
-		props->SetStringProperty(container, vr::Prop_ModelNumber_String, "HandOfLesser Tracker");
+		if (isShadowTracker())
+		{
+			props->SetStringProperty(container, vr::Prop_ModelNumber_String, 
+				"HandOfLesser Shadow Tracker");
+		}
+		else
+		{
+			props->SetStringProperty(container, vr::Prop_ModelNumber_String, 
+				"HandOfLesser Tracker");
+		}
 		props->SetStringProperty(
 			container, vr::Prop_SerialNumber_String, mSerialNumber.c_str());
 
@@ -40,8 +61,16 @@ namespace HOL
 		props->SetStringProperty(container, vr::Prop_ResourceRoot_String, "htc");
 
 		// Set tracker role for proper icon/functionality
-		const char* trackerRole = bodyTrackerRoleToTrackerRoleString(mRole);
-		props->SetStringProperty(container, vr::Prop_ControllerType_String, trackerRole);
+		if (mRole.has_value())
+		{
+			const char* trackerRole = bodyTrackerRoleToTrackerRoleString(mRole.value());
+			props->SetStringProperty(container, vr::Prop_ControllerType_String, trackerRole);
+		}
+		else
+		{
+			// Shadow tracker - generic vive_tracker type
+			props->SetStringProperty(container, vr::Prop_ControllerType_String, "vive_tracker");
+		}
 
 		// Reference HTC's input profile (minimal - just pose)
 		props->SetStringProperty(
@@ -56,7 +85,15 @@ namespace HOL
 
 		mIsActive = true;
 
-		DriverLog("HandOfLesser tracker activated: %s", bodyTrackerRoleToString(mRole));
+		if (mRole.has_value())
+		{
+			DriverLog("HandOfLesser body tracker activated: %s", 
+					  bodyTrackerRoleToString(mRole.value()));
+		}
+		else
+		{
+			DriverLog("HandOfLesser shadow tracker activated: %s", mSerialNumber.c_str());
+		}
 
 		return vr::VRInitError_None;
 	}
@@ -103,48 +140,57 @@ namespace HOL
 	void EmulatedTrackerDriver::UpdatePose(const HOL::BodyTrackerPosePacket& packet)
 	{
 		// Build DriverPose_t from packet
-		mLastPose.qWorldFromDriverRotation.w = 1.0;
-		mLastPose.qWorldFromDriverRotation.x = 0.0;
-		mLastPose.qWorldFromDriverRotation.y = 0.0;
-		mLastPose.qWorldFromDriverRotation.z = 0.0;
+		vr::DriverPose_t pose{};
+		pose.qWorldFromDriverRotation.w = 1.0;
+		pose.qWorldFromDriverRotation.x = 0.0;
+		pose.qWorldFromDriverRotation.y = 0.0;
+		pose.qWorldFromDriverRotation.z = 0.0;
 
-		mLastPose.qDriverFromHeadRotation.w = 1.0;
-		mLastPose.qDriverFromHeadRotation.x = 0.0;
-		mLastPose.qDriverFromHeadRotation.y = 0.0;
-		mLastPose.qDriverFromHeadRotation.z = 0.0;
+		pose.qDriverFromHeadRotation.w = 1.0;
+		pose.qDriverFromHeadRotation.x = 0.0;
+		pose.qDriverFromHeadRotation.y = 0.0;
+		pose.qDriverFromHeadRotation.z = 0.0;
 
 		// Set position
-		mLastPose.vecPosition[0] = packet.location.position.x();
-		mLastPose.vecPosition[1] = packet.location.position.y();
-		mLastPose.vecPosition[2] = packet.location.position.z();
+		pose.vecPosition[0] = packet.location.position.x();
+		pose.vecPosition[1] = packet.location.position.y();
+		pose.vecPosition[2] = packet.location.position.z();
 
 		// Set orientation
-		mLastPose.qRotation.w = packet.location.orientation.w();
-		mLastPose.qRotation.x = packet.location.orientation.x();
-		mLastPose.qRotation.y = packet.location.orientation.y();
-		mLastPose.qRotation.z = packet.location.orientation.z();
+		pose.qRotation.w = packet.location.orientation.w();
+		pose.qRotation.x = packet.location.orientation.x();
+		pose.qRotation.y = packet.location.orientation.y();
+		pose.qRotation.z = packet.location.orientation.z();
 
 		// Set velocities
-		mLastPose.vecVelocity[0] = packet.velocity.linearVelocity.x();
-		mLastPose.vecVelocity[1] = packet.velocity.linearVelocity.y();
-		mLastPose.vecVelocity[2] = packet.velocity.linearVelocity.z();
+		pose.vecVelocity[0] = packet.velocity.linearVelocity.x();
+		pose.vecVelocity[1] = packet.velocity.linearVelocity.y();
+		pose.vecVelocity[2] = packet.velocity.linearVelocity.z();
 
-		mLastPose.vecAngularVelocity[0] = packet.velocity.angularVelocity.x();
-		mLastPose.vecAngularVelocity[1] = packet.velocity.angularVelocity.y();
-		mLastPose.vecAngularVelocity[2] = packet.velocity.angularVelocity.z();
+		pose.vecAngularVelocity[0] = packet.velocity.angularVelocity.x();
+		pose.vecAngularVelocity[1] = packet.velocity.angularVelocity.y();
+		pose.vecAngularVelocity[2] = packet.velocity.angularVelocity.z();
 
 		// Set tracking state
-		mLastPose.poseIsValid = packet.valid;
-		mLastPose.deviceIsConnected = mDeviceConnected;
-		mLastPose.result = packet.tracked ? vr::TrackingResult_Running_OK
-										  : vr::TrackingResult_Running_OutOfRange;
+		pose.poseIsValid = packet.valid;
+		pose.deviceIsConnected = mDeviceConnected;
+		pose.result = packet.tracked ? vr::TrackingResult_Running_OK
+									  : vr::TrackingResult_Running_OutOfRange;
+		pose.poseTimeOffset = 0.0;
 
-		mLastPose.poseTimeOffset = 0.0;
+		UpdatePose(pose);
+	}
+
+	void EmulatedTrackerDriver::UpdatePose(const vr::DriverPose_t& pose)
+	{
+		mLastPose = pose;
+		// Ensure connected state is preserved
+		mLastPose.deviceIsConnected = mDeviceConnected;
 	}
 
 	void EmulatedTrackerDriver::SubmitPose()
 	{
-		if (mIsActive && mDeviceConnected)
+		if (mIsActive && mDeviceConnected && mDeviceIndex != vr::k_unTrackedDeviceIndexInvalid)
 		{
 			vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
 				mDeviceIndex, GetPose(), sizeof(vr::DriverPose_t));
@@ -158,7 +204,8 @@ namespace HOL
 
 		mDeviceConnected = connected;
 
-		if (!connected)
+		// Only submit pose if activated (have a valid device index)
+		if (!connected && mIsActive && mDeviceIndex != vr::k_unTrackedDeviceIndexInvalid)
 		{
 			// Submit disconnected pose
 			vr::VRServerDriverHost()->TrackedDevicePoseUpdated(

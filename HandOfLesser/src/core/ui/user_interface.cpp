@@ -602,12 +602,14 @@ void HOL::UserInterface::buildSteamVR()
 
 	// Display devices in a table
 	if (ImGui::BeginTable("DevicesTable",
-						  2,
+						  4,
 						  ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg
 							  | ImGuiTableFlags_SizingStretchSame))
 	{
 		ImGui::TableSetupColumn("Serial");
 		ImGui::TableSetupColumn("Role");
+		ImGui::TableSetupColumn("Act as Tracker");
+		ImGui::TableSetupColumn("Also When Held");
 		ImGui::TableHeadersRow();
 
 		for (const auto& [serial, config] : devices)
@@ -625,6 +627,21 @@ void HOL::UserInterface::buildSteamVR()
 
 			ImGui::TableNextColumn();
 			ImGui::Text("%s", roleToString(config->role));
+
+			ImGui::TableNextColumn();
+			if (ImGui::Checkbox(("##actAsTracker_" + serial).c_str(), &config->actAsTracker))
+			{
+				syncSettings = true;
+			}
+
+			ImGui::TableNextColumn();
+			// "Also when held" only relevant if actAsTracker is enabled
+			ImGui::BeginDisabled(!config->actAsTracker);
+			if (ImGui::Checkbox(("##alsoWhenHeld_" + serial).c_str(), &config->alsoWhenHeld))
+			{
+				syncSettings = true;
+			}
+			ImGui::EndDisabled();
 
 			if (!config->activatedThisSession)
 			{

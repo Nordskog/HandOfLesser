@@ -7,6 +7,8 @@
 
 namespace HOL
 {
+	class EmulatedTrackerDriver;  // Forward declaration
+
 	class HookedController : public GenericControllerInterface
 	{
 		friend class HandOfLesser;
@@ -66,6 +68,13 @@ namespace HOL
 		// Reset every time there's an update, if we are possessing or offsetting.
 		int32_t framesSinceLastPoseUpdate = 0;
 
+		// Shadow tracker support
+		void setShadowTracker(EmulatedTrackerDriver* tracker);
+		EmulatedTrackerDriver* getShadowTracker() { return mShadowTracker; }
+		bool shouldActAsTracker();
+		bool isActingAsTracker() const { return mActingAsTracker; }
+		void setActingAsTracker(bool acting);
+
 	private:
 		vr::DriverPose_t mLastPose;
 		bool mLastHeldState
@@ -89,5 +98,10 @@ namespace HOL
 		bool mLoggedMissingSkeletonHandle = false;
 		vr::VRBoneTransform_t mSkeletalPose[SteamVR::HandSkeletonBone::eBone_Count]{};
 		bool mSuppressed = false;
+
+		// Shadow tracker support
+		EmulatedTrackerDriver* mShadowTracker = nullptr;
+		bool mActingAsTracker = false;
 	};
 } // namespace HOL
+

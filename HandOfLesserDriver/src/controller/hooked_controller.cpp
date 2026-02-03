@@ -2,6 +2,7 @@
 #include "hooked_controller.h"
 #include "controller_common.h"
 #include "src/hooking/hooks.h"
+#include "src/tracker/emulated_tracker_driver.h"
 #include <driverlog.h>
 #include <src/utils/math_utils.h>
 
@@ -351,6 +352,38 @@ namespace HOL
 	void HookedController::sendDeviceState()
 	{
 		HOL::HandOfLesser::Current->sendDeviceState(this);
+	}
+
+	void HookedController::setShadowTracker(EmulatedTrackerDriver* tracker)
+	{
+		mShadowTracker = tracker;
+	}
+
+	void HookedController::setActingAsTracker(bool acting)
+	{
+		mActingAsTracker = acting;
+	}
+
+	bool HookedController::shouldActAsTracker()
+	{
+		// Look up device config by serial
+		auto it = HOL::HandOfLesser::Config.deviceSettings.devices.find(serial);
+		if (it == HOL::HandOfLesser::Config.deviceSettings.devices.end())
+			return false;
+
+		const auto& deviceConfig = it->second;
+		if (!deviceConfig.actAsTracker)
+			return false;
+
+		// If "also when held" is set, always act as tracker
+		if (deviceConfig.alsoWhenHeld)
+			return true;
+
+		// Default: only act as tracker when NOT held (requires multimodal)
+		if (!HOL::HandOfLesser::Tracking.isMultimodalEnabled)
+			return true; // No multimodal = can't detect held, so just act as tracker
+
+		return !isHeld(); // Act as tracker only when NOT held
 	}
 
 } // namespace HOL

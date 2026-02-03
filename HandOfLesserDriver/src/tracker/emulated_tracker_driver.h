@@ -3,6 +3,7 @@
 
 #include <string>
 #include <atomic>
+#include <optional>
 
 #include "openvr_driver.h"
 #include <HandOfLesserCommon.h>
@@ -10,12 +11,16 @@
 namespace HOL
 {
 	//-----------------------------------------------------------------------------
-	// Purpose: Represents a body tracker device in the system
+	// Purpose: Represents a body tracker or shadow tracker device in the system
 	//-----------------------------------------------------------------------------
 	class EmulatedTrackerDriver : public vr::ITrackedDeviceServerDriver
 	{
 	public:
+		// For body trackers (with predefined role)
 		EmulatedTrackerDriver(HOL::BodyTrackerRole role);
+
+		// For shadow trackers (no body role, mirrors another device)
+		EmulatedTrackerDriver(const std::string& sourceSerial);
 
 		// ITrackedDeviceServerDriver interface
 		vr::EVRInitError Activate(uint32_t unObjectId) override;
@@ -30,11 +35,15 @@ namespace HOL
 		// Custom methods
 		const std::string& MyGetSerialNumber();
 		void UpdatePose(const HOL::BodyTrackerPosePacket& packet);
+		void UpdatePose(const vr::DriverPose_t& pose);  // Generic pose update
 		void SubmitPose();
 		void setConnectedState(bool connected);
+		
+		bool isShadowTracker() const { return !mRole.has_value(); }
 
 	private:
-		HOL::BodyTrackerRole mRole;
+		std::optional<HOL::BodyTrackerRole> mRole;  // Empty for shadow trackers
+		std::string mSourceSerial;                   // For shadow trackers
 		std::string mSerialNumber;
 		std::atomic<vr::TrackedDeviceIndex_t> mDeviceIndex = vr::k_unTrackedDeviceIndexInvalid;
 		std::atomic<bool> mIsActive = false;

@@ -264,6 +264,7 @@ namespace HOL
 		// Update logic wouldn't normally run unless in certain modes, so force upon config change.
 		updateControllerConnectionStates(true);
 		updateTrackerConnectionStates();
+		updateShadowTrackerStates();
 
 		// Only notify app if we actually changed the device list
 		if (devicesChanged)
@@ -479,9 +480,12 @@ namespace HOL
 
 					// This will set suppressed state and a disconnect event depending on the
 					// existing suppression state, meaning it may not trigger if we've been
-					// submitting poses on its behalf in possession or offset modes. With multimodal
-					// enabled all
-					hooked->setSuppressed(handTrackingPrimary);
+					// submitting poses on its behalf in possession or offset modes.
+					// Don't unsuppress if the controller is acting as a tracker.
+					if (!hooked->isActingAsTracker())
+					{
+						hooked->setSuppressed(handTrackingPrimary);
+					}
 				}
 
 				// Just sets an internal bool to enabled so it accepts data,
@@ -601,6 +605,16 @@ namespace HOL
 
 		if (trackingState.isMultimodalEnabled)
 		{
+			// If controller is configured to always act as tracker (alsoWhenHeld),
+			// the real controller will never come back, so keep using hand tracking
+			auto it = Config.deviceSettings.devices.find(controller->serial);
+			if (it != Config.deviceSettings.devices.end() 
+				&& it->second.actAsTracker 
+				&& it->second.alsoWhenHeld)
+			{
+				return true; // Always use hand tracking
+			}
+			
 			bool shouldPossess = !controller->isHeld();
 			return shouldPossess;
 		}
@@ -679,6 +693,98 @@ namespace HOL
 		}
 
 		return false;
+	}
+
+	bool HandOfLesser::isShadowTracker(vr::ITrackedDeviceServerDriver* driver)
+	{
+		for (auto& pair : mShadowTrackers)
+		{
+			if (pair.second.get() == driver)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	EmulatedTrackerDriver* HandOfLesser::getOrCreateShadowTracker(HookedController* controller)
+	{
+		const std::string& serial = controller->serial;
+
+		auto it = mShadowTrackers.find(serial);
+		if (it != mShadowTrackers.end())
+		{
+			// Ensure the controller has the pointer (may have been cleared)
+			controller->setShadowTracker(it->second.get());
+			return it->second.get();
+		}
+
+		// Create new shadow tracker
+		auto tracker = std::make_unique<EmulatedTrackerDriver>(serial);
+
+		// Register with SteamVR
+		if (vr::VRServerDriverHost()->TrackedDeviceAdded(
+				tracker->MyGetSerialNumber().c_str(),
+				vr::TrackedDeviceClass_GenericTracker,
+				tracker.get()))
+		{
+			EmulatedTrackerDriver* ptr = tracker.get();
+			mShadowTrackers[serial] = std::move(tracker);
+			controller->setShadowTracker(ptr);
+			DriverLog("Created shadow tracker for: %s", serial.c_str());
+			return ptr;
+		}
+
+		DriverLog("Failed to create shadow tracker for: %s", serial.c_str());
+		return nullptr;
+	}
+
+	void HandOfLesser::updateShadowTrackerState(HookedController* controller)
+	{
+		bool shouldAct = controller->shouldActAsTracker();
+		bool isActing = controller->isActingAsTracker();
+
+		if (shouldAct && !isActing)
+		{
+			// Transition: controller → tracker
+			auto* shadow = getOrCreateShadowTracker(controller);
+			if (shadow)
+			{
+				shadow->setConnectedState(true);
+				controller->setSuppressed(true);
+				controller->setActingAsTracker(true);
+				DriverLog("Controller %s now acting as tracker", controller->serial.c_str());
+			}
+		}
+		else if (!shouldAct && isActing)
+		{
+			// Transition: tracker → controller
+			// Try controller pointer first, fall back to map lookup
+			EmulatedTrackerDriver* shadow = controller->getShadowTracker();
+			if (!shadow)
+			{
+				auto it = mShadowTrackers.find(controller->serial);
+				if (it != mShadowTrackers.end())
+				{
+					shadow = it->second.get();
+				}
+			}
+			if (shadow)
+			{
+				shadow->setConnectedState(false);
+			}
+			controller->setSuppressed(false);
+			controller->setActingAsTracker(false);
+			DriverLog("Controller %s no longer acting as tracker", controller->serial.c_str());
+		}
+	}
+
+	void HandOfLesser::updateShadowTrackerStates()
+	{
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			updateShadowTrackerState(controllerContainer.get());
+		}
 	}
 
 	// Only works if a side has been assigned
@@ -995,6 +1101,7 @@ namespace HOL
 		{
 			this->estimateControllerSide();
 		}
+
 
 		// iterate frame counter for all controller
 		for (auto& controller : this->mHookedControllers)

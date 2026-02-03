@@ -1,6 +1,7 @@
 #include "driverlog.h"
 #include "hooks.h"
 #include "src/controller/controller_common.h"
+#include "src/tracker/emulated_tracker_driver.h"
 
 namespace HOL::hooks
 {
@@ -15,13 +16,11 @@ namespace HOL::hooks
 			DriverLog("Device ID: %lld", (long long)unWhichDevice);
 
 			if (HandOfLesser::Current->isEmulatedController(_this)
-				|| HandOfLesser::Current->isEmulatedController(_this))
+				|| HandOfLesser::Current->isEmulatedTracker(_this)
+				|| HandOfLesser::Current->isShadowTracker(_this))
 			{
-				// Do not hook our own controllers. In theory we never evne add the hook to our own
-				// driver so this should never be called, but just in case.
-				DriverLog("Activate hooked on emulated controller or tracker, this probably "
-						  "shouldn't happen "
-						  "but skipping anyway.");
+				// Do not hook our own controllers or trackers.
+				DriverLog("Activate hooked on emulated device, skipping.");
 				return TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
 			}
 
@@ -132,10 +131,11 @@ namespace HOL::hooks
 		{
 			DriverLog("TrackedDeviceAdded006!");
 
-			if (HandOfLesser::Current->isEmulatedController(pDriver))
+		if (HandOfLesser::Current->isEmulatedController(pDriver)
+				|| HandOfLesser::Current->isShadowTracker(pDriver))
 			{
-				// Do not hook our own controllers
-				DriverLog("Emulated controller, skipping TrackedDeviceAdded hook.");
+				// Do not hook our own controllers or shadow trackers
+				DriverLog("Emulated device, skipping TrackedDeviceAdded hook.");
 			}
 			else
 			{
@@ -198,8 +198,20 @@ namespace HOL::hooks
 				// reset frame counter
 				controller->framesSinceLastPoseUpdate = 0;
 
+				// Update shadow tracker state (may transition controller ↔ tracker)
+				HOL::HandOfLesser::Current->updateShadowTrackerState(controller);
+
 				if (controller->isSuppressed())
 				{
+					// If acting as tracker, forward pose to shadow tracker
+					if (controller->isActingAsTracker())
+					{
+						if (auto* shadow = controller->getShadowTracker())
+						{
+							shadow->UpdatePose(newPose);
+							shadow->SubmitPose();
+						}
+					}
 					// We've sent a disconnect message,
 					// prevent any future pose submits.
 					return;
@@ -394,6 +406,15 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 			inputHandle.inputPath.c_str(),
 			bNewValue ? "True" : "False");
 			*/
+					// Block input when acting as tracker
+					if (controller->isActingAsTracker())
+					{
+						if (config.steamvr.blockControllerInputWhileHandTracking)
+						{
+							return vr::EVRInputError::VRInputError_None;
+						}
+					}
+
 					auto controllerMode = config.handPose.controllerMode;
 					if (controller->shouldPossess())
 					{
@@ -447,6 +468,15 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 							inputHandle.inputPath.c_str(),
 							bNewValue);
 							*/
+				// Block input when acting as tracker
+				if (controller->isActingAsTracker())
+				{
+					if (config.steamvr.blockControllerInputWhileHandTracking)
+					{
+						return vr::EVRInputError::VRInputError_None;
+					}
+				}
+
 				auto controllerMode = config.handPose.controllerMode;
 				if (controller->shouldPossess())
 				{
