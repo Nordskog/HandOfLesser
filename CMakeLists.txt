@@ -16,6 +16,12 @@ add_definitions(-D_SILENCE_CXX20_CODECVT_FACETS_DEPRECATION_WARNING)
 # Silence security warnings
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
+# Suppress MSVC warnings for float/double precision loss (we don't care about this)
+if(MSVC)
+    add_compile_options(/wd4305)  # truncation from 'double' to 'float'
+    add_compile_options(/wd4244)  # conversion from 'double' to 'float', possible loss of data
+endif()
+
 # Needed for CTest
 include(CTest)
 enable_testing()
