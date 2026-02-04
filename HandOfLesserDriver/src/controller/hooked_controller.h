@@ -7,7 +7,7 @@
 
 namespace HOL
 {
-	class EmulatedTrackerDriver;  // Forward declaration
+	class EmulatedTrackerDriver; // Forward declaration
 
 	class HookedController : public GenericControllerInterface
 	{
@@ -70,9 +70,15 @@ namespace HOL
 
 		// Shadow tracker support
 		void setShadowTracker(EmulatedTrackerDriver* tracker);
-		EmulatedTrackerDriver* getShadowTracker() { return mShadowTracker; }
+		EmulatedTrackerDriver* getShadowTracker()
+		{
+			return mShadowTracker;
+		}
 		bool shouldActAsTracker();
-		bool isActingAsTracker() const { return mActingAsTracker; }
+		bool isActingAsTracker() const
+		{
+			return mActingAsTracker;
+		}
 		void setActingAsTracker(bool acting);
 
 	private:
@@ -104,4 +110,3 @@ namespace HOL
 		bool mActingAsTracker = false;
 	};
 } // namespace HOL
-

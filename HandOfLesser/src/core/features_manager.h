@@ -22,6 +22,8 @@ namespace HOL
 		void requestHighFidelity();
 		void requestLowFidelity();
 
+		void applyTrackingFeatures(bool enableHighFidelity, bool enableMultimodal);
+
 		bool isMultimodalEnabled() const
 		{
 			return mMultimodalEnabled;

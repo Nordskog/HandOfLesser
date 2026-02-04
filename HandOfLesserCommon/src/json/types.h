@@ -165,7 +165,7 @@ namespace HOL
 		{
 			j = {{"jointLengthMultiplier", settings.jointLengthMultiplier},
 				 {"sendSkeletalInput", settings.sendSkeletalInput},
-				 {"augmentHookedControllers", settings.augmentHookedControllers},
+				 {"augmentControllerSkeleton", settings.augmentControllerSkeleton},
 				 {"positionOffset", settings.positionOffset},
 				 {"orientationOffset", settings.orientationOffset}};
 		}
@@ -175,7 +175,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "jointLengthMultiplier", settings.jointLengthMultiplier);
 			nlohmann::get_to_if_present(j, "sendSkeletalInput", settings.sendSkeletalInput);
 			nlohmann::get_to_if_present(
-				j, "augmentHookedControllers", settings.augmentHookedControllers);
+				j, "augmentControllerSkeleton", settings.augmentControllerSkeleton);
 			nlohmann::get_to_if_present(j, "positionOffset", settings.positionOffset);
 			nlohmann::get_to_if_present(j, "orientationOffset", settings.orientationOffset);
 		}
@@ -255,16 +255,16 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const TrackingFeaturesSettings& settings)
 		{
-			j = {{"enableHighFidelityWithSteamVR", settings.enableHighFidelityWithSteamVR},
-				 {"enableMultimodalWithSteamVR", settings.enableMultimodalWithSteamVR}};
+			j = {{"enableUpperBodyTracking", settings.enableUpperBodyTracking},
+				 {"enableSimultaneousTracking", settings.enableSimultaneousTracking}};
 		}
 
 		inline void from_json(const nlohmann::json& j, TrackingFeaturesSettings& settings)
 		{
 			nlohmann::get_to_if_present(
-				j, "enableHighFidelityWithSteamVR", settings.enableHighFidelityWithSteamVR);
+				j, "enableUpperBodyTracking", settings.enableUpperBodyTracking);
 			nlohmann::get_to_if_present(
-				j, "enableMultimodalWithSteamVR", settings.enableMultimodalWithSteamVR);
+				j, "enableSimultaneousTracking", settings.enableSimultaneousTracking);
 		}
 
 		inline void to_json(nlohmann::json& j, const HandOfLesserSettings& settings)

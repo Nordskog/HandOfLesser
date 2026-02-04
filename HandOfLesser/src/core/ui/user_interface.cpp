@@ -427,6 +427,30 @@ void HOL::UserInterface::buildMisc()
 
 		ImGui::EndPopup();
 	}
+
+	if (ImGui::Button("Request High Fidelity"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.requestHighFidelity();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Request Low Fidelity"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.requestLowFidelity();
+	}
+
+	if (ImGui::Button("Resume Multimodal"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.enableMultimodal();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Pause Multimodal"))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.disableMultimodal();
+	}
 }
 
 void HOL::UserInterface::buildBodyTrackers()
@@ -488,8 +512,6 @@ void HOL::UserInterface::buildSteamVR()
 									&Config.steamvr.sendSteamVRControllerPosition);
 
 	syncSettings |= ImGui::Checkbox("Transmit skeletal input", &Config.skeletal.sendSkeletalInput);
-	syncSettings |= ImGui::Checkbox("Augment controller skeleton with hand tracking",
-									&Config.skeletal.augmentHookedControllers);
 
 	syncSettings |= ImGui::Checkbox("Transmit SteamVR Input", &Config.steamvr.sendSteamVRInput);
 
@@ -716,6 +738,37 @@ void HOL::UserInterface::buildMain()
 	}
 
 	/////////////////
+	// Tracking features (Oculus only)
+	/////////////////
+
+	ImGui::SeparatorText("Tracking features");
+
+	if (ImGui::Checkbox("Upper body tracking", &Config.trackingFeatures.enableUpperBodyTracking))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.applyTrackingFeatures(
+			Config.trackingFeatures.enableUpperBodyTracking,
+			Config.trackingFeatures.enableSimultaneousTracking);
+	}
+
+	if (ImGui::Checkbox("Simultaneous hand and controller tracking",
+						&Config.trackingFeatures.enableSimultaneousTracking))
+	{
+		HOL::HandOfLesserCore::Current->featuresManager.applyTrackingFeatures(
+			Config.trackingFeatures.enableUpperBodyTracking,
+			Config.trackingFeatures.enableSimultaneousTracking);
+	}
+
+	// Disable (grey out) augment checkbox when simultaneous tracking not enabled
+	if (!Config.trackingFeatures.enableSimultaneousTracking)
+		ImGui::BeginDisabled();
+
+	ImGui::Checkbox("Augment controller skeleton with hand tracking",
+					&Config.skeletal.augmentControllerSkeleton);
+
+	if (!Config.trackingFeatures.enableSimultaneousTracking)
+		ImGui::EndDisabled();
+
+	/////////////////
 	// General
 	/////////////////
 
@@ -739,45 +792,6 @@ void HOL::UserInterface::buildMain()
 	{
 		Config.general = HOL::settings::GeneralSettings();
 	}
-
-	/////////////////
-	// Tracking features (Oculus only)
-	// Note: High fidelity must be enabled BEFORE multimodal, or multimodal may fail
-	/////////////////
-
-	ImGui::SeparatorText("Tracking features");
-
-	if (ImGui::Button("Request High Fidelity"))
-	{
-		HOL::HandOfLesserCore::Current->featuresManager.requestHighFidelity();
-	}
-
-	ImGui::SameLine();
-
-	if (ImGui::Button("Request Low Fidelity"))
-	{
-		HOL::HandOfLesserCore::Current->featuresManager.requestLowFidelity();
-	}
-
-	ImGui::SameLine();
-	ImGui::Checkbox("Enable with SteamVR##HighFidelity",
-					&Config.trackingFeatures.enableHighFidelityWithSteamVR);
-
-	if (ImGui::Button("Resume Multimodal"))
-	{
-		HOL::HandOfLesserCore::Current->featuresManager.enableMultimodal();
-	}
-
-	ImGui::SameLine();
-
-	if (ImGui::Button("Pause Multimodal"))
-	{
-		HOL::HandOfLesserCore::Current->featuresManager.disableMultimodal();
-	}
-
-	ImGui::SameLine();
-	ImGui::Checkbox("Enable with SteamVR##Multimodal",
-					&Config.trackingFeatures.enableMultimodalWithSteamVR);
 
 	/////////////////
 	// Offset inputs

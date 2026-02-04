@@ -262,6 +262,11 @@ namespace HOL
 		}
 	}
 
+	bool HOL::EmulatedControllerDriver::isConnected() const
+	{
+		return mDeviceConnected.load();
+	}
+
 	vr::VRInputComponentHandle_t
 	EmulatedControllerDriver::createBooleanComponent(vr::PropertyContainerHandle_t container,
 													 vr::IVRDriverInput* input,

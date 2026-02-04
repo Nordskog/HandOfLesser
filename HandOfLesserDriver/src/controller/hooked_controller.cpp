@@ -110,7 +110,7 @@ namespace HOL
 		auto& config = HOL::HandOfLesser::Current->Config;
 		const auto& trackingState = HOL::HandOfLesser::Tracking;
 
-		if (!config.skeletal.augmentHookedControllers)
+		if (!config.skeletal.augmentControllerSkeleton)
 		{
 			return;
 		}
@@ -178,7 +178,7 @@ namespace HOL
 	bool HookedController::isAugmentedSkeletonActive() const
 	{
 		const auto& config = HOL::HandOfLesser::Current->Config;
-		if (!config.skeletal.augmentHookedControllers)
+		if (!config.skeletal.augmentControllerSkeleton)
 		{
 			return false;
 		}

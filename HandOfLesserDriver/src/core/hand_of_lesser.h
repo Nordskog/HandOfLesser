@@ -47,6 +47,9 @@ namespace HOL
 		HookedController* getHMD();
 		HookedController*
 		getHookedControllerByInputHandle(vr::VRInputComponentHandle_t inputHandle);
+
+		// Returns the active controller if we are in a mode that modifies it and it is connected
+		// otherwise returns nullptr
 		GenericControllerInterface* GetActiveController(HOL::HandSide side);
 
 		void requestEstimateControllerSide();
@@ -88,7 +91,7 @@ namespace HOL
 		std::unordered_map<HOL::BodyTrackerRole, std::unique_ptr<EmulatedTrackerDriver>>
 			mEmulatedTrackers;
 		std::unordered_map<std::string, std::unique_ptr<EmulatedTrackerDriver>>
-			mShadowTrackers;  // Keyed by source device serial
+			mShadowTrackers; // Keyed by source device serial
 		HOL::HandTransformPacket mLastHandTransforms[HOL::HandSide_MAX]{};
 		bool mHasHandTransform[HOL::HandSide_MAX]{false, false};
 	};

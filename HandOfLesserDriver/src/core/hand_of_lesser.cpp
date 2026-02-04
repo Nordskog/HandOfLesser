@@ -1,6 +1,8 @@
 #include "hand_of_lesser.h"
 #include "HandOfLesserCommon.h"
 #include <driverlog.h>
+#include "src/controller/emulated_controller_driver.h"
+#include "src/controller/generic_control_interface.h"
 #include "src/utils/math_utils.h"
 #include <nlohmann/json.hpp>
 #include <src/json/types.h>
@@ -167,10 +169,25 @@ namespace HOL
 
 				case HOL::NativePacketType::SkeletalInput: {
 					HOL::SkeletalPacket* packet = (HOL::SkeletalPacket*)rawPacket;
-					auto controller = this->GetActiveController(packet->side);
-					if (controller != nullptr)
+
+					// Send to active controller (for normal skeletal input)
+					auto activeController = this->GetActiveController(packet->side);
+					if (activeController != nullptr)
 					{
-						controller->UpdateSkeletal(packet);
+						activeController->UpdateSkeletal(packet);
+					}
+					else
+					{
+						// send to hooked controller when augmentation enabled
+						if (Config.skeletal.augmentControllerSkeleton
+							&& Tracking.isMultimodalEnabled)
+						{
+							auto hookedController = getHookedController(packet->side);
+							if (hookedController != nullptr)
+							{
+								hookedController->UpdateSkeletal(packet);
+							}
+						}
 					}
 
 					break;
@@ -608,13 +625,12 @@ namespace HOL
 			// If controller is configured to always act as tracker (alsoWhenHeld),
 			// the real controller will never come back, so keep using hand tracking
 			auto it = Config.deviceSettings.devices.find(controller->serial);
-			if (it != Config.deviceSettings.devices.end() 
-				&& it->second.actAsTracker 
+			if (it != Config.deviceSettings.devices.end() && it->second.actAsTracker
 				&& it->second.alsoWhenHeld)
 			{
 				return true; // Always use hand tracking
 			}
-			
+
 			bool shouldPossess = !controller->isHeld();
 			return shouldPossess;
 		}
@@ -723,10 +739,9 @@ namespace HOL
 		auto tracker = std::make_unique<EmulatedTrackerDriver>(serial);
 
 		// Register with SteamVR
-		if (vr::VRServerDriverHost()->TrackedDeviceAdded(
-				tracker->MyGetSerialNumber().c_str(),
-				vr::TrackedDeviceClass_GenericTracker,
-				tracker.get()))
+		if (vr::VRServerDriverHost()->TrackedDeviceAdded(tracker->MyGetSerialNumber().c_str(),
+														 vr::TrackedDeviceClass_GenericTracker,
+														 tracker.get()))
 		{
 			EmulatedTrackerDriver* ptr = tracker.get();
 			mShadowTrackers[serial] = std::move(tracker);
@@ -883,7 +898,13 @@ namespace HOL
 		switch (HandOfLesser::Current->Config.handPose.controllerMode)
 		{
 			case ControllerMode::EmulateControllerMode: {
-				return getEmulatedController(side);
+				EmulatedControllerDriver* emulated = getEmulatedController(side);
+				// If not connected then it is not the primary controller
+				if (!emulated->isConnected())
+				{
+					return nullptr;
+				}
+				return emulated;
 			}
 			case ControllerMode::OffsetControllerMode:
 			case ControllerMode::HookedControllerMode: {
@@ -1101,7 +1122,6 @@ namespace HOL
 		{
 			this->estimateControllerSide();
 		}
-
 
 		// iterate frame counter for all controller
 		for (auto& controller : this->mHookedControllers)

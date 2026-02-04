@@ -120,6 +120,7 @@ namespace HOL
 		void UpdateFloatInput(const std::string& input, float value) override;
 		void UpdateSkeletal(HOL::SkeletalPacket* packet) override;
 		void SubmitPose() override;
+		bool isConnected() const;
 
 		void Deactivate() override;
 

@@ -173,7 +173,7 @@ namespace HOL
 		{
 			float jointLengthMultiplier = 1.05f;
 			bool sendSkeletalInput = true;
-			bool augmentHookedControllers = false;
+			bool augmentControllerSkeleton = false;
 			Eigen::Vector3f positionOffset = Eigen::Vector3f(-0.168f, -0.041f, 0.049f);
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(174.300f, 1.221f, 136.930f);
 		};
@@ -208,8 +208,8 @@ namespace HOL
 			bool activatedThisSession = false; // Runtime flag, not saved to JSON
 
 			// Shadow tracker settings
-			bool actAsTracker = false;   // Make this device appear as a tracker
-			bool alsoWhenHeld = false;   // Act as tracker even when held (multimodal only)
+			bool actAsTracker = false; // Make this device appear as a tracker
+			bool alsoWhenHeld = false; // Act as tracker even when held (multimodal only)
 		};
 
 		struct DeviceSettings
@@ -219,8 +219,8 @@ namespace HOL
 
 		struct TrackingFeaturesSettings
 		{
-			bool enableHighFidelityWithSteamVR = false;
-			bool enableMultimodalWithSteamVR = false;
+			bool enableUpperBodyTracking = false;
+			bool enableSimultaneousTracking = false;
 		};
 
 		struct HandOfLesserSettings

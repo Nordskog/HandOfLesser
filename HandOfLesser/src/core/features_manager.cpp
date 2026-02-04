@@ -66,4 +66,21 @@ namespace HOL
 			HandOfLesserCore::Current->syncState();
 		}
 	}
+
+	void FeaturesManager::applyTrackingFeatures(bool enableHighFidelity, bool enableMultimodal)
+	{
+		// Always disable multimodal first to avoid conflicts
+		if (mMultimodalEnabled)
+			this->disableMultimodal();
+
+		// Enable high fidelity if requested
+		if (enableHighFidelity)
+			this->requestHighFidelity();
+		else
+			this->requestLowFidelity();
+
+		// Re-enable multimodal if requested
+		if (enableMultimodal)
+			this->enableMultimodal();
+	}
 } // namespace HOL

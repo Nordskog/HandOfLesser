@@ -437,7 +437,7 @@ void HandOfLesserCore::sendUpdate()
 		}
 	}
 
-	if (Config.skeletal.sendSkeletalInput || Config.skeletal.augmentHookedControllers)
+	if (Config.skeletal.sendSkeletalInput || Config.skeletal.augmentControllerSkeleton)
 	{
 		for (int i = 0; i < HandSide_MAX; i++)
 		{
@@ -554,16 +554,6 @@ bool HOL::HandOfLesserCore::isDriverConnected() const
 
 void HOL::HandOfLesserCore::onDriverConnected()
 {
-	// High fidelity MUST be enabled before multimodal on Oculus runtime
-	if (Config.trackingFeatures.enableHighFidelityWithSteamVR)
-	{
-		std::cout << "Auto-enabling high fidelity body tracking" << std::endl;
-		featuresManager.requestHighFidelity();
-	}
-
-	if (Config.trackingFeatures.enableMultimodalWithSteamVR)
-	{
-		std::cout << "Auto-enabling multimodal tracking" << std::endl;
-		featuresManager.enableMultimodal();
-	}
+	featuresManager.applyTrackingFeatures(Config.trackingFeatures.enableUpperBodyTracking,
+										  Config.trackingFeatures.enableSimultaneousTracking);
 }
