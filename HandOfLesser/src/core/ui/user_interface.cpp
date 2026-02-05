@@ -743,6 +743,13 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::SeparatorText("Tracking features");
 
+	if (!HOL::state::Runtime.isOVR)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	ImGui::BeginGroup();
+
 	if (ImGui::Checkbox("Upper body tracking", &Config.trackingFeatures.enableUpperBodyTracking))
 	{
 		HOL::HandOfLesserCore::Current->featuresManager.applyTrackingFeatures(
@@ -767,6 +774,18 @@ void HOL::UserInterface::buildMain()
 
 	if (!Config.trackingFeatures.enableSimultaneousTracking)
 		ImGui::EndDisabled();
+
+	ImGui::EndGroup();
+
+	if (!HOL::state::Runtime.isOVR)
+	{
+		ImGui::EndDisabled();
+
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+		{
+			ImGui::SetTooltip("These features are only available when using the Oculus runtime.");
+		}
+	}
 
 	/////////////////
 	// General

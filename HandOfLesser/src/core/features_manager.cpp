@@ -25,6 +25,11 @@ namespace HOL
 
 	void FeaturesManager::setMultimodalEnabled(bool enabled)
 	{
+		if (!state::Runtime.isOVR)
+		{
+			return;
+		}
+
 		if (mInstanceHolder && mInstanceHolder->mSession)
 		{
 			if (enabled)
@@ -52,6 +57,11 @@ namespace HOL
 
 	void FeaturesManager::requestBodyTrackingFidelity(bool high)
 	{
+		if (!state::Runtime.isOVR)
+		{
+			return;
+		}
+
 		if (mBodyTracking)
 		{
 			XrBodyTrackerFB bodyTracker = mBodyTracking->getBodyTracker().getBodyTrackerFB();
