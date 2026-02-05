@@ -339,6 +339,9 @@ void HandOfLesserCore::doOpenXRStuff()
 		this->mInstanceHolder.mStageSpace, time, this->mBodyTracking.getBodyTracker());
 	this->mHandTracking.updateInputs();
 
+	// Periodic check for tracking features
+	this->featuresManager.performPeriodicCheck();
+
 	this->sendUpdate();
 
 	return;

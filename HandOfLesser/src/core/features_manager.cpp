@@ -4,11 +4,13 @@
 #include "src/openxr/body_tracking.h"
 #include "src/core/HandOfLesserCore.h"
 #include "src/core/state_global.h"
+#include "src/core/settings_global.h"
 
 namespace HOL
 {
 	FeaturesManager::FeaturesManager() : mInstanceHolder(nullptr), mBodyTracking(nullptr)
 	{
+		mLastTrackingFeatureCheckTime = std::chrono::steady_clock::now();
 	}
 
 	void FeaturesManager::setInstanceHolder(OpenXR::InstanceHolder* instanceHolder)
@@ -26,9 +28,12 @@ namespace HOL
 		if (mInstanceHolder && mInstanceHolder->mSession)
 		{
 			HandTrackingInterface::resumeMultimodal(mInstanceHolder->mSession);
-			mMultimodalEnabled = true;
-			state::Tracking.isMultimodalEnabled = true;
-			HandOfLesserCore::Current->syncState();
+			if (!mMultimodalEnabled)
+			{
+				mMultimodalEnabled = true;
+				state::Tracking.isMultimodalEnabled = true;
+				HandOfLesserCore::Current->syncState();
+			}
 		}
 	}
 
@@ -37,9 +42,12 @@ namespace HOL
 		if (mInstanceHolder && mInstanceHolder->mSession)
 		{
 			HandTrackingInterface::pauseMultimodal(mInstanceHolder->mSession);
-			mMultimodalEnabled = false;
-			state::Tracking.isMultimodalEnabled = false;
-			HandOfLesserCore::Current->syncState();
+			if (mMultimodalEnabled)
+			{
+				mMultimodalEnabled = false;
+				state::Tracking.isMultimodalEnabled = false;
+				HandOfLesserCore::Current->syncState();
+			}
 		}
 	}
 
@@ -50,8 +58,11 @@ namespace HOL
 			XrBodyTrackerFB bodyTracker = mBodyTracking->getBodyTracker().getBodyTrackerFB();
 			HandTrackingInterface::requestBodyTrackingFidelity(bodyTracker,
 															   XR_BODY_TRACKING_FIDELITY_HIGH_META);
-			state::Tracking.isHighFidelityEnabled = true;
-			HandOfLesserCore::Current->syncState();
+			if (!state::Tracking.isHighFidelityEnabled)
+			{
+				state::Tracking.isHighFidelityEnabled = true;
+				HandOfLesserCore::Current->syncState();
+			}
 		}
 	}
 
@@ -62,8 +73,11 @@ namespace HOL
 			XrBodyTrackerFB bodyTracker = mBodyTracking->getBodyTracker().getBodyTrackerFB();
 			HandTrackingInterface::requestBodyTrackingFidelity(bodyTracker,
 															   XR_BODY_TRACKING_FIDELITY_LOW_META);
-			state::Tracking.isHighFidelityEnabled = false;
-			HandOfLesserCore::Current->syncState();
+			if (state::Tracking.isHighFidelityEnabled)
+			{
+				state::Tracking.isHighFidelityEnabled = false;
+				HandOfLesserCore::Current->syncState();
+			}
 		}
 	}
 
@@ -82,5 +96,28 @@ namespace HOL
 		// Re-enable multimodal if requested
 		if (enableMultimodal)
 			this->enableMultimodal();
+	}
+} // namespace HOL
+
+void FeaturesManager::performPeriodicCheck()
+{
+	auto now = std::chrono::steady_clock::now();
+	if (std::chrono::duration_cast<std::chrono::milliseconds>(now
+															  - this->mLastTrackingFeatureCheckTime)
+		>= TRACKING_FEATURE_CHECK_INTERVAL_MS)
+	{
+		// Re-request High Fidelity if enabled
+		if (Config.trackingFeatures.enableUpperBodyTracking)
+		{
+			requestHighFidelity();
+		}
+
+		// Re-enable Multimodal if enabled
+		if (Config.trackingFeatures.enableSimultaneousTracking)
+		{
+			enableMultimodal();
+		}
+
+		this->mLastTrackingFeatureCheckTime = now;
 	}
 } // namespace HOL
