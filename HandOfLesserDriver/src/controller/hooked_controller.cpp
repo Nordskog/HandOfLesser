@@ -46,6 +46,7 @@ namespace HOL
 		this->mHookedHost = host;
 		this->mHookedDriver = driver;
 		this->propertyContainer = propertyContainer;
+		this->mLastStateChangeTime = std::chrono::steady_clock::now();
 	}
 
 	void HookedController::lateInit(std::string serial,
@@ -231,19 +232,46 @@ namespace HOL
 
 	bool HookedController::isHeld()
 	{
-		const float HELD_THRESHOLD = 0.15f; // 10cm
+		const float HELD_THRESHOLD = 0.15f; // 15cm
+		const float NOT_HELD_THRESHOLD_MULTIPLIER = 2.0f;
 
-		// TODO: Require a few consecutive frames to make switch
 		float distance = HOL::HandOfLesser::Current->getControllerToHandDistance(this);
 
 		if (distance > 99999) // Invalid
 		{
-			// If we don't know, we don't know.
-			// Retain current value.
+			// Don't allow state changes when distance is invalid
+			// Reset the "consistency timer" so we require 500ms of valid data
+			mLastStateChangeTime = std::chrono::steady_clock::now();
 			return mLastHeldState;
 		}
 
-		mLastHeldState = distance < HELD_THRESHOLD;
+		// Determine threshold based on current state (asymmetric)
+		float threshold
+			= mLastHeldState ? (HELD_THRESHOLD
+								* NOT_HELD_THRESHOLD_MULTIPLIER) // Larger threshold to leave "held"
+							 : HELD_THRESHOLD;					 // Normal threshold to enter "held"
+
+		// Determine what the new state should be based on distance
+		bool desiredState = distance < threshold;
+
+		// If desired state matches current state, we're stable - reset timer
+		if (desiredState == mLastHeldState)
+		{
+			mLastStateChangeTime = std::chrono::steady_clock::now();
+			return mLastHeldState;
+		}
+
+		// Desired state differs - check if enough time has elapsed
+		auto now = std::chrono::steady_clock::now();
+		auto timeSinceLastChange
+			= std::chrono::duration_cast<std::chrono::milliseconds>(now - mLastStateChangeTime);
+
+		if (timeSinceLastChange >= STATE_CHANGE_DELAY_MS)
+		{
+			// Enough time has passed, make the switch
+			mLastHeldState = desiredState;
+			mLastStateChangeTime = now;
+		}
 
 		return mLastHeldState;
 	}

@@ -4,6 +4,7 @@
 #include <openvr_driver.h>
 #include "src/input/InputCommons.h"
 #include "src/steamvr/skeletal_input_joints.h"
+#include <chrono>
 
 namespace HOL
 {
@@ -85,6 +86,8 @@ namespace HOL
 		vr::DriverPose_t mLastPose;
 		bool mLastHeldState
 			= true; // Controllers not added until held, so should be true on activate
+		std::chrono::steady_clock::time_point mLastStateChangeTime;
+		const std::chrono::milliseconds STATE_CHANGE_DELAY_MS{500};
 
 		HOL::HandTransformPacket mLastTransformPacket;
 		HOL::ControllerInputPacket mLastInputPacket;
