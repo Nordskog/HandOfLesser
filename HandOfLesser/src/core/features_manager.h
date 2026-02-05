@@ -18,11 +18,8 @@ namespace HOL
 		void setInstanceHolder(OpenXR::InstanceHolder* instanceHolder);
 		void setBodyTracking(OpenXR::BodyTracking* bodyTracking);
 
-		void enableMultimodal();
-		void disableMultimodal();
-
-		void requestHighFidelity();
-		void requestLowFidelity();
+		void setMultimodalEnabled(bool enabled);
+		void requestBodyTrackingFidelity(bool high);
 
 		void applyTrackingFeatures(bool enableHighFidelity, bool enableMultimodal);
 		void performPeriodicCheck();

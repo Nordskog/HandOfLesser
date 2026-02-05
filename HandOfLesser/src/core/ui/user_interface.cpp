@@ -430,26 +430,26 @@ void HOL::UserInterface::buildMisc()
 
 	if (ImGui::Button("Request High Fidelity"))
 	{
-		HOL::HandOfLesserCore::Current->featuresManager.requestHighFidelity();
+		HOL::HandOfLesserCore::Current->featuresManager.requestBodyTrackingFidelity(true);
 	}
 
 	ImGui::SameLine();
 
 	if (ImGui::Button("Request Low Fidelity"))
 	{
-		HOL::HandOfLesserCore::Current->featuresManager.requestLowFidelity();
+		HOL::HandOfLesserCore::Current->featuresManager.requestBodyTrackingFidelity(false);
 	}
 
 	if (ImGui::Button("Resume Multimodal"))
 	{
-		HOL::HandOfLesserCore::Current->featuresManager.enableMultimodal();
+		HOL::HandOfLesserCore::Current->featuresManager.setMultimodalEnabled(true);
 	}
 
 	ImGui::SameLine();
 
 	if (ImGui::Button("Pause Multimodal"))
 	{
-		HOL::HandOfLesserCore::Current->featuresManager.disableMultimodal();
+		HOL::HandOfLesserCore::Current->featuresManager.setMultimodalEnabled(false);
 	}
 }
 

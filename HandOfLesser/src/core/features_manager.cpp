@@ -23,60 +23,58 @@ namespace HOL
 		mBodyTracking = bodyTracking;
 	}
 
-	void FeaturesManager::enableMultimodal()
+	void FeaturesManager::setMultimodalEnabled(bool enabled)
 	{
 		if (mInstanceHolder && mInstanceHolder->mSession)
 		{
-			HandTrackingInterface::resumeMultimodal(mInstanceHolder->mSession);
-			if (!mMultimodalEnabled)
+			if (enabled)
 			{
-				mMultimodalEnabled = true;
-				state::Tracking.isMultimodalEnabled = true;
-				HandOfLesserCore::Current->syncState();
+				HandTrackingInterface::resumeMultimodal(mInstanceHolder->mSession);
+				if (!mMultimodalEnabled)
+				{
+					mMultimodalEnabled = true;
+					state::Tracking.isMultimodalEnabled = true;
+					HandOfLesserCore::Current->syncState();
+				}
+			}
+			else
+			{
+				HandTrackingInterface::pauseMultimodal(mInstanceHolder->mSession);
+				if (mMultimodalEnabled)
+				{
+					mMultimodalEnabled = false;
+					state::Tracking.isMultimodalEnabled = false;
+					HandOfLesserCore::Current->syncState();
+				}
 			}
 		}
 	}
 
-	void FeaturesManager::disableMultimodal()
-	{
-		if (mInstanceHolder && mInstanceHolder->mSession)
-		{
-			HandTrackingInterface::pauseMultimodal(mInstanceHolder->mSession);
-			if (mMultimodalEnabled)
-			{
-				mMultimodalEnabled = false;
-				state::Tracking.isMultimodalEnabled = false;
-				HandOfLesserCore::Current->syncState();
-			}
-		}
-	}
-
-	void FeaturesManager::requestHighFidelity()
+	void FeaturesManager::requestBodyTrackingFidelity(bool high)
 	{
 		if (mBodyTracking)
 		{
 			XrBodyTrackerFB bodyTracker = mBodyTracking->getBodyTracker().getBodyTrackerFB();
-			HandTrackingInterface::requestBodyTrackingFidelity(bodyTracker,
-															   XR_BODY_TRACKING_FIDELITY_HIGH_META);
-			if (!state::Tracking.isHighFidelityEnabled)
-			{
-				state::Tracking.isHighFidelityEnabled = true;
-				HandOfLesserCore::Current->syncState();
-			}
-		}
-	}
 
-	void FeaturesManager::requestLowFidelity()
-	{
-		if (mBodyTracking)
-		{
-			XrBodyTrackerFB bodyTracker = mBodyTracking->getBodyTracker().getBodyTrackerFB();
-			HandTrackingInterface::requestBodyTrackingFidelity(bodyTracker,
-															   XR_BODY_TRACKING_FIDELITY_LOW_META);
-			if (state::Tracking.isHighFidelityEnabled)
+			if (high)
 			{
-				state::Tracking.isHighFidelityEnabled = false;
-				HandOfLesserCore::Current->syncState();
+				HandTrackingInterface::requestBodyTrackingFidelity(
+					bodyTracker, XR_BODY_TRACKING_FIDELITY_HIGH_META);
+				if (!state::Tracking.isHighFidelityEnabled)
+				{
+					state::Tracking.isHighFidelityEnabled = true;
+					HandOfLesserCore::Current->syncState();
+				}
+			}
+			else
+			{
+				HandTrackingInterface::requestBodyTrackingFidelity(
+					bodyTracker, XR_BODY_TRACKING_FIDELITY_LOW_META);
+				if (state::Tracking.isHighFidelityEnabled)
+				{
+					state::Tracking.isHighFidelityEnabled = false;
+					HandOfLesserCore::Current->syncState();
+				}
 			}
 		}
 	}
@@ -85,17 +83,14 @@ namespace HOL
 	{
 		// Always disable multimodal first to avoid conflicts
 		if (mMultimodalEnabled)
-			this->disableMultimodal();
+			this->setMultimodalEnabled(false);
 
 		// Enable high fidelity if requested
-		if (enableHighFidelity)
-			this->requestHighFidelity();
-		else
-			this->requestLowFidelity();
+		this->requestBodyTrackingFidelity(enableHighFidelity);
 
 		// Re-enable multimodal if requested
 		if (enableMultimodal)
-			this->enableMultimodal();
+			this->setMultimodalEnabled(true);
 	}
 } // namespace HOL
 
@@ -109,13 +104,13 @@ void FeaturesManager::performPeriodicCheck()
 		// Re-request High Fidelity if enabled
 		if (Config.trackingFeatures.enableUpperBodyTracking)
 		{
-			requestHighFidelity();
+			requestBodyTrackingFidelity(true);
 		}
 
 		// Re-enable Multimodal if enabled
 		if (Config.trackingFeatures.enableSimultaneousTracking)
 		{
-			enableMultimodal();
+			setMultimodalEnabled(true);
 		}
 
 		this->mLastTrackingFeatureCheckTime = now;
