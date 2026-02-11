@@ -615,6 +615,18 @@ void HOL::UserInterface::buildSteamVR()
 	std::vector<std::pair<std::string, HOL::settings::DeviceConfig*>> devices;
 	for (auto& [serial, config] : Config.deviceSettings.devices)
 	{
+		const bool isUnsupportedRole = config.role == vr::TrackedDeviceClass_HMD
+			|| config.role == vr::TrackedDeviceClass_GenericTracker;
+		if (isUnsupportedRole)
+		{
+			if (config.actAsTracker || config.alsoWhenHeld)
+			{
+				config.actAsTracker = false;
+				config.alsoWhenHeld = false;
+				syncSettings = true;
+			}
+		}
+
 		if (mShowAllDevices || config.activatedThisSession)
 		{
 			devices.push_back({serial, &config});
@@ -648,6 +660,8 @@ void HOL::UserInterface::buildSteamVR()
 		for (const auto& [serial, config] : devices)
 		{
 			ImGui::TableNextRow();
+			const bool isUnsupportedRole = config->role == vr::TrackedDeviceClass_HMD
+				|| config->role == vr::TrackedDeviceClass_GenericTracker;
 
 			// Grey out inactive devices
 			if (!config->activatedThisSession)
@@ -662,15 +676,17 @@ void HOL::UserInterface::buildSteamVR()
 			ImGui::Text("%s", roleToString(config->role));
 
 			ImGui::TableNextColumn();
-			if (ImGui::Checkbox(("##actAsTracker_" + serial).c_str(), &config->actAsTracker))
+			if (!isUnsupportedRole
+				&& ImGui::Checkbox(("##actAsTracker_" + serial).c_str(), &config->actAsTracker))
 			{
 				syncSettings = true;
 			}
 
 			ImGui::TableNextColumn();
 			// "Also when held" only relevant if actAsTracker is enabled
-			ImGui::BeginDisabled(!config->actAsTracker);
-			if (ImGui::Checkbox(("##alsoWhenHeld_" + serial).c_str(), &config->alsoWhenHeld))
+			ImGui::BeginDisabled(isUnsupportedRole || !config->actAsTracker);
+			if (!isUnsupportedRole
+				&& ImGui::Checkbox(("##alsoWhenHeld_" + serial).c_str(), &config->alsoWhenHeld))
 			{
 				syncSettings = true;
 			}
