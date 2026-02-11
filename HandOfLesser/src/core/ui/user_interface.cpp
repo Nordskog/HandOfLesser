@@ -525,6 +525,17 @@ void HOL::UserInterface::buildSteamVR()
 	syncSettings |= ImGui::InputFloat(
 		"Steam Pose offset (s)", &Config.steamvr.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f");
 
+	ImGui::InputFloat("Linear Velocity multiplier",
+					  &Config.general.linearVelocityMultiplier,
+					  0.05f,
+					  0.1f,
+					  "%.3f");
+	ImGui::InputFloat("Angular Velocity multiplier",
+					  &Config.general.angularVelocityMultiplier,
+					  0.05f,
+					  0.1f,
+					  "%.3f");
+
 	/////////////////
 	// Skeletal
 	/////////////////
@@ -711,22 +722,17 @@ void HOL::UserInterface::buildMain()
 	// Mode
 	////////////////////
 
-	ImGui::SeparatorText("Driver mode");
+	ImGui::SeparatorText("Hand Tracking Mode");
 
 	std::vector<std::tuple<std::string, HOL::ControllerMode>> modeRadioButtons
-		= {{"None", HOL::ControllerMode::NoControllerMode},
-		   {"Emulate", HOL::ControllerMode::EmulateControllerMode},
-		   {"Possess", HOL::ControllerMode::HookedControllerMode},
-		   {"Offset", HOL::ControllerMode::OffsetControllerMode}};
+		= {{"Do Nothing", HOL::ControllerMode::NoControllerMode},
+		   {"Emulate separate controller", HOL::ControllerMode::EmulateControllerMode},
+		   {"Possess existing controller", HOL::ControllerMode::HookedControllerMode},
+		   {"Offset existing controller", HOL::ControllerMode::OffsetControllerMode}};
 
 	bool isFirstIteration = true;
 	for (const auto& buttonContent : modeRadioButtons)
 	{
-		if (!isFirstIteration)
-		{
-			ImGui::SameLine();
-		}
-
 		if (ImGui::RadioButton(std::get<0>(buttonContent).c_str(),
 							   (int*)&HOL::Config.handPose.controllerMode,
 							   std::get<1>(buttonContent)))
@@ -945,17 +951,6 @@ void UserInterface::buildVRChatOSCSettings()
 			Config.general.updateIntervalMS = 100;
 		}
 	}
-
-	ImGui::InputFloat("Linear Velocity multiplier",
-					  &Config.general.linearVelocityMultiplier,
-					  0.05f,
-					  0.1f,
-					  "%.3f");
-	ImGui::InputFloat("Angular Velocity multiplier",
-					  &Config.general.angularVelocityMultiplier,
-					  0.05f,
-					  0.1f,
-					  "%.3f");
 
 	ImGui::SameLine();
 	if (rightAlignButton("Reset##VRChat"))
