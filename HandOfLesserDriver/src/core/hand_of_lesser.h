@@ -18,6 +18,7 @@ namespace HOL
 		void runFrame();
 		void addEmulatedControllers();
 		void removeEmulatedControllers();
+		void destroyEmulatedControllers();
 		void addEmulatedTrackers();
 		void removeEmulatedTrackers();
 		void updateTrackerConnectionStates();

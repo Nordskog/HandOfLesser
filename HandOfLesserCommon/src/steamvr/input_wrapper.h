@@ -44,6 +44,7 @@ namespace HOL::SteamVR
 	{
 		// These may not be universal
 		InputWrapper const Joystick = InputWrapper("joystick");
+		InputWrapper const Thumbstick = InputWrapper("thumbstick");
 		InputWrapper const Trackpad = InputWrapper("trackpad");
 		InputWrapper const Trigger = InputWrapper("trigger");
 		InputWrapper const Grip = InputWrapper("grip");

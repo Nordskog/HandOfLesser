@@ -759,6 +759,26 @@ void HOL::UserInterface::buildMain()
 		isFirstIteration = false;
 	}
 
+	if (HOL::Config.handPose.controllerMode == HOL::ControllerMode::EmulateControllerMode)
+	{
+		ImGui::SeparatorText("Emulated controller profile");
+
+		if (ImGui::RadioButton("Index",
+							   (int*)&HOL::Config.handPose.emulatedControllerProfile,
+							   HOL::EmulatedControllerProfile::EmulatedControllerProfile_Index))
+		{
+			HOL::HandOfLesserCore::Current->syncSettings();
+		}
+
+		if (ImGui::RadioButton(
+				"Oculus Touch",
+				(int*)&HOL::Config.handPose.emulatedControllerProfile,
+				HOL::EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch))
+		{
+			HOL::HandOfLesserCore::Current->syncSettings();
+		}
+	}
+
 	/////////////////
 	// Tracking features (Oculus only)
 	/////////////////

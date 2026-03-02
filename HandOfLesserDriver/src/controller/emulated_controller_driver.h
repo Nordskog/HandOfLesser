@@ -19,6 +19,20 @@ namespace HOL
 		a_click,
 		b_touch,
 		b_click,
+		x_touch,
+		x_click,
+		y_touch,
+		y_click,
+
+		joystick_x,
+		joystick_y,
+		joystick_touch,
+		joystick_click,
+
+		thumbstick_x,
+		thumbstick_y,
+		thumbstick_touch,
+		thumbstick_click,
 
 		trigger_value,
 		trigger_touch,
@@ -52,6 +66,20 @@ namespace HOL
 		arr[a_click] = A.click();
 		arr[b_touch] = B.touch();
 		arr[b_click] = B.click();
+		arr[x_touch] = X.touch();
+		arr[x_click] = X.click();
+		arr[y_touch] = Y.touch();
+		arr[y_click] = Y.click();
+
+		arr[joystick_x] = Joystick.x();
+		arr[joystick_y] = Joystick.y();
+		arr[joystick_touch] = Joystick.touch();
+		arr[joystick_click] = Joystick.click();
+
+		arr[thumbstick_x] = Thumbstick.x();
+		arr[thumbstick_y] = Thumbstick.y();
+		arr[thumbstick_touch] = Thumbstick.touch();
+		arr[thumbstick_click] = Thumbstick.click();
 		arr[trigger_value] = Trigger.value();
 		arr[trigger_touch] = Trigger.touch();
 		arr[trigger_click] = Trigger.click();
@@ -90,7 +118,8 @@ namespace HOL
 									 public HOL::GenericControllerInterface
 	{
 	public:
-		EmulatedControllerDriver(vr::ETrackedControllerRole role);
+		EmulatedControllerDriver(vr::ETrackedControllerRole role,
+								 HOL::EmulatedControllerProfile profile);
 
 		vr::EVRInitError Activate(uint32_t unObjectId) override;
 
@@ -142,6 +171,7 @@ namespace HOL
 		std::atomic<vr::TrackedDeviceIndex_t> my_controller_index_;
 
 		vr::ETrackedControllerRole my_controller_role_;
+		HOL::EmulatedControllerProfile my_emulated_profile_;
 
 		std::string my_controller_model_number_;
 		std::string my_controller_serial_number_;

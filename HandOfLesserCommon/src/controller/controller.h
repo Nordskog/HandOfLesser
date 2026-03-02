@@ -9,6 +9,13 @@
 
 namespace HOL
 {
+	enum EmulatedControllerProfile
+	{
+		EmulatedControllerProfile_Index,
+		EmulatedControllerProfile_OculusTouch,
+		EmulatedControllerProfile_MAX
+	};
+
 	enum ControllerType
 	{
 		NONE,

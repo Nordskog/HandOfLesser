@@ -254,6 +254,15 @@ namespace HOL
 			}
 		}
 
+		if (Config.handPose.emulatedControllerProfile
+				!= oldConfig.handPose.emulatedControllerProfile
+			&& Config.handPose.controllerMode == ControllerMode::EmulateControllerMode)
+		{
+			devicesChanged = true;
+			destroyEmulatedControllers();
+			addEmulatedControllers();
+		}
+
 		// Handle body tracker changes
 		bool trackersEnabledChanged
 			= Config.bodyTrackers.enableBodyTrackers != oldConfig.bodyTrackers.enableBodyTrackers;
@@ -305,9 +314,13 @@ namespace HOL
 			// We made the constructor take in a controller role, so let's pass their respective
 			// roles in.
 			this->mEmulatedControllers[HOL::HandSide::LeftHand]
-				= std::make_unique<EmulatedControllerDriver>(vr::TrackedControllerRole_LeftHand);
+				= std::make_unique<EmulatedControllerDriver>(
+					vr::TrackedControllerRole_LeftHand,
+					Config.handPose.emulatedControllerProfile);
 			this->mEmulatedControllers[HOL::HandSide::RightHand]
-				= std::make_unique<EmulatedControllerDriver>(vr::TrackedControllerRole_RightHand);
+				= std::make_unique<EmulatedControllerDriver>(
+					vr::TrackedControllerRole_RightHand,
+					Config.handPose.emulatedControllerProfile);
 
 			// Now we need to tell vrserver about our controllers.
 			// The first argument is the serial number of the device, which must be unique across
@@ -347,6 +360,18 @@ namespace HOL
 			// We only add controllers once, and then enable/disable them.
 			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(false);
 			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(false);
+		}
+	}
+
+	void HandOfLesser::destroyEmulatedControllers()
+	{
+		for (int i = 0; i < HOL::HandSide_MAX; i++)
+		{
+			if (this->mEmulatedControllers[i])
+			{
+				this->mEmulatedControllers[i]->setConnectedState(false);
+				this->mEmulatedControllers[i].reset();
+			}
 		}
 	}
 

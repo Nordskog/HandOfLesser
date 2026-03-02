@@ -122,6 +122,8 @@ namespace HOL
 			// NoControllerMode should always be the default so the driver does nothing
 			// until the app connects.
 			HOL::ControllerMode controllerMode = HOL::ControllerMode::NoControllerMode;
+			HOL::EmulatedControllerProfile emulatedControllerProfile
+				= HOL::EmulatedControllerProfile::EmulatedControllerProfile_Index;
 
 			HOL::ControllerType controllerType = HOL::ControllerType::OculusTouch_VDXR;
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(0, 0, 0);

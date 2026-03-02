@@ -4,6 +4,7 @@
 #include "driverlog.h"
 #include "vrmath.h"
 #include "controller_common.h"
+#include "emulated_input_profile.h"
 #include <HandOfLesserCommon.h>
 #include <src/core/hand_of_lesser.h>
 
@@ -25,7 +26,8 @@ namespace HOL
 {
 	using namespace SteamVR;
 
-	EmulatedControllerDriver::EmulatedControllerDriver(vr::ETrackedControllerRole role)
+	EmulatedControllerDriver::EmulatedControllerDriver(vr::ETrackedControllerRole role,
+													   HOL::EmulatedControllerProfile profile)
 	{
 		// Set a member to keep track of whether we've activated yet or not
 		is_active_ = false;
@@ -33,6 +35,7 @@ namespace HOL
 		// The constructor takes a role argument, that gives us information about if our controller
 		// is a left or right hand. Let's store it for later use. We'll need it.
 		my_controller_role_ = role;
+		my_emulated_profile_ = profile;
 
 		// We have our model number and serial number stored in SteamVR settings. We need to get
 		// them and do so here. Other IVRSettings methods (to get int32, floats, bools) return the
@@ -102,38 +105,74 @@ namespace HOL
 		// As well as what default bindings should be for legacy apps.
 		// Note, we can use the wildcard {<driver_name>} to match the root folder location
 		// of our driver.
+		const bool isLeftHand = isLeftControllerRole(my_controller_role_);
 		props->SetStringProperty(container,
 								 vr::Prop_ModelNumber_String,
-								 (my_controller_role_ == vr::TrackedControllerRole_LeftHand)
-									 ? "Knuckles Left"
-									 : "Knuckles Right");
-		props->SetStringProperty(container,
-								 vr::Prop_RenderModelName_String,
-								 (my_controller_role_ == vr::TrackedControllerRole_LeftHand)
-									 ? "{indexcontroller}valve_controller_knu_1_0_left"
-									 : "{indexcontroller}valve_controller_knu_1_0_right");
-		props->SetStringProperty(container, vr::Prop_ResourceRoot_String, "indexcontroller");
-		props->SetStringProperty(container,
-								 vr::Prop_RegisteredDeviceType_String,
-								 (my_controller_role_ == vr::TrackedControllerRole_LeftHand)
-									 ? "valve/index_controllerLHR-E217CD00"
-									 : "valve/index_controllerLHR-E217CD01");
-		props->SetStringProperty(container,
-								 vr::Prop_InputProfilePath_String,
-								 "{indexcontroller}/input/index_controller_profile.json");
-		props->SetStringProperty(container, vr::Prop_ControllerType_String, "knuckles");
+								 getEmulatedControllerModelName(my_emulated_profile_, isLeftHand));
+		props->SetStringProperty(
+			container,
+			vr::Prop_RenderModelName_String,
+			getEmulatedControllerRenderModelName(my_emulated_profile_, isLeftHand));
+		props->SetStringProperty(
+			container, vr::Prop_ResourceRoot_String, getEmulatedControllerResourceRoot(my_emulated_profile_));
+		props->SetStringProperty(
+			container,
+			vr::Prop_RegisteredDeviceType_String,
+			getEmulatedControllerRegisteredType(my_emulated_profile_, isLeftHand));
+		props->SetStringProperty(
+			container,
+			vr::Prop_InputProfilePath_String,
+			getEmulatedControllerInputProfilePath(my_emulated_profile_));
+		props->SetStringProperty(
+			container, vr::Prop_ControllerType_String, getEmulatedControllerTypeString(my_emulated_profile_));
 		// Let's set up handles for all of our components.
 		// Even though these are also defined in our input profile,
 		// We need to get handles to them to update the inputs.
 
 		auto input = vr::VRDriverInput();
 
-		// Let's set up our "A" button. We've defined it to have a touch and a click component.
-		createBooleanComponent(container, input, InputHandleType::a_touch);
-		createBooleanComponent(container, input, InputHandleType::a_click);
+		if (my_emulated_profile_ == HOL::EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
+		{
+			// Oculus layout: left has X/Y, right has A/B.
+			if (isLeftHand)
+			{
+				createBooleanComponent(container, input, InputHandleType::x_touch);
+				createBooleanComponent(container, input, InputHandleType::x_click);
+				createBooleanComponent(container, input, InputHandleType::y_touch);
+				createBooleanComponent(container, input, InputHandleType::y_click);
+			}
+			else
+			{
+				createBooleanComponent(container, input, InputHandleType::a_touch);
+				createBooleanComponent(container, input, InputHandleType::a_click);
+				createBooleanComponent(container, input, InputHandleType::b_touch);
+				createBooleanComponent(container, input, InputHandleType::b_click);
+			}
+		}
+		else
+		{
+			// Index layout: A/B on both hands.
+			createBooleanComponent(container, input, InputHandleType::a_touch);
+			createBooleanComponent(container, input, InputHandleType::a_click);
+			createBooleanComponent(container, input, InputHandleType::b_touch);
+			createBooleanComponent(container, input, InputHandleType::b_click);
+		}
 
-		createBooleanComponent(container, input, InputHandleType::b_touch);
-		createBooleanComponent(container, input, InputHandleType::b_click);
+		// Stick input (profile-specific naming).
+		if (my_emulated_profile_ == HOL::EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
+		{
+			createScalarComponent(container, input, InputHandleType::joystick_x);
+			createScalarComponent(container, input, InputHandleType::joystick_y);
+			createBooleanComponent(container, input, InputHandleType::joystick_touch);
+			createBooleanComponent(container, input, InputHandleType::joystick_click);
+		}
+		else
+		{
+			createScalarComponent(container, input, InputHandleType::thumbstick_x);
+			createScalarComponent(container, input, InputHandleType::thumbstick_y);
+			createBooleanComponent(container, input, InputHandleType::thumbstick_touch);
+			createBooleanComponent(container, input, InputHandleType::thumbstick_click);
+		}
 
 		// Let's set up our trigger. We've defined it to have a value and click component.
 
@@ -281,11 +320,19 @@ namespace HOL
 													vr::IVRDriverInput* input,
 													InputHandleType type)
 	{
+		vr::EVRScalarUnits units = vr::VRScalarUnits_NormalizedOneSided;
+		// Stick X/Y are centered axes (-1..1); trigger, grip, and finger values are one-sided (0..1).
+		if (type == InputHandleType::thumbstick_x || type == InputHandleType::thumbstick_y
+			|| type == InputHandleType::joystick_x || type == InputHandleType::joystick_y)
+		{
+			units = vr::VRScalarUnits_NormalizedTwoSided;
+		}
+
 		input->CreateScalarComponent(container,
 									 INPUT_PATHS[type].c_str(),
 									 &mInputHandles[type],
 									 vr::VRScalarType_Absolute,
-									 vr::VRScalarUnits_NormalizedOneSided);
+									 units);
 		return mInputHandles[type];
 	}
 
@@ -310,8 +357,12 @@ namespace HOL
 			return;
 
 		auto driverInput = vr::VRDriverInput();
+		HandSide side = my_controller_role_ == vr::TrackedControllerRole_LeftHand
+			? HandSide::LeftHand
+			: HandSide::RightHand;
+		std::string inputName = mapEmulatedInputPath(my_emulated_profile_, side, input);
 
-		auto inputType = INPUT_TYPES.find(input);
+		auto inputType = INPUT_TYPES.find(inputName);
 		if (inputType != INPUT_TYPES.end())
 		{
 			driverInput->UpdateBooleanComponent(mInputHandles[inputType->second], value, 0);
@@ -324,8 +375,12 @@ namespace HOL
 			return;
 
 		auto driverInput = vr::VRDriverInput();
+		HandSide side = my_controller_role_ == vr::TrackedControllerRole_LeftHand
+			? HandSide::LeftHand
+			: HandSide::RightHand;
+		std::string inputName = mapEmulatedInputPath(my_emulated_profile_, side, input);
 
-		auto inputType = INPUT_TYPES.find(input);
+		auto inputType = INPUT_TYPES.find(inputName);
 		if (inputType != INPUT_TYPES.end())
 		{
 			driverInput->UpdateScalarComponent(mInputHandles[inputType->second], value, 0);
