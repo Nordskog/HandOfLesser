@@ -15,7 +15,7 @@ public:
 
 	XrBodyJointLocationFB* getLastJointLocations();
 	XrBodyTrackerFB getBodyTrackerFB();
-	float confidence;
+	float confidence = 0.0f;
 	bool active = false;
 
 private:
@@ -35,10 +35,10 @@ private:
 												 const Eigen::Vector3f& nextJointPos,
 												 const Eigen::Quaternionf& bogusOrientation);
 
-	XrBodyJointLocationFB mLastWithTrackedHands[XR_BODY_JOINT_COUNT_FB];
+	XrBodyJointLocationFB mLastWithTrackedHands[XR_BODY_JOINT_COUNT_FB]{};
 
-	XrBodyTrackerFB mBodyTracker;
+	XrBodyTrackerFB mBodyTracker = XR_NULL_HANDLE;
 	XrPath mInputSourcePath;
-	XrBodyJointLocationFB mJointLocations[XR_BODY_JOINT_COUNT_FB];
-	XrBodyJointLocationFB mPreviousJointLocations[XR_BODY_JOINT_COUNT_FB];
+	XrBodyJointLocationFB mJointLocations[XR_BODY_JOINT_COUNT_FB]{};
+	XrBodyJointLocationFB mPreviousJointLocations[XR_BODY_JOINT_COUNT_FB]{};
 };

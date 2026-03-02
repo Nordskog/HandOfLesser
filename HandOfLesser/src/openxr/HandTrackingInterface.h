@@ -14,21 +14,23 @@ public:
 	static void createHandTracker(xr::UniqueDynamicSession& session,
 								  XrHandEXT side,
 								  XrHandTrackerEXT& handTrackerOut);
-	static bool locateHandJoints(XrHandTrackerEXT& handTracker,
-								 xr::UniqueDynamicSpace& space,
-								 XrTime time,
-								 XrHandJointLocationEXT* handJointLocationsOut,
-								 XrHandJointVelocityEXT* handJointVelocitiesOut);
+	static XrResult locateHandJoints(XrHandTrackerEXT& handTracker,
+									 xr::UniqueDynamicSpace& space,
+									 XrTime time,
+									 XrHandJointLocationEXT* handJointLocationsOut,
+									 XrHandJointVelocityEXT* handJointVelocitiesOut,
+									 bool& handActiveOut);
 	static void destroyHandTracker();
 
 	// Body
 	static void createBodyTracker(xr::UniqueDynamicSession& session,
 								  XrBodyTrackerFB& bodyTrackerOut);
 	static void destroyBodyTracker();
-	static float locateBodyJoints(XrBodyTrackerFB& bodyTracker,
-								  xr::UniqueDynamicSpace& space,
-								  XrTime time,
-								  XrBodyJointLocationFB* bodyJointLocationsOut);
+	static XrResult locateBodyJoints(XrBodyTrackerFB& bodyTracker,
+									 xr::UniqueDynamicSpace& space,
+									 XrTime time,
+									 XrBodyJointLocationFB* bodyJointLocationsOut,
+									 float& confidenceOut);
 
 	// Multimodal
 	static void resumeMultimodal(xr::UniqueDynamicSession& session);

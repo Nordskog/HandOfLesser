@@ -140,12 +140,24 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	std::copy(
 		std::begin(mJointLocations), std::end(mJointLocations), std::begin(mPrevJointLocations));
 
+	bool handActive = false;
+	XrResult result = HandTrackingInterface::locateHandJoints(this->mHandTracker,
+															  space,
+															  time,
+															  this->mJointLocations,
+															  this->mJointVelocities,
+															  handActive);
+	if (result != XR_SUCCESS)
+	{
+		this->handPose = {};
+		HOL::display::HandTransform[this->mSide].trackedJointCount = 0;
+		HOL::display::HandTransform[this->mSide].active = false;
+		HOL::display::HandTransform[this->mSide].positionValid = false;
+		HOL::display::HandTransform[this->mSide].positionTracked = false;
+		return;
+	}
 
-	this->handPose.active = HandTrackingInterface::locateHandJoints(this->mHandTracker,
-																	space,
-																	time,
-																	this->mJointLocations,
-																	this->mJointVelocities);
+	this->handPose.active = handActive;
 
 	// Count tracked joints IMMEDIATELY after fetching, before any fallback/modification logic
 	int trackedCount = 0;
@@ -159,7 +171,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	}
 	HOL::display::HandTransform[this->mSide].trackedJointCount = trackedCount;
 
-	auto palmLocation = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
+	auto& palmLocation = this->mJointLocations[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 
 	// Orientation is not going to be set without position for hand tracking.
 	this->handPose.poseValid = (palmLocation.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)

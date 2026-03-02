@@ -45,8 +45,16 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 			  std::end(mJointLocations),
 			  std::begin(mPreviousJointLocations));
 
-	this->confidence = HandTrackingInterface::locateBodyJoints(
-		this->mBodyTracker, space, time, this->mJointLocations);
+	XrResult result = HandTrackingInterface::locateBodyJoints(
+		this->mBodyTracker, space, time, this->mJointLocations, this->confidence);
+	if (result != XR_SUCCESS)
+	{
+		this->confidence = 0.0f;
+		this->active = false;
+		HOL::display::BodyTracking.confidence = this->confidence;
+		return;
+	}
+
 	this->active = confidence > 0.0f;
 
 	// Generate our own palm joints from body tracking.

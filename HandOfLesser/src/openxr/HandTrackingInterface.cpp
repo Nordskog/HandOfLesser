@@ -1,5 +1,6 @@
 #include "HandTrackingInterface.h"
 #include "XrUtils.h"
+#include <cstring>
 
 // Static members need to be initialized
 PFN_xrCreateHandTrackerEXT HandTrackingInterface::xrCreateHandTrackerEXT_ = nullptr;
@@ -93,12 +94,15 @@ void HandTrackingInterface::createHandTracker(xr::UniqueDynamicSession& session,
 			 xrCreateHandTrackerEXT_(session.get(), &createInfo, &handTrackerOut));
 }
 
-bool HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
-											 xr::UniqueDynamicSpace& space,
-											 XrTime time,
-											 XrHandJointLocationEXT* handJointLocationsOut,
-											 XrHandJointVelocityEXT* handJointVelocitiesOut)
+XrResult HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
+												 xr::UniqueDynamicSpace& space,
+												 XrTime time,
+												 XrHandJointLocationEXT* handJointLocationsOut,
+												 XrHandJointVelocityEXT* handJointVelocitiesOut,
+												 bool& handActiveOut)
 {
+	handActiveOut = false;
+
 
 	XrHandJointVelocitiesEXT velocities{XR_TYPE_HAND_JOINT_VELOCITIES_EXT};
 	velocities.next = NULL;
@@ -114,10 +118,18 @@ bool HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
 	locateInfo.baseSpace = space.get();
 	locateInfo.time = time;
 
-	handleXR("xrLocateHandJointsEXT_ call",
-			 xrLocateHandJointsEXT_(handTracker, &locateInfo, &locations));
+	XrResult result = xrLocateHandJointsEXT_(handTracker, &locateInfo, &locations);
+	if (!handleXR("xrLocateHandJointsEXT_ call", result))
+	{
+		std::memset(handJointLocationsOut, 0, sizeof(XrHandJointLocationEXT) * XR_HAND_JOINT_COUNT_EXT);
+		std::memset(handJointVelocitiesOut,
+					0,
+					sizeof(XrHandJointVelocityEXT) * XR_HAND_JOINT_COUNT_EXT);
+		return result;
+	}
 
-	return locations.isActive;
+	handActiveOut = locations.isActive;
+	return result;
 }
 
 void HandTrackingInterface::destroyHandTracker()
@@ -139,11 +151,14 @@ void HandTrackingInterface::destroyBodyTracker()
 {
 }
 
-float HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
-											  xr::UniqueDynamicSpace& space,
-											  XrTime time,
-											  XrBodyJointLocationFB* bodyJointLocationsOut)
+XrResult HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
+												 xr::UniqueDynamicSpace& space,
+												 XrTime time,
+												 XrBodyJointLocationFB* bodyJointLocationsOut,
+												 float& confidenceOut)
 {
+	confidenceOut = 0.0f;
+
 	XrBodyJointLocationsFB locations{XR_TYPE_BODY_JOINT_LOCATIONS_FB};
 	locations.next = NULL;
 	locations.jointCount = XR_BODY_JOINT_COUNT_FB;
@@ -153,10 +168,15 @@ float HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
 	locateInfo.baseSpace = space.get();
 	locateInfo.time = time;
 
-	handleXR("xrLocateHandJointsEXT_ call",
-			 xrLocateBodyJointsFB_(bodyTracker, &locateInfo, &locations));
+	XrResult result = xrLocateBodyJointsFB_(bodyTracker, &locateInfo, &locations);
+	if (!handleXR("xrLocateBodyJointsFB_ call", result))
+	{
+		std::memset(bodyJointLocationsOut, 0, sizeof(XrBodyJointLocationFB) * XR_BODY_JOINT_COUNT_FB);
+		return result;
+	}
 
-	return locations.confidence;
+	confidenceOut = locations.confidence;
+	return result;
 }
 
 void HandTrackingInterface::resumeMultimodal(xr::UniqueDynamicSession& session)
