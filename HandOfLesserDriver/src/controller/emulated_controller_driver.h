@@ -168,7 +168,8 @@ namespace HOL
 		std::atomic<float> last_curl_ = 0.f;
 		std::atomic<float> last_splay_ = 0.f;
 
-		std::atomic<vr::TrackedDeviceIndex_t> my_controller_index_;
+		std::atomic<vr::TrackedDeviceIndex_t> my_controller_index_
+			= vr::k_unTrackedDeviceIndexInvalid;
 
 		vr::ETrackedControllerRole my_controller_role_;
 		HOL::EmulatedControllerProfile my_emulated_profile_;
@@ -179,7 +180,7 @@ namespace HOL
 		std::array<vr::VRInputComponentHandle_t, InputHandleType::MAX> mInputHandles;
 
 		std::atomic<bool> is_active_ = false;
-		std::atomic<bool> mDeviceConnected = true;
+		std::atomic<bool> mDeviceConnected = false;
 
 		vr::VRBoneTransform_t mSkeletalPose[eBone_Count];
 

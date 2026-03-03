@@ -65,6 +65,10 @@ namespace HOL
 		DriverLog("HandOfLesser controller model number: %s", my_controller_model_number_.c_str());
 		DriverLog("HandOfLesser controller serial number: %s",
 				  my_controller_serial_number_.c_str());
+
+		// New emulated controllers must stay disconnected until the driver decides
+		// hand tracking is actually primary for that side.
+		mLastPose = ControllerCommon::generateDisconnectedPose();
 	}
 
 	//-----------------------------------------------------------------------------
@@ -246,6 +250,15 @@ namespace HOL
 		// Set an member to keep track of whether we've activated yet or not
 		is_active_ = true;
 
+		// If the controller was added while hand tracking was unavailable,
+		// reassert the disconnected pose now that we have a valid device index.
+		if (!mDeviceConnected)
+		{
+			mLastPose = ControllerCommon::generateDisconnectedPose();
+			vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
+				my_controller_index_, mLastPose, sizeof(vr::DriverPose_t));
+		}
+
 		// We've activated everything successfully!
 		// Let's tell SteamVR that by saying we don't have any errors.
 		return vr::VRInitError_None;
@@ -294,10 +307,12 @@ namespace HOL
 		mDeviceConnected = connected;
 		if (!connected)
 		{
-			vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
-				my_controller_index_,
-				ControllerCommon::generateDisconnectedPose(),
-				sizeof(vr::DriverPose_t));
+			mLastPose = ControllerCommon::generateDisconnectedPose();
+			if (is_active_ && my_controller_index_ != vr::k_unTrackedDeviceIndexInvalid)
+			{
+				vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
+					my_controller_index_, mLastPose, sizeof(vr::DriverPose_t));
+			}
 		}
 	}
 

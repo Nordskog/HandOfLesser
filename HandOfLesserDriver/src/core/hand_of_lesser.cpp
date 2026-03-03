@@ -303,9 +303,8 @@ namespace HOL
 	{
 		if (this->mEmulatedControllers[HOL::HandSide::LeftHand])
 		{
-			// We only add controllers once, and then enable/disable them.
-			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(true);
-			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(true);
+			// We only add controllers once, and updateControllerConnectionStates()
+			// decides whether they should actually be connected.
 		}
 		else
 		{
@@ -924,6 +923,10 @@ namespace HOL
 		{
 			case ControllerMode::EmulateControllerMode: {
 				EmulatedControllerDriver* emulated = getEmulatedController(side);
+				if (emulated == nullptr)
+				{
+					return nullptr;
+				}
 				// If not connected then it is not the primary controller
 				if (!emulated->isConnected())
 				{
