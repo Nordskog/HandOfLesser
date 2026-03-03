@@ -259,7 +259,7 @@ namespace HOL
 			&& Config.handPose.controllerMode == ControllerMode::EmulateControllerMode)
 		{
 			devicesChanged = true;
-			destroyEmulatedControllers();
+			removeEmulatedControllers();
 			addEmulatedControllers();
 		}
 
@@ -301,41 +301,26 @@ namespace HOL
 
 	void HandOfLesser::addEmulatedControllers()
 	{
-		if (this->mEmulatedControllers[HOL::HandSide::LeftHand])
+		// Index or touch?
+		HOL::EmulatedControllerProfile profile = Config.handPose.emulatedControllerProfile;
+
+		for (int i = 0; i < HOL::HandSide_MAX; i++)
 		{
-			// We only add controllers once, and updateControllerConnectionStates()
-			// decides whether they should actually be connected.
-		}
-		else
-		{
-			// Let's add our controllers to the system.
-			// First, we need to actually instantiate our controller devices.
-			// We made the constructor take in a controller role, so let's pass their respective
-			// roles in.
-			this->mEmulatedControllers[HOL::HandSide::LeftHand]
-				= std::make_unique<EmulatedControllerDriver>(
-					vr::TrackedControllerRole_LeftHand,
-					Config.handPose.emulatedControllerProfile);
-			this->mEmulatedControllers[HOL::HandSide::RightHand]
-				= std::make_unique<EmulatedControllerDriver>(
-					vr::TrackedControllerRole_RightHand,
-					Config.handPose.emulatedControllerProfile);
-
-			// Now we need to tell vrserver about our controllers.
-			// The first argument is the serial number of the device, which must be unique across
-			// all devices. We get it from our driver settings when we instantiate, And can pass it
-			// out of the function with MyGetSerialNumber(). Let's add the left hand controller
-			// first (there isn't a specific order). make sure we actually managed to create the
-			// device. TrackedDeviceAdded returning true means we have had our device added to
-			// SteamVR. TrackedDeviceAdded returning true means we have had our device added to
-			// SteamVR.
-
-			// Make sure we actually managed to create the device.
-			// TrackedDeviceAdded returning true means we have had our device added to SteamVR.
-
-			for (int i = 0; i < HOL::HandSide_MAX; i++)
+			// Existing controllers reomved on change, so if already there then should be right.
+			if (this->mEmulatedControllers[i])
 			{
-				EmulatedControllerDriver* controller = this->mEmulatedControllers[i].get();
+				continue;
+			}
+
+			// Slot should also be empty, but otherwise add.
+			auto& controllerSlot = this->mAllEmulatedControllers[profile][i];
+			if (!controllerSlot)
+			{
+				controllerSlot = std::make_unique<EmulatedControllerDriver>(
+					i == HOL::HandSide::LeftHand ? vr::TrackedControllerRole_LeftHand
+												 : vr::TrackedControllerRole_RightHand,
+					profile);
+				EmulatedControllerDriver* controller = controllerSlot.get();
 
 				if (!vr::VRServerDriverHost()->TrackedDeviceAdded(
 						controller->MyGetSerialNumber().c_str(),
@@ -344,32 +329,46 @@ namespace HOL
 				{
 					DriverLog("Failed to create %s controller device!",
 							  (i == 0 ? "left" : "right"));
+					controllerSlot.reset();
+					continue;
 				}
 			}
+
+			this->mEmulatedControllers[i] = controllerSlot.get();
 		}
 
 		updateControllerConnectionStates();
 	}
 
+	// Removes from active slots and disconnects
 	void HandOfLesser::removeEmulatedControllers()
-	{
-		// If no pointer, then we never even added the controllers.
-		if (this->mEmulatedControllers[HOL::HandSide::LeftHand])
-		{
-			// We only add controllers once, and then enable/disable them.
-			this->mEmulatedControllers[HOL::HandSide::LeftHand]->setConnectedState(false);
-			this->mEmulatedControllers[HOL::HandSide::RightHand]->setConnectedState(false);
-		}
-	}
-
-	void HandOfLesser::destroyEmulatedControllers()
 	{
 		for (int i = 0; i < HOL::HandSide_MAX; i++)
 		{
-			if (this->mEmulatedControllers[i])
+			if (!this->mEmulatedControllers[i])
 			{
-				this->mEmulatedControllers[i]->setConnectedState(false);
-				this->mEmulatedControllers[i].reset();
+				continue;
+			}
+
+			this->mEmulatedControllers[i]->setConnectedState(false);
+			this->mEmulatedControllers[i] = nullptr;
+		}
+	}
+
+	// Actually nukes
+	void HandOfLesser::destroyEmulatedControllers()
+	{
+		removeEmulatedControllers();
+
+		for (int profile = 0; profile < HOL::EmulatedControllerProfile_MAX; profile++)
+		{
+			for (int side = 0; side < HOL::HandSide_MAX; side++)
+			{
+				if (this->mAllEmulatedControllers[profile][side])
+				{
+					this->mAllEmulatedControllers[profile][side]->setConnectedState(false);
+					this->mAllEmulatedControllers[profile][side].reset();
+				}
 			}
 		}
 	}
@@ -534,6 +533,22 @@ namespace HOL
 				if (auto emulated = getEmulatedController(side))
 				{
 					emulated->setConnectedState(handTrackingPrimary);
+				}
+
+
+				// Ensure inactive controllers are disconnected
+				for (int profile = 0; profile < HOL::EmulatedControllerProfile_MAX; profile++)
+				{
+					if (profile == Config.handPose.emulatedControllerProfile)
+					{
+						continue;
+					}
+
+					auto& inactive = mAllEmulatedControllers[profile][i];
+					if (inactive)
+					{
+						inactive->setConnectedState(false);
+					}
 				}
 			}
 		}
@@ -704,17 +719,20 @@ namespace HOL
 
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)
 	{
-		return this->mEmulatedControllers[(int)side].get();
+		return this->mEmulatedControllers[(int)side];
 	}
 
 	bool HandOfLesser::isEmulatedController(vr::ITrackedDeviceServerDriver* driver)
 	{
-		for (auto& controllerContainer : mEmulatedControllers)
+		for (auto& profileControllers : mAllEmulatedControllers)
 		{
-			EmulatedControllerDriver* controller = controllerContainer.get();
-			if (controller == driver)
+			for (auto& controllerContainer : profileControllers)
 			{
-				return true;
+				EmulatedControllerDriver* controller = controllerContainer.get();
+				if (controller == driver)
+				{
+					return true;
+				}
 			}
 		}
 
@@ -1137,10 +1155,9 @@ namespace HOL
 			== ControllerMode::EmulateControllerMode)
 		{
 			// TODO: only run if using index controller
-			EmulatedControllerDriver* leftController
-				= this->mEmulatedControllers[HandSide::LeftHand].get();
+			EmulatedControllerDriver* leftController = this->getEmulatedController(HandSide::LeftHand);
 			EmulatedControllerDriver* rightController
-				= this->mEmulatedControllers[HandSide::RightHand].get();
+				= this->getEmulatedController(HandSide::RightHand);
 
 			// We always create both
 			if (leftController != nullptr && rightController != nullptr)
@@ -1198,8 +1215,7 @@ namespace HOL
 		}
 
 		// Our controller devices will have already deactivated. Let's now destroy them.
-		this->mEmulatedControllers[HandSide::LeftHand].reset();
-		this->mEmulatedControllers[HandSide::RightHand].reset();
+		this->destroyEmulatedControllers();
 	}
 
 	float HandOfLesser::getControllerToHandDistance(HookedController* controller)
@@ -1252,8 +1268,16 @@ namespace HOL
 	void HandOfLesser::sendStatus()
 	{
 		DriverStatusPacket packet;
-		packet.emulatedControllersActive
-			= (mEmulatedControllers[0] != nullptr || mEmulatedControllers[1] != nullptr);
+		packet.emulatedControllersActive = false;
+		for (auto& controller : mEmulatedControllers)
+		{
+			if (controller != nullptr)
+			{
+				packet.emulatedControllersActive = true;
+				break;
+			}
+		}
+
 		packet.hookedControllerCount = (int)mHookedControllers.size();
 		packet.emulatedTrackerCount = (int)mEmulatedTrackers.size();
 

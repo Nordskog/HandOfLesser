@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <thread>
 #include <unordered_map>
 #include <HandOfLesserCommon.h>
@@ -88,7 +89,10 @@ namespace HOL
 		std::thread my_pose_update_thread_;
 		HOL::NamedPipeTransport mTransport;
 
-		std::unique_ptr<EmulatedControllerDriver> mEmulatedControllers[2];
+		std::array<EmulatedControllerDriver*, HOL::HandSide_MAX> mEmulatedControllers{};
+		std::array<std::array<std::unique_ptr<EmulatedControllerDriver>, HOL::HandSide_MAX>,
+				   HOL::EmulatedControllerProfile_MAX>
+			mAllEmulatedControllers;
 		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
 		std::unordered_map<HOL::BodyTrackerRole, std::unique_ptr<EmulatedTrackerDriver>>
 			mEmulatedTrackers;

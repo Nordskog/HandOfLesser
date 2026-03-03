@@ -55,7 +55,7 @@ namespace HOL
 									my_controller_settings_key_serial_number,
 									serial_number,
 									sizeof(serial_number));
-		my_controller_serial_number_ = serial_number;
+		my_controller_serial_number_ = getEmulatedControllerSerial(profile, serial_number);
 
 		// Here's an example of how to use our logging wrapper around IVRDriverLog
 		// In SteamVR logs (SteamVR Hamburger Menu > Developer Settings > Web console) drivers have

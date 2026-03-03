@@ -14,6 +14,8 @@ vr::EVRInitError MyDeviceProvider::Init(vr::IVRDriverContext* pDriverContext)
 	// OpenVR provides a macro to do this for us.
 	VR_INIT_SERVER_DRIVER_CONTEXT(pDriverContext);
 
+	DriverLog("HandOfLesser driver loaded");
+
 	this->mHandOfLesser.init();
 
 	HOL::hooks::InjectHooks(pDriverContext);

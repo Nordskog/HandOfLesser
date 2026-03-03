@@ -29,6 +29,15 @@ namespace HOL
 					: "{indexcontroller}valve_controller_knu_1_0_right";
 	}
 
+	inline std::string getEmulatedControllerSerial(EmulatedControllerProfile profile,
+												   const std::string& baseSerial)
+	{
+		return baseSerial
+			   + (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch
+					  ? "_touch"
+					  : "_index");
+	}
+
 	inline const char* getEmulatedControllerResourceRoot(EmulatedControllerProfile profile)
 	{
 		return (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
