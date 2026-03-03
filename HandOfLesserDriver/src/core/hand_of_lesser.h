@@ -41,6 +41,7 @@ namespace HOL
 		bool isEmulatedTracker(vr::ITrackedDeviceServerDriver* driver);
 		bool isShadowTracker(vr::ITrackedDeviceServerDriver* driver);
 		HookedController* getHookedController(HOL::HandSide side);
+		std::vector<HookedController*> getHookedControllers(HOL::HandSide side);
 		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
 		HookedController* getHookedControllerBySerial(std::string serial);
 		HookedController*

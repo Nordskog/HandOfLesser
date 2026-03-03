@@ -507,7 +507,7 @@ namespace HOL
 				bool handTrackingPrimary = emulationMode && isHandTrackingPrimary(side);
 
 				// TODO: Add bool to determine if we should suppress existing controllers
-				if (auto hooked = getHookedController(side))
+				for (auto* hooked : getHookedControllers(side))
 				{
 					// We don't want to spam disconnect signals, but we want to ensure that the
 					// hooked controllers are reset to their original state after we've
@@ -840,6 +840,34 @@ namespace HOL
 		}
 
 		return nullptr;
+	}
+
+	std::vector<HookedController*> HandOfLesser::getHookedControllers(HOL::HandSide side)
+	{
+		std::vector<HookedController*> controllers;
+
+		if (side < 0 || side >= HOL::HandSide_MAX)
+		{
+			return controllers;
+		}
+
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			HookedController* controller = controllerContainer.get();
+			if (controller->mDeviceClass != vr::TrackedDeviceClass_Controller)
+			{
+				continue;
+			}
+
+			if (controller->getSide() != side)
+			{
+				continue;
+			}
+
+			controllers.push_back(controller);
+		}
+
+		return controllers;
 	}
 
 	HookedController* HandOfLesser::getHookedControllerByDeviceId(uint32_t deviceId)
