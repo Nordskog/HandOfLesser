@@ -14,7 +14,8 @@ namespace HOL
 	{
 		if (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
 		{
-			return left ? "HandOfLesser Touch Left" : "HandOfLesser Touch Right";
+			return left ? "Oculus Quest2 (Left Controller)"
+						: "Oculus Quest2 (Right Controller)";
 		}
 
 		return left ? "Knuckles Left" : "Knuckles Right";
@@ -23,8 +24,12 @@ namespace HOL
 	inline const char* getEmulatedControllerRenderModelName(EmulatedControllerProfile profile,
 															 bool left)
 	{
-		// Keep index render models for now. Input profile controls the layout semantics.
-		(void)profile;
+		if (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
+		{
+			return left ? "oculus_quest2_controller_left"
+						: "oculus_quest2_controller_right";
+		}
+
 		return left ? "{indexcontroller}valve_controller_knu_1_0_left"
 					: "{indexcontroller}valve_controller_knu_1_0_right";
 	}
@@ -41,7 +46,7 @@ namespace HOL
 	inline const char* getEmulatedControllerResourceRoot(EmulatedControllerProfile profile)
 	{
 		return (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
-				   ? "00handoflesser"
+				   ? "oculus"
 				   : "indexcontroller";
 	}
 
@@ -50,8 +55,8 @@ namespace HOL
 	{
 		if (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
 		{
-			return left ? "handoflesser/touch_left"
-						: "handoflesser/touch_right";
+			return left ? "oculus/WMHD315M3010GV_Controller_Left"
+						: "oculus/WMHD315M3010GV_Controller_Right";
 		}
 
 		return left ? "valve/index_controllerLHR-E217CD00"
@@ -71,7 +76,7 @@ namespace HOL
 	inline const char* getEmulatedControllerTypeString(EmulatedControllerProfile profile)
 	{
 		return (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
-				   ? "handoflesser_touch"
+				   ? "oculus_touch"
 				   : "knuckles";
 	}
 

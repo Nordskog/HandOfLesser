@@ -1,6 +1,6 @@
 {
   "jsonid": "input_profile",
-  "controller_type": "handoflesser_touch",
+  "controller_type": "oculus_touch",
   "compatibility_mode_controller_type": "oculus_touch",
   "input_bindingui_mode" : "controller_handed",
   "input_bindingui_left" :
