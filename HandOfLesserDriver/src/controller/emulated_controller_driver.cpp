@@ -129,6 +129,7 @@ namespace HOL
 			getEmulatedControllerInputProfilePath(my_emulated_profile_));
 		props->SetStringProperty(
 			container, vr::Prop_ControllerType_String, getEmulatedControllerTypeString(my_emulated_profile_));
+		setEmulatedControllerIconProperties(props, container, my_emulated_profile_, isLeftHand);
 		// Let's set up handles for all of our components.
 		// Even though these are also defined in our input profile,
 		// We need to get handles to them to update the inputs.

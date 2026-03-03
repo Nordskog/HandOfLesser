@@ -1,6 +1,8 @@
 #pragma once
 
 #include <HandOfLesserCommon.h>
+#include <cstring>
+#include <string>
 #include "emulated_controller_driver.h"
 
 namespace HOL
@@ -78,6 +80,86 @@ namespace HOL
 		return (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
 				   ? "oculus_touch"
 				   : "knuckles";
+	}
+
+	inline std::string getEmulatedControllerIconPath(EmulatedControllerProfile profile,
+													 bool left,
+													 const char* state)
+	{
+		if (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
+		{
+			std::string extension = ".png";
+			if (strcmp(state, "searching") == 0 || strcmp(state, "searching_alert") == 0)
+			{
+				extension = ".gif";
+			}
+
+			return std::string("{oculus}/icons/rifts_")
+				   + (left ? "left" : "right")
+				   + "_controller_"
+				   + state
+				   + extension;
+		}
+
+		std::string extension = ".png";
+		if (strcmp(state, "searching") == 0 || strcmp(state, "searching_alert") == 0)
+		{
+			extension = ".gif";
+		}
+
+		return std::string("{00handoflesser}/icons/controller_status_") + state + extension;
+	}
+
+	inline void setEmulatedControllerIconProperties(vr::CVRPropertyHelpers* props,
+													vr::PropertyContainerHandle_t container,
+													EmulatedControllerProfile profile,
+													bool left)
+	{
+		if (profile != EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
+		{
+			return;
+		}
+
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathDeviceOff_String,
+			getEmulatedControllerIconPath(profile, left, "off").c_str());
+		props->SetStringProperty( 
+			container,
+			vr::Prop_NamedIconPathDeviceSearching_String,
+			getEmulatedControllerIconPath(profile, left, "searching").c_str());
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathDeviceSearchingAlert_String,
+			getEmulatedControllerIconPath(profile, left, "searching_alert").c_str());
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathDeviceReady_String,
+			getEmulatedControllerIconPath(profile, left, "ready").c_str());
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathDeviceReadyAlert_String,
+			getEmulatedControllerIconPath(profile, left, "ready_alert").c_str());
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathDeviceNotReady_String,
+			getEmulatedControllerIconPath(profile, left, "error").c_str());
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathDeviceStandby_String,
+			getEmulatedControllerIconPath(profile, left, "standby").c_str());
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathDeviceAlertLow_String,
+			getEmulatedControllerIconPath(profile, left, "ready_low").c_str());
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathControllerLeftDeviceOff_String,
+			getEmulatedControllerIconPath(profile, true, "off").c_str());
+		props->SetStringProperty(
+			container,
+			vr::Prop_NamedIconPathControllerRightDeviceOff_String,
+			getEmulatedControllerIconPath(profile, false, "off").c_str());
 	}
 
 	// Maps index inputs to touch controller and vice-versa,

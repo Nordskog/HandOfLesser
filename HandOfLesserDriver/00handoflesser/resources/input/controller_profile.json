@@ -1,6 +1,6 @@
 {
 	"jsonid": "input_profile",
-	"controller_type": "handoflesser",
+	"controller_type": "knuckles",
 	"compatibility_mode_controller_type": "knuckles",
 	"input_bindingui_mode": "controller_handed",
 	"input_bindingui_left": {
