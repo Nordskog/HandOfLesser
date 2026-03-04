@@ -1,5 +1,6 @@
 {
   "driver_00handoflesser": {
     "enable": true,
+    "loadPriority": 1001
   }
 }
