@@ -8,20 +8,6 @@
 #include <HandOfLesserCommon.h>
 #include <src/core/hand_of_lesser.h>
 
-// Let's create some variables for strings used in getting settings.
-// This is the section where all of the settings we want are stored. A section name can be anything,
-// but if you want to store driver specific settings, it's best to namespace the section with the
-// driver identifier ie "<my_driver>_<section>" to avoid collisions
-static const char* my_controller_main_settings_section = "driver_handoflesser";
-
-// Individual right/left hand settings sections
-static const char* my_controller_right_settings_section = "driver_handoflesser_left_controller";
-static const char* my_controller_left_settings_section = "driver_handoflesser_right_controller";
-
-// These are the keys we want to retrieve the values for in the settings
-static const char* my_controller_settings_key_model_number = "controller_model_number";
-static const char* my_controller_settings_key_serial_number = "controller_serial_number";
-
 namespace HOL
 {
 	using namespace SteamVR;
@@ -36,26 +22,11 @@ namespace HOL
 		// is a left or right hand. Let's store it for later use. We'll need it.
 		my_controller_role_ = role;
 		my_emulated_profile_ = profile;
+		const bool isLeftHand = my_controller_role_ == vr::TrackedControllerRole_LeftHand;
 
-		// We have our model number and serial number stored in SteamVR settings. We need to get
-		// them and do so here. Other IVRSettings methods (to get int32, floats, bools) return the
-		// data, instead of modifying, but strings are different.
-		char model_number[1024];
-		vr::VRSettings()->GetString(my_controller_main_settings_section,
-									my_controller_settings_key_model_number,
-									model_number,
-									sizeof(model_number));
-		my_controller_model_number_ = model_number;
-
-		// Get our serial number depending on our "handedness"
-		char serial_number[1024];
-		vr::VRSettings()->GetString(my_controller_role_ == vr::TrackedControllerRole_LeftHand
-										? my_controller_left_settings_section
-										: my_controller_right_settings_section,
-									my_controller_settings_key_serial_number,
-									serial_number,
-									sizeof(serial_number));
-		my_controller_serial_number_ = getEmulatedControllerSerial(profile, serial_number);
+		my_controller_model_number_ = getEmulatedControllerModelName(profile, isLeftHand);
+		my_controller_serial_number_
+			= getEmulatedControllerSerial(profile, isLeftHand ? "HandOfLesserL" : "HandOfLesserR");
 
 		// Here's an example of how to use our logging wrapper around IVRDriverLog
 		// In SteamVR logs (SteamVR Hamburger Menu > Developer Settings > Web console) drivers have
