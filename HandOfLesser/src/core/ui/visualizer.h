@@ -48,6 +48,8 @@ namespace HOL
 		void init(); // Call on UI thread!!
 
 		void centerTo(Eigen::Vector3f center);
+		bool isActive() const;
+		void setActive(bool active);
 
 		void swapOuterDrawQueue(); // At end of main loop frame
 		void clearDrawQueue();	// before drawing ( frame start )
@@ -94,7 +96,7 @@ namespace HOL
 		DrawQueue mDrawSwap1;
 		DrawQueue mDrawSwap2;
 
-
+		bool mIsActive = false;
 
 		float mFov = 90;
 	};

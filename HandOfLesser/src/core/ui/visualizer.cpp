@@ -39,6 +39,16 @@ namespace HOL
 		this->mCameraPosition += move;
 	}
 
+	bool Visualizer::isActive() const
+	{
+		return this->mIsActive;
+	}
+
+	void Visualizer::setActive(bool active)
+	{
+		this->mIsActive = active;
+	}
+
 	void Visualizer::swapOuterDrawQueue()
 	{
 		// Swap swap and draw

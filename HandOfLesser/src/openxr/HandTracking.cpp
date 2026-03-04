@@ -375,9 +375,14 @@ HOL::HandPose& HandTracking::getHandPose(HOL::HandSide side)
 
 void HOL::OpenXR::HandTracking::drawHands()
 {
+	auto vis = HOL::UserInterface::Current->getVisualizer();
+	if (!vis->isActive())
+	{
+		return;
+	}
+
 	auto colorGrey = IM_COL32(155, 155, 155, 255);
 	auto colorWhite = IM_COL32(255, 255, 255, 255);
-	auto vis = HOL::UserInterface::Current->getVisualizer();
 
 	for (int i = 0; i < HandSide::HandSide_MAX; i++)
 	{

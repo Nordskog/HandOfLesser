@@ -1170,6 +1170,7 @@ void UserInterface::buildInterface()
 	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y));
 
 	ImGui::Begin("HandOfLesser", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+	bool visualTabOpen = false;
 
 	ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 	if (ImGui::BeginTabBar("MyTabBar", tab_bar_flags))
@@ -1203,6 +1204,7 @@ void UserInterface::buildInterface()
 		}
 		if (ImGui::BeginTabItem("Visual"))
 		{
+			visualTabOpen = true;
 			buildVisual();
 			ImGui::EndTabItem();
 		}
@@ -1221,6 +1223,8 @@ void UserInterface::buildInterface()
 
 		ImGui::EndTabBar();
 	}
+
+	this->mVisualizer.setActive(visualTabOpen);
 
 	ImGui::End();
 }

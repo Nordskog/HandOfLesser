@@ -20,6 +20,10 @@ void HOL::OpenXR::BodyTracking::drawBody()
 	auto colorNotTracked = IM_COL32(255, 0, 0, 150); // Red semi-transparent for not tracked
 
 	auto vis = HOL::UserInterface::Current->getVisualizer();
+	if (!vis->isActive())
+	{
+		return;
+	}
 
 	XrBodyJointLocationFB* jointLocations = this->mBodyTracker.getLastJointLocations();
 
