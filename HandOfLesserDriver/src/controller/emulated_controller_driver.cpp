@@ -333,11 +333,6 @@ namespace HOL
 		this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPacket, true);
 	}
 
-	void EmulatedControllerDriver::UpdateInput(HOL::ControllerInputPacket* packet)
-	{
-		this->mLastInputPacket = *packet;
-	}
-
 	void EmulatedControllerDriver::UpdateBoolInput(const std::string& input, bool value)
 	{
 		if (!mDeviceConnected)
@@ -429,80 +424,6 @@ namespace HOL
 	{
 		if (!mDeviceConnected)
 			return;
-
-		auto input = vr::VRDriverInput();
-		// DriverLog("run frame");
-		/*
-		//if (this->mLastData.side == XR_HAND_LEFT_EXT)
-		{
-			DriverLog("Index value: %.2f, click: %d",
-				this->mLastData.inputs.trigger,
-				this->mLastData.inputs.triggerClick);
-		}
-
-		*/
-
-		const auto timeOffset = 0.0f;
-
-		////////////////
-		// Trigger
-		///////////////
-
-		input->UpdateScalarComponent(mInputHandles[InputHandleType::trigger_value],
-									 this->mLastInputPacket.triggerValue,
-									 timeOffset);
-
-		input->UpdateBooleanComponent(mInputHandles[InputHandleType::trigger_touch],
-									  this->mLastInputPacket.triggerTouch,
-									  timeOffset);
-
-		input->UpdateBooleanComponent(mInputHandles[InputHandleType::trigger_click],
-									  this->mLastInputPacket.triggerClick,
-									  timeOffset);
-
-		////////////
-		// Grip
-		///////////
-
-		input->UpdateScalarComponent(mInputHandles[InputHandleType::grip_value],
-									 this->mLastInputPacket.gripValue,
-									 timeOffset);
-
-		input->UpdateScalarComponent(mInputHandles[InputHandleType::grip_force],
-									 this->mLastInputPacket.gripForce,
-									 timeOffset);
-
-		input->UpdateBooleanComponent(mInputHandles[InputHandleType::grip_touch],
-									  this->mLastInputPacket.gripTouch,
-									  timeOffset);
-
-		///////////////
-		// Finger curl
-		///////////////
-
-		auto updateFinger = [&](InputHandleType handle, float fingerCurl)
-		{ input->UpdateScalarComponent(mInputHandles[handle], fingerCurl, timeOffset); };
-
-		updateFinger(InputHandleType::finger_index, mLastInputPacket.fingerCurlIndex);
-		updateFinger(InputHandleType::finger_middle, mLastInputPacket.fingerCurlMiddle);
-		updateFinger(InputHandleType::finger_ring, mLastInputPacket.fingerCurlRing);
-		updateFinger(InputHandleType::finger_pinky, mLastInputPacket.fingerCurlPinky);
-
-		//////////////////
-		// Other buttons
-		//////////////////
-
-		input->UpdateBooleanComponent(mInputHandles[InputHandleType::system_click],
-									  this->mLastInputPacket.systemClick,
-									  timeOffset);
-
-		// DriverLog(
-		// 	"Index value: %.2f, middle: %.2f, ring: %.2f, pinky: %.2f",
-		// 	mLastInputPacket.fingerCurlIndex,
-		// 	mLastInputPacket.fingerCurlMiddle,
-		// 	mLastInputPacket.fingerCurlRing,
-		// 	mLastInputPacket.fingerCurlPinky
-		// );
 	}
 
 	//-----------------------------------------------------------------------------

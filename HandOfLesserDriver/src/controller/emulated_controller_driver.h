@@ -144,7 +144,6 @@ namespace HOL
 														   InputHandleType type);
 
 		void UpdatePose(HOL::HandTransformPacket* packet) override;
-		void UpdateInput(HOL::ControllerInputPacket* packet) override;
 		void UpdateBoolInput(const std::string& input, bool value) override;
 		void UpdateFloatInput(const std::string& input, float value) override;
 		void UpdateSkeletal(HOL::SkeletalPacket* packet) override;
@@ -187,7 +186,6 @@ namespace HOL
 		vr::DriverPose_t mLastPose;
 
 		HOL::HandTransformPacket mLastTransformPacket;
-		HOL::ControllerInputPacket mLastInputPacket;
 	};
 
 } // namespace HOL

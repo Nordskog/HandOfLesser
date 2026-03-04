@@ -106,22 +106,6 @@ namespace HOL
 					break;
 				}
 
-				case HOL::NativePacketType::ControllerInput: {
-					HOL::ControllerInputPacket* packet = (HOL::ControllerInputPacket*)rawPacket;
-
-					if (packet->valid)
-					{
-						GenericControllerInterface* controller
-							= this->GetActiveController(packet->side);
-						if (controller != nullptr)
-						{
-							controller->UpdateInput(packet);
-						}
-					}
-
-					break;
-				}
-
 				case HOL::NativePacketType::Settings: {
 					HOL::SettingsPacket* packet = (HOL::SettingsPacket*)rawPacket;
 

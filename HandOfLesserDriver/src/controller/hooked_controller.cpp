@@ -83,9 +83,6 @@ namespace HOL
 			this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPacket, true);
 		}
 	}
-	void HookedController::UpdateInput(HOL::ControllerInputPacket* packet)
-	{
-	}
 	void HookedController::UpdateBoolInput(const std::string& input, bool value)
 	{
 		auto inputHandle = this->inputHandlesByName.find(input);
