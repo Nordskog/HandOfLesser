@@ -41,36 +41,29 @@ namespace HOL
 		vr::PropertyContainerHandle_t container
 			= props->TrackedDeviceToPropertyContainer(mDeviceIndex);
 
-		// Set basic tracker properties
+		// Keep the original model naming so SteamVR presentation remains unchanged.
 		if (isShadowTracker())
 		{
-			props->SetStringProperty(container, vr::Prop_ModelNumber_String, 
-				"HandOfLesser Shadow Tracker");
+			props->SetStringProperty(container, vr::Prop_ModelNumber_String,
+									 "HandOfLesser Shadow Tracker");
 		}
 		else
 		{
-			props->SetStringProperty(container, vr::Prop_ModelNumber_String, 
-				"HandOfLesser Tracker");
+			props->SetStringProperty(container, vr::Prop_ModelNumber_String,
+									 "HandOfLesser Tracker");
 		}
 		props->SetStringProperty(
 			container, vr::Prop_SerialNumber_String, mSerialNumber.c_str());
+		props->SetStringProperty(container,
+								 vr::Prop_RegisteredDeviceType_String,
+								 ("htc/vive_tracker" + mSerialNumber).c_str());
 
 		// Reference HTC Vive Tracker resources
 		props->SetStringProperty(
 			container, vr::Prop_RenderModelName_String, "{htc}vr_tracker_vive_1_0");
 		props->SetStringProperty(container, vr::Prop_ResourceRoot_String, "htc");
 
-		// Set tracker role for proper icon/functionality
-		if (mRole.has_value())
-		{
-			const char* trackerRole = bodyTrackerRoleToTrackerRoleString(mRole.value());
-			props->SetStringProperty(container, vr::Prop_ControllerType_String, trackerRole);
-		}
-		else
-		{
-			// Shadow tracker - generic vive_tracker type
-			props->SetStringProperty(container, vr::Prop_ControllerType_String, "vive_tracker");
-		}
+		props->SetStringProperty(container, vr::Prop_ControllerType_String, "vive_tracker");
 
 		// Reference HTC's input profile (minimal - just pose)
 		props->SetStringProperty(
@@ -171,11 +164,13 @@ namespace HOL
 		pose.vecAngularVelocity[1] = packet.velocity.angularVelocity.y();
 		pose.vecAngularVelocity[2] = packet.velocity.angularVelocity.z();
 
-		// Set tracking state
+		// Body tracking often provides valid estimated poses without the TRACKED bit for
+		// torso/arm joints. Treat valid poses as running so apps like VRChat don't
+		// discard them while SteamVR still renders them.
 		pose.poseIsValid = packet.valid;
 		pose.deviceIsConnected = mDeviceConnected;
-		pose.result = packet.tracked ? vr::TrackingResult_Running_OK
-									  : vr::TrackingResult_Running_OutOfRange;
+		pose.result = packet.valid ? vr::TrackingResult_Running_OK
+								   : vr::TrackingResult_Running_OutOfRange;
 		pose.poseTimeOffset = 0.0;
 
 		UpdatePose(pose);
