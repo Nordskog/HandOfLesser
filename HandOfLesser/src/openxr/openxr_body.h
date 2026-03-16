@@ -28,14 +28,15 @@ private:
 								const Eigen::Vector3f& relativePos,
 								const Eigen::Quaternionf& relativeRot);
 
-	void preserveWristRotation(HandSide side);
+	void preservePalmPose(HandSide side);
+	bool canUseArmTrackingAnchor() const;
 	void generateMissingPalmJoint(HandSide side);
 
 	Eigen::Quaternionf fixOculusJointOrientation(const Eigen::Vector3f& currentJointPos,
 												 const Eigen::Vector3f& nextJointPos,
 												 const Eigen::Quaternionf& bogusOrientation);
-
-	XrBodyJointLocationFB mLastWithTrackedHands[XR_BODY_JOINT_COUNT_FB]{};
+	XrBodyJointLocationFB mLastTrackedPalms[2]{};
+	XrBodyJointLocationFB mLastTrackedAnchors[2]{};
 
 	XrBodyTrackerFB mBodyTracker = XR_NULL_HANDLE;
 	XrPath mInputSourcePath;

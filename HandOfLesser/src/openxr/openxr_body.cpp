@@ -4,6 +4,7 @@
 #include "XrUtils.h"
 
 #include "src/core/ui/display_global.h"
+#include "src/core/settings_global.h"
 #include "src/core/state_global.h"
 
 #include <iostream>
@@ -62,41 +63,45 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	generateMissingPalmJoint(HandSide::LeftHand);
 	generateMissingPalmJoint(HandSide::RightHand);
 
-	// Preserve wrist rotation when hand tracking is lost
+	// Preserve palm pose when hand tracking is lost.
 	// Use metacarpal tracking state to detect loss - fingers remain tracked until fully lost
 	// VDXR marks wrist onwards as tracked when tracked, rest untracked.
 	// Oculus only marks metacarpal and onwards.
 	{
+		const bool useArmTrackingAnchor = canUseArmTrackingAnchor();
+
 		// Left hand
 		auto& leftMetacarpal = mJointLocations[XR_BODY_JOINT_LEFT_HAND_MIDDLE_METACARPAL_FB];
 		if (leftMetacarpal.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 		{
-			// Hand tracking is active - save current palm and forearm positions
-			mLastWithTrackedHands[XR_BODY_JOINT_LEFT_HAND_PALM_FB]
+			// Hand tracking is active - save current palm and whichever body anchor
+			// we will use if hand tracking is later lost.
+			mLastTrackedPalms[(int)HandSide::LeftHand]
 				= mJointLocations[XR_BODY_JOINT_LEFT_HAND_PALM_FB];
-			mLastWithTrackedHands[XR_BODY_JOINT_LEFT_ARM_LOWER_FB]
-				= mJointLocations[XR_BODY_JOINT_LEFT_ARM_LOWER_FB];
+			mLastTrackedAnchors[(int)HandSide::LeftHand]
+				= mJointLocations[useArmTrackingAnchor ? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
+													   : XR_BODY_JOINT_CHEST_FB];
 		}
 		else
 		{
-			// Hand tracking lost - preserve wrist rotation relative to forearm
-			preserveWristRotation(HandSide::LeftHand);
+			preservePalmPose(HandSide::LeftHand);
 		}
 
 		// Right hand
 		auto& rightMetacarpal = mJointLocations[XR_BODY_JOINT_RIGHT_HAND_MIDDLE_METACARPAL_FB];
 		if (rightMetacarpal.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 		{
-			// Hand tracking is active - save current palm and forearm positions
-			mLastWithTrackedHands[XR_BODY_JOINT_RIGHT_HAND_PALM_FB]
+			// Hand tracking is active - save current palm and whichever body anchor
+			// we will use if hand tracking is later lost.
+			mLastTrackedPalms[(int)HandSide::RightHand]
 				= mJointLocations[XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
-			mLastWithTrackedHands[XR_BODY_JOINT_RIGHT_ARM_LOWER_FB]
-				= mJointLocations[XR_BODY_JOINT_RIGHT_ARM_LOWER_FB];
+			mLastTrackedAnchors[(int)HandSide::RightHand]
+				= mJointLocations[useArmTrackingAnchor ? XR_BODY_JOINT_RIGHT_ARM_LOWER_FB
+														: XR_BODY_JOINT_CHEST_FB];
 		}
 		else
 		{
-			// Hand tracking lost - preserve wrist rotation relative to forearm
-			preserveWristRotation(HandSide::RightHand);
+			preservePalmPose(HandSide::RightHand);
 		}
 	}
 
@@ -114,30 +119,65 @@ XrBodyTrackerFB OpenXRBody::getBodyTrackerFB()
 	return this->mBodyTracker;
 }
 
-void OpenXRBody::preserveWristRotation(HandSide side)
+void OpenXRBody::preservePalmPose(HandSide side)
 {
-	XrBodyJointLocationFB& lastTwist
-		= this->mLastWithTrackedHands[side == HandSide::LeftHand
-										  ? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
-										  : XR_BODY_JOINT_RIGHT_ARM_LOWER_FB];
-	XrBodyJointLocationFB& lastPalm
-		= this->mLastWithTrackedHands[side == HandSide::LeftHand
-										  ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
-										  : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
+	XrBodyJointFB anchorJoint
+		= canUseArmTrackingAnchor()
+			  ? (side == HandSide::LeftHand ? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
+											: XR_BODY_JOINT_RIGHT_ARM_LOWER_FB)
+			  : XR_BODY_JOINT_CHEST_FB;
 
-	XrBodyJointLocationFB& currentTwist
-		= this->mJointLocations[side == HandSide::LeftHand ? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
-														   : XR_BODY_JOINT_RIGHT_ARM_LOWER_FB];
+	XrBodyJointLocationFB& lastAnchor = this->mLastTrackedAnchors[(int)side];
+	XrBodyJointLocationFB& lastPalm = this->mLastTrackedPalms[(int)side];
+
+	XrBodyJointLocationFB& currentAnchor = this->mJointLocations[anchorJoint];
 
 	XrBodyJointLocationFB& currentPalm
 		= this->mJointLocations[side == HandSide::LeftHand ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
 														   : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
 
+	if (!(lastAnchor.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+		|| !(lastAnchor.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+		|| !(lastPalm.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+		|| !(lastPalm.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+		|| !(currentAnchor.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+		|| !(currentAnchor.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+	{
+		return;
+	}
+
 	Eigen::Vector3f relativePos;
 	Eigen::Quaternionf relativeRot;
 
-	calculateRelativeTransform(lastTwist, lastPalm, relativePos, relativeRot);
-	applyRelativeTransform(currentTwist, currentPalm, relativePos, relativeRot);
+	calculateRelativeTransform(lastAnchor, lastPalm, relativePos, relativeRot);
+	applyRelativeTransform(currentAnchor, currentPalm, relativePos, relativeRot);
+
+	currentPalm.locationFlags |= XR_SPACE_LOCATION_POSITION_VALID_BIT;
+	currentPalm.locationFlags |= XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+	currentPalm.locationFlags &= ~XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
+	currentPalm.locationFlags &= ~XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT;
+}
+
+bool OpenXRBody::canUseArmTrackingAnchor() const
+{
+	// With the oculus runtime we decide whether or not upper body tracking is enabled.
+	// With VDXR, we don't know if it is enabled. However, VDXR will mark the body joints as 
+	// valid AND tracked when using a Quest2. With a Quest 3 where upper body is always enabled 
+	// they are instead untracked. Use this to determine whether or not we actually have upper body tracking. 
+
+	if (HOL::state::Runtime.isOVR)
+	{
+		return HOL::state::Tracking.isHighFidelityEnabled;
+	}
+
+	if (HOL::state::Runtime.isVDXR)
+	{
+		auto& chest = mJointLocations[XR_BODY_JOINT_CHEST_FB];
+		return (chest.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+			   && !(chest.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT);
+	}
+
+	return false;
 }
 
 void OpenXRBody::calculateRelativeTransform(const XrBodyJointLocationFB& baseJoint,

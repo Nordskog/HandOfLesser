@@ -239,7 +239,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		// Don't bother doing anything with stale data.
 		// VDXR updates at intervals of 7-16ms, Airlink updates constantly.
 		// Prediction also does nothing for VDXR.
-		this->handPose.poseStale = this->mPrevRawPose.position.isApprox(newPalmPosition);
+		this->handPose.poseStale = false; // this->mPrevRawPose.position.isApprox(newPalmPosition);
+		 // TODO: better staleness check that considers body fallback data.
 
 		if (!this->handPose.poseStale)
 		{

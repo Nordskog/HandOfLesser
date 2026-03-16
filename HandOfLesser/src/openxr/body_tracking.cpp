@@ -19,6 +19,7 @@ void HOL::OpenXR::BodyTracking::drawBody()
 	auto colorTracked = IM_COL32(0, 255, 0, 150);	 // Green semi-transparent for tracked
 	auto colorUntracked = IM_COL32(255, 180, 0, 170); // Orange for valid but untracked
 	auto colorInvalid = IM_COL32(255, 0, 0, 150);	 // Red for invalid joints
+	auto colorFallbackPalm = IM_COL32(255, 255, 0, 255);
 
 	auto vis = HOL::UserInterface::Current->getVisualizer();
 	if (!vis->isActive())
@@ -42,6 +43,22 @@ void HOL::OpenXR::BodyTracking::drawBody()
 
 		vis->submitPoint(OpenXR::toEigenVector(joint.pose.position), color, 7);
 	}
+
+	const auto drawFallbackPalm = [&](XrBodyJointFB jointIndex)
+	{
+		auto& palm = jointLocations[jointIndex];
+		bool isValid = (palm.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+					   == XR_SPACE_LOCATION_POSITION_VALID_BIT;
+		bool isTracked = (palm.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
+						 == XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
+		if (isValid && !isTracked)
+		{
+			vis->submitPoint(OpenXR::toEigenVector(palm.pose.position), colorFallbackPalm, 7);
+		}
+	};
+
+	drawFallbackPalm(XR_BODY_JOINT_LEFT_HAND_PALM_FB);
+	drawFallbackPalm(XR_BODY_JOINT_RIGHT_HAND_PALM_FB);
 
 	// Visualize palm orientation axes if enabled
 	if (Config.visualizer.showBodyTrackingPalmAxes)
