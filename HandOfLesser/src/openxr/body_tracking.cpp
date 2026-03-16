@@ -17,7 +17,8 @@ void HOL::OpenXR::BodyTracking::updateBody(xr::UniqueDynamicSpace& space, XrTime
 void HOL::OpenXR::BodyTracking::drawBody()
 {
 	auto colorTracked = IM_COL32(0, 255, 0, 150);	 // Green semi-transparent for tracked
-	auto colorNotTracked = IM_COL32(255, 0, 0, 150); // Red semi-transparent for not tracked
+	auto colorUntracked = IM_COL32(255, 180, 0, 170); // Orange for valid but untracked
+	auto colorInvalid = IM_COL32(255, 0, 0, 150);	 // Red for invalid joints
 
 	auto vis = HOL::UserInterface::Current->getVisualizer();
 	if (!vis->isActive())
@@ -31,13 +32,14 @@ void HOL::OpenXR::BodyTracking::drawBody()
 	{
 		XrBodyJointLocationFB& joint = jointLocations[j];
 
+		bool isValid = (joint.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+					   == XR_SPACE_LOCATION_POSITION_VALID_BIT;
 		// Check if joint is tracked
 		bool isTracked = (joint.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 						 == XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
 
-		auto color = isTracked ? colorTracked : colorNotTracked;
+		auto color = isValid ? (isTracked ? colorTracked : colorUntracked) : colorInvalid;
 
-		// WIll replace this later anyway so nevermind wasteful conversion
 		vis->submitPoint(OpenXR::toEigenVector(joint.pose.position), color, 7);
 	}
 
