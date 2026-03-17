@@ -251,6 +251,13 @@ void InstanceHolder::initExtensions()
 			XR_META_SIMULTANEOUS_HANDS_AND_CONTROLLERS_EXTENSION_NAME);
 	}
 
+	// We need aim states to get the menu button gesture in OVR
+	if (HOL::state::Runtime.isOVR
+		&& hasExtension(this->mExtensions, XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME))
+	{
+		this->mEnabledExtensions.push_back(XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME);
+	}
+
 	if (hasExtension(this->mExtensions, XR_MND_HEADLESS_EXTENSION_NAME))
 	{
 		std::cout << "Runtime supports headless extension, running in headless mode" << std::endl;

@@ -17,6 +17,7 @@ public:
 
 	HandPose handPose;
 	XrHandJointLocationEXT* getLastJointLocations();
+	const XrHandTrackingAimStateFB* getAimState() const;
 
 private:
 	void calculateCurlSplay();
@@ -27,6 +28,7 @@ private:
 	XrHandJointLocationEXT mJointLocations[XR_HAND_JOINT_COUNT_EXT]{};
 	XrHandJointLocationEXT mPrevJointLocations[XR_HAND_JOINT_COUNT_EXT]{};
 	XrHandJointVelocityEXT mJointVelocities[XR_HAND_JOINT_COUNT_EXT]{};
+	XrHandTrackingAimStateFB mAimState{XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
 
 	HOL::PoseLocation mPrevRawPose{};
 };

@@ -14,11 +14,13 @@
 #include "src/hands/gesture/chain_gesture.h"
 #include "src/hands/gesture/combo_gesture.h"
 #include "src/hands/gesture/finger_curl_gesture.h"
+#include "src/hands/gesture/aim_gesture.h"
 #include "src/hands/action/trigger_action.h"
 #include "src/hands/input/steamvr_float_input.h"
 #include "src/hands/input/steamvr_bool_input.h"
 #include "src/steamvr/input_wrapper.h"
 #include "src/steamvr/steamvr_input.h"
+#include "src/core/state_global.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -170,6 +172,29 @@ void HOL::OpenXR::HandTracking::initGestures()
 		this->mActions.push_back(buttonAction);
 	}
 
+	// VDXR provides a system input that we pass through. 
+	// OVR does not, so we have to grab it ourselves. 
+	// Maybe just do this for VDXR too?
+	if (HOL::state::Runtime.isOVR)
+	{
+		for (int i = 0; i < HandSide::HandSide_MAX; i++)
+		{
+			HandSide side = (HandSide)i;
+
+			auto aimGesture = AimGesture::Gesture::Create();
+			aimGesture->parameters.side = side;
+			aimGesture->parameters.flags = XR_HAND_TRACKING_AIM_MENU_PRESSED_BIT_FB;
+
+			auto buttonAction = ButtonAction::Create();
+			buttonAction->setTriggerGesture(aimGesture);
+			buttonAction->addSink(
+				InputType::Button,
+				SteamVRBoolInput::Create()->setup(side, SteamVR::Input::System.click()));
+
+			this->mActions.push_back(buttonAction);
+		}
+	}
+
 	// Grab
 
 	{
@@ -275,6 +300,7 @@ void HOL::OpenXR::HandTracking::updateGestures()
 
 		data.handPose[i] = &hand.handPose;
 		data.joints[i] = hand.getLastJointLocations();
+		data.aimState[i] = hand.getAimState();
 	}
 
 	// TODO: HMD pose

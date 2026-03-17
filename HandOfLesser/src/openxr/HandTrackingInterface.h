@@ -19,7 +19,8 @@ public:
 									 XrTime time,
 									 XrHandJointLocationEXT* handJointLocationsOut,
 									 XrHandJointVelocityEXT* handJointVelocitiesOut,
-									 bool& handActiveOut);
+									 bool& handActiveOut,
+									 XrHandTrackingAimStateFB* handAimStateOut = nullptr);
 	static void destroyHandTracker();
 
 	// Body

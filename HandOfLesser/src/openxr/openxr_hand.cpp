@@ -4,6 +4,7 @@
 #include <HandOfLesserCommon.h>
 #include "HandTrackingInterface.h"
 #include "src/core/settings_global.h"
+#include "src/core/state_global.h"
 #include "src/core/ui/display_global.h"
 #include <iostream>
 #include <utility>
@@ -23,6 +24,11 @@ void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 XrHandJointLocationEXT* OpenXRHand::getLastJointLocations()
 {
 	return this->mJointLocations;
+}
+
+const XrHandTrackingAimStateFB* OpenXRHand::getAimState() const
+{
+	return &this->mAimState;
 }
 
 void OpenXRHand::calculateCurlSplay()
@@ -141,12 +147,15 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		std::begin(mJointLocations), std::end(mJointLocations), std::begin(mPrevJointLocations));
 
 	bool handActive = false;
-	XrResult result = HandTrackingInterface::locateHandJoints(this->mHandTracker,
-															  space,
-															  time,
-															  this->mJointLocations,
-															  this->mJointVelocities,
-															  handActive);
+	this->mAimState = {XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
+	XrResult result = HandTrackingInterface::locateHandJoints(
+		this->mHandTracker,
+		space,
+		time,
+		this->mJointLocations,
+		this->mJointVelocities,
+		handActive,
+		HOL::state::Runtime.isOVR ? &this->mAimState : nullptr);	// Only need aim for OVR menu gesture
 	if (result != XR_SUCCESS)
 	{
 		this->handPose = {};
