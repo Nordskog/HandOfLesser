@@ -240,21 +240,23 @@ void HOL::OpenXR::HandTracking::initGestures()
 			HandSide side = (HandSide)i;
 		
 
-			// Trigger is grab + pinch ( but temporarily not )
+			// Trigger is grab + pinch
+			// SteamVR won't open the menu if trigger is held at the same time as the menu button is presed.
+			// Requiring that you also close your fist is a good way to sidestep this, and not miss-fire trigger.
 			auto grabPinchGesture = ComboGesture::Gesture::Create();
 			grabPinchGesture->parameters.holdUntilAllReleased = false;
 
 			std::vector<HOL::FingerType> allGrabFingers
 				= {FingerType::FingerMiddle, FingerType::FingerRing, FingerType::FingerLittle};
 
-			/*
 			// Grab is all but index curled
 			for (auto finger : allGrabFingers)
 			{
-				auto curlGesture = FingerCurlGesture::Create();
-				curlGesture.get()->setup(finger, (HandSide)i);
+				auto curlGesture = FingerCurlGesture::Gesture::Create();
+				curlGesture->parameters.finger = finger;
+				curlGesture->parameters.side = (HandSide)i;
 				grabPinchGesture->addGesture(curlGesture);
-			}*/
+			}
 
 			// Use aim for pinch
 			auto triggerGesture = ProximityGesture::Create();
