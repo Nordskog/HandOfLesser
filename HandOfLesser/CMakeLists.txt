@@ -36,6 +36,7 @@
 	src/hands/gesture/finger_curl_gesture.cpp
 	src/hands/gesture/combo_gesture.cpp
 	src/hands/gesture/aim_gesture.cpp
+	src/hands/gesture/inverse_gesture.cpp
 	src/vrchat/vrchat_input.cpp
 	src/hands/input/osc_float_input.cpp
 	src/hands/input/osc_alternate_float_input.cpp
