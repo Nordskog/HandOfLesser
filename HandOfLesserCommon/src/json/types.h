@@ -187,6 +187,7 @@ namespace HOL
 		{
 			j = {{"sendSteamVRControllerPosition", settings.sendSteamVRControllerPosition},
 				 {"sendSteamVRInput", settings.sendSteamVRInput},
+				 {"transmitLegacyFingerCurl", settings.transmitLegacyFingerCurl},
 				 {"blockControllerInputWhileHandTracking",
 				  settings.blockControllerInputWhileHandTracking},
 				 {"steamPoseTimeOffset", settings.steamPoseTimeOffset},
@@ -199,6 +200,8 @@ namespace HOL
 			nlohmann::get_to_if_present(
 				j, "sendSteamVRControllerPosition", settings.sendSteamVRControllerPosition);
 			nlohmann::get_to_if_present(j, "sendSteamVRInput", settings.sendSteamVRInput);
+			nlohmann::get_to_if_present(
+				j, "transmitLegacyFingerCurl", settings.transmitLegacyFingerCurl);
 			nlohmann::get_to_if_present(j,
 										"blockControllerInputWhileHandTracking",
 										settings.blockControllerInputWhileHandTracking);

@@ -287,6 +287,7 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 void HandTracking::updateInputs()
 {
 	updateGestures();
+	submitLegacyFingerCurl();
 }
 
 static bool firstRun = true;
@@ -316,6 +317,57 @@ void HOL::OpenXR::HandTracking::updateGestures()
 	// printf("Combo: %.3f\n", combo);
 }
 
+void HOL::OpenXR::HandTracking::submitLegacyFingerCurl()
+{
+	const bool isEmulatedIndex
+		= Config.handPose.controllerMode == ControllerMode::EmulateControllerMode
+		  && Config.handPose.emulatedControllerProfile
+				 == EmulatedControllerProfile::EmulatedControllerProfile_Index;
+
+	for (int i = 0; i < HandSide::HandSide_MAX; i++)
+	{
+		OpenXRHand& hand = getHand((HandSide)i);
+		if (!hand.handPose.poseValid)
+		{
+			continue;
+		}
+
+		const float fingerCurlIndex
+			= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerIndex].getCurlSum());
+		const float fingerCurlMiddle
+			= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerMiddle].getCurlSum());
+		const float fingerCurlRing
+			= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerRing].getCurlSum());
+		const float fingerCurlPinky
+			= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerLittle].getCurlSum());
+		const float averageFingerCurl
+			= (fingerCurlIndex + fingerCurlMiddle + fingerCurlRing + fingerCurlPinky) / 4.0f;
+		const float gripForce = std::clamp((averageFingerCurl - 0.5f) / 0.5f, 0.0f, 1.0f);
+
+		if (!isEmulatedIndex)
+		{
+			continue;
+		}
+
+		SteamVR::SteamVRInput::Current->submitFloat(
+			(HandSide)i, SteamVR::Input::Grip.force(), gripForce);
+
+		if (!Config.steamvr.transmitLegacyFingerCurl)
+		{
+			continue;
+		}
+
+		SteamVR::SteamVRInput::Current->submitFloat(
+			(HandSide)i, SteamVR::Input::Finger.index(), fingerCurlIndex);
+		SteamVR::SteamVRInput::Current->submitFloat(
+			(HandSide)i, SteamVR::Input::Finger.middle(), fingerCurlMiddle);
+		SteamVR::SteamVRInput::Current->submitFloat(
+			(HandSide)i, SteamVR::Input::Finger.ring(), fingerCurlRing);
+		SteamVR::SteamVRInput::Current->submitFloat(
+			(HandSide)i, SteamVR::Input::Finger.pinky(), fingerCurlPinky);
+	}
+}
+
 OpenXRHand& HandTracking::getHand(HOL::HandSide side)
 {
 	if (side == HOL::HandSide::LeftHand)
@@ -341,56 +393,6 @@ HOL::HandTransformPacket HandTracking::getTransformPacket(HOL::HandSide side)
 	packet.side = (HOL::HandSide)side;
 	packet.location = hand.handPose.palmLocation;
 	packet.velocity = hand.handPose.palmVelocity;
-
-	return packet;
-}
-
-HOL::ControllerInputPacket HandTracking::getInputPacket(HOL::HandSide side)
-{
-	// todo we're replacing all of this
-	OpenXRHand hand = getHand(side);
-	OpenXRHand otherHand = getHand(side == HOL::HandSide::LeftHand ? HOL::HandSide::RightHand
-																   : HOL::HandSide::LeftHand);
-
-	HOL::ControllerInputPacket packet;
-
-	packet.valid = hand.handPose.poseValid;
-	packet.side = (HOL::HandSide)side;
-
-	//
-	packet.fingerCurlIndex
-		= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerIndex].getCurlSum());
-	packet.fingerCurlMiddle
-		= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerMiddle].getCurlSum());
-	packet.fingerCurlRing
-		= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerRing].getCurlSum());
-	packet.fingerCurlPinky
-		= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerLittle].getCurlSum());
-
-	// map index curl to trigger touch and force
-	float triggerValueRange = 0.15f;
-	packet.triggerValue = std::clamp(
-		(packet.fingerCurlIndex - (1.0f - triggerValueRange)) / triggerValueRange, 0.0f, 1.0f);
-	packet.triggerTouch = packet.fingerCurlIndex >= (1.0f - triggerValueRange);
-
-	// steamvr will not allow a click unless the triggerValue is 1'ish
-	// does touch matter? who knows
-	if (packet.triggerClick)
-	{
-		packet.triggerValue = 1.0f;
-		packet.triggerTouch = true;
-	}
-
-	float gripRaw // use average of remaining finger's curl for grip
-		= (packet.fingerCurlMiddle + packet.fingerCurlRing + packet.fingerCurlPinky) / 3.0f;
-
-	// Map rest of fingers to grip touch and force
-	// Vrchat jumps to fist pose as soon as there is any force
-	float gripForceRange = 0.01f; // Just jump to 1 at full bend
-	float gripValueRange = 0.3f;
-	packet.gripValue = std::clamp((gripRaw - (1.0f - gripValueRange)) / gripValueRange, 0.0f, 1.0f);
-	packet.gripForce = std::clamp((gripRaw - (1.0f - gripForceRange)) / gripForceRange, 0.0f, 1.0f);
-	packet.gripTouch = gripRaw >= (1.0f - gripValueRange);
 
 	return packet;
 }

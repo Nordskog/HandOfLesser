@@ -21,7 +21,6 @@ namespace HOL::OpenXR
 		void updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker);
 		void updateInputs();
 		HOL::HandTransformPacket getTransformPacket(HOL::HandSide side);
-		HOL::ControllerInputPacket getInputPacket(HOL::HandSide side);
 		HOL::HandPose& getHandPose(HOL::HandSide side);
 		void drawHands();
 		OpenXRHand& getHand(HOL::HandSide side);
@@ -29,6 +28,7 @@ namespace HOL::OpenXR
 	private:
 		void initHands(xr::UniqueDynamicSession& session);
 		void initGestures();
+		void submitLegacyFingerCurl();
 		void updateSimpleGestures();
 		void updateGestures();
 		OpenXRHand mLeftHand;

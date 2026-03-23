@@ -184,6 +184,7 @@ namespace HOL
 		{
 			bool sendSteamVRControllerPosition = true;
 			bool sendSteamVRInput = true;
+			bool transmitLegacyFingerCurl = true;
 			bool blockControllerInputWhileHandTracking = true;
 			float steamPoseTimeOffset = .0f;
 			bool forceInactive = false;

@@ -416,13 +416,6 @@ void HandOfLesserCore::sendUpdate()
 				HOL::HandTransformPacket transPacket
 					= this->mHandTracking.getTransformPacket((HandSide)i);
 				this->mDriverTransport.send((char*)&transPacket, sizeof(HOL::HandTransformPacket));
-
-				/*
-				HOL::ControllerInputPacket inputPacket
-					= this->mHandTracking.getInputPacket((HandSide)i);
-				this->mDriverTransport.send((char*)&inputPacket,
-				sizeof(HOL::ControllerInputPacket));
-				*/
 			}
 		}
 	}

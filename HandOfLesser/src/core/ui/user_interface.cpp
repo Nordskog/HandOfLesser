@@ -513,6 +513,9 @@ void HOL::UserInterface::buildSteamVR()
 
 	syncSettings |= ImGui::Checkbox("Transmit skeletal input", &Config.skeletal.sendSkeletalInput);
 
+	syncSettings |= ImGui::Checkbox("Transmit legacy finger curl",
+									&Config.steamvr.transmitLegacyFingerCurl);
+
 	syncSettings |= ImGui::Checkbox("Transmit SteamVR Input", &Config.steamvr.sendSteamVRInput);
 
 	ImGui::SeparatorText("Input");
