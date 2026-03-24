@@ -18,7 +18,9 @@ using namespace HOL::OpenXR;
 void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 {
 	this->mSide = side;
-	HandTrackingInterface::createHandTracker(session, toOpenXRHandSide(side), this->mHandTracker);
+	bool requestUnobstructedDataSource = HOL::state::Runtime.supportsHandTrackingDataSource;
+	HandTrackingInterface::createHandTracker(
+		session, toOpenXRHandSide(side), this->mHandTracker, requestUnobstructedDataSource);
 }
 
 XrHandJointLocationEXT* OpenXRHand::getLastJointLocations()
@@ -147,7 +149,9 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		std::begin(mJointLocations), std::end(mJointLocations), std::begin(mPrevJointLocations));
 
 	bool handActive = false;
+	bool useHandTrackingDataSource = HOL::state::Runtime.supportsHandTrackingDataSource;
 	this->mAimState = {XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
+	this->mDataSourceState = {XR_TYPE_HAND_TRACKING_DATA_SOURCE_STATE_EXT};
 	XrResult result = HandTrackingInterface::locateHandJoints(
 		this->mHandTracker,
 		space,
@@ -155,7 +159,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->mJointLocations,
 		this->mJointVelocities,
 		handActive,
-		HOL::state::Runtime.supportsHandTrackingAim ? &this->mAimState : nullptr);
+		HOL::state::Runtime.supportsHandTrackingAim ? &this->mAimState : nullptr,
+		useHandTrackingDataSource ? &this->mDataSourceState : nullptr);
 	if (result != XR_SUCCESS)
 	{
 		this->handPose = {};
@@ -167,6 +172,19 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	}
 
 	this->handPose.active = handActive;
+
+	// We explicitly only want unobstructed hand tracking data.
+	// That means controller-based hand poses. 
+	if (useHandTrackingDataSource && this->mDataSourceState.isActive
+		&& this->mDataSourceState.dataSource == XR_HAND_TRACKING_DATA_SOURCE_CONTROLLER_EXT)
+	{
+		this->handPose = {};
+		HOL::display::HandTransform[this->mSide].trackedJointCount = 0;
+		HOL::display::HandTransform[this->mSide].active = false;
+		HOL::display::HandTransform[this->mSide].positionValid = false;
+		HOL::display::HandTransform[this->mSide].positionTracked = false;
+		return;
+	}
 
 	// Count tracked joints IMMEDIATELY after fetching, before any fallback/modification logic
 	int trackedCount = 0;

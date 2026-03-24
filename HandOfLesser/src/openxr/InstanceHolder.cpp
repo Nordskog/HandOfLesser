@@ -229,6 +229,8 @@ void InstanceHolder::initExtensions()
 		= hasExtension(this->mExtensions, XR_FB_BODY_TRACKING_EXTENSION_NAME);
 	state::Runtime.supportsHandTrackingAim
 		= hasExtension(this->mExtensions, XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME);
+	state::Runtime.supportsHandTrackingDataSource
+		= hasExtension(this->mExtensions, XR_EXT_HAND_TRACKING_DATA_SOURCE_EXTENSION_NAME);
 
 	this->mEnabledExtensions = {XR_EXT_HAND_TRACKING_EXTENSION_NAME,
 		XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME, // Used to get current time.
@@ -259,6 +261,13 @@ void InstanceHolder::initExtensions()
 	if (state::Runtime.supportsHandTrackingAim)
 	{
 		this->mEnabledExtensions.push_back(XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME);
+	}
+
+	// If the runtime exposes hand-tracking data source, always enable it so we can
+	// inspect where hand data came from and reject controller-fed hand poses.
+	if (state::Runtime.supportsHandTrackingDataSource)
+	{
+		this->mEnabledExtensions.push_back(XR_EXT_HAND_TRACKING_DATA_SOURCE_EXTENSION_NAME);
 	}
 
 	if (hasExtension(this->mExtensions, XR_MND_HEADLESS_EXTENSION_NAME))

@@ -13,14 +13,16 @@ public:
 	// Hand
 	static void createHandTracker(xr::UniqueDynamicSession& session,
 								  XrHandEXT side,
-								  XrHandTrackerEXT& handTrackerOut);
+								  XrHandTrackerEXT& handTrackerOut,
+								  bool requestUnobstructedDataSource = false);
 	static XrResult locateHandJoints(XrHandTrackerEXT& handTracker,
 									 xr::UniqueDynamicSpace& space,
 									 XrTime time,
 									 XrHandJointLocationEXT* handJointLocationsOut,
 									 XrHandJointVelocityEXT* handJointVelocitiesOut,
 									 bool& handActiveOut,
-									 XrHandTrackingAimStateFB* handAimStateOut = nullptr);
+									 XrHandTrackingAimStateFB* handAimStateOut = nullptr,
+									 XrHandTrackingDataSourceStateEXT* handDataSourceStateOut = nullptr);
 	static void destroyHandTracker();
 
 	// Body

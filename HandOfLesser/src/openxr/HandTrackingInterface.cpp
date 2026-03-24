@@ -92,11 +92,22 @@ void HandTrackingInterface::initFunctions(xr::UniqueDynamicInstance& instance)
 
 void HandTrackingInterface::createHandTracker(xr::UniqueDynamicSession& session,
 											  XrHandEXT side,
-											  XrHandTrackerEXT& handTrackerOut)
+											  XrHandTrackerEXT& handTrackerOut,
+											  bool requestUnobstructedDataSource)
 {
 	XrHandTrackerCreateInfoEXT createInfo{XR_TYPE_HAND_TRACKER_CREATE_INFO_EXT};
 	createInfo.handJointSet = XR_HAND_JOINT_SET_DEFAULT_EXT;
 	createInfo.hand = side;
+
+	XrHandTrackingDataSourceEXT requestedDataSource = XR_HAND_TRACKING_DATA_SOURCE_UNOBSTRUCTED_EXT;
+	XrHandTrackingDataSourceInfoEXT dataSourceInfo{XR_TYPE_HAND_TRACKING_DATA_SOURCE_INFO_EXT};
+	if (requestUnobstructedDataSource)
+	{
+		dataSourceInfo.requestedDataSourceCount = 1;
+		dataSourceInfo.requestedDataSources = &requestedDataSource;
+		createInfo.next = &dataSourceInfo;
+	}
+
 	handleXR("xrCreateHandTrackerEXT_ call",
 			 xrCreateHandTrackerEXT_(session.get(), &createInfo, &handTrackerOut));
 }
@@ -107,7 +118,8 @@ XrResult HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
 												 XrHandJointLocationEXT* handJointLocationsOut,
 												 XrHandJointVelocityEXT* handJointVelocitiesOut,
 												 bool& handActiveOut,
-												 XrHandTrackingAimStateFB* aimStateOut)
+												 XrHandTrackingAimStateFB* aimStateOut,
+												 XrHandTrackingDataSourceStateEXT* dataSourceStateOut)
 {
 	handActiveOut = false;
 
@@ -117,15 +129,21 @@ XrResult HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
 	velocities.jointVelocities = handJointVelocitiesOut;
 
 	XrHandJointLocationsEXT locations{XR_TYPE_HAND_JOINT_LOCATIONS_EXT};
+	void* next = &velocities;
+
+	if (dataSourceStateOut != nullptr)
+	{
+		dataSourceStateOut->next = next;
+		next = dataSourceStateOut;
+	}
+
 	if (aimStateOut != nullptr)
 	{
-		aimStateOut->next = &velocities;
-		locations.next = aimStateOut;
+		aimStateOut->next = next;
+		next = aimStateOut;
 	}
-	else
-	{
-		locations.next = &velocities;
-	}
+
+	locations.next = next;
 	locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
 	locations.jointLocations = handJointLocationsOut;
 
@@ -143,6 +161,10 @@ XrResult HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
 		if (aimStateOut != nullptr)
 		{
 			*aimStateOut = {XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
+		}
+		if (dataSourceStateOut != nullptr)
+		{
+			*dataSourceStateOut = {XR_TYPE_HAND_TRACKING_DATA_SOURCE_STATE_EXT};
 		}
 		
 		return result;

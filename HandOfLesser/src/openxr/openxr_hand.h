@@ -29,6 +29,7 @@ private:
 	XrHandJointLocationEXT mPrevJointLocations[XR_HAND_JOINT_COUNT_EXT]{};
 	XrHandJointVelocityEXT mJointVelocities[XR_HAND_JOINT_COUNT_EXT]{};
 	XrHandTrackingAimStateFB mAimState{XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
+	XrHandTrackingDataSourceStateEXT mDataSourceState{XR_TYPE_HAND_TRACKING_DATA_SOURCE_STATE_EXT};
 
 	HOL::PoseLocation mPrevRawPose{};
 };
