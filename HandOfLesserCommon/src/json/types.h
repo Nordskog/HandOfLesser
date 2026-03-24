@@ -88,7 +88,6 @@ namespace HOL
 		{
 			j = {{"controllerMode", settings.controllerMode},
 				 {"emulatedControllerProfile", settings.emulatedControllerProfile},
-				 {"controllerType", settings.controllerType},
 				 {"orientationOffset", settings.orientationOffset},
 				 {"positionOffset", settings.positionOffset}};
 		}
@@ -98,7 +97,6 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "controllerMode", settings.controllerMode);
 			nlohmann::get_to_if_present(
 				j, "emulatedControllerProfile", settings.emulatedControllerProfile);
-			nlohmann::get_to_if_present(j, "controllerType", settings.controllerType);
 			nlohmann::get_to_if_present(j, "orientationOffset", settings.orientationOffset);
 			nlohmann::get_to_if_present(j, "positionOffset", settings.positionOffset);
 		}

@@ -124,8 +124,6 @@ namespace HOL
 			HOL::ControllerMode controllerMode = HOL::ControllerMode::NoControllerMode;
 			HOL::EmulatedControllerProfile emulatedControllerProfile
 				= HOL::EmulatedControllerProfile::EmulatedControllerProfile_Index;
-
-			HOL::ControllerType controllerType = HOL::ControllerType::OculusTouch_VDXR;
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(0, 0, 0);
 			Eigen::Vector3f positionOffset = Eigen::Vector3f(0, 0, 0);
 		};

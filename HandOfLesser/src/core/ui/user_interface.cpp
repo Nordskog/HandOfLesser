@@ -857,34 +857,6 @@ void HOL::UserInterface::buildMain()
 		Config.general = HOL::settings::GeneralSettings();
 	}
 
-	/////////////////
-	// Offset inputs
-	/////////////////
-
-	ImGui::SeparatorText("Controller type");
-
-	if (ImGui::Button("None (zero offset)"))
-	{
-		Config.handPose.controllerType = ControllerType::NONE;
-	}
-
-	if (ImGui::Button("Index Knucles"))
-	{
-		Config.handPose.controllerType = ControllerType::ValveIndexKnucles;
-	}
-
-	if (ImGui::Button("Touch Airlink"))
-	{
-		Config.handPose.controllerType = ControllerType::OculusTouch_Airlink;
-	}
-
-	ImGui::SameLine();
-
-	if (ImGui::Button("Touch VDXR"))
-	{
-		Config.handPose.controllerType = ControllerType::OculusTouch_VDXR;
-	}
-
 	ImGui::SeparatorText("Offset preset");
 
 	if (ImGui::Button("Zero"))
