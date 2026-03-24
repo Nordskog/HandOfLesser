@@ -57,7 +57,7 @@ namespace HOL
 
 	void FeaturesManager::requestBodyTrackingFidelity(bool high)
 	{
-		if (!state::Runtime.isOVR)
+		if (!state::Runtime.isOVR || !state::Runtime.supportsBodyTracking)
 		{
 			return;
 		}
@@ -65,6 +65,10 @@ namespace HOL
 		if (mBodyTracking)
 		{
 			XrBodyTrackerFB bodyTracker = mBodyTracking->getBodyTracker().getBodyTrackerFB();
+			if (bodyTracker == nullptr)
+			{
+				return;
+			}
 
 			if (high)
 			{

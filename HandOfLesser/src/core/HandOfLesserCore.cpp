@@ -35,6 +35,7 @@ void HandOfLesserCore::init(int serverPort)
 		runtimeState.runtimeName, runtimeName.c_str(), sizeof(runtimeState.runtimeName) - 1);
 	runtimeState.isVDXR = false;
 	runtimeState.isOVR = false;
+	runtimeState.supportsBodyTracking = false;
 	runtimeState.supportsHandTrackingAim = false;
 	runtimeState.openxrState = HOL::OpenXR::OpenXrState::Uninitialized;
 	trackingState.isMultimodalEnabled = false;

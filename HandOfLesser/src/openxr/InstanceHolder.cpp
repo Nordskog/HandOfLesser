@@ -225,14 +225,19 @@ void InstanceHolder::enumerateExtensions()
 
 void InstanceHolder::initExtensions()
 {
+	state::Runtime.supportsBodyTracking
+		= hasExtension(this->mExtensions, XR_FB_BODY_TRACKING_EXTENSION_NAME);
 	state::Runtime.supportsHandTrackingAim
 		= hasExtension(this->mExtensions, XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME);
 
-	this->mEnabledExtensions = {
-		XR_FB_BODY_TRACKING_EXTENSION_NAME,
-		XR_EXT_HAND_TRACKING_EXTENSION_NAME,
+	this->mEnabledExtensions = {XR_EXT_HAND_TRACKING_EXTENSION_NAME,
 		XR_KHR_WIN32_CONVERT_PERFORMANCE_COUNTER_TIME_EXTENSION_NAME, // Used to get current time.
 		XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
+
+	if (state::Runtime.supportsBodyTracking)
+	{
+		this->mEnabledExtensions.push_back(XR_FB_BODY_TRACKING_EXTENSION_NAME);
+	}
 
 	if (hasExtension(this->mExtensions, XR_META_BODY_TRACKING_FIDELITY_EXTENSION_NAME))
 	{

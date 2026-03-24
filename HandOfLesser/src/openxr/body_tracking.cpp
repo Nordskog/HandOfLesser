@@ -28,6 +28,10 @@ void HOL::OpenXR::BodyTracking::drawBody()
 	}
 
 	XrBodyJointLocationFB* jointLocations = this->mBodyTracker.getLastJointLocations();
+	if (jointLocations == nullptr)
+	{
+		return;
+	}
 
 	for (int j = 0; j < XR_BODY_JOINT_COUNT_FB; j++)
 	{
@@ -95,6 +99,10 @@ HOL::MultimodalPosePacket HOL::OpenXR::BodyTracking::getMultimodalPosePacket()
 	MultimodalPosePacket packet;
 
 	auto* bodyJoints = mBodyTracker.getLastJointLocations();
+	if (bodyJoints == nullptr)
+	{
+		return packet;
+	}
 
 	/////////////
 	// Offsets

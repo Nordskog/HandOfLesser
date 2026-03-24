@@ -14,6 +14,7 @@ public:
 	void updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time);
 
 	XrBodyJointLocationFB* getLastJointLocations();
+	bool isAvailable() const;
 	XrBodyTrackerFB getBodyTrackerFB();
 	float confidence = 0.0f;
 	bool active = false;
@@ -38,7 +39,7 @@ private:
 	XrBodyJointLocationFB mLastTrackedPalms[2]{};
 	XrBodyJointLocationFB mLastTrackedAnchors[2]{};
 
-	XrBodyTrackerFB mBodyTracker = XR_NULL_HANDLE;
+	XrBodyTrackerFB mBodyTracker = nullptr;
 	XrPath mInputSourcePath;
 	XrBodyJointLocationFB mJointLocations[XR_BODY_JOINT_COUNT_FB]{};
 	XrBodyJointLocationFB mPreviousJointLocations[XR_BODY_JOINT_COUNT_FB]{};

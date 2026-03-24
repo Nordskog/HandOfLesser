@@ -23,7 +23,7 @@ private:
 	void calculateCurlSplay();
 
 	HOL::HandSide mSide;
-	XrHandTrackerEXT mHandTracker = XR_NULL_HANDLE;
+	XrHandTrackerEXT mHandTracker = nullptr;
 	XrPath mInputSourcePath;
 	XrHandJointLocationEXT mJointLocations[XR_HAND_JOINT_COUNT_EXT]{};
 	XrHandJointLocationEXT mPrevJointLocations[XR_HAND_JOINT_COUNT_EXT]{};

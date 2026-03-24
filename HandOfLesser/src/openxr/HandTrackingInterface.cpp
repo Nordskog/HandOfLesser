@@ -1,5 +1,6 @@
 #include "HandTrackingInterface.h"
 #include "XrUtils.h"
+#include "src/core/state_global.h"
 #include <cstring>
 
 // Static members need to be initialized
@@ -51,17 +52,23 @@ void HandTrackingInterface::initFunctions(xr::UniqueDynamicInstance& instance)
 				 inst, "xrLocateHandJointsEXT", (PFN_xrVoidFunction*)(&xrLocateHandJointsEXT_)));
 
 	// Body
-	handleXR("xrCreateBodyTrackerFB get",
-			 xrGetInstanceProcAddr(
-				 inst, "xrCreateBodyTrackerFB", (PFN_xrVoidFunction*)(&xrCreateBodyTrackerFB_)));
+	if (HOL::state::Runtime.supportsBodyTracking)
+	{
+		handleXR("xrCreateBodyTrackerFB get",
+				 xrGetInstanceProcAddr(inst,
+									   "xrCreateBodyTrackerFB",
+									   (PFN_xrVoidFunction*)(&xrCreateBodyTrackerFB_)));
 
-	handleXR("xrDestroyBodyTrackerFB get",
-			 xrGetInstanceProcAddr(
-				 inst, "xrDestroyBodyTrackerFB", (PFN_xrVoidFunction*)(&xrDestroyBodyTrackerFB_)));
+		handleXR("xrDestroyBodyTrackerFB get",
+				 xrGetInstanceProcAddr(inst,
+									   "xrDestroyBodyTrackerFB",
+									   (PFN_xrVoidFunction*)(&xrDestroyBodyTrackerFB_)));
 
-	handleXR("xrLocateBodyJointsFB get",
-			 xrGetInstanceProcAddr(
-				 inst, "xrLocateBodyJointsFB", (PFN_xrVoidFunction*)(&xrLocateBodyJointsFB_)));
+		handleXR("xrLocateBodyJointsFB get",
+				 xrGetInstanceProcAddr(inst,
+									   "xrLocateBodyJointsFB",
+									   (PFN_xrVoidFunction*)(&xrLocateBodyJointsFB_)));
+	}
 
 	// Multimodal
 	handleXR("xrResumEsimultaneousHandsAndControllersTrackingMETA get",

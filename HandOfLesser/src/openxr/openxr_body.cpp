@@ -34,6 +34,11 @@ Eigen::Quaternionf OpenXRBody::fixOculusJointOrientation(const Eigen::Vector3f& 
 
 void OpenXRBody::init(xr::UniqueDynamicSession& session)
 {
+	if (!HOL::state::Runtime.supportsBodyTracking)
+	{
+		return;
+	}
+
 	HandTrackingInterface::createBodyTracker(session, mBodyTracker);
 }
 
@@ -111,7 +116,17 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 
 XrBodyJointLocationFB* OpenXRBody::getLastJointLocations()
 {
+	if (mBodyTracker == nullptr)
+	{
+		return nullptr;
+	}
+
 	return this->mJointLocations;
+}
+
+bool OpenXRBody::isAvailable() const
+{
+	return mBodyTracker != nullptr;
 }
 
 XrBodyTrackerFB OpenXRBody::getBodyTrackerFB()
