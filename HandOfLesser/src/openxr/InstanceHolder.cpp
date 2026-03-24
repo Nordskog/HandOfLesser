@@ -46,13 +46,9 @@ void InstanceHolder::initInstance()
 	// We don't enable any
 	std::vector<const char*> enabledLayers;
 
-	// Should probably query the runtime for its min but good enough for now
-	xr::Version openXRVersion = xr::Version::current();
-	if (HOL::state::Runtime.isVDXR)
-	{
-		// Explicitly only suports 1.0
-		openXRVersion = xr::Version(1, 0, 0);
-	}
+	// The extensions we rely on work fine with OpenXR 1.0, and some runtimes
+	// reject newer requested core API versions.
+	xr::Version openXRVersion = xr::Version(1, 0, 0);
 
 	this->mInstance = xr::createInstanceUnique(
 		xr::InstanceCreateInfo{
