@@ -212,6 +212,20 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	ImGui::SameLine();
 	ImGui::Checkbox("Tracked", &HOL::display::HandTransform[side].positionTracked);
 
+	const char* dataSource = "Unknown";
+	switch (HOL::display::HandTransform[side].dataSource)
+	{
+		case XR_HAND_TRACKING_DATA_SOURCE_UNOBSTRUCTED_EXT:
+			dataSource = "Hand";
+			break;
+		case XR_HAND_TRACKING_DATA_SOURCE_CONTROLLER_EXT:
+			dataSource = "Controller";
+			break;
+		default:
+			break;
+	}
+
+	ImGui::Text("Data source: %s", dataSource);
 	ImGui::Text("Tracked joints: %d / 26", HOL::display::HandTransform[side].trackedJointCount);
 
 	ImGui::SeparatorText("Position");

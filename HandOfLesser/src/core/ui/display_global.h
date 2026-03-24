@@ -16,6 +16,7 @@ namespace HOL
 		bool active;
 		bool positionValid;
 		bool positionTracked;
+		XrHandTrackingDataSourceEXT dataSource = XR_HAND_TRACKING_DATA_SOURCE_MAX_ENUM_EXT;
 		int trackedJointCount = 0;
 		Eigen::Vector3f finalTranslationOffset;
 		Eigen::Vector3f finalOrientationOffset; // In degrees

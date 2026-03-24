@@ -168,22 +168,17 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		HOL::display::HandTransform[this->mSide].active = false;
 		HOL::display::HandTransform[this->mSide].positionValid = false;
 		HOL::display::HandTransform[this->mSide].positionTracked = false;
+		HOL::display::HandTransform[this->mSide].dataSource
+			= XR_HAND_TRACKING_DATA_SOURCE_MAX_ENUM_EXT;
 		return;
 	}
 
 	this->handPose.active = handActive;
-
-	// We explicitly only want unobstructed hand tracking data.
-	// That means controller-based hand poses. 
-	if (useHandTrackingDataSource && this->mDataSourceState.isActive
-		&& this->mDataSourceState.dataSource == XR_HAND_TRACKING_DATA_SOURCE_CONTROLLER_EXT)
+	HOL::display::HandTransform[this->mSide].dataSource
+		= XR_HAND_TRACKING_DATA_SOURCE_MAX_ENUM_EXT;
+	if (useHandTrackingDataSource && this->mDataSourceState.isActive)
 	{
-		this->handPose = {};
-		HOL::display::HandTransform[this->mSide].trackedJointCount = 0;
-		HOL::display::HandTransform[this->mSide].active = false;
-		HOL::display::HandTransform[this->mSide].positionValid = false;
-		HOL::display::HandTransform[this->mSide].positionTracked = false;
-		return;
+		HOL::display::HandTransform[this->mSide].dataSource = this->mDataSourceState.dataSource;
 	}
 
 	// Count tracked joints IMMEDIATELY after fetching, before any fallback/modification logic
@@ -206,6 +201,19 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 
 	// Use tracked joint count instead of just palm joint to determine tracking quality
 	this->handPose.poseTracked = (trackedCount >= HOL::Config.general.minTrackedJointsForQuality);
+
+	// If source is not unobstructed treat it as invalid.
+	bool hasUnobstructedHandTrackingSource
+		= !useHandTrackingDataSource
+		  || (this->mDataSourceState.isActive
+			  && this->mDataSourceState.dataSource
+					 == XR_HAND_TRACKING_DATA_SOURCE_UNOBSTRUCTED_EXT);
+	if (!hasUnobstructedHandTrackingSource)
+	{
+		this->handPose.active = false;
+		this->handPose.poseValid = false;
+		this->handPose.poseTracked = false;
+	}
 
 	// Never stale if invalid?
 	this->handPose.poseStale = false;
@@ -233,7 +241,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->handPose.poseValid = true;
 		this->handPose.poseTracked = false; // otherwise estimated usign upper-body
 	}
-	else if (alwaysUseUpperBodyTracking)
+	else if (bodyTracker.active && alwaysUseUpperBodyTracking)
 	{
 		// Just copy palm position from body.
 		XrBodyJointLocationFB& bodyPalmJoint
@@ -243,6 +251,10 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 
 		palmLocation.pose.position = bodyPalmJoint.pose.position;
 		palmLocation.pose.orientation = bodyPalmJoint.pose.orientation;
+
+		this->handPose.active = true;
+		this->handPose.poseValid = true;
+		this->handPose.poseTracked = false; // otherwise estimated usign upper-body
 	}
 	
 
