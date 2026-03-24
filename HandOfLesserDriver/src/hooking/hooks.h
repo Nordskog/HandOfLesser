@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+#include <unordered_map>
 #include <openvr_driver.h>
 #include "src/core/hand_of_lesser.h"
 #include "Hooking.h"
@@ -27,7 +29,9 @@ namespace HOL::hooks
 	{
 		using Signature = vr::EVRInitError (*)(vr::ITrackedDeviceServerDriver*, uint32_t);
 
-		extern Hook<Signature> FunctionHook;
+		extern std::unordered_map<void*, std::unique_ptr<Hook<Signature>>> FunctionHooksByTarget;
+		vr::EVRInitError Detour(vr::ITrackedDeviceServerDriver* _this, uint32_t unWhichDevice);
+		void EnsureHookForDriver(vr::ITrackedDeviceServerDriver* driver);
 	} // namespace TrackedDeviceActivate
 
 	namespace UpdateBooleanComponent

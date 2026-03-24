@@ -7,11 +7,59 @@ namespace HOL::hooks
 {
 	namespace TrackedDeviceActivate
 	{
-		Hook<TrackedDeviceActivate::Signature> FunctionHook("ITrackedDeviceServerDriver::Activate");
+		std::unordered_map<void*, std::unique_ptr<Hook<TrackedDeviceActivate::Signature>>>
+			FunctionHooksByTarget;
 
-		static vr::EVRInitError Detour(vr::ITrackedDeviceServerDriver* _this,
-									   uint32_t unWhichDevice)
+		void EnsureHookForDriver(vr::ITrackedDeviceServerDriver* driver)
 		{
+			if (driver == nullptr)
+			{
+				return;
+			}
+
+			// A C++ interface pointer points at an object whose first field is a pointer to that
+			// object's vtable. We cast:
+			// - driver        -> object pointer
+			// - (void***)     -> "pointer to object whose first field is a void** vtable"
+			// - *             -> the actual vtable pointer
+			void** vtable = *((void***)driver);
+
+			// ITrackedDeviceServerDriver::Activate is the first virtual in this interface, so the
+			// implementation function we want to hook is vtable slot 0 for each concrete driver type.
+			void* targetFunc = vtable[0];
+
+			if (FunctionHooksByTarget.find(targetFunc) != FunctionHooksByTarget.end())
+			{
+				return;
+			}
+
+			auto hook = std::make_unique<Hook<TrackedDeviceActivate::Signature>>(
+				"ITrackedDeviceServerDriver::Activate@"
+				+ std::to_string((uintptr_t)targetFunc));
+
+			if (!hook->CreateHookInObjectVTable(driver, 0, &TrackedDeviceActivate::Detour))
+			{
+				return;
+			}
+
+			IHook::Register(hook.get());
+			FunctionHooksByTarget[targetFunc] = std::move(hook);
+		}
+
+		vr::EVRInitError Detour(vr::ITrackedDeviceServerDriver* _this, uint32_t unWhichDevice)
+		{
+			// Look up the hook/original function by the concrete Activate implementation backing this
+			// particular device driver's vtable. Different drivers can implement the same interface
+			// with different vtables, which is why a single global Activate hook was insufficient.
+			void** vtable = *((void***)_this);
+			void* targetFunc = vtable[0];
+			auto hook = FunctionHooksByTarget.find(targetFunc);
+			if (hook == FunctionHooksByTarget.end() || hook->second->originalFunc == nullptr)
+			{
+				DriverLog("Missing activate original function for target %p", targetFunc);
+				return vr::VRInitError_Driver_Failed;
+			}
+
 			DriverLog("TrackedDeviceActivate!");
 			DriverLog("Device ID: %lld", (long long)unWhichDevice);
 
@@ -21,7 +69,7 @@ namespace HOL::hooks
 			{
 				// Do not hook our own controllers or trackers.
 				DriverLog("Activate hooked on emulated device, skipping.");
-				return TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
+				return hook->second->originalFunc(_this, unWhichDevice);
 			}
 
 			// Get the role
@@ -35,7 +83,7 @@ namespace HOL::hooks
 
 			// Let original function run. This will add all the inputs, which is why
 			// we need to add the controller first.
-			auto ret = TrackedDeviceActivate::FunctionHook.originalFunc(_this, unWhichDevice);
+			auto ret = hook->second->originalFunc(_this, unWhichDevice);
 
 			// These devices should not be populated until activate has been called,
 			// but for some devices they are. Weird.
@@ -129,7 +177,8 @@ namespace HOL::hooks
 						   vr::ETrackedDeviceClass eDeviceClass,
 						   vr::ITrackedDeviceServerDriver* pDriver)
 		{
-			DriverLog("TrackedDeviceAdded006!");
+			DriverLog("TrackedDeviceAdded006! serial=%s",
+					  pchDeviceSerialNumber != nullptr ? pchDeviceSerialNumber : "<null>");
 
 		if (HandOfLesser::Current->isEmulatedController(pDriver)
 				|| HandOfLesser::Current->isShadowTracker(pDriver))
@@ -139,18 +188,12 @@ namespace HOL::hooks
 			}
 			else
 			{
-				if (!IHook::Exists(TrackedDeviceActivate::FunctionHook.name))
-				{
-					DriverLog("Adding activate hook");
-
-					TrackedDeviceActivate::FunctionHook.CreateHookInObjectVTable(
-						pDriver, 0, &TrackedDeviceActivate::Detour);
-					IHook::Register(&TrackedDeviceActivate::FunctionHook);
-				}
+				TrackedDeviceActivate::EnsureHookForDriver(pDriver);
 
 				if (eDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
 				{
-					DriverLog("Controller added!");
+					DriverLog("Controller added! serial=%s",
+							  pchDeviceSerialNumber != nullptr ? pchDeviceSerialNumber : "<null>");
 
 					// TODO: We only have access to the driverHost here, but don't know the ID
 					// or the role of the controller yet. Activate() should be called
@@ -160,7 +203,9 @@ namespace HOL::hooks
 				}
 				else
 				{
-					DriverLog("Some other device added, class: %d", eDeviceClass);
+					DriverLog("Some other device added, class: %d, serial=%s",
+							  eDeviceClass,
+							  pchDeviceSerialNumber != nullptr ? pchDeviceSerialNumber : "<null>");
 				}
 			}
 
@@ -654,6 +699,7 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 	void DisableHooks()
 	{
 		IHook::DestroyAll();
+		TrackedDeviceActivate::FunctionHooksByTarget.clear();
 		MH_Uninitialize();
 	}
 
