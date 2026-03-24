@@ -172,10 +172,7 @@ void HOL::OpenXR::HandTracking::initGestures()
 		this->mActions.push_back(buttonAction);
 	}
 
-	// VDXR provides a system input that we pass through. 
-	// OVR does not, so we have to grab it ourselves. 
-	// Maybe just do this for VDXR too?
-	if (HOL::state::Runtime.isOVR)
+	if (HOL::state::Runtime.supportsHandTrackingAim)
 	{
 		for (int i = 0; i < HandSide::HandSide_MAX; i++)
 		{

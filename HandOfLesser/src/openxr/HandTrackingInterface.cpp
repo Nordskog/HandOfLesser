@@ -105,12 +105,20 @@ XrResult HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
 	handActiveOut = false;
 
 	XrHandJointVelocitiesEXT velocities{XR_TYPE_HAND_JOINT_VELOCITIES_EXT};
-	velocities.next = aimStateOut;	// May be null
+	velocities.next = nullptr;
 	velocities.jointCount = XR_HAND_JOINT_COUNT_EXT;
 	velocities.jointVelocities = handJointVelocitiesOut;
 
 	XrHandJointLocationsEXT locations{XR_TYPE_HAND_JOINT_LOCATIONS_EXT};
-	locations.next = &velocities;
+	if (aimStateOut != nullptr)
+	{
+		aimStateOut->next = &velocities;
+		locations.next = aimStateOut;
+	}
+	else
+	{
+		locations.next = &velocities;
+	}
 	locations.jointCount = XR_HAND_JOINT_COUNT_EXT;
 	locations.jointLocations = handJointLocationsOut;
 
@@ -125,6 +133,10 @@ XrResult HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
 		std::memset(handJointVelocitiesOut,
 					0,
 					sizeof(XrHandJointVelocityEXT) * XR_HAND_JOINT_COUNT_EXT);
+		if (aimStateOut != nullptr)
+		{
+			*aimStateOut = {XR_TYPE_HAND_TRACKING_AIM_STATE_FB};
+		}
 		
 		return result;
 	}

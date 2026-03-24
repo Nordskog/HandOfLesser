@@ -155,7 +155,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->mJointLocations,
 		this->mJointVelocities,
 		handActive,
-		HOL::state::Runtime.isOVR ? &this->mAimState : nullptr);	// Only need aim for OVR menu gesture
+		HOL::state::Runtime.supportsHandTrackingAim ? &this->mAimState : nullptr);
 	if (result != XR_SUCCESS)
 	{
 		this->handPose = {};

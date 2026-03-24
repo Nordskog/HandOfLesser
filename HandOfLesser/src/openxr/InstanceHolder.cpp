@@ -229,6 +229,9 @@ void InstanceHolder::enumerateExtensions()
 
 void InstanceHolder::initExtensions()
 {
+	state::Runtime.supportsHandTrackingAim
+		= hasExtension(this->mExtensions, XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME);
+
 	this->mEnabledExtensions = {
 		XR_FB_BODY_TRACKING_EXTENSION_NAME,
 		XR_EXT_HAND_TRACKING_EXTENSION_NAME,
@@ -251,9 +254,8 @@ void InstanceHolder::initExtensions()
 			XR_META_SIMULTANEOUS_HANDS_AND_CONTROLLERS_EXTENSION_NAME);
 	}
 
-	// We need aim states to get the menu button gesture in OVR
-	if (HOL::state::Runtime.isOVR
-		&& hasExtension(this->mExtensions, XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME))
+	// We use aim states to get the hand-tracked menu gesture.
+	if (state::Runtime.supportsHandTrackingAim)
 	{
 		this->mEnabledExtensions.push_back(XR_FB_HAND_TRACKING_AIM_EXTENSION_NAME);
 	}

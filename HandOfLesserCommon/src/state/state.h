@@ -16,6 +16,7 @@ namespace HOL::state
 	{
 		bool isVDXR = false;
 		bool isOVR = false;
+		bool supportsHandTrackingAim = false;
 		HOL::OpenXR::OpenXrState openxrState = HOL::OpenXR::OpenXrState::Uninitialized;
 		char runtimeName[128] = {};
 	};
