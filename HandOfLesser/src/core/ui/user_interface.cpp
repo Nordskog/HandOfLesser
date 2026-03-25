@@ -782,6 +782,25 @@ void HOL::UserInterface::buildMain()
 			HOL::HandOfLesserCore::Current->syncSettings();
 		}
 
+		if (ImGui::IsItemHovered())
+		{
+			switch (std::get<1>(buttonContent))
+			{
+				case HOL::ControllerMode::NoControllerMode:
+					showWrappedTooltip("Do nothing.");
+					break;
+				case HOL::ControllerMode::EmulateControllerMode:
+					showWrappedTooltip("Emulate a brand new controller.");
+					break;
+				case HOL::ControllerMode::HookedControllerMode:
+					showWrappedTooltip("Take control of existing controllers.");
+					break;
+				case HOL::ControllerMode::OffsetControllerMode:
+					showWrappedTooltip("Apply offset to existing controllers.");
+					break;
+			}
+		}
+
 		isFirstIteration = false;
 	}
 
