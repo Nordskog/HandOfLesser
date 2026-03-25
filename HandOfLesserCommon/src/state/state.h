@@ -16,6 +16,7 @@ namespace HOL::state
 	{
 		bool isVDXR = false;
 		bool isOVR = false;
+		bool isSteamVR = false;
 		bool supportsBodyTracking = false;
 		bool supportsHandTrackingAim = false;
 		bool supportsHandTrackingDataSource = false;

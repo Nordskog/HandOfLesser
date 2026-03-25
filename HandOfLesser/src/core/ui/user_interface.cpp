@@ -778,20 +778,41 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::SeparatorText("Skeletal Motion Range");
 
-	int skeletalMotionRange = HOL::Config.skeletal.submitUnobstructedHandTracking ? 1 : 0;
+	if (HOL::state::Runtime.isSteamVR)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	ImGui::BeginGroup();
+
+	int skeletalMotionRange
+		= HOL::state::Runtime.isSteamVR ? 0 : (HOL::Config.skeletal.submitUnobstructedHandTracking ? 1 : 0);
 	bool updateSkeletalMotionRange = false;
 	updateSkeletalMotionRange |= ImGui::RadioButton("Obstructed", &skeletalMotionRange, 0);
 	if (ImGui::IsItemHovered())
 	{
-		ImGui::SetTooltip(
-			"VRChat will not enable hand tracking controls");
+		ImGui::SetTooltip("VRChat will not enable hand tracking controls");
 	}
 	updateSkeletalMotionRange |= ImGui::RadioButton("Unobstructed", &skeletalMotionRange, 1);
 	if (ImGui::IsItemHovered())
 	{
-		ImGui::SetTooltip(
-			"VRChat will enable hand tracking controls");
+		ImGui::SetTooltip("VRChat will enable hand tracking controls");
 	}
+
+	ImGui::EndGroup();
+
+	if (HOL::state::Runtime.isSteamVR)
+	{
+		ImGui::EndDisabled();
+
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+		{
+			ImGui::SetTooltip(
+				"Using data from SteamXR to submit data to SteamXR causes a feedback loop, so"
+				" we can only submit obstructed hand tracking data.");
+		}
+	}
+
 	if (updateSkeletalMotionRange)
 	{
 		HOL::Config.skeletal.submitUnobstructedHandTracking = skeletalMotionRange == 1;

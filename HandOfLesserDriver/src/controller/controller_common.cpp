@@ -323,6 +323,11 @@ namespace HOL::ControllerCommon
 			return vr::VRSkeletalMotionRange_WithController;
 		}
 
+		if (HandOfLesser::Runtime.isSteamVR)
+		{
+			return vr::VRSkeletalMotionRange_WithController;
+		}
+
 		// For emulated and hooked either can be configured.
 		// If unobstructed, VRChat will enable its hand tracking controls.
 		return HandOfLesser::Config.skeletal.submitUnobstructedHandTracking

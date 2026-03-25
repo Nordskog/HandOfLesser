@@ -35,6 +35,7 @@ void HandOfLesserCore::init(int serverPort)
 		runtimeState.runtimeName, runtimeName.c_str(), sizeof(runtimeState.runtimeName) - 1);
 	runtimeState.isVDXR = false;
 	runtimeState.isOVR = false;
+	runtimeState.isSteamVR = false;
 	runtimeState.supportsBodyTracking = false;
 	runtimeState.supportsHandTrackingAim = false;
 	runtimeState.supportsHandTrackingDataSource = false;
@@ -56,6 +57,14 @@ void HandOfLesserCore::init(int serverPort)
 	{
 		runtimeState.isOVR = true;
 		std::cout << "Runtime is Oculus, will support multimodal and stuff" << std::endl;
+	}
+
+	if (runtimePath.find("steamxr_") != std::string::npos)
+	{
+		runtimeState.isSteamVR = true;
+		std::cout << "Runtime is SteamVR, unobstructed skeletal input will be forced off. Also "
+					 "don't expect body tracking."
+				  << std::endl;
 	}
 
 	this->mInstanceHolder.init();
