@@ -38,6 +38,7 @@ namespace HOL
 		void updateStyles(float scale);
 
 		bool rightAlignButton(const char* label, int verticalLineOffset = 0);
+		void showWrappedTooltip(const char* text);
 
 		void InputFloatMultipleSingleLableWithButtons(std::string inputLabelBase,
 													  std::string visibleLabel,

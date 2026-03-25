@@ -135,6 +135,15 @@ bool HOL::UserInterface::rightAlignButton(const char* label, int verticalLineOff
 	return ImGui::Button(label);
 }
 
+void HOL::UserInterface::showWrappedTooltip(const char* text)
+{
+	ImGui::BeginTooltip();
+	ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+	ImGui::TextUnformatted(text);
+	ImGui::PopTextWrapPos();
+	ImGui::EndTooltip();
+}
+
 void UserInterface::initGLFW()
 {
 	glfwSetErrorCallback(UserInterface::error_callback);
@@ -791,12 +800,12 @@ void HOL::UserInterface::buildMain()
 	updateSkeletalMotionRange |= ImGui::RadioButton("Obstructed", &skeletalMotionRange, 0);
 	if (ImGui::IsItemHovered())
 	{
-		ImGui::SetTooltip("VRChat will not enable hand tracking controls");
+		showWrappedTooltip("VRChat will not enable hand tracking controls.");
 	}
 	updateSkeletalMotionRange |= ImGui::RadioButton("Unobstructed", &skeletalMotionRange, 1);
 	if (ImGui::IsItemHovered())
 	{
-		ImGui::SetTooltip("VRChat will enable hand tracking controls");
+		showWrappedTooltip("VRChat will enable hand tracking controls.");
 	}
 
 	ImGui::EndGroup();
@@ -807,9 +816,9 @@ void HOL::UserInterface::buildMain()
 
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 		{
-			ImGui::SetTooltip(
-				"Using data from SteamXR to submit data to SteamXR causes a feedback loop, so"
-				" we can only submit obstructed hand tracking data.");
+			showWrappedTooltip(
+				"Using data from SteamXR to submit data to SteamXR causes a feedback loop, so "
+				"we can only submit obstructed hand tracking data.");
 		}
 	}
 
@@ -885,7 +894,7 @@ void HOL::UserInterface::buildMain()
 
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 		{
-			ImGui::SetTooltip("These features are only available when using the Oculus runtime.");
+			showWrappedTooltip("These features are only available when using the Oculus runtime.");
 		}
 	}
 
