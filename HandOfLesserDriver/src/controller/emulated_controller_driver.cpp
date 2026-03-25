@@ -379,7 +379,7 @@ namespace HOL
 		ControllerCommon::buildSkeletalPoseFromPacket(*packet, mSkeletalPose);
 
 		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
-													 vr::VRSkeletalMotionRange_WithoutController,
+													 ControllerCommon::getSkeletalMotionRange(false),
 													 mSkeletalPose,
 													 eBone_Count);
 	}

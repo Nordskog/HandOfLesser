@@ -776,6 +776,28 @@ void HOL::UserInterface::buildMain()
 		isFirstIteration = false;
 	}
 
+	ImGui::SeparatorText("Skeletal Motion Range");
+
+	int skeletalMotionRange = HOL::Config.skeletal.submitUnobstructedHandTracking ? 1 : 0;
+	bool updateSkeletalMotionRange = false;
+	updateSkeletalMotionRange |= ImGui::RadioButton("Obstructed", &skeletalMotionRange, 0);
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip(
+			"VRChat will not enable hand tracking controls");
+	}
+	updateSkeletalMotionRange |= ImGui::RadioButton("Unobstructed", &skeletalMotionRange, 1);
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip(
+			"VRChat will enable hand tracking controls");
+	}
+	if (updateSkeletalMotionRange)
+	{
+		HOL::Config.skeletal.submitUnobstructedHandTracking = skeletalMotionRange == 1;
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+
 	if (HOL::Config.handPose.controllerMode == HOL::ControllerMode::EmulateControllerMode)
 	{
 		ImGui::SeparatorText("Emulated controller profile");

@@ -315,4 +315,19 @@ namespace HOL::ControllerCommon
 		}
 	}
 
+	vr::EVRSkeletalMotionRange getSkeletalMotionRange(bool augmentControllerSkeleton)
+	{
+		// When augmenting the controller with hand tracking, it should always be obstructed
+		if (augmentControllerSkeleton)
+		{
+			return vr::VRSkeletalMotionRange_WithController;
+		}
+
+		// For emulated and hooked either can be configured.
+		// If unobstructed, VRChat will enable its hand tracking controls.
+		return HandOfLesser::Config.skeletal.submitUnobstructedHandTracking
+			? vr::VRSkeletalMotionRange_WithoutController
+			: vr::VRSkeletalMotionRange_WithController;
+	}
+
 } // namespace HOL::ControllerCommon

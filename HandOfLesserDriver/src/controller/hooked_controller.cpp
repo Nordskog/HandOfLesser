@@ -107,13 +107,10 @@ namespace HOL
 	{
 		auto& config = HOL::HandOfLesser::Current->Config;
 		const auto& trackingState = HOL::HandOfLesser::Tracking;
+		bool shouldAugment
+			= config.skeletal.augmentControllerSkeleton && trackingState.isMultimodalEnabled;
 
-		if (!config.skeletal.augmentControllerSkeleton)
-		{
-			return;
-		}
-
-		if (!trackingState.isMultimodalEnabled)
+		if (!config.skeletal.sendSkeletalInput && !shouldAugment)
 		{
 			return;
 		}
@@ -160,16 +157,17 @@ namespace HOL
 			hooks::UpdateSkeletonComponent::FunctionHook.originalFunc(
 				this->driverInput,
 				mSkeletonHandle,
-				vr::VRSkeletalMotionRange_WithoutController,
+				HOL::ControllerCommon::getSkeletalMotionRange(shouldAugment),
 				mSkeletalPose,
 				SteamVR::HandSkeletonBone::eBone_Count);
 		}
 		else
 		{
-			this->driverInput->UpdateSkeletonComponent(mSkeletonHandle,
-													   vr::VRSkeletalMotionRange_WithoutController,
-													   mSkeletalPose,
-													   SteamVR::HandSkeletonBone::eBone_Count);
+			this->driverInput->UpdateSkeletonComponent(
+				mSkeletonHandle,
+				HOL::ControllerCommon::getSkeletalMotionRange(shouldAugment),
+				mSkeletalPose,
+				SteamVR::HandSkeletonBone::eBone_Count);
 		}
 	}
 

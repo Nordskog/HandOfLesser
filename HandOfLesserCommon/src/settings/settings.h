@@ -171,6 +171,7 @@ namespace HOL
 
 		struct SkeletalInput
 		{
+			bool submitUnobstructedHandTracking = true;
 			float jointLengthMultiplier = 1.05f;
 			bool sendSkeletalInput = true;
 			bool augmentControllerSkeleton = false;
