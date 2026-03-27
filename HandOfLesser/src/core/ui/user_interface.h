@@ -15,6 +15,7 @@ namespace HOL
 		void onFrame();
 		void buildInterface();
 		bool shouldTerminate();
+		bool shouldRestart();
 		static UserInterface* Current; // We only have a single window for now
 		Visualizer* getVisualizer();
 
@@ -28,6 +29,7 @@ namespace HOL
 		static void windows_scale_callback(GLFWwindow* window, float xscale, float yscale);
 		float scaleSize(float size);
 		bool mShouldTerminate = false;
+		bool mShouldRestart = false;
 		bool shouldCloseWindow();
 
 		Visualizer mVisualizer;

@@ -64,7 +64,7 @@ bool UserInterface::shouldCloseWindow()
 
 void UserInterface::onFrame()
 {
-	this->mShouldTerminate = this->shouldCloseWindow();
+	this->mShouldTerminate = this->shouldCloseWindow() || this->mShouldRestart;
 
 	glfwPollEvents();
 	ImGui_ImplOpenGL3_NewFrame();
@@ -758,6 +758,11 @@ void HOL::UserInterface::buildMain()
 		ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "Driver: Disconnected");
 	}
 
+	if (ImGui::Button("Restart app"))
+	{
+		this->mShouldRestart = true;
+	}
+
 	//////////////////
 	// Mode
 	////////////////////
@@ -1298,6 +1303,11 @@ void UserInterface::buildInterface()
 bool HOL::UserInterface::shouldTerminate()
 {
 	return mShouldTerminate;
+}
+
+bool HOL::UserInterface::shouldRestart()
+{
+	return mShouldRestart;
 }
 
 Visualizer* HOL::UserInterface::getVisualizer()

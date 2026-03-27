@@ -10,6 +10,7 @@ using namespace HOL;
 class OpenXRBody
 {
 public:
+	~OpenXRBody();
 	void init(xr::UniqueDynamicSession& session);
 	void updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time);
 
@@ -20,6 +21,7 @@ public:
 	bool active = false;
 
 private:
+	void shutdown();
 	void calculateRelativeTransform(const XrBodyJointLocationFB& baseJoint,
 									const XrBodyJointLocationFB& childJoint,
 									Eigen::Vector3f& relativePos,

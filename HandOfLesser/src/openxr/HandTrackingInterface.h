@@ -23,12 +23,12 @@ public:
 									 bool& handActiveOut,
 									 XrHandTrackingAimStateFB* handAimStateOut = nullptr,
 									 XrHandTrackingDataSourceStateEXT* handDataSourceStateOut = nullptr);
-	static void destroyHandTracker();
+	static void destroyHandTracker(XrHandTrackerEXT& handTracker);
 
 	// Body
 	static void createBodyTracker(xr::UniqueDynamicSession& session,
 								  XrBodyTrackerFB& bodyTrackerOut);
-	static void destroyBodyTracker();
+	static void destroyBodyTracker(XrBodyTrackerFB& bodyTracker);
 	static XrResult locateBodyJoints(XrBodyTrackerFB& bodyTracker,
 									 xr::UniqueDynamicSpace& space,
 									 XrTime time,

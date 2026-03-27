@@ -4,15 +4,23 @@
 
 int main(int /* argc */, char* /* argv */[])
 {
-	HOL::HandOfLesserCore app;
+	bool shouldRestart = false;
 
-	//try
+	do
 	{
-		app.init(9005);
-		app.start();
+		HOL::HandOfLesserCore app;
+
+		//try
+		{
+			app.init(9005);
+			shouldRestart = app.start();
+		}
+		//catch (std::exception exp)
+		{
+			//std::cerr << exp.what() << std::endl;
+		}
 	}
-	//catch (std::exception exp)
-	{
-		//std::cerr << exp.what() << std::endl;
-	}
+	while (shouldRestart);
+
+	return 0;
 }

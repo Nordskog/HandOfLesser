@@ -32,6 +32,16 @@ Eigen::Quaternionf OpenXRBody::fixOculusJointOrientation(const Eigen::Vector3f& 
 	return Eigen::Quaternionf(rotMatrix);
 }
 
+OpenXRBody::~OpenXRBody()
+{
+	this->shutdown();
+}
+
+void OpenXRBody::shutdown()
+{
+	HandTrackingInterface::destroyBodyTracker(this->mBodyTracker);
+}
+
 void OpenXRBody::init(xr::UniqueDynamicSession& session)
 {
 	if (!HOL::state::Runtime.supportsBodyTracking)

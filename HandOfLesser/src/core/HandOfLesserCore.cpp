@@ -19,6 +19,14 @@ HandOfLesserCore::HandOfLesserCore()
 {
 }
 
+HandOfLesserCore::~HandOfLesserCore()
+{
+	if (Current == this)
+	{
+		Current = nullptr;
+	}
+}
+
 void HandOfLesserCore::init(int serverPort)
 {
 	this->Current = this;
@@ -124,7 +132,7 @@ void HandOfLesserCore::init(int serverPort)
 	this->syncState();
 }
 
-void HandOfLesserCore::start()
+bool HandOfLesserCore::start()
 {
 	this->loadSettings();
 
@@ -134,6 +142,8 @@ void HandOfLesserCore::start()
 
 	this->mainLoop();
 	this->saveSettings();
+
+	return this->mUserInterface.shouldRestart();
 }
 
 std::vector<const char*> HandOfLesserCore::getRequiredExtensions()

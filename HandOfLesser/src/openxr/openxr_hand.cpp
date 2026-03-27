@@ -15,6 +15,16 @@
 using namespace HOL;
 using namespace HOL::OpenXR;
 
+OpenXRHand::~OpenXRHand()
+{
+	this->shutdown();
+}
+
+void OpenXRHand::shutdown()
+{
+	HandTrackingInterface::destroyHandTracker(this->mHandTracker);
+}
+
 void OpenXRHand::init(xr::UniqueDynamicSession& session, HOL::HandSide side)
 {
 	this->mSide = side;

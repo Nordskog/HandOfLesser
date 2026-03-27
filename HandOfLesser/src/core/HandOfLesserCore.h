@@ -24,9 +24,10 @@ namespace HOL
 	class HandOfLesserCore // : public XrEventsInterface
 	{
 	public:
+		~HandOfLesserCore();
 		HandOfLesserCore();
 		void init(int serverPort);
-		void start();
+		bool start();
 		static HandOfLesserCore* Current; // Time to commit sinss
 
 		void syncSettings();

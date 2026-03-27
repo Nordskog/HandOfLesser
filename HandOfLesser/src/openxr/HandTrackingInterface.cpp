@@ -174,9 +174,15 @@ XrResult HandTrackingInterface::locateHandJoints(XrHandTrackerEXT& handTracker,
 	return result;
 }
 
-void HandTrackingInterface::destroyHandTracker()
+void HandTrackingInterface::destroyHandTracker(XrHandTrackerEXT& handTracker)
 {
-	// TODO
+	if (handTracker == nullptr || xrDestroyHandTrackerEXT_ == nullptr)
+	{
+		return;
+	}
+
+	handleXR("xrDestroyHandTrackerEXT call", xrDestroyHandTrackerEXT_(handTracker));
+	handTracker = nullptr;
 }
 
 void HandTrackingInterface::createBodyTracker(xr::UniqueDynamicSession& session,
@@ -189,8 +195,15 @@ void HandTrackingInterface::createBodyTracker(xr::UniqueDynamicSession& session,
 			 xrCreateBodyTrackerFB_(session.get(), &createInfo, &bodyTrackerOut));
 }
 
-void HandTrackingInterface::destroyBodyTracker()
+void HandTrackingInterface::destroyBodyTracker(XrBodyTrackerFB& bodyTracker)
 {
+	if (bodyTracker == nullptr || xrDestroyBodyTrackerFB_ == nullptr)
+	{
+		return;
+	}
+
+	handleXR("xrDestroyBodyTrackerFB call", xrDestroyBodyTrackerFB_(bodyTracker));
+	bodyTracker = nullptr;
 }
 
 XrResult HandTrackingInterface::locateBodyJoints(XrBodyTrackerFB& bodyTracker,
