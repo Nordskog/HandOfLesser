@@ -469,7 +469,7 @@ void HOL::UserInterface::buildVisual()
 
 void HOL::UserInterface::buildMisc()
 {
-	const char* restoreDefaultsLabel = "restore defaults";
+	const char* restoreDefaultsLabel = "Factory reset";
 	if (ImGui::Button(restoreDefaultsLabel))
 		ImGui::OpenPopup(restoreDefaultsLabel);
 
@@ -482,14 +482,17 @@ void HOL::UserInterface::buildMisc()
 		ImGui::Text("Restore all settings to default?");
 		ImGui::Separator();
 
-		if (ImGui::Button("OK##restoreDefaults", ImVec2(140, 0)))
+		float buttonWidth
+			= (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f;
+
+		if (ImGui::Button("OK##restoreDefaults", ImVec2(buttonWidth, 0)))
 		{
 			Config = HOL::settings::HandOfLesserSettings();
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::SetItemDefaultFocus();
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel##restoreDefaults", ImVec2(140, 0)))
+		if (ImGui::Button("Cancel##restoreDefaults", ImVec2(buttonWidth, 0)))
 		{
 			ImGui::CloseCurrentPopup();
 		}
@@ -549,13 +552,6 @@ void HOL::UserInterface::buildBodyTrackers()
 	syncSettings |= ImGui::Checkbox("Right Upper Arm", &Config.bodyTrackers.enableRightUpperArm);
 	syncSettings |= ImGui::Checkbox("Right Lower Arm", &Config.bodyTrackers.enableRightLowerArm);
 
-	ImGui::SameLine();
-	if (rightAlignButton("Reset##BodyTrackers"))
-	{
-		Config.bodyTrackers = HOL::settings::BodyTrackerSettings();
-		syncSettings = true;
-	}
-
 	ImGui::EndChild();
 
 	if (syncSettings)
@@ -595,16 +591,26 @@ void HOL::UserInterface::buildSteamVR()
 	syncSettings |= ImGui::InputFloat(
 		"Steam Pose offset (s)", &Config.steamvr.steamPoseTimeOffset, 0.01f, 0.1f, "%.3f");
 
-	ImGui::InputFloat("Linear Velocity multiplier",
-					  &Config.general.linearVelocityMultiplier,
-					  0.05f,
-					  0.1f,
-					  "%.3f");
-	ImGui::InputFloat("Angular Velocity multiplier",
-					  &Config.general.angularVelocityMultiplier,
-					  0.05f,
-					  0.1f,
-					  "%.3f");
+	syncSettings |= ImGui::InputFloat("Linear Velocity multiplier",
+									  &Config.general.linearVelocityMultiplier,
+									  0.05f,
+									  0.1f,
+									  "%.3f");
+	syncSettings |= ImGui::InputFloat("Angular Velocity multiplier",
+									  &Config.general.angularVelocityMultiplier,
+									  0.05f,
+									  0.1f,
+									  "%.3f");
+
+	if (rightAlignButton("Reset##SteamVRGeneral"))
+	{
+		HOL::settings::SteamVRSettings steamVrDefaults;
+		HOL::settings::GeneralSettings generalDefaults;
+		Config.steamvr.steamPoseTimeOffset = steamVrDefaults.steamPoseTimeOffset;
+		Config.general.linearVelocityMultiplier = generalDefaults.linearVelocityMultiplier;
+		Config.general.angularVelocityMultiplier = generalDefaults.angularVelocityMultiplier;
+		syncSettings = true;
+	}
 
 	/////////////////
 	// Skeletal
@@ -612,15 +618,15 @@ void HOL::UserInterface::buildSteamVR()
 
 	ImGui::SeparatorText("Skeletal Input");
 
-	if (rightAlignButton("Reset##Skeletal"))
-	{
-		Config.skeletal = HOL::settings::SkeletalInput();
-	}
-
-	bool lengthChanged = false;
-
 	syncSettings |= ImGui::InputFloat(
 		"Length multiplier", &Config.skeletal.jointLengthMultiplier, 0.01f, 0.1f, "%.3f");
+	ImGui::SameLine();
+	if (rightAlignButton("Reset##Skeletal"))
+	{
+		HOL::settings::SkeletalInput defaults;
+		Config.skeletal.jointLengthMultiplier = defaults.jointLengthMultiplier;
+		syncSettings = true;
+	}
 
 	/////////////////
 	// Skeletal Offset
@@ -1056,7 +1062,10 @@ void HOL::UserInterface::buildMain()
 	ImGui::SameLine();
 	if (rightAlignButton("Reset##General"))
 	{
-		Config.general = HOL::settings::GeneralSettings();
+		HOL::settings::GeneralSettings defaults;
+		Config.general.motionPredictionMS = defaults.motionPredictionMS;
+		Config.general.updateIntervalMS = defaults.updateIntervalMS;
+		Config.general.forceInactive = defaults.forceInactive;
 	}
 
 	ImGui::SeparatorText("Offset preset");
@@ -1159,9 +1168,9 @@ void UserInterface::buildVRChatOSCSettings()
 	if (ImGui::InputInt("Packed Update Interval (ms)", &Config.vrchat.packedUpdateInterval))
 	{
 		// Should never be anything but 100, and definitely never less
-		if (Config.general.updateIntervalMS < 100)
+		if (Config.vrchat.packedUpdateInterval < 100)
 		{
-			Config.general.updateIntervalMS = 100;
+			Config.vrchat.packedUpdateInterval = 100;
 		}
 	}
 
