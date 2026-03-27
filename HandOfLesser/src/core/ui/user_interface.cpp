@@ -22,6 +22,7 @@
 using namespace HOL;
 
 static const int PANEL_WIDTH = 600;
+static const int WINDOW_HEIGHT = 600;
 
 UserInterface* UserInterface::Current = nullptr;
 
@@ -45,6 +46,7 @@ void UserInterface::init()
 	float xscale, yscale = 0;
 	glfwGetWindowContentScale(this->mWindow, &xscale, &yscale);
 	updateStyles(xscale);
+	updateWindowSize(false);
 }
 
 void UserInterface::terminate()
@@ -117,15 +119,57 @@ void UserInterface::updateStyles(float scale)
 	return;
 }
 
+void UserInterface::updateWindowSize(bool preserveHeight)
+{
+	const ImGuiStyle& style = ImGui::GetStyle();
+	// Keep the window width matched to our fixed content width.
+	int width = (int)std::ceil(scaleSize(PANEL_WIDTH) + style.WindowPadding.x * 2.0f);
+	int minHeight = (int)std::ceil(scaleSize(500.0f));
+	int defaultHeight = (int)std::ceil(scaleSize(WINDOW_HEIGHT));
+	int maxHeight = GLFW_DONT_CARE;
+
+	if (GLFWmonitor* monitor = glfwGetPrimaryMonitor())
+	{
+		int workareaX, workareaY, workareaWidth, workareaHeight;
+		glfwGetMonitorWorkarea(monitor, &workareaX, &workareaY, &workareaWidth, &workareaHeight);
+		if (workareaHeight > 0)
+		{
+			// Clamp the default and maximum height to the visible desktop work area so
+			// the window does not launch off-screen on shorter displays.
+			maxHeight = workareaHeight;
+			defaultHeight = std::min(defaultHeight, workareaHeight);
+		}
+	}
+
+	int height = defaultHeight;
+	if (preserveHeight)
+	{
+		// On DPI/content-scale changes, preserve the current user-selected height instead
+		// of snapping back to the default height every time.
+		int currentWidth, currentHeight;
+		glfwGetWindowSize(this->mWindow, &currentWidth, &currentHeight);
+		height = std::max(currentHeight, minHeight);
+		if (maxHeight != GLFW_DONT_CARE)
+		{
+			height = std::min(height, maxHeight);
+		}
+	}
+
+	// Lock the width, but allow the user to resize vertically within sensible limits.
+	glfwSetWindowSizeLimits(this->mWindow, width, minHeight, width, maxHeight);
+	glfwSetWindowSize(this->mWindow, width, height);
+}
+
 bool HOL::UserInterface::rightAlignButton(const char* label, int verticalLineOffset)
 {
 	float available_width = ImGui::GetContentRegionAvail().x;
+	float rightMargin = ImGui::GetStyle().ScrollbarSize + ImGui::GetStyle().ItemSpacing.x;
 
 	// note that hide_text_after_double_hash is false, otherwise it will calculate its width too
 	float button_width
 		= ImGui::CalcTextSize(label, nullptr, true).x + ImGui::GetStyle().FramePadding.x * 2;
 
-	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + available_width - button_width);
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + available_width - button_width - rightMargin);
 
 	if (verticalLineOffset != 0)
 	{
@@ -158,10 +202,9 @@ void UserInterface::initGLFW()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	// TODO: Fix window sizing
-	this->mWindow
-		= glfwCreateWindow(PANEL_WIDTH * 1.5, PANEL_WIDTH * 1.5, "Hand of Lesser", NULL, NULL);
+	this->mWindow = glfwCreateWindow(PANEL_WIDTH, WINDOW_HEIGHT, "Hand of Lesser", NULL, NULL);
 	if (!this->mWindow)
 	{
 		std::cerr << "glfw windows creation failed!" << std::endl;
@@ -200,6 +243,7 @@ void UserInterface::windows_scale_callback(GLFWwindow* window, float xscale, flo
 {
 	std::cout << "New scale: " << xscale << std::endl;
 	UserInterface::Current->updateStyles(xscale); // xy should be the same?
+	UserInterface::Current->updateWindowSize();
 }
 
 float UserInterface::scaleSize(float size)
@@ -568,7 +612,6 @@ void HOL::UserInterface::buildSteamVR()
 
 	ImGui::SeparatorText("Skeletal Input");
 
-	ImGui::SameLine();
 	if (rightAlignButton("Reset##Skeletal"))
 	{
 		Config.skeletal = HOL::settings::SkeletalInput();

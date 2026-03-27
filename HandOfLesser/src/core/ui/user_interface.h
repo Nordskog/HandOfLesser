@@ -28,6 +28,7 @@ namespace HOL
 		static void error_callback(int error, const char* description);
 		static void windows_scale_callback(GLFWwindow* window, float xscale, float yscale);
 		float scaleSize(float size);
+		void updateWindowSize(bool preserveHeight = true);
 		bool mShouldTerminate = false;
 		bool mShouldRestart = false;
 		bool shouldCloseWindow();
