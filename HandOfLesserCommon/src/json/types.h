@@ -164,9 +164,8 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const SkeletalInput& settings)
 		{
-			j = {{"submitUnobstructedHandTracking", settings.submitUnobstructedHandTracking},
+			j = {{"transmitMode", settings.transmitMode},
 				 {"jointLengthMultiplier", settings.jointLengthMultiplier},
-				 {"sendSkeletalInput", settings.sendSkeletalInput},
 				 {"augmentControllerSkeleton", settings.augmentControllerSkeleton},
 				 {"positionOffset", settings.positionOffset},
 				 {"orientationOffset", settings.orientationOffset}};
@@ -174,12 +173,8 @@ namespace HOL
 
 		inline void from_json(const nlohmann::json& j, SkeletalInput& settings)
 		{
-			nlohmann::get_to_if_present(
-				j,
-				"submitUnobstructedHandTracking",
-				settings.submitUnobstructedHandTracking);
+			nlohmann::get_to_if_present(j, "transmitMode", settings.transmitMode);
 			nlohmann::get_to_if_present(j, "jointLengthMultiplier", settings.jointLengthMultiplier);
-			nlohmann::get_to_if_present(j, "sendSkeletalInput", settings.sendSkeletalInput);
 			nlohmann::get_to_if_present(
 				j, "augmentControllerSkeleton", settings.augmentControllerSkeleton);
 			nlohmann::get_to_if_present(j, "positionOffset", settings.positionOffset);

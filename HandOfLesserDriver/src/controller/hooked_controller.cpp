@@ -110,7 +110,7 @@ namespace HOL
 		bool shouldAugment
 			= config.skeletal.augmentControllerSkeleton && trackingState.isMultimodalEnabled;
 
-		if (!config.skeletal.sendSkeletalInput && !shouldAugment)
+		if (config.skeletal.transmitMode == SkeletalInputMode_DontTransmit && !shouldAugment)
 		{
 			return;
 		}

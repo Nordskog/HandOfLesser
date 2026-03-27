@@ -534,8 +534,6 @@ void HOL::UserInterface::buildSteamVR()
 	syncSettings |= ImGui::Checkbox("Transmit Controller position",
 									&Config.steamvr.sendSteamVRControllerPosition);
 
-	syncSettings |= ImGui::Checkbox("Transmit skeletal input", &Config.skeletal.sendSkeletalInput);
-
 	syncSettings |= ImGui::Checkbox("Transmit legacy finger curl",
 									&Config.steamvr.transmitLegacyFingerCurl);
 
@@ -804,7 +802,7 @@ void HOL::UserInterface::buildMain()
 		isFirstIteration = false;
 	}
 
-	ImGui::SeparatorText("Skeletal Motion Range");
+	ImGui::SeparatorText("Skeletal Input");
 
 	if (HOL::state::Runtime.isSteamVR)
 	{
@@ -813,15 +811,23 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::BeginGroup();
 
-	int skeletalMotionRange
-		= HOL::state::Runtime.isSteamVR ? 0 : (HOL::Config.skeletal.submitUnobstructedHandTracking ? 1 : 0);
-	bool updateSkeletalMotionRange = false;
-	updateSkeletalMotionRange |= ImGui::RadioButton("Obstructed", &skeletalMotionRange, 0);
+	int skeletalTransmitMode = HOL::state::Runtime.isSteamVR ? HOL::SkeletalInputMode_DontTransmit
+															 : HOL::Config.skeletal.transmitMode;
+	bool updateSkeletalTransmitMode = false;
+	updateSkeletalTransmitMode |= ImGui::RadioButton(
+		"Don't transmit", &skeletalTransmitMode, HOL::SkeletalInputMode_DontTransmit);
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip("Do not submit skeletal input to SteamVR.");
+	}
+	updateSkeletalTransmitMode |= ImGui::RadioButton(
+		"Transmit obstructed", &skeletalTransmitMode, HOL::SkeletalInputMode_Obstructed);
 	if (ImGui::IsItemHovered())
 	{
 		showWrappedTooltip("VRChat will not enable hand tracking controls.");
 	}
-	updateSkeletalMotionRange |= ImGui::RadioButton("Unobstructed", &skeletalMotionRange, 1);
+	updateSkeletalTransmitMode |= ImGui::RadioButton(
+		"Transmit unobstructed", &skeletalTransmitMode, HOL::SkeletalInputMode_Unobstructed);
 	if (ImGui::IsItemHovered())
 	{
 		showWrappedTooltip("VRChat will enable hand tracking controls.");
@@ -837,13 +843,13 @@ void HOL::UserInterface::buildMain()
 		{
 			showWrappedTooltip(
 				"Using data from SteamXR to submit data to SteamXR causes a feedback loop, so "
-				"we can only submit obstructed hand tracking data.");
+				"we cannot transmit skeletal input data.");
 		}
 	}
 
-	if (updateSkeletalMotionRange)
+	if (updateSkeletalTransmitMode)
 	{
-		HOL::Config.skeletal.submitUnobstructedHandTracking = skeletalMotionRange == 1;
+		HOL::Config.skeletal.transmitMode = static_cast<HOL::SkeletalInputMode>(skeletalTransmitMode);
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}
 

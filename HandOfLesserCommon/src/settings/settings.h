@@ -171,9 +171,8 @@ namespace HOL
 
 		struct SkeletalInput
 		{
-			bool submitUnobstructedHandTracking = true;
+			SkeletalInputMode transmitMode = SkeletalInputMode_Unobstructed;
 			float jointLengthMultiplier = 1.05f;
-			bool sendSkeletalInput = true;
 			bool augmentControllerSkeleton = false;
 			Eigen::Vector3f positionOffset = Eigen::Vector3f(-0.168f, -0.041f, 0.049f);
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(174.300f, 1.221f, 136.930f);

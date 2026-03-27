@@ -328,11 +328,15 @@ namespace HOL::ControllerCommon
 			return vr::VRSkeletalMotionRange_WithController;
 		}
 
-		// For emulated and hooked either can be configured.
-		// If unobstructed, VRChat will enable its hand tracking controls.
-		return HandOfLesser::Config.skeletal.submitUnobstructedHandTracking
-			? vr::VRSkeletalMotionRange_WithoutController
-			: vr::VRSkeletalMotionRange_WithController;
+		switch (HandOfLesser::Config.skeletal.transmitMode)
+		{
+			case SkeletalInputMode_Unobstructed:
+				return vr::VRSkeletalMotionRange_WithoutController;
+			case SkeletalInputMode_DontTransmit:
+			case SkeletalInputMode_Obstructed:
+			default:
+				return vr::VRSkeletalMotionRange_WithController;
+		}
 	}
 
 } // namespace HOL::ControllerCommon

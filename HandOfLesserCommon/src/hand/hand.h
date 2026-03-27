@@ -31,6 +31,14 @@ namespace HOL
 		FingerBendType_MAX
 	};
 
+	enum SkeletalInputMode
+	{
+		SkeletalInputMode_DontTransmit,
+		SkeletalInputMode_Obstructed,
+		SkeletalInputMode_Unobstructed,
+		SkeletalInputMode_MAX
+	};
+
 	struct PoseLocationEuler
 	{
 		Eigen::Vector3f position;

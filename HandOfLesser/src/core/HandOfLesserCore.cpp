@@ -445,7 +445,10 @@ void HandOfLesserCore::sendUpdate()
 		}
 	}
 
-	if (Config.skeletal.sendSkeletalInput || Config.skeletal.augmentControllerSkeleton)
+	HOL::SkeletalInputMode skeletalTransmitMode = state::Runtime.isSteamVR
+		? HOL::SkeletalInputMode_DontTransmit
+		: Config.skeletal.transmitMode;
+	if (skeletalTransmitMode != HOL::SkeletalInputMode_DontTransmit)
 	{
 		for (int i = 0; i < HandSide_MAX; i++)
 		{
