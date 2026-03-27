@@ -30,6 +30,8 @@ HandOfLesserCore::~HandOfLesserCore()
 void HandOfLesserCore::init(int serverPort)
 {
 	this->Current = this;
+	this->loadSettings();
+	HOL::OpenXR::setOpenXRRuntimeOverride(Config.openxr.runtimeOverridePath);
 
 	std::string runtimePath = HOL::OpenXR::getActiveOpenXRRuntimePath(1);
 	std::string runtimeName = HOL::OpenXR::getActiveOpenXRRuntimeName(1);
@@ -134,8 +136,6 @@ void HandOfLesserCore::init(int serverPort)
 
 bool HandOfLesserCore::start()
 {
-	this->loadSettings();
-
 	this->mActive = true;
 	this->mUserInterfaceThread = std::thread(&HandOfLesserCore::userInterfaceLoop, this);
 	this->mReceiveThread = std::thread(&HandOfLesserCore::receiveDataThread, this);
@@ -563,8 +563,6 @@ void HOL::HandOfLesserCore::loadSettings()
 	{
 		std::cout << "No settings.json found, using defaults." << std::endl;
 	}
-	syncSettings();
-	syncState();
 }
 
 bool HOL::HandOfLesserCore::isDriverConnected() const

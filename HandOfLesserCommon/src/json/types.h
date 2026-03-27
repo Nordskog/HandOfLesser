@@ -162,6 +162,16 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "sendOscInput", settings.sendOscInput);
 		}
 
+		inline void to_json(nlohmann::json& j, const OpenXRSettings& settings)
+		{
+			j = {{"runtimeOverridePath", settings.runtimeOverridePath}};
+		}
+
+		inline void from_json(const nlohmann::json& j, OpenXRSettings& settings)
+		{
+			nlohmann::get_to_if_present(j, "runtimeOverridePath", settings.runtimeOverridePath);
+		}
+
 		inline void to_json(nlohmann::json& j, const SkeletalInput& settings)
 		{
 			j = {{"transmitMode", settings.transmitMode},
@@ -277,6 +287,7 @@ namespace HOL
 				 {"fingerBend", settings.fingerBend},
 				 {"skeletalBend", settings.skeletalBend},
 				 {"handPose", settings.handPose},
+				 {"openxr", settings.openxr},
 				 {"vrchat", settings.vrchat},
 				 {"debug", settings.debug},
 				 {"steamvr", settings.steamvr},
@@ -294,6 +305,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "fingerBend", settings.fingerBend);
 			nlohmann::get_to_if_present(j, "skeletalBend", settings.skeletalBend);
 			nlohmann::get_to_if_present(j, "handPose", settings.handPose);
+			nlohmann::get_to_if_present(j, "openxr", settings.openxr);
 			nlohmann::get_to_if_present(j, "vrchat", settings.vrchat);
 			nlohmann::get_to_if_present(j, "debug", settings.debug);
 			nlohmann::get_to_if_present(j, "steamvr", settings.steamvr);

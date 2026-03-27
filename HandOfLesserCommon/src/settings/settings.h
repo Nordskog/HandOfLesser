@@ -169,6 +169,11 @@ namespace HOL
 			bool sendOscInput = true;
 		};
 
+		struct OpenXRSettings
+		{
+			std::string runtimeOverridePath;
+		};
+
 		struct SkeletalInput
 		{
 			SkeletalInputMode transmitMode = SkeletalInputMode_Unobstructed;
@@ -235,6 +240,7 @@ namespace HOL
 			SteamVRSettings steamvr;
 			VisualizerSettings visualizer;
 			InputSettings input;
+			OpenXRSettings openxr;
 			SkeletalInput skeletal;
 			BodyTrackerSettings bodyTrackers;
 			DeviceSettings deviceSettings;

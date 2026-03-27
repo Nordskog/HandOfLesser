@@ -1,5 +1,6 @@
 #include "XrUtils.h"
 #include <src/windows/windows_utils.h>
+#include <algorithm>
 
 namespace HOL::OpenXR
 {
@@ -63,6 +64,13 @@ namespace HOL::OpenXR
 
 	std::string getActiveOpenXRRuntimePath(int majorApiVersion)
 	{
+		char envBuffer[2048] = {};
+		DWORD envLength = GetEnvironmentVariableA("XR_RUNTIME_JSON", envBuffer, sizeof(envBuffer));
+		if (envLength > 0 && envLength < sizeof(envBuffer))
+		{
+			return std::string(envBuffer, envLength);
+		}
+
 		std::string runtimePath = "Unknown";
 		std::string path = "SOFTWARE\\Khronos\\OpenXR\\" + std::to_string(majorApiVersion);
 
@@ -71,19 +79,101 @@ namespace HOL::OpenXR
 		return runtimePath;
 	}
 
-	std::string getActiveOpenXRRuntimeName(int majorApiVersion)
+	std::string getOpenXRRuntimeName(std::string runtimePath)
 	{
-		std::string runtimeName = getActiveOpenXRRuntimePath(majorApiVersion);
-
 		// In an ideal world we'd go read the json, but I am lazy
-		int lastSlash = runtimeName.find_last_of('\\');
+		int lastSlash = runtimePath.find_last_of('\\');
 		if (lastSlash > 0)
 		{
 			// Just get filename from path
-			runtimeName = runtimeName.substr(lastSlash + 1);
+			runtimePath = runtimePath.substr(lastSlash + 1);
 		}
 
-		return runtimeName;
+		return runtimePath;
+	}
+
+	std::string getActiveOpenXRRuntimeName(int majorApiVersion)
+	{
+		return getOpenXRRuntimeName(getActiveOpenXRRuntimePath(majorApiVersion));
+	}
+
+	std::vector<std::string> getAvailableOpenXRRuntimePaths(int majorApiVersion)
+	{
+		std::vector<std::string> runtimePaths;
+		std::string path = "SOFTWARE\\Khronos\\OpenXR\\" + std::to_string(majorApiVersion)
+						   + "\\AvailableRuntimes";
+
+		HKEY hKey = nullptr;
+		LONG result = RegOpenKeyExA(HKEY_LOCAL_MACHINE, path.c_str(), 0, KEY_READ, &hKey);
+		if (result != ERROR_SUCCESS)
+		{
+			return runtimePaths;
+		}
+
+		DWORD valueCount = 0;
+		DWORD maxValueNameLength = 0;
+		result = RegQueryInfoKeyA(hKey,
+								  nullptr,
+								  nullptr,
+								  nullptr,
+								  nullptr,
+								  nullptr,
+								  nullptr,
+								  &valueCount,
+								  &maxValueNameLength,
+								  nullptr,
+								  nullptr,
+								  nullptr);
+		if (result != ERROR_SUCCESS)
+		{
+			RegCloseKey(hKey);
+			return runtimePaths;
+		}
+
+		std::vector<char> valueName(maxValueNameLength + 1);
+		for (DWORD i = 0; i < valueCount; i++)
+		{
+			DWORD valueNameLength = (DWORD)valueName.size();
+			DWORD valueType = 0;
+			DWORD valueData = 0;
+			DWORD valueDataSize = sizeof(valueData);
+			result = RegEnumValueA(hKey,
+								   i,
+								   valueName.data(),
+								   &valueNameLength,
+								   nullptr,
+								   &valueType,
+								   reinterpret_cast<LPBYTE>(&valueData),
+								   &valueDataSize);
+			if (result != ERROR_SUCCESS || valueType != REG_DWORD || valueData != 0)
+			{
+				continue;
+			}
+
+			std::string runtimePath(valueName.data(), valueNameLength);
+			DWORD attributes = GetFileAttributesA(runtimePath.c_str());
+			if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_DIRECTORY))
+			{
+				std::cout << "Skipping missing OpenXR runtime manifest: " << runtimePath
+						  << std::endl;
+				continue;
+			}
+
+			runtimePaths.emplace_back(runtimePath);
+		}
+
+		RegCloseKey(hKey);
+
+		std::sort(runtimePaths.begin(), runtimePaths.end());
+		runtimePaths.erase(std::unique(runtimePaths.begin(), runtimePaths.end()),
+						   runtimePaths.end());
+		return runtimePaths;
+	}
+
+	bool setOpenXRRuntimeOverride(const std::string& runtimePath)
+	{
+		LPCSTR value = runtimePath.empty() ? nullptr : runtimePath.c_str();
+		return SetEnvironmentVariableA("XR_RUNTIME_JSON", value) != 0;
 	}
 
 } // namespace HOL::OpenXR

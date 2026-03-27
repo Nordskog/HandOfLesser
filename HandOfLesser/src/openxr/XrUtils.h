@@ -7,6 +7,7 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <vector>
 #include <HandOfLesserCommon.h>
 
 namespace HOL::OpenXR
@@ -57,4 +58,7 @@ namespace HOL::OpenXR
 
 	std::string getActiveOpenXRRuntimePath(int majorApiVersion);
 	std::string getActiveOpenXRRuntimeName(int majorApiVersion);
+	std::string getOpenXRRuntimeName(std::string runtimePath);
+	std::vector<std::string> getAvailableOpenXRRuntimePaths(int majorApiVersion);
+	bool setOpenXRRuntimeOverride(const std::string& runtimePath);
 } // namespace HOL::OpenXR

@@ -11,6 +11,7 @@
 #include <imgui_impl_win32.h>
 #include <iterator>
 #include <algorithm>
+#include <unordered_map>
 
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
@@ -39,6 +40,7 @@ void UserInterface::init()
 	initGLFW();
 	initImgui();
 	this->mVisualizer.init();
+	this->mAvailableOpenXRRuntimes = HOL::OpenXR::getAvailableOpenXRRuntimePaths(1);
 
 	float xscale, yscale = 0;
 	glfwGetWindowContentScale(this->mWindow, &xscale, &yscale);
@@ -758,9 +760,70 @@ void HOL::UserInterface::buildMain()
 		ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "Driver: Disconnected");
 	}
 
-	if (ImGui::Button("Restart app"))
+	//////////////////
+	// OpenXR Runtime
+	////////////////////
+
+	ImGui::SeparatorText("OpenXR Runtime");
+
+	std::unordered_map<std::string, int> runtimeNameCounts;
+	for (const auto& runtimePath : this->mAvailableOpenXRRuntimes)
+	{
+		runtimeNameCounts[HOL::OpenXR::getOpenXRRuntimeName(runtimePath)]++;
+	}
+	std::string selectedRuntimeLabel = "Auto";
+	if (!Config.openxr.runtimeOverridePath.empty())
+	{
+		selectedRuntimeLabel = HOL::OpenXR::getOpenXRRuntimeName(Config.openxr.runtimeOverridePath);
+		if (runtimeNameCounts[selectedRuntimeLabel] > 1)
+		{
+			selectedRuntimeLabel = Config.openxr.runtimeOverridePath;
+		}
+	}
+
+	if (ImGui::BeginCombo("##OpenXRRuntime", selectedRuntimeLabel.c_str()))
+	{
+		bool selectedAuto = Config.openxr.runtimeOverridePath.empty();
+		if (ImGui::Selectable("Auto", selectedAuto))
+		{
+			Config.openxr.runtimeOverridePath.clear();
+			HOL::HandOfLesserCore::Current->syncSettings();
+		}
+		if (ImGui::IsItemHovered())
+		{
+			showWrappedTooltip("Use the current system default OpenXR runtime.");
+		}
+
+		for (const auto& runtimePath : this->mAvailableOpenXRRuntimes)
+		{
+			std::string runtimeName = HOL::OpenXR::getOpenXRRuntimeName(runtimePath);
+			if (runtimeNameCounts[runtimeName] > 1)
+			{
+				runtimeName = runtimePath;
+			}
+			bool selected = Config.openxr.runtimeOverridePath == runtimePath;
+			if (ImGui::Selectable(runtimeName.c_str(), selected))
+			{
+				Config.openxr.runtimeOverridePath = runtimePath;
+				HOL::HandOfLesserCore::Current->syncSettings();
+			}
+			if (ImGui::IsItemHovered())
+			{
+				showWrappedTooltip(runtimePath.c_str());
+			}
+		}
+
+		ImGui::EndCombo();
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Restart"))
 	{
 		this->mShouldRestart = true;
+	}
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip("Restart to switch runtimes.");
 	}
 
 	//////////////////

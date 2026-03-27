@@ -36,6 +36,7 @@ namespace HOL
 
 		// UI state
 		bool mShowAllDevices = false;
+		std::vector<std::string> mAvailableOpenXRRuntimes;
 
 		void updateStyles(float scale);
 
