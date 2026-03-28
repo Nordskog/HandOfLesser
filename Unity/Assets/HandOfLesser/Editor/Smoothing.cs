@@ -104,9 +104,14 @@ namespace HOL
             sAdjustSmoothingToFramerate = adjustSmoothingToFramerate; // rather than add it to be a bunch of functions
             AnimatorControllerLayer layer = ControllerLayer.smoothing.findLayer(controller);
 
+            // When UseFull is active, HOL_directInput writes smooth directly instead.
+            AnimatorState disabledState = layer.stateMachine.AddState("HOLSmoothingDisabled");
+            disabledState.writeDefaultValues = true;
+
             // State within this controller. TODO: attach to stuff
             AnimatorState rootState = layer.stateMachine.AddState("HOLSmoothing");
             rootState.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
+            layer.stateMachine.defaultState = rootState;
 
             // Blendtree at the root of our state
             BlendTree rootBlendtree = new BlendTree();
@@ -138,6 +143,20 @@ namespace HOL
             // Cannot add directly to parent tree, see generateSmoothingBlendtree()
             // Have to be added like this in order to set directblendparameter
             rootBlendtree.children = childTrees.ToArray();
+
+            AnimatorStateTransition transition = rootState.AddTransition(disabledState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 1, HOL.Resources.USE_FULL_PARAMETER);
+
+            transition = disabledState.AddTransition(rootState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.USE_FULL_PARAMETER);
 
             AssetDatabase.SaveAssets();
 

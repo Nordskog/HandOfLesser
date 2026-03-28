@@ -78,6 +78,10 @@ namespace HOL
                 transition.canTransitionToSelf = false;
             }
 
+            // This whole layer is only for packed interlace buffering. Keep all of its normal
+            // transitions inactive while local full is enabled so the disabled state actually sticks.
+            transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.USE_FULL_PARAMETER);
+
             return transition;
         }
 
@@ -92,8 +96,10 @@ namespace HOL
             // Wait for left -> update left -> wait for right -> update right -> wait for left ...
 
             // Holding zone while waiting for hand side param to change
+            var disabledState = generateDummyState(layer, "disabled");
             var rightToLeftState = generateDummyState(layer, "rightToLeft");
             var lefToRightState = generateDummyState(layer, "leftToRight");
+            layer.stateMachine.defaultState = rightToLeftState;
 
             var leftBufferState = generateDummyState(layer, "leftBuffer");
             var rightBufferState = generateDummyState(layer, "rightBuffer");
@@ -134,6 +140,20 @@ namespace HOL
             // they'll exit immediately.
             leftState.AddTransition(generateTransition(lefToRightState, layer.stateMachine, true));
             rightState.AddTransition(generateTransition(rightToLeftState, layer.stateMachine, true));
+
+            transition = layer.stateMachine.AddAnyStateTransition(disabledState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 1, HOL.Resources.USE_FULL_PARAMETER);
+
+            transition = disabledState.AddTransition(rightToLeftState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.USE_FULL_PARAMETER);
         }
 
     }

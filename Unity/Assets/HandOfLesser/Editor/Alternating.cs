@@ -83,8 +83,10 @@ namespace HOL
             // Wait for left -> update left -> wait for right -> update right -> wait for left ...
 
             // Holding zone while waiting for hand side param to change
+            var disabledState = generateDummyState(layer, "disabled");
             var rightToLeftState = generateDummyState(layer, "rightToLeft");
             var lefToRightState = generateDummyState(layer, "leftToRight");
+            layer.stateMachine.defaultState = rightToLeftState;
 
             // State that will house the driver setting our params
             var leftState = generateSingleHandState(layer, HandSide.left);
@@ -109,6 +111,20 @@ namespace HOL
             // they'll exit immediately.
             leftState.AddTransition(generateTransition(lefToRightState, layer.stateMachine, true));
             rightState.AddTransition(generateTransition(rightToLeftState, layer.stateMachine, true));
+
+            transition = layer.stateMachine.AddAnyStateTransition(disabledState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 1, HOL.Resources.USE_FULL_PARAMETER);
+
+            transition = disabledState.AddTransition(rightToLeftState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.USE_FULL_PARAMETER);
         }
 
     }

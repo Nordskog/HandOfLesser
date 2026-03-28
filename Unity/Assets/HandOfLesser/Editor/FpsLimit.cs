@@ -22,6 +22,24 @@ public class FpsLimitWindow : EditorWindow
         {
             Application.targetFrameRate = sFpsLimit;
         }
+
+        if (GUILayout.Button("60"))
+        {
+            sFpsLimit = 60;
+            Application.targetFrameRate = sFpsLimit;
+        }
+
+        if (GUILayout.Button("120"))
+        {
+            sFpsLimit = 120;
+            Application.targetFrameRate = sFpsLimit;
+        }
+
+        if (GUILayout.Button("240"))
+        {
+            sFpsLimit = 240;
+            Application.targetFrameRate = sFpsLimit;
+        }
     }
 
 }

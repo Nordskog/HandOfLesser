@@ -22,6 +22,7 @@ namespace HOL
             PropertyType.OSC_Packed.addPrefixNamespace("interlace_bit"));
 
         public static readonly string FPS_SMOOTHING_PARAMETER = addNamespacePrefix("fps_smoothing_amount");
+        public static readonly string USE_FULL_PARAMETER = addNamespacePrefix("UseFull");
 
         public static readonly string ALWAYS_1_PARAMETER = addNamespacePrefix( "always_one");
 

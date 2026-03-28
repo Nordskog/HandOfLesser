@@ -92,6 +92,23 @@ namespace HOL
 
             generateTransition(leftState, lefToRightState, layer.stateMachine, true);
             generateTransition(rightState, rightToLeftState, layer.stateMachine, true);
+
+            // Full drives smooth directly, so framerate measurement is not needed in that mode.
+            var disabledState = generateDummyState(layer, "disabled");
+
+            AnimatorStateTransition transition = layer.stateMachine.AddAnyStateTransition(disabledState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 1, HOL.Resources.USE_FULL_PARAMETER);
+
+            transition = disabledState.AddTransition(rightToLeftState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.USE_FULL_PARAMETER);
         }
 
         public static void addParameters(AnimatorController controller)
@@ -231,9 +248,13 @@ namespace HOL
         {
             AnimatorControllerLayer layer = ControllerLayer.fpsSmoothing.findLayer(controller);
 
+            AnimatorState disabledState = layer.stateMachine.AddState("HOLFpsSmoothingDisabled");
+            disabledState.writeDefaultValues = true;
+
             // State within this controller. TODO: attach to stuff
             AnimatorState rootState = layer.stateMachine.AddState("HOLFpsSmoothing");
             rootState.writeDefaultValues = true; // Must be true or values are multiplied depending on umber of blendtrees in controller!?!?!
+            layer.stateMachine.defaultState = rootState;
 
             // Blendtree at the root of our state
             BlendTree rootBlendtree = new BlendTree();
@@ -254,6 +275,20 @@ namespace HOL
             // Cannot add directly to parent tree, see generateSmoothingBlendtree()
             // Have to be added like this in order to set directblendparameter
             rootBlendtree.children = childTrees.ToArray();
+
+            AnimatorStateTransition transition = rootState.AddTransition(disabledState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 1, HOL.Resources.USE_FULL_PARAMETER);
+
+            transition = disabledState.AddTransition(rootState);
+            transition.hasExitTime = false;
+            transition.hasFixedDuration = true;
+            transition.duration = 0;
+            transition.canTransitionToSelf = false;
+            transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.USE_FULL_PARAMETER);
 
             AssetDatabase.SaveAssets();
 

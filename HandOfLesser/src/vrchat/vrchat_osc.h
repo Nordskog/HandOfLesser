@@ -13,7 +13,9 @@ namespace HOL::VRChat
 	static const int OSC_PACKET_BUFFER_SIZE = SINGLE_HAND_JOINT_COUNT * 2 * 128;
 
 	static const std::string NAMESPACE_PREFIX = "HOL/";
-	static const std::string OSC_FULL_PREFIX = "input/";
+	// Full uses its own raw parameter namespace. Unity then copies it into the controller's
+	// internal working parameters locally, instead of sharing ownership of input/smooth directly.
+	static const std::string OSC_FULL_PREFIX = "full/";
 	static const std::string OSC_ALTERNATING_PREFIX = "alternating/";
 	static const std::string OSC_PACKED_PREFIX = "packed/";
 
@@ -24,6 +26,8 @@ namespace HOL::VRChat
 
 	static const std::string OSC_PACKED_INTERLACE_BIT
 		= OSC_PREFIX + NAMESPACE_PREFIX + OSC_PACKED_PREFIX + "interlace_bit";
+
+	static const std::string OSC_USE_FULL_PARAMETER = OSC_PREFIX + NAMESPACE_PREFIX + "UseFull";
 
 	class VRChatOSC
 	{

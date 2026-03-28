@@ -35,6 +35,7 @@ namespace HOL
         baseLayer, 
         inputAlternating, 
         inputPacked, 
+        directInput, // Copies raw full input to smooth when local full is enabled
         smoothing, 
         interlacePopulate, 
         interlaceWeigh, 
@@ -49,7 +50,7 @@ namespace HOL
 
     enum PropertyType
     {
-        OSC_Full,       // This should always be the same as input, as it required no processing
+        OSC_Full,       // Local-only raw full input. Do not reuse internal working params for this.
         OSC_Alternating,      
         OSC_Packed,     // We will use packed for network and full for local, so need to separate them
         OSC_Packed_first,      // for interlacing
@@ -178,6 +179,7 @@ namespace HOL
                 case ControllerLayer.baseLayer: return "HOL_base";
                 case ControllerLayer.inputPacked:       return "HOL_inputPacked";
                 case ControllerLayer.inputAlternating:  return "HOL_inputAlternating";
+                case ControllerLayer.directInput:       return "HOL_directInput";
                 case ControllerLayer.smoothing:         return "HOL_smoothing";
                 case ControllerLayer.bend:              return "HOL_bend";
                 case ControllerLayer.interlacePopulate: return "HOL_interlacePopulate";
@@ -213,7 +215,7 @@ namespace HOL
         {
             switch (prop)
             {
-                case PropertyType.OSC_Full: return "input"; // No processing required, so just treat as input
+                case PropertyType.OSC_Full: return "full"; // Raw local full path, kept separate from Animator-owned params
                 case PropertyType.OSC_Alternating: return "alternating";
                 case PropertyType.OSC_Packed: return "packed";
                 case PropertyType.OSC_Packed_first: return "packed_first";

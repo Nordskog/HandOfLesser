@@ -573,6 +573,10 @@ namespace HOL::VRChat
 			.int32(side)
 			.closeMessage();
 
+		packet.openMessage(OSC_USE_FULL_PARAMETER.c_str(), 1)
+			.int32(Config.vrchat.sendFull ? 1 : 0)
+			.closeMessage();
+
 		packet.closeBundle();
 
 		return packet.size();
@@ -601,6 +605,10 @@ namespace HOL::VRChat
 				.int32(flipFlop)
 				.closeMessage();
 		}
+
+		packet.openMessage(OSC_USE_FULL_PARAMETER.c_str(), 1)
+			.int32(Config.vrchat.sendFull ? 1 : 0)
+			.closeMessage();
 
 		packet.closeBundle();
 
@@ -642,6 +650,10 @@ namespace HOL::VRChat
 				.float32(this->mOscOutput[i])
 				.closeMessage();
 		}
+
+		packet.openMessage(OSC_USE_FULL_PARAMETER.c_str(), 1)
+			.int32(Config.vrchat.sendFull ? 1 : 0)
+			.closeMessage();
 
 		packet.closeBundle();
 
