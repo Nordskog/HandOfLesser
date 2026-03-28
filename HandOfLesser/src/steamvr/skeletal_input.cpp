@@ -83,7 +83,7 @@ namespace HOL::SteamVR
 		return;
 	}
 
-	HOL::SkeletalPacket& SkeletalInput::getSkeletalPacket(OpenXRHand& hand, HandSide side)
+	HOL::SkeletalPacket& SkeletalInput::getSkeletalPacket(OpenXRHand* hand, HandSide side)
 	{
 		// Root is where the controller origin is.
 		// Wrist should be the offset from that to the wrist location.
@@ -118,7 +118,7 @@ namespace HOL::SteamVR
 		for (int i = 1; i < HandSkeletonBone::eBone_Count; i++)
 		{
 			getOpenXRJointLocation(
-				hand.getLastJointLocations(), (HandSkeletonBone)i, packet.locations[i]);
+				hand->getLastJointLocations(), (HandSkeletonBone)i, packet.locations[i]);
 		}
 
 		HOL::PoseLocation& rootJoint = packet.locations[HandSkeletonBone::eBone_Root];

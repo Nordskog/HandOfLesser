@@ -20,7 +20,7 @@ namespace HOL::SteamVR
 	class SkeletalInput
 	{
 	public:
-		HOL::SkeletalPacket& getSkeletalPacket(OpenXRHand& hand, HandSide side);
+		HOL::SkeletalPacket& getSkeletalPacket(OpenXRHand* hand, HandSide side);
 
 	private:
 		// Don't really need to separate them but eh

@@ -296,11 +296,11 @@ void HOL::OpenXR::HandTracking::updateGestures()
 	HOL::Gesture::GestureData data;
 	for (int i = 0; i < HandSide::HandSide_MAX; i++)
 	{
-		OpenXRHand& hand = getHand((HandSide)i);
+		OpenXRHand* hand = getHand((HandSide)i);
 
-		data.handPose[i] = &hand.handPose;
-		data.joints[i] = hand.getLastJointLocations();
-		data.aimState[i] = hand.getAimState();
+		data.handPose[i] = &hand->handPose;
+		data.joints[i] = hand->getLastJointLocations();
+		data.aimState[i] = hand->getAimState();
 	}
 
 	// TODO: HMD pose
@@ -323,20 +323,20 @@ void HOL::OpenXR::HandTracking::submitLegacyFingerCurl()
 
 	for (int i = 0; i < HandSide::HandSide_MAX; i++)
 	{
-		OpenXRHand& hand = getHand((HandSide)i);
-		if (!hand.handPose.poseValid)
+		OpenXRHand* hand = getHand((HandSide)i);
+		if (!hand->handPose.poseValid)
 		{
 			continue;
 		}
 
 		const float fingerCurlIndex
-			= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerIndex].getCurlSum());
+			= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerIndex].getCurlSum());
 		const float fingerCurlMiddle
-			= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerMiddle].getCurlSum());
+			= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerMiddle].getCurlSum());
 		const float fingerCurlRing
-			= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerRing].getCurlSum());
+			= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerRing].getCurlSum());
 		const float fingerCurlPinky
-			= mapCurlToSteamVR(hand.handPose.fingers[FingerType::FingerLittle].getCurlSum());
+			= mapCurlToSteamVR(hand->handPose.fingers[FingerType::FingerLittle].getCurlSum());
 		const float averageFingerCurl
 			= (fingerCurlIndex + fingerCurlMiddle + fingerCurlRing + fingerCurlPinky) / 4.0f;
 		const float gripForce = std::clamp((averageFingerCurl - 0.5f) / 0.5f, 0.0f, 1.0f);
@@ -365,31 +365,31 @@ void HOL::OpenXR::HandTracking::submitLegacyFingerCurl()
 	}
 }
 
-OpenXRHand& HandTracking::getHand(HOL::HandSide side)
+OpenXRHand* HandTracking::getHand(HOL::HandSide side)
 {
 	if (side == HOL::HandSide::LeftHand)
 	{
-		return this->mLeftHand;
+		return &this->mLeftHand;
 	}
 	else
 	{
-		return this->mRightHand;
+		return &this->mRightHand;
 	}
 }
 
 HOL::HandTransformPacket HandTracking::getTransformPacket(HOL::HandSide side)
 {
-	OpenXRHand hand = getHand(side);
+	OpenXRHand* hand = getHand(side);
 
 	HOL::HandTransformPacket packet;
 
-	packet.active = hand.handPose.active;
-	packet.valid = hand.handPose.poseValid;
-	packet.tracked = hand.handPose.poseTracked;
-	packet.stale = hand.handPose.poseStale;
+	packet.active = hand->handPose.active;
+	packet.valid = hand->handPose.poseValid;
+	packet.tracked = hand->handPose.poseTracked;
+	packet.stale = hand->handPose.poseStale;
 	packet.side = (HOL::HandSide)side;
-	packet.location = hand.handPose.palmLocation;
-	packet.velocity = hand.handPose.palmVelocity;
+	packet.location = hand->handPose.palmLocation;
+	packet.velocity = hand->handPose.palmVelocity;
 
 	return packet;
 }
@@ -413,7 +413,7 @@ void HOL::OpenXR::HandTracking::drawHands()
 
 	for (int i = 0; i < HandSide::HandSide_MAX; i++)
 	{
-		XrHandJointLocationEXT* jointLocations = this->getHand((HandSide)i).getLastJointLocations();
+		XrHandJointLocationEXT* jointLocations = this->getHand((HandSide)i)->getLastJointLocations();
 
 		for (int j = 0; j < XR_HAND_JOINT_COUNT_EXT; j++)
 		{

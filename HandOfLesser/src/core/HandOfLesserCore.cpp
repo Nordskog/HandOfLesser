@@ -462,8 +462,8 @@ void HandOfLesserCore::sendUpdate()
 	{
 		for (int i = 0; i < HandSide_MAX; i++)
 		{
-			OpenXRHand& hand = this->mHandTracking.getHand((HandSide)i);
-			if (hand.handPose.poseValid) // Only update if valid
+			OpenXRHand* hand = this->mHandTracking.getHand((HandSide)i);
+			if (hand->handPose.poseValid) // Only update if valid
 			{
 				SkeletalPacket& packet = this->mSkeletalInput.getSkeletalPacket(hand, (HandSide)i);
 				this->mDriverTransport.send((char*)&packet, sizeof(HOL::SkeletalPacket));
