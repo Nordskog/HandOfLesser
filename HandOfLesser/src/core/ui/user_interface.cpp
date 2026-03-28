@@ -25,6 +25,56 @@ static const int WINDOW_HEIGHT = 600;
 
 UserInterface* UserInterface::Current = nullptr;
 
+namespace
+{
+	GLFWmonitor* getWindowMonitor(GLFWwindow* window)
+	{
+		// GLFW only reports an attached monitor for fullscreen windows. For a normal window we
+		// approximate "current monitor" by picking the display with the largest overlap area.
+		int windowX, windowY, windowWidth, windowHeight;
+		glfwGetWindowPos(window, &windowX, &windowY);
+		glfwGetWindowSize(window, &windowWidth, &windowHeight);
+
+		int bestOverlap = -1;
+		GLFWmonitor* bestMonitor = glfwGetPrimaryMonitor();
+
+		int monitorCount = 0;
+		GLFWmonitor** monitors = glfwGetMonitors(&monitorCount);
+		for (int i = 0; i < monitorCount; i++)
+		{
+			GLFWmonitor* monitor = monitors[i];
+			int monitorX, monitorY;
+			glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+
+			const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
+			if (videoMode == nullptr)
+			{
+				continue;
+			}
+
+			int overlapWidth
+				= std::max(0,
+						   std::min(windowX + windowWidth, monitorX + videoMode->width)
+							   - std::max(windowX, monitorX));
+			int overlapHeight
+				= std::max(0,
+						   std::min(windowY + windowHeight, monitorY + videoMode->height)
+							   - std::max(windowY, monitorY));
+			// The window may straddle two monitors during a drag, so choose the one that owns
+			// the biggest portion of the current window rectangle.
+			int overlapArea = overlapWidth * overlapHeight;
+
+			if (overlapArea > bestOverlap)
+			{
+				bestOverlap = overlapArea;
+				bestMonitor = monitor;
+			}
+		}
+
+		return bestMonitor;
+	}
+}
+
 ImVec2 operator+(const ImVec2& v1, const ImVec2& v2)
 {
 	return ImVec2(v1.x + v2.x, v1.y + v2.y);
@@ -44,6 +94,7 @@ void UserInterface::init()
 
 	float xscale, yscale = 0;
 	glfwGetWindowContentScale(this->mWindow, &xscale, &yscale);
+	this->mContentScale = xscale;
 	updateStyles(xscale);
 	updateWindowSize(false);
 }
@@ -88,6 +139,7 @@ void UserInterface::onFrame()
 
 void UserInterface::updateStyles(float scale)
 {
+	this->mContentScale = scale;
 	scale *= 1.25f;
 	this->mScale = scale;
 
@@ -127,7 +179,7 @@ void UserInterface::updateWindowSize(bool preserveHeight)
 	int defaultHeight = (int)std::ceil(scaleSize(WINDOW_HEIGHT));
 	int maxHeight = GLFW_DONT_CARE;
 
-	if (GLFWmonitor* monitor = glfwGetPrimaryMonitor())
+	if (GLFWmonitor* monitor = getWindowMonitor(this->mWindow))
 	{
 		int workareaX, workareaY, workareaWidth, workareaHeight;
 		glfwGetMonitorWorkarea(monitor, &workareaX, &workareaY, &workareaWidth, &workareaHeight);
@@ -140,13 +192,15 @@ void UserInterface::updateWindowSize(bool preserveHeight)
 		}
 	}
 
+	int currentWidth = 0;
+	int currentHeight = 0;
+	glfwGetWindowSize(this->mWindow, &currentWidth, &currentHeight);
+
 	int height = defaultHeight;
 	if (preserveHeight)
 	{
 		// On DPI/content-scale changes, preserve the current user-selected height instead
 		// of snapping back to the default height every time.
-		int currentWidth, currentHeight;
-		glfwGetWindowSize(this->mWindow, &currentWidth, &currentHeight);
 		height = std::max(currentHeight, minHeight);
 		if (maxHeight != GLFW_DONT_CARE)
 		{
@@ -156,7 +210,14 @@ void UserInterface::updateWindowSize(bool preserveHeight)
 
 	// Lock the width, but allow the user to resize vertically within sensible limits.
 	glfwSetWindowSizeLimits(this->mWindow, width, minHeight, width, maxHeight);
-	glfwSetWindowSize(this->mWindow, width, height);
+	if (currentWidth != width || currentHeight != height)
+	{
+		// Changing the window size can itself trigger another content-scale callback when the
+		// window crosses a monitor boundary, so suppress that re-entrant callback path.
+		this->mApplyingWindowSize = true;
+		glfwSetWindowSize(this->mWindow, width, height);
+		this->mApplyingWindowSize = false;
+	}
 }
 
 bool HOL::UserInterface::rightAlignButton(const char* label, int verticalLineOffset)
@@ -240,6 +301,19 @@ void UserInterface::error_callback(int error, const char* description)
 
 void UserInterface::windows_scale_callback(GLFWwindow* window, float xscale, float yscale)
 {
+	if (UserInterface::Current->mApplyingWindowSize)
+	{
+		// Ignore scale changes caused by our own corrective resize to avoid bouncing between
+		// two monitors with different DPI scales.
+		return;
+	}
+
+	if (std::abs(UserInterface::Current->mContentScale - xscale) < 0.001f)
+	{
+		// Some platforms emit redundant scale callbacks while the effective scale is unchanged.
+		return;
+	}
+
 	std::cout << "New scale: " << xscale << std::endl;
 	UserInterface::Current->updateStyles(xscale); // xy should be the same?
 	UserInterface::Current->updateWindowSize();

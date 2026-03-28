@@ -28,6 +28,8 @@ namespace HOL
 		void initGLFW();
 		void initImgui();
 		float mScale = 1.f;
+		float mContentScale = 1.f;
+		bool mApplyingWindowSize = false;
 		static void error_callback(int error, const char* description);
 		static void windows_scale_callback(GLFWwindow* window, float xscale, float yscale);
 		float scaleSize(float size);
