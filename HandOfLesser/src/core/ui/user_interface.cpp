@@ -21,7 +21,6 @@
 
 using namespace HOL;
 
-static const int PANEL_WIDTH = 600;
 static const int WINDOW_HEIGHT = 600;
 
 UserInterface* UserInterface::Current = nullptr;
@@ -123,7 +122,7 @@ void UserInterface::updateWindowSize(bool preserveHeight)
 {
 	const ImGuiStyle& style = ImGui::GetStyle();
 	// Keep the window width matched to our fixed content width.
-	int width = (int)std::ceil(scaleSize(PANEL_WIDTH) + style.WindowPadding.x * 2.0f);
+	int width = (int)std::ceil(scaleSize(PanelWidth) + style.WindowPadding.x * 2.0f);
 	int minHeight = (int)std::ceil(scaleSize(500.0f));
 	int defaultHeight = (int)std::ceil(scaleSize(WINDOW_HEIGHT));
 	int maxHeight = GLFW_DONT_CARE;
@@ -204,7 +203,7 @@ void UserInterface::initGLFW()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	this->mWindow = glfwCreateWindow(PANEL_WIDTH, WINDOW_HEIGHT, "Hand of Lesser", NULL, NULL);
+	this->mWindow = glfwCreateWindow(PanelWidth, WINDOW_HEIGHT, "Hand of Lesser", NULL, NULL);
 	if (!this->mWindow)
 	{
 		std::cerr << "glfw windows creation failed!" << std::endl;
@@ -467,6 +466,152 @@ void HOL::UserInterface::buildVisual()
 	mVisualizer.drawVisualizer();
 }
 
+void HOL::UserInterface::buildInput()
+{
+	bool syncSettings = false;
+
+	ImGui::BeginChild("InputWindow", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
+
+	ImGui::SeparatorText("Hard-coded SteamVR Input");
+	ImGui::TextWrapped("Minimal hard-coded bindings. These are not intended to be comprehensive.");
+
+	using FingerHighlights = UiGraphics::FingerHighlights;
+	using FingerFlags = UiGraphics::FingerFlags;
+	auto makeFingerHighlights
+		= [](HOL::InputGestureHighlight highlight, std::initializer_list<HOL::FingerType> fingers)
+	{
+		FingerHighlights flags{};
+		flags.fill(HOL::InputGestureHighlight_None);
+		for (HOL::FingerType finger : fingers)
+		{
+			flags[finger] = highlight;
+		}
+		return flags;
+	};
+
+	auto mergeFingerHighlights
+		= [](const FingerHighlights& primary, const FingerHighlights& secondary)
+	{
+		FingerHighlights merged = secondary;
+		for (int i = 0; i < HOL::FingerType_MAX; i++)
+		{
+			if (primary[i] != HOL::InputGestureHighlight_None)
+			{
+				merged[i] = primary[i];
+			}
+		}
+		return merged;
+	};
+
+	auto makeFingerFlags = [](std::initializer_list<HOL::FingerType> fingers)
+	{
+		FingerFlags flags{};
+		flags.fill(false);
+		for (HOL::FingerType finger : fingers)
+		{
+			flags[finger] = true;
+		}
+		return flags;
+	};
+
+	ImGui::SeparatorText("Either Hand");
+
+	UiGraphics::drawDualBinding(
+		this->mScale,
+		"Grip",
+		"Grip",
+		"Close the middle, ring, and little fingers into a grab.",
+		makeFingerHighlights(HOL::InputGestureHighlight_Secondary,
+							 {HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle}),
+		makeFingerFlags({HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle}));
+
+	UiGraphics::drawDualBinding(
+		this->mScale,
+		"Trigger",
+		"Trigger",
+		"Make a fist, then tap thumb and index fingers.",
+		mergeFingerHighlights(
+			makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+								 {HOL::FingerThumb, HOL::FingerIndex}),
+			makeFingerHighlights(HOL::InputGestureHighlight_Secondary,
+								 {HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle})),
+		makeFingerFlags({HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle}),
+		{{HOL::FingerThumb, HOL::FingerIndex}});
+
+	ImGui::SeparatorText("Left Hand");
+
+	UiGraphics::drawSingleBinding(this->mScale,
+								  "Joystick",
+								  "Movement",
+								  "Drag while pinching thumb and middle finger",
+								  HOL::LeftHand,
+								  makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+													   {HOL::FingerThumb, HOL::FingerMiddle}),
+								  makeFingerFlags({}),
+								  {{HOL::FingerThumb, HOL::FingerMiddle}});
+
+	UiGraphics::drawSequenceBinding(this->mScale,
+									"Y",
+									"Vrchat menu",
+									"Tap pinky, ring, middle, index in sequence, quickly",
+									HOL::LeftHand,
+									{makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerLittle}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerRing}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerMiddle}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerIndex})});
+
+	UiGraphics::drawSequenceBinding(this->mScale,
+									"X",
+									"VRchat mute",
+									"Tap index, middle, ring, pinky in sequence, quickly",
+									HOL::LeftHand,
+									{makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerIndex}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerMiddle}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerRing}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerLittle})});
+
+	UiGraphics::drawSingleBinding(this->mScale,
+								  "Menu",
+								  "Oculus system gesture",
+								  "Pinch thumb and index fingers while facing you",
+								  HOL::LeftHand,
+								  makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+													   {HOL::FingerThumb, HOL::FingerIndex}),
+								  makeFingerFlags({}),
+								  {{HOL::FingerThumb, HOL::FingerIndex}});
+
+	ImGui::SeparatorText("Right Hand");
+
+	UiGraphics::drawSequenceBinding(this->mScale,
+									"Toggle SteamVR Input",
+									"Can also be toggled in SteamVR tab",
+									"Tap pinky, ring, middle, index in sequence, quickly",
+									HOL::RightHand,
+									{makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerLittle}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerRing}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerMiddle}),
+									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
+														  {HOL::FingerThumb, HOL::FingerIndex})});
+
+	ImGui::EndChild();
+
+	if (syncSettings)
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+}
+
 void HOL::UserInterface::buildMisc()
 {
 	const char* restoreDefaultsLabel = "Factory reset";
@@ -530,7 +675,7 @@ void HOL::UserInterface::buildBodyTrackers()
 	bool syncSettings = false;
 
 	ImGui::BeginChild(
-		"BodyTrackersWindow", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
+		"BodyTrackersWindow", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("Body Trackers");
 
@@ -565,7 +710,7 @@ void HOL::UserInterface::buildSteamVR()
 	bool syncSettings = false;
 
 	ImGui::BeginChild(
-		"LeftSkeletalWindow", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
+		"LeftSkeletalWindow", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
 
 	/////////////////
 	// General
@@ -785,7 +930,7 @@ void HOL::UserInterface::buildSteamVR()
 void HOL::UserInterface::buildMain()
 {
 	ImGui::BeginChild(
-		"LeftMainWindow", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
+		"LeftMainWindow", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
 
 	/////////////////////////
 	// State
@@ -1150,7 +1295,7 @@ void UserInterface::buildVRChatOSCSettings()
 	//				  ImGuiChildFlags_AutoResizeY);
 
 	ImGui::BeginChild(
-		"VRChatSettings", ImVec2(scaleSize(PANEL_WIDTH), 0), ImGuiChildFlags_AutoResizeY);
+		"VRChatSettings", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("VRChat");
 
@@ -1378,14 +1523,7 @@ void UserInterface::buildInterface()
 		}
 		if (ImGui::BeginTabItem("Input"))
 		{
-			bool syncSettings = false;
-			syncSettings |= ImGui::Checkbox("Send OSC Input", &Config.input.sendOscInput);
-
-			if (syncSettings)
-			{
-				HOL::HandOfLesserCore::Current->syncSettings();
-			}
-
+			buildInput();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Visual"))

@@ -1,7 +1,9 @@
 #pragma once
 
+#include <array>
 #include <HandOfLesserCommon.h>
 #include <GLFW/glfw3.h>
+#include "ui_graphics.h"
 #include "visualizer.h"
 
 namespace HOL
@@ -20,6 +22,7 @@ namespace HOL
 		Visualizer* getVisualizer();
 
 	private:
+		static constexpr int PanelWidth = 600;
 		GLFWwindow* mWindow = nullptr;
 
 		void initGLFW();
@@ -43,7 +46,6 @@ namespace HOL
 
 		bool rightAlignButton(const char* label, int verticalLineOffset = 0);
 		void showWrappedTooltip(const char* text);
-
 		void InputFloatMultipleSingleLableWithButtons(std::string inputLabelBase,
 													  std::string visibleLabel,
 													  float smallIncrement,

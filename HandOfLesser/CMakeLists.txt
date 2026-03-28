@@ -11,6 +11,7 @@
 	src/core/state_global.cpp
 	src/openxr/openxr_hand.cpp
 	src/core/ui/user_interface.cpp
+	src/core/ui/ui_graphics.cpp
 	src/openxr/XrUtils.cpp
 	src/oculus/oculus_hacks.cpp
 	src/vrchat/vrchat_osc.cpp
