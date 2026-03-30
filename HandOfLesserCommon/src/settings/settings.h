@@ -22,7 +22,7 @@ namespace HOL
 
 			float thumbCurlCenter[3] = {
 				20.1f, 
-				-2.1f, 
+				19.4f, 
 				50.2f
 			};
 
@@ -31,7 +31,7 @@ namespace HOL
 				-3.6f,
 				12.9f, 
 				16.2f, 
-				-18.2f		// Thumb
+				-9.2f		// Thumb
 			};
 
 			// Range values must match unity!
@@ -42,7 +42,7 @@ namespace HOL
 			};
 			MotionRange thumbCurlRange[3] = {
 				{-4.1f, 0.4	}, 
-				{-0.5, 1.0	},
+				{-1.5, 1.0	},
 				{-2, 1.27	}
 			};
 
