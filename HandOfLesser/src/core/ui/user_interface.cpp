@@ -1100,13 +1100,59 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::SeparatorText("Hand Tracking Mode");
 
+	// Left / Right hand dropdowns for which controllers to possess
+
+	// Only list controllers that are currently relevant to this session. The actual selection is
+	// persisted as a serial, with an empty string meaning automatic choice in the driver.
+	std::vector<std::string> activeControllerSerials;
+	for (auto& [serial, config] : Config.deviceSettings.devices)
+	{
+		if (config.role == vr::TrackedDeviceClass_Controller && config.activatedThisSession)
+		{
+			activeControllerSerials.push_back(serial);
+		}
+	}
+	std::sort(activeControllerSerials.begin(), activeControllerSerials.end());
+
+	auto drawPreferredPossessionCombo = [&](const char* label, std::string& preferredSerial)
+	{
+		const char* preview = preferredSerial.empty() ? "Auto" : preferredSerial.c_str();
+		ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x * 0.5f
+								- ImGui::GetStyle().ItemSpacing.x);
+		if (ImGui::BeginCombo(label, preview))
+		{
+			if (ImGui::Selectable("Auto", preferredSerial.empty()))
+			{
+				preferredSerial.clear();
+				HOL::HandOfLesserCore::Current->syncSettings();
+			}
+
+			for (const auto& serial : activeControllerSerials)
+			{
+				bool selected = preferredSerial == serial;
+				if (ImGui::Selectable(serial.c_str(), selected))
+				{
+					preferredSerial = serial;
+					HOL::HandOfLesserCore::Current->syncSettings();
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+	};
+
+	// Actual hand tracking mode switches on left side
+
 	std::vector<std::tuple<std::string, HOL::ControllerMode>> modeRadioButtons
 		= {{"Do Nothing", HOL::ControllerMode::NoControllerMode},
 		   {"Emulate separate controller", HOL::ControllerMode::EmulateControllerMode},
 		   {"Possess existing controller", HOL::ControllerMode::HookedControllerMode},
 		   {"Offset existing controller", HOL::ControllerMode::OffsetControllerMode}};
 
-	bool isFirstIteration = true;
+	ImGui::BeginChild("HandTrackingModeLeft",
+					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
+					  ImGuiChildFlags_AutoResizeY);
+
 	for (const auto& buttonContent : modeRadioButtons)
 	{
 		if (ImGui::RadioButton(std::get<0>(buttonContent).c_str(),
@@ -1134,9 +1180,31 @@ void HOL::UserInterface::buildMain()
 					break;
 			}
 		}
-
-		isFirstIteration = false;
 	}
+
+	ImGui::EndChild();
+	ImGui::SameLine();
+
+	// Which controllers to possess selection on right side
+
+	ImGui::BeginChild("HandTrackingModeRight", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
+
+	float modeRowHeight = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
+	ImGui::Dummy(ImVec2(0, modeRowHeight * 2.0f));
+
+	ImGui::BeginDisabled(HOL::Config.handPose.controllerMode
+						 != HOL::ControllerMode::HookedControllerMode);
+	drawPreferredPossessionCombo(
+		"Possess Left##PreferredPossessLeft", Config.deviceSettings.preferredLeftControllerSerial);
+	drawPreferredPossessionCombo(
+		"Possess Right##PreferredPossessRight", Config.deviceSettings.preferredRightControllerSerial);
+	ImGui::EndDisabled();
+
+	ImGui::EndChild();
+
+	//////////////////
+	// Skeletal input
+	//////////////////
 
 	ImGui::SeparatorText("Skeletal Input");
 

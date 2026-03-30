@@ -259,11 +259,17 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const DeviceSettings& settings)
 		{
-			j = {{"devices", settings.devices}};
+			j = {{"preferredLeftControllerSerial", settings.preferredLeftControllerSerial},
+				 {"preferredRightControllerSerial", settings.preferredRightControllerSerial},
+				 {"devices", settings.devices}};
 		}
 
 		inline void from_json(const nlohmann::json& j, DeviceSettings& settings)
 		{
+			nlohmann::get_to_if_present(
+				j, "preferredLeftControllerSerial", settings.preferredLeftControllerSerial);
+			nlohmann::get_to_if_present(
+				j, "preferredRightControllerSerial", settings.preferredRightControllerSerial);
 			nlohmann::get_to_if_present(j, "devices", settings.devices);
 		}
 

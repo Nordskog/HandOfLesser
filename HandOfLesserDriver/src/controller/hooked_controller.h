@@ -92,6 +92,7 @@ namespace HOL
 		HOL::ControllerInputPacket mLastInputPacket;
 
 		bool mValidWhileOriginalInvalid;
+		bool mHasHadValidOriginalPose = false;
 
 		HandSide mSide;
 		vr::IVRServerDriverHost* mHookedHost;

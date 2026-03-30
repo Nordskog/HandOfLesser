@@ -220,6 +220,9 @@ namespace HOL
 
 		struct DeviceSettings
 		{
+			// Empty means automatic selection.
+			std::string preferredLeftControllerSerial;
+			std::string preferredRightControllerSerial;
 			std::map<std::string, DeviceConfig> devices;
 		};
 

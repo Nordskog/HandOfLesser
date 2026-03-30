@@ -293,12 +293,13 @@ namespace HOL
 			return false;
 		}
 
-		return HOL::HandOfLesser::Current->isHandTrackingPrimary(this->mSide);
+		return HOL::HandOfLesser::Current->shouldPossess(this);
 	}
 
 	void HookedController::setSide(HandSide side)
 	{
 		this->mSide = side;
+		HOL::HandOfLesser::Current->refreshPreferredHookedControllers();
 	}
 
 	HandSide HookedController::getSide()
@@ -352,6 +353,10 @@ namespace HOL
 	void HookedController::setLastOriginalPoseState(bool valid)
 	{
 		this->mLastOriginalPoseValid = valid;
+		if (valid)
+		{
+			this->mHasHadValidOriginalPose = true;
+		}
 	}
 
 	Eigen::Vector3f HookedController::getWorldPosition()
