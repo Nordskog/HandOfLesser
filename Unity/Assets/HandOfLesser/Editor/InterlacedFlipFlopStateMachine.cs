@@ -78,10 +78,6 @@ namespace HOL
                 transition.canTransitionToSelf = false;
             }
 
-            // This whole layer is only for packed interlace buffering. Keep all of its normal
-            // transitions inactive while local full is enabled so the disabled state actually sticks.
-            transition.AddCondition(AnimatorConditionMode.Equals, 0, HOL.Resources.USE_FULL_PARAMETER);
-
             return transition;
         }
 
