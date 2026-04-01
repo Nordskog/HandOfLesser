@@ -1146,8 +1146,7 @@ void HOL::UserInterface::buildMain()
 	std::vector<std::tuple<std::string, HOL::ControllerMode>> modeRadioButtons
 		= {{"Do Nothing", HOL::ControllerMode::NoControllerMode},
 		   {"Emulate separate controller", HOL::ControllerMode::EmulateControllerMode},
-		   {"Possess existing controller", HOL::ControllerMode::HookedControllerMode},
-		   {"Offset existing controller", HOL::ControllerMode::OffsetControllerMode}};
+		   {"Possess existing controller", HOL::ControllerMode::HookedControllerMode}};
 
 	ImGui::BeginChild("HandTrackingModeLeft",
 					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
@@ -1175,8 +1174,7 @@ void HOL::UserInterface::buildMain()
 				case HOL::ControllerMode::HookedControllerMode:
 					showWrappedTooltip("Take control of existing controllers.");
 					break;
-				case HOL::ControllerMode::OffsetControllerMode:
-					showWrappedTooltip("Apply offset to existing controllers.");
+				default:
 					break;
 			}
 		}
@@ -1189,15 +1187,35 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::BeginChild("HandTrackingModeRight", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
 
-	float modeRowHeight = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
-	ImGui::Dummy(ImVec2(0, modeRowHeight * 2.0f));
+	bool fallbackOnlyAllowed = !HOL::state::Runtime.isOVR;
+	bool fallbackOnly = fallbackOnlyAllowed ? Config.handPose.fallbackOnly : false;
 
 	ImGui::BeginDisabled(HOL::Config.handPose.controllerMode
-						 != HOL::ControllerMode::HookedControllerMode);
-	drawPreferredPossessionCombo(
-		"Possess Left##PreferredPossessLeft", Config.deviceSettings.preferredLeftControllerSerial);
-	drawPreferredPossessionCombo(
-		"Possess Right##PreferredPossessRight", Config.deviceSettings.preferredRightControllerSerial);
+							 != HOL::ControllerMode::HookedControllerMode
+						 || !fallbackOnlyAllowed);
+
+	drawPreferredPossessionCombo("Possess Left##PreferredPossessLeft",
+								 Config.deviceSettings.preferredLeftControllerSerial);
+	drawPreferredPossessionCombo("Possess Right##PreferredPossessRight",
+								 Config.deviceSettings.preferredRightControllerSerial);
+
+	if (ImGui::Checkbox("Fallback only", &fallbackOnly))
+	{
+		Config.handPose.fallbackOnly = fallbackOnly;
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+	if (ImGui::IsItemHovered())
+	{
+		if (HOL::state::Runtime.isOVR)
+		{
+			showWrappedTooltip("Oculus does not provide their own hand-tracking controllers,"
+							   "so fallback is meaningless.");
+		}
+		else
+		{
+			showWrappedTooltip("Only possess if controller is not submitting a valid pose");
+		}
+	}
 	ImGui::EndDisabled();
 
 	ImGui::EndChild();

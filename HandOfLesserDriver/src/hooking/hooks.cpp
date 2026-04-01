@@ -246,6 +246,13 @@ namespace HOL::hooks
 				// Update shadow tracker state (may transition controller ↔ tracker)
 				HOL::HandOfLesser::Current->updateShadowTrackerState(controller);
 
+				if (!controller->isActingAsTracker()
+					&& config.handPose.controllerMode == ControllerMode::HookedControllerMode)
+				{
+					controller->setSuppressed(
+						HOL::HandOfLesser::Current->shouldSuppressHookedController(controller));
+				}
+
 				if (controller->isSuppressed())
 				{
 					// If acting as tracker, forward pose to shadow tracker
@@ -263,24 +270,25 @@ namespace HOL::hooks
 				}
 
 				auto controllerMode = config.handPose.controllerMode;
-				if (controllerMode == ControllerMode::HookedControllerMode
-					|| controllerMode == ControllerMode::OffsetControllerMode)
+				if (controllerMode == ControllerMode::HookedControllerMode)
 				{
-					if (controllerMode == ControllerMode::HookedControllerMode)
+					bool fallbackOnlyActive = config.handPose.fallbackOnly && !HOL::HandOfLesser::Runtime.isOVR;
+					bool shouldPossess = HOL::HandOfLesser::Current->shouldPossess(controller);
+					bool shouldSubmitFallbackPose
+						= shouldPossess && (!fallbackOnlyActive || !newPoseValid);
+
+					// Just do nothing if we are possessing controllers and need to replace the
+					// native pose outright.
+					if (shouldSubmitFallbackPose)
 					{
-						// Just do nothing if we are possessing controllers
-						if (HOL::HandOfLesser::Current->shouldPossess(controller))
-						{
-							// Prevent original function from being called
-							return;
-						}
+						// Prevent original function from being called.
+						return;
 					}
-					else if (controllerMode == ControllerMode::OffsetControllerMode
-							 && controller->canPossess())
+
+					if (fallbackOnlyActive && shouldPossess && newPoseValid)
 					{
-						// Modify pose by offset, if we are hand-tracking.
-						// Casting to non-cast maybe bad, but don't want to create new one
-						// constantly.
+						// In fallback-only mode we keep the native pose while it is healthy and
+						// only apply our configured calibration offset until we need to take over.
 						HOL::ControllerCommon::offsetPose((vr::DriverPose_t&)newPose,
 														  controller->getSide(),
 														  config.handPose.positionOffset,
@@ -460,17 +468,22 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 						}
 					}
 
-					auto controllerMode = config.handPose.controllerMode;
-					if (controller->shouldPossess())
+					if (HOL::HandOfLesser::Current->shouldSuppressHookedController(controller))
 					{
-						if (controllerMode == ControllerMode::HookedControllerMode
-							|| controllerMode == ControllerMode::OffsetControllerMode)
+						if (config.steamvr.blockControllerInputWhileHandTracking)
 						{
-							if (config.steamvr.blockControllerInputWhileHandTracking)
-							{
-								// DriverLog("Blocked!");
-								return vr::EVRInputError::VRInputError_None;
-							}
+							return vr::EVRInputError::VRInputError_None;
+						}
+					}
+
+					auto controllerMode = config.handPose.controllerMode;
+					if (controller->shouldPossess()
+						&& controllerMode == ControllerMode::HookedControllerMode)
+					{
+						if (config.steamvr.blockControllerInputWhileHandTracking)
+						{
+							// DriverLog("Blocked!");
+							return vr::EVRInputError::VRInputError_None;
 						}
 					}
 				}
@@ -522,17 +535,22 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 					}
 				}
 
-				auto controllerMode = config.handPose.controllerMode;
-				if (controller->shouldPossess())
+				if (HOL::HandOfLesser::Current->shouldSuppressHookedController(controller))
 				{
-					if (controllerMode == ControllerMode::HookedControllerMode
-						|| controllerMode == ControllerMode::OffsetControllerMode)
+					if (config.steamvr.blockControllerInputWhileHandTracking)
 					{
-						if (config.steamvr.blockControllerInputWhileHandTracking)
-						{
-							// DriverLog("Blocked!");
-							return vr::EVRInputError::VRInputError_None;
-						}
+						return vr::EVRInputError::VRInputError_None;
+					}
+				}
+
+				auto controllerMode = config.handPose.controllerMode;
+				if (controller->shouldPossess()
+					&& controllerMode == ControllerMode::HookedControllerMode)
+				{
+					if (config.steamvr.blockControllerInputWhileHandTracking)
+					{
+						// DriverLog("Blocked!");
+						return vr::EVRInputError::VRInputError_None;
 					}
 				}
 			}

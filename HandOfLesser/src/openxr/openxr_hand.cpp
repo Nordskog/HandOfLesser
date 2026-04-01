@@ -365,7 +365,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 									  userTranslationOffset);
 
 			// We need to perform this completely separate for the offset to match when
-			// applied to the existing hand-tracking pose supplied by VD when in Offset mode.
+			// it is later applied to the native controller pose in fallback-only hooked mode.
 			this->handPose.palmLocation.orientation
 				= HOL::rotateLocal(this->handPose.palmLocation.orientation,
 								   HOL::quaternionFromEulerAnglesDegrees(userRotationOffset));

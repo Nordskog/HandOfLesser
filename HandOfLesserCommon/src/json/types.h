@@ -87,6 +87,7 @@ namespace HOL
 		inline void to_json(nlohmann::json& j, const HandPoseSettings& settings)
 		{
 			j = {{"controllerMode", settings.controllerMode},
+				 {"fallbackOnly", settings.fallbackOnly},
 				 {"emulatedControllerProfile", settings.emulatedControllerProfile},
 				 {"orientationOffset", settings.orientationOffset},
 				 {"positionOffset", settings.positionOffset}};
@@ -95,6 +96,7 @@ namespace HOL
 		inline void from_json(const nlohmann::json& j, HandPoseSettings& settings)
 		{
 			nlohmann::get_to_if_present(j, "controllerMode", settings.controllerMode);
+			nlohmann::get_to_if_present(j, "fallbackOnly", settings.fallbackOnly);
 			nlohmann::get_to_if_present(
 				j, "emulatedControllerProfile", settings.emulatedControllerProfile);
 			nlohmann::get_to_if_present(j, "orientationOffset", settings.orientationOffset);

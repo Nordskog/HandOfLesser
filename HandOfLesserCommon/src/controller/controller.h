@@ -30,7 +30,6 @@ namespace HOL
 		NoControllerMode,
 		EmulateControllerMode,
 		HookedControllerMode,
-		OffsetControllerMode,
 		ControllerMode_MAX
 	};
 

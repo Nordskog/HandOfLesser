@@ -65,7 +65,7 @@ namespace HOL
 		bool mLastOriginalPoseValid;
 
 		// Frames since last updated by original driver.
-		// Reset every time there's an update, if we are possessing or offsetting.
+		// Used to detect runtimes that stop submitting poses instead of explicitly going invalid.
 		int32_t framesSinceLastPoseUpdate = 0;
 
 		// Shadow tracker support

@@ -87,8 +87,7 @@ namespace HOL
 						mHasHandTransform[packet->side] = packet->valid;
 					}
 
-					if (Config.handPose.controllerMode != ControllerMode::HookedControllerMode
-						&& Config.handPose.controllerMode != ControllerMode::OffsetControllerMode)
+					if (Config.handPose.controllerMode != ControllerMode::HookedControllerMode)
 					{
 						if (auto hooked = getHookedController(packet->side))
 						{
@@ -488,7 +487,7 @@ namespace HOL
 		const bool hookedMode
 			= Config.handPose.controllerMode == ControllerMode::HookedControllerMode;
 
-		if (hookedMode)
+		if (hookedMode && forceUpdate)
 		{
 			for (auto& controllerContainer : mHookedControllers)
 			{
@@ -504,24 +503,14 @@ namespace HOL
 					continue;
 				}
 
-				// We don't want to spam disconnect signals, but we want to ensure that the
-				// hooked controllers are reset to their original state after we've
-				// possess or suppressed them. If the controllers are connected and active
-				// their next pose submission will connect them again, so we can safely send
-				// a disconnect here, cover the case when the controller is should be inactive.
+				// We don't want to spam disconnect signals, but we do want to force the hooked
+				// controllers back through a clean reconnect path after a mode/settings change.
+				// If the controllers are still active their next real pose submission will bring
+				// them back immediately, so this is safe as a one-off reset.
 				if (forceUpdate)
 				{
 					hooked->sendDisconnectState();
 				}
-
-				// Hooked mode only wants one controller pair alive. Keep the preferred device for
-				// each side and disconnect every other controller so SteamVR only sees one pair.
-				HandSide side = hooked->getSide();
-				bool shouldSuppress = side != HandSide_MAX && hooked != getHookedController(side);
-				// This will set suppressed state and a disconnect event depending on the
-				// existing suppression state, meaning it may not trigger if we've been
-				// submitting poses on its behalf in possession or offset modes.
-				hooked->setSuppressed(shouldSuppress);
 			}
 		}
 
@@ -538,7 +527,7 @@ namespace HOL
 				{
 					// This will set suppressed state and a disconnect event depending on the
 					// existing suppression state, meaning it may not trigger if we've been
-					// submitting poses on its behalf in possession or offset modes.
+					// submitting poses on its behalf already.
 					// Don't unsuppress if the controller is acting as a tracker.
 					if (!hooked->isActingAsTracker())
 					{
@@ -636,17 +625,23 @@ namespace HOL
 	bool HandOfLesser::shouldPossess(HookedController* controller)
 	{
 		if (HandOfLesser::Current->Config.handPose.controllerMode
-			== ControllerMode::HookedControllerMode)
+			!= ControllerMode::HookedControllerMode)
 		{
-			// Only the selected controller for a side should ever be possessed.
-			if (controller != nullptr
-				&& controller == getHookedController(controller->getSide()))
-			{
-				return shouldUseHandTracking(controller);
-			}
+			return false;
 		}
 
-		return false;
+		// Only the selected controller for a side should ever be possessed.
+		if (controller == nullptr || controller != getHookedController(controller->getSide()))
+		{
+			return false;
+		}
+
+		if (!shouldUseHandTracking(controller))
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	bool HandOfLesser::shouldEmulateControllers()
@@ -684,25 +679,75 @@ namespace HOL
 			return shouldPossess;
 		}
 
+		// Recovery controller is the first pair of real controllers we encountered.
+		// If a driver provides hand-tracking controllers we may be hooking 
+		// those instead of the real controllers, but still want to use the real
+		// controls to determine whether or not we should stop hand tracking entirely.
+		HookedController* recoveryController = getRecoveryHookedController(controller->getSide());
+		if (recoveryController == nullptr)
+		{
+			recoveryController = controller;
+		}
+
 		bool canPoss = controller->canPossess();
-		if (!controller->mLastOriginalPoseValid && canPoss)
+		bool recoveryPoseValid = recoveryController->mLastOriginalPoseValid;
+		if (!recoveryPoseValid && canPoss)
 		{
 			controller->mValidWhileOriginalInvalid = true;
 		}
 
-		if (controller->mLastOriginalPoseValid)
+		if (recoveryPoseValid)
 		{
 			controller->mValidWhileOriginalInvalid = false;
 		}
 
-		bool originalSubmitStale = controller->framesSinceLastPoseUpdate > 30;
+		bool originalSubmitStale = recoveryController->framesSinceLastPoseUpdate > 30;
 
 		bool shouldPossess
 			= controller->mLastTransformPacket.tracked
-			  || (canPoss && (!controller->mLastOriginalPoseValid || originalSubmitStale))
+			  || (canPoss && (!recoveryPoseValid || originalSubmitStale))
 			  || controller->mValidWhileOriginalInvalid;
 
 		return shouldPossess;
+	}
+
+	bool HandOfLesser::shouldSuppressHookedController(HookedController* controller)
+	{
+		if (controller == nullptr)
+		{
+			return false;
+		}
+
+		if (Config.handPose.controllerMode != ControllerMode::HookedControllerMode)
+		{
+			return false;
+		}
+
+		if (controller->mDeviceClass != vr::TrackedDeviceClass_Controller)
+		{
+			return false;
+		}
+
+		if (controller->isActingAsTracker())
+		{
+			return false;
+		}
+
+		HandSide side = controller->getSide();
+		if (side < 0 || side >= HOL::HandSide_MAX)
+		{
+			return false;
+		}
+
+		if (!isHandTrackingPrimary(side))
+		{
+			return false;
+		}
+
+		// Once a side is hand-tracking-primary, only the selected hooked controller for that
+		// side stays live. Every other same-side controller should be hidden until native
+		// control takes priority again.
+		return controller != getHookedController(side);
 	}
 
 	bool HandOfLesser::isHandTrackingPrimary(HOL::HandSide side)
@@ -896,11 +941,14 @@ namespace HOL
 
 	void HandOfLesser::refreshPreferredHookedControllers()
 	{
-		// The selected controller only changes when device availability or settings change, so
-		// cache the result instead of rescoring every getHookedController() call.
+		// Preferred possessed controllers and the real-controller recovery pair both only change
+		// when device availability, side assignment, or settings change, so cache them together
+		// instead of rescanning the full hooked list every frame.
 		for (int i = 0; i < HOL::HandSide_MAX; ++i)
 		{
-			refreshPreferredHookedController(static_cast<HOL::HandSide>(i));
+			HOL::HandSide side = static_cast<HOL::HandSide>(i);
+			refreshPreferredHookedController(side);
+			refreshRecoveryHookedController(side);
 		}
 	}
 
@@ -950,6 +998,36 @@ namespace HOL
 		mPreferredHookedControllers[side] = bestController;
 	}
 
+	void HandOfLesser::refreshRecoveryHookedController(HOL::HandSide side)
+	{
+		if (side < 0 || side >= HOL::HandSide_MAX)
+		{
+			return;
+		}
+
+		mRecoveryHookedControllers[side] = nullptr;
+
+		for (HookedController* controller : getHookedControllers(side))
+		{
+			// Hand-tracking controller pairs are the thing we may be possessing in fallback-only
+			// mode, so they are not useful as the signal that native controller tracking has
+			// returned. Devices explicitly treated as trackers should also be ignored here.
+			if (isHandTrackingControllerSerial(controller->serial))
+			{
+				continue;
+			}
+
+			auto configIt = Config.deviceSettings.devices.find(controller->serial);
+			if (configIt != Config.deviceSettings.devices.end() && configIt->second.actAsTracker)
+			{
+				continue;
+			}
+
+			mRecoveryHookedControllers[side] = controller;
+			return;
+		}
+	}
+
 	std::string HandOfLesser::getPreferredHookedControllerSerial(HOL::HandSide side) const
 	{
 		switch (side)
@@ -961,6 +1039,16 @@ namespace HOL
 			default:
 				return "";
 		}
+	}
+
+	HookedController* HandOfLesser::getRecoveryHookedController(HOL::HandSide side) const
+	{
+		if (side < 0 || side >= HOL::HandSide_MAX)
+		{
+			return nullptr;
+		}
+
+		return mRecoveryHookedControllers[side];
 	}
 
 	bool HandOfLesser::isHandTrackingControllerSerial(const std::string& serial) const
@@ -991,10 +1079,12 @@ namespace HOL
 		}
 
 		// Steam Link / Virtual Desktop hand devices advertise themselves in the serial.
-		// Prefer real controllers when both sets are present.
+		// Fallback-only mode wants to stay attached to those hand-driven controllers so it can
+		// keep their high-frequency native pose until we actually need to take over.
 		if (isHandTrackingControllerSerial(controller->serial))
 		{
-			score -= 100;
+			bool fallbackOnlyActive = Config.handPose.fallbackOnly && !Runtime.isOVR;
+			score += fallbackOnlyActive ? 100 : -100;
 		}
 
 		// If we have ever seen a real pose from this controller, prefer it slightly over an
@@ -1099,9 +1189,20 @@ namespace HOL
 				}
 				return emulated;
 			}
-			case ControllerMode::OffsetControllerMode:
 			case ControllerMode::HookedControllerMode: {
-				return getHookedController(side);
+				HookedController* hooked = getHookedController(side);
+				if (hooked == nullptr)
+				{
+					return nullptr;
+				}
+
+				// Not active if we shouldn't possess it
+				if (!shouldPossess(hooked))
+				{
+					return nullptr;
+				}
+
+				return hooked;
 			}
 			default: {
 				return nullptr;

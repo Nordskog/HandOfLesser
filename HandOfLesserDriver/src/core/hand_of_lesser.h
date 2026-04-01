@@ -60,6 +60,7 @@ namespace HOL
 		float getControllerToHandDistance(HookedController* controller);
 		bool isHandTrackingPrimary(HOL::HandSide side);
 		bool shouldUseHandTracking(HookedController* controller);
+		bool shouldSuppressHookedController(HookedController* controller);
 
 		HOL::MultimodalPosePacket mLastMultimodalPosePacket;
 		static HOL::state::TrackingState Tracking;
@@ -74,9 +75,11 @@ namespace HOL
 		void updateShadowTrackerStates();
 		EmulatedTrackerDriver* getOrCreateShadowTracker(HookedController* controller);
 
-	private:
+private:
 		void refreshPreferredHookedController(HOL::HandSide side);
+		void refreshRecoveryHookedController(HOL::HandSide side);
 		std::string getPreferredHookedControllerSerial(HOL::HandSide side) const;
+		HookedController* getRecoveryHookedController(HOL::HandSide side) const;
 		bool isHandTrackingControllerSerial(const std::string& serial) const;
 		int getHookedControllerSelectionScore(HookedController* controller) const;
 		void ReceiveDataThread();
@@ -104,6 +107,7 @@ namespace HOL
 		std::unordered_map<std::string, std::unique_ptr<EmulatedTrackerDriver>>
 			mShadowTrackers; // Keyed by source device serial
 		std::array<HookedController*, HOL::HandSide_MAX> mPreferredHookedControllers{};
+		std::array<HookedController*, HOL::HandSide_MAX> mRecoveryHookedControllers{};
 		HOL::HandTransformPacket mLastHandTransforms[HOL::HandSide_MAX]{};
 		bool mHasHandTransform[HOL::HandSide_MAX]{false, false};
 	};

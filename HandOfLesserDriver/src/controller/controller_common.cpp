@@ -140,7 +140,8 @@ namespace HOL::ControllerCommon
 		///////////////////////////
 
 		// Apply the DriverFromHead offset, rather than letting OVR do it.
-		// This allows us to apply the same offset to both possess and offset modes.
+		// This allows us to apply the same offset whether we are replacing the native pose
+		// outright or only offsetting it in fallback-only hooked mode.
 		// SteamVR wants the original sensor position for applying velocities and stuff,
 		// but as of writing there is no hand-tracking solution that provides useful
 		// velocities anyway, so we just supply the final pose.

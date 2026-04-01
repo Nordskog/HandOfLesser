@@ -195,11 +195,21 @@ namespace HOL
 	void HookedController::SubmitPose()
 	{
 		auto& config = HOL::HandOfLesser::Current->Config;
+		bool fallbackOnlyActive = config.handPose.fallbackOnly && !HOL::HandOfLesser::Runtime.isOVR;
 
 		if (HOL::HandOfLesser::Current->shouldPossess(this))
 		{
-			// In this state we prevent the original hooked call from running,
-			// and call the original function with our pose instead.
+			bool originalSubmitStale = this->framesSinceLastPoseUpdate > 30;
+			bool shouldSubmitFallbackPose
+				= !fallbackOnlyActive || !this->mLastOriginalPoseValid || originalSubmitStale;
+
+			if (!shouldSubmitFallbackPose)
+			{
+				return;
+			}
+
+			// In this state the native controller pose is no longer good enough, so call the
+			// original function ourselves with our replacement pose instead.
 
 			// If we are submitting a stale pose to lock it in place, we must jitter it
 			// because vrchat is stupid and ignores all the status information steamvr provides.
@@ -210,18 +220,6 @@ namespace HOL
 
 			HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
 				this->mHookedHost, this->mDeviceId, pose, sizeof(vr::DriverPose_t));
-		}
-		else if (config.handPose.controllerMode == ControllerMode::OffsetControllerMode)
-		{
-			// If we have gonte 5 frames without a pose update when offsetting, we should also
-			// jitter the pose so vrchat doesn't disable our arms for several seconds.
-			if (config.steamvr.jitterLastPoseOnTrackingLoss && this->framesSinceLastPoseUpdate > 5)
-			{
-				const auto& pose = HOL::ControllerCommon::addJitter(this->lastOriginalPose);
-
-				HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
-					this->mHookedHost, this->mDeviceId, pose, sizeof(vr::DriverPose_t));
-			}
 		}
 	}
 
