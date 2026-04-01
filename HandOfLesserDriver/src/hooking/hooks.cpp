@@ -579,9 +579,27 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 			HookedController* controller
 				= HandOfLesser::Current->getHookedControllerByInputHandle(ulComponent);
 
-			if (controller != nullptr && controller->isAugmentedSkeletonActive())
+			if (controller != nullptr)
 			{
-				return vr::VRInputError_None;
+				if (controller->isAugmentedSkeletonActive())
+				{
+					return vr::VRInputError_None;
+				}
+
+				bool submittingSkeletalInput = HandOfLesser::Current->Config.skeletal.transmitMode
+											   != SkeletalInputMode_DontTransmit;
+
+				// While possessing a hooked controller, the app is already submitting the skeletal
+				// data we want SteamVR to see. Swallow the native controller's own skeleton updates
+				// so they cannot overwrite the possessed hand-tracking skeleton on the same handle.
+				if (submittingSkeletalInput
+					&& HandOfLesser::Current->Config.handPose.controllerMode
+						   == ControllerMode::HookedControllerMode
+					&& HandOfLesser::Current->shouldPossess(controller))
+				{
+					return vr::VRInputError_None;
+				}
+
 			}
 
 			return UpdateSkeletonComponent::FunctionHook.originalFunc(
