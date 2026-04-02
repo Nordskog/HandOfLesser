@@ -3,8 +3,8 @@ namespace HOL
 {
 	PoseLocationEuler getControllerBaseOffset()
 	{
-		return {Eigen::Vector3f(0.076, -0.043, -0.107),
-				Eigen::Vector3f(0.176f, -39.510f, -91.296f)};
+		return {Eigen::Vector3f(0.077f, -0.042f, -0.106f),
+				Eigen::Vector3f(-0.300f, -40.510f, -89.296f)};
 	}
 
 	PoseLocationEuler getControllerOffsetPreset(ControllerOffsetPreset type)
