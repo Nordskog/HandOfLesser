@@ -15,9 +15,15 @@ namespace HOL
 		bool poseTracked;
 		bool poseStale;
 
-		// raw values
+		// Raw palm-space values from the runtime.
+		// These are used for SteamVR controller pose generation so the driver can apply the
+		// controller offset through DriverFromHead instead of baking it into the sensor pose.
 		HOL::PoseLocation palmLocation;
-		HOL::PoseVelocity palmVelocity; // Does velocity need to be modified for tracker?
+		HOL::PoseVelocity palmVelocity;
+
+		// Final controller-aligned pose after base + user offsets have been applied.
+		HOL::PoseLocation controllerLocation;
+		HOL::PoseVelocity controllerVelocity;
 
 		// offset to match Index tracker location
 		HOL::PoseLocation trackerLocation;

@@ -299,6 +299,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 			this->handPose.palmLocation.position = newPalmPosition;
 			this->handPose.palmLocation.orientation = newPalmOrientation;
 
+			this->handPose.controllerLocation = this->handPose.palmLocation;
+
 			auto palmVelocity = this->mJointVelocities[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 
 			this->handPose.palmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
@@ -309,6 +311,11 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 				*= HOL::Config.general.linearVelocityMultiplier;
 			this->handPose.palmVelocity.angularVelocity
 				*= HOL::Config.general.angularVelocityMultiplier;
+
+			// The final controller pose remains offset for local display and any logic that wants
+			// the controller-aligned transform, but the raw palm values are kept separately so the
+			// driver can construct DriverFromHead poses directly from the sensor origin.
+			this->handPose.controllerVelocity = this->handPose.palmVelocity;
 
 			/////////////
 			// Offsets
@@ -346,28 +353,28 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 
 			// Remember to apply translation then rotation, always
 
-			this->handPose.palmLocation.position
-				= HOL::translateLocal(this->handPose.palmLocation.position,
-									  this->handPose.palmLocation.orientation,
+			this->handPose.controllerLocation.position
+				= HOL::translateLocal(this->handPose.controllerLocation.position,
+									  this->handPose.controllerLocation.orientation,
 									  controllerTranslationOffset);
 
-			this->handPose.palmLocation.orientation
-				= HOL::rotateLocal(this->handPose.palmLocation.orientation,
+			this->handPose.controllerLocation.orientation
+				= HOL::rotateLocal(this->handPose.controllerLocation.orientation,
 								   HOL::quaternionFromEulerAnglesDegrees(controllerRotationOffset));
 
 			////////////////
 			// User offset
 			///////////////
 
-			this->handPose.palmLocation.position
-				= HOL::translateLocal(this->handPose.palmLocation.position,
-									  this->handPose.palmLocation.orientation,
+			this->handPose.controllerLocation.position
+				= HOL::translateLocal(this->handPose.controllerLocation.position,
+									  this->handPose.controllerLocation.orientation,
 									  userTranslationOffset);
 
 			// We need to perform this completely separate for the offset to match when
 			// it is later applied to the native controller pose in fallback-only hooked mode.
-			this->handPose.palmLocation.orientation
-				= HOL::rotateLocal(this->handPose.palmLocation.orientation,
+			this->handPose.controllerLocation.orientation
+				= HOL::rotateLocal(this->handPose.controllerLocation.orientation,
 								   HOL::quaternionFromEulerAnglesDegrees(userRotationOffset));
 
 			//////////////////////
@@ -394,9 +401,9 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 				HOL::display::HandTransform[this->mSide].rawPose.orientation = newPalmOrientation;
 
 				HOL::display::HandTransform[this->mSide].finalPose.position
-					= this->handPose.palmLocation.position;
+					= this->handPose.controllerLocation.position;
 				HOL::display::HandTransform[this->mSide].finalPose.orientation
-					= this->handPose.palmLocation.orientation;
+					= this->handPose.controllerLocation.orientation;
 
 				HOL::display::HandTransform[this->mSide].finalTranslationOffset
 					= controllerTranslationOffset;

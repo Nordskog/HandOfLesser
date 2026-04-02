@@ -11,6 +11,35 @@ namespace HOL::ControllerCommon
 	static std::uniform_real_distribution<float> JitterDistribution
 		= std::uniform_real_distribution<float>(0, 0.0001);
 
+	static void getControllerPoseOffset(HOL::HandSide side,
+										Eigen::Vector3f& translationOffset,
+										Eigen::Quaternionf& rotationOffset)
+	{
+		auto baseOffset = HOL::getControllerBaseOffset();
+		Eigen::Vector3f baseTranslationOffset = baseOffset.position;
+		Eigen::Vector3f baseRotationOffset = baseOffset.orientation;
+
+		Eigen::Vector3f userTranslationOffset = HandOfLesser::Config.handPose.positionOffset;
+		Eigen::Vector3f userRotationOffset = HandOfLesser::Config.handPose.orientationOffset;
+
+		if (side != HandSide::LeftHand)
+		{
+			baseTranslationOffset = flipHandTranslation(baseTranslationOffset);
+			baseRotationOffset = flipHandRotation(baseRotationOffset);
+			userTranslationOffset = flipHandTranslation(userTranslationOffset);
+			userRotationOffset = flipHandRotation(userRotationOffset);
+		}
+
+		Eigen::Quaternionf baseRotation
+			= HOL::quaternionFromEulerAnglesDegrees(baseRotationOffset);
+		Eigen::Quaternionf userRotation
+			= HOL::quaternionFromEulerAnglesDegrees(userRotationOffset);
+
+		// The app applies the base controller offset first, then the user offset.
+		rotationOffset = baseRotation * userRotation;
+		translationOffset = baseTranslationOffset + (baseRotation * userTranslationOffset);
+	}
+
 	vr::DriverPose_t generatePose(HOL::HandTransformPacket* packet, bool deviceConnected)
 	{
 		// Let's retrieve the Hmd pose to base our controller pose off.
@@ -30,7 +59,13 @@ namespace HOL::ControllerCommon
 		// I guess this would be to align coordinate systems if they were offset.
 		// Probably won't need that for quest
 
-		// copy our position to our pose
+		// HandTransform packets now carry the raw palm pose/velocity from the runtime.
+		// Keep that as the sensor origin and express the controller alignment through
+		// DriverFromHead so SteamVR can predict the offset controller point correctly.
+		Eigen::Vector3f driverFromHeadTranslation;
+		Eigen::Quaternionf qDriverFromHead;
+		getControllerPoseOffset(packet->side, driverFromHeadTranslation, qDriverFromHead);
+
 		pose.vecPosition[0] = packet->location.position.x();
 		pose.vecPosition[1] = packet->location.position.y();
 		pose.vecPosition[2] = packet->location.position.z();
@@ -39,6 +74,15 @@ namespace HOL::ControllerCommon
 		pose.qRotation.x = packet->location.orientation.x();
 		pose.qRotation.y = packet->location.orientation.y();
 		pose.qRotation.z = packet->location.orientation.z();
+
+		pose.vecDriverFromHeadTranslation[0] = driverFromHeadTranslation.x();
+		pose.vecDriverFromHeadTranslation[1] = driverFromHeadTranslation.y();
+		pose.vecDriverFromHeadTranslation[2] = driverFromHeadTranslation.z();
+
+		pose.qDriverFromHeadRotation.w = qDriverFromHead.w();
+		pose.qDriverFromHeadRotation.x = qDriverFromHead.x();
+		pose.qDriverFromHeadRotation.y = qDriverFromHead.y();
+		pose.qDriverFromHeadRotation.z = qDriverFromHead.z();
 
 		// Ideally we would supply velocities with our poses so SteamVR can
 		// do extra prediction and make up for low samples (I .e.g VDXR ).
