@@ -800,10 +800,12 @@ void HOL::UserInterface::buildSteamVR()
 
 	syncSettings |= ImGui::Checkbox("Transmit SteamVR Input", &Config.steamvr.sendSteamVRInput);
 
-	ImGui::SeparatorText("Input");
+	ImGui::SeparatorText("Blocking behavior");
 
 	syncSettings |= ImGui::Checkbox("Block Controller Input while handtracking",
 									&Config.steamvr.blockControllerInputWhileHandTracking);
+	syncSettings |= ImGui::Checkbox("Disable other controllers while handtracking",
+									&Config.steamvr.disableOtherControllersWhileHandTracking);
 
 	ImGui::SeparatorText("General");
 

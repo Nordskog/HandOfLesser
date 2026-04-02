@@ -264,9 +264,13 @@ namespace HOL::hooks
 							shadow->SubmitPose();
 						}
 					}
-					// We've sent a disconnect message,
-					// prevent any future pose submits.
-					return;
+
+					if (config.steamvr.disableOtherControllersWhileHandTracking)
+					{
+						// We've sent a disconnect message,
+						// prevent any future pose submits.
+						return;
+					}
 				}
 
 				auto controllerMode = config.handPose.controllerMode;
