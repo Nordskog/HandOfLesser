@@ -139,17 +139,11 @@ namespace HOL::ControllerCommon
 		// Apply driver offsets
 		///////////////////////////
 
-		// Apply the DriverFromHead offset, rather than letting OVR do it.
-		// This allows us to apply the same offset whether we are replacing the native pose
-		// outright or only offsetting it in fallback-only hooked mode.
-		// SteamVR wants the original sensor position for applying velocities and stuff,
-		// but as of writing there is no hand-tracking solution that provides useful
-		// velocities anyway, so we just supply the final pose.
-		// In theory you could apply the driver offset, apply our offsets, then
-		// apply the inverse of the driver offset. Do that if we ever need velocities.
-
-		// offsets are expected to be applied translation, then rotation.
-		// we should try to adhere to this with all our offsets too.
+		// Native controller poses often keep part of their transform in DriverFromHead.
+		// SteamVR can use that original structure for its own prediction, so in fallback-only
+		// mode we must not bake it into vecPosition/qRotation and clear it out.
+		// Instead, convert to the final native pose, apply our calibration offset there,
+		// then solve back to the local pose while preserving DriverFromHead unchanged.
 
 		Eigen::Vector3f vecDriverFromHead
 			= Eigen::Vector3f(existingPose.vecDriverFromHeadTranslation[0],
@@ -164,36 +158,38 @@ namespace HOL::ControllerCommon
 		poseTranslation = HOL::translateLocal(poseTranslation, poseRotation, vecDriverFromHead);
 		poseRotation = poseRotation * qDriverFromHead;
 
-		// Clear in pose
-		existingPose.vecDriverFromHeadTranslation[0] = 0;
-		existingPose.vecDriverFromHeadTranslation[1] = 0;
-		existingPose.vecDriverFromHeadTranslation[2] = 0;
-
-		existingPose.qDriverFromHeadRotation.w = 1;
-		existingPose.qDriverFromHeadRotation.x = 0;
-		existingPose.qDriverFromHeadRotation.y = 0;
-		existingPose.qDriverFromHeadRotation.z = 0;
-
 		////////////////////
-		// Apply our offets
+		// Apply our offsets
 		////////////////////
 
+		// Offsets are expected to be applied translation, then rotation.
+		// We should try to adhere to this with all our offsets too.
 		poseTranslation = HOL::translateLocal(poseTranslation, poseRotation, translationOffset);
 		poseRotation
 			= HOL::rotateLocal(poseRotation, HOL::quaternionFromEulerAnglesDegrees(rotationOffset));
+
+		//////////////////////////////////////
+		// Restore the original pose structure
+		//////////////////////////////////////
+
+		// Leave the native DriverFromHead data and native velocities untouched so SteamVR can
+		// keep predicting this as the original tracked controller instead of as a rebased pose.
+		Eigen::Quaternionf localPoseRotation = poseRotation * qDriverFromHead.inverse();
+		Eigen::Vector3f localPoseTranslation
+			= poseTranslation - (localPoseRotation * vecDriverFromHead);
 
 		//////////
 		// Assign
 		//////////
 
-		existingPose.vecPosition[0] = poseTranslation.x();
-		existingPose.vecPosition[1] = poseTranslation.y();
-		existingPose.vecPosition[2] = poseTranslation.z();
+		existingPose.vecPosition[0] = localPoseTranslation.x();
+		existingPose.vecPosition[1] = localPoseTranslation.y();
+		existingPose.vecPosition[2] = localPoseTranslation.z();
 
-		existingPose.qRotation.w = poseRotation.w();
-		existingPose.qRotation.x = poseRotation.x();
-		existingPose.qRotation.y = poseRotation.y();
-		existingPose.qRotation.z = poseRotation.z();
+		existingPose.qRotation.w = localPoseRotation.w();
+		existingPose.qRotation.x = localPoseRotation.x();
+		existingPose.qRotation.y = localPoseRotation.y();
+		existingPose.qRotation.z = localPoseRotation.z();
 	}
 
 	void applyDriverOffset(Eigen::Vector3f& posePosition,
