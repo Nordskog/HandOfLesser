@@ -119,7 +119,8 @@ namespace HOL
 	{
 	public:
 		EmulatedControllerDriver(vr::ETrackedControllerRole role,
-								 HOL::EmulatedControllerProfile profile);
+								 HOL::EmulatedControllerProfile profile,
+								 vr::EVRSkeletalTrackingLevel trackingLevel);
 
 		vr::EVRInitError Activate(uint32_t unObjectId) override;
 
@@ -172,6 +173,7 @@ namespace HOL
 
 		vr::ETrackedControllerRole my_controller_role_;
 		HOL::EmulatedControllerProfile my_emulated_profile_;
+		vr::EVRSkeletalTrackingLevel my_tracking_level_;
 
 		std::string my_controller_model_number_;
 		std::string my_controller_serial_number_;

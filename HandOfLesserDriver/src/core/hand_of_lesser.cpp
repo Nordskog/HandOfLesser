@@ -7,7 +7,6 @@
 #include <nlohmann/json.hpp>
 #include <src/json/types.h>
 #include <algorithm>
-#include <cctype>
 #include <limits>
 
 namespace HOL
@@ -240,8 +239,9 @@ namespace HOL
 			}
 		}
 
-		if (Config.handPose.emulatedControllerProfile
-				!= oldConfig.handPose.emulatedControllerProfile
+		if ((Config.handPose.emulatedControllerProfile
+				 != oldConfig.handPose.emulatedControllerProfile
+			 || Config.skeletal.trackingLevel != oldConfig.skeletal.trackingLevel)
 			&& Config.handPose.controllerMode == ControllerMode::EmulateControllerMode)
 		{
 			devicesChanged = true;
@@ -289,8 +289,10 @@ namespace HOL
 
 	void HandOfLesser::addEmulatedControllers()
 	{
-		// Index or touch?
 		HOL::EmulatedControllerProfile profile = Config.handPose.emulatedControllerProfile;
+		vr::EVRSkeletalTrackingLevel trackingLevel = getRequestedSkeletalTrackingLevel();
+		HOL::EmulatedControllerVariant variant
+			= HOL::getEmulatedControllerVariant(profile, trackingLevel);
 
 		for (int i = 0; i < HOL::HandSide_MAX; i++)
 		{
@@ -300,14 +302,16 @@ namespace HOL
 				continue;
 			}
 
-			// Slot should also be empty, but otherwise add.
-			auto& controllerSlot = this->mAllEmulatedControllers[profile][i];
+			// Emulated controllers are cached by controller variant so the driver can switch between
+			// profile/tracking-level combinations without recreating devices each time.
+			auto& controllerSlot = this->mAllEmulatedControllers[variant][i];
 			if (!controllerSlot)
 			{
 				controllerSlot = std::make_unique<EmulatedControllerDriver>(
 					i == HOL::HandSide::LeftHand ? vr::TrackedControllerRole_LeftHand
 												 : vr::TrackedControllerRole_RightHand,
-					profile);
+					profile,
+					trackingLevel);
 				EmulatedControllerDriver* controller = controllerSlot.get();
 
 				if (!vr::VRServerDriverHost()->TrackedDeviceAdded(
@@ -348,14 +352,14 @@ namespace HOL
 	{
 		removeEmulatedControllers();
 
-		for (int profile = 0; profile < HOL::EmulatedControllerProfile_MAX; profile++)
+		for (int variant = 0; variant < HOL::EmulatedControllerVariant_MAX; variant++)
 		{
 			for (int side = 0; side < HOL::HandSide_MAX; side++)
 			{
-				if (this->mAllEmulatedControllers[profile][side])
+				if (this->mAllEmulatedControllers[variant][side])
 				{
-					this->mAllEmulatedControllers[profile][side]->setConnectedState(false);
-					this->mAllEmulatedControllers[profile][side].reset();
+					this->mAllEmulatedControllers[variant][side]->setConnectedState(false);
+					this->mAllEmulatedControllers[variant][side].reset();
 				}
 			}
 		}
@@ -544,14 +548,16 @@ namespace HOL
 
 
 				// Ensure inactive controllers are disconnected
-				for (int profile = 0; profile < HOL::EmulatedControllerProfile_MAX; profile++)
+				HOL::EmulatedControllerVariant activeVariant = HOL::getEmulatedControllerVariant(
+					Config.handPose.emulatedControllerProfile, getRequestedSkeletalTrackingLevel());
+				for (int variant = 0; variant < HOL::EmulatedControllerVariant_MAX; variant++)
 				{
-					if (profile == Config.handPose.emulatedControllerProfile)
+					if (variant == activeVariant)
 					{
 						continue;
 					}
 
-					auto& inactive = mAllEmulatedControllers[profile][i];
+					auto& inactive = mAllEmulatedControllers[variant][i];
 					if (inactive)
 					{
 						inactive->setConnectedState(false);
@@ -779,9 +785,9 @@ namespace HOL
 
 	bool HandOfLesser::isEmulatedController(vr::ITrackedDeviceServerDriver* driver)
 	{
-		for (auto& profileControllers : mAllEmulatedControllers)
+		for (auto& variantControllers : mAllEmulatedControllers)
 		{
-			for (auto& controllerContainer : profileControllers)
+			for (auto& controllerContainer : variantControllers)
 			{
 				EmulatedControllerDriver* controller = controllerContainer.get();
 				if (controller == driver)
@@ -1009,10 +1015,9 @@ namespace HOL
 
 		for (HookedController* controller : getHookedControllers(side))
 		{
-			// Hand-tracking controller pairs are the thing we may be possessing in fallback-only
-			// mode, so they are not useful as the signal that native controller tracking has
-			// returned. Devices explicitly treated as trackers should also be ignored here.
-			if (isHandTrackingControllerSerial(controller->serial))
+			// Full skeletal tracking indicates the dedicated hand-tracking controller pair, which is
+			// not useful as the signal that native controller tracking has returned.
+			if (controller->mSkeletonTrackingLevel == vr::VRSkeletalTracking_Full)
 			{
 				continue;
 			}
@@ -1051,14 +1056,9 @@ namespace HOL
 		return mRecoveryHookedControllers[side];
 	}
 
-	bool HandOfLesser::isHandTrackingControllerSerial(const std::string& serial) const
+	vr::EVRSkeletalTrackingLevel HandOfLesser::getRequestedSkeletalTrackingLevel() const
 	{
-		std::string loweredSerial = serial;
-		std::transform(loweredSerial.begin(),
-					   loweredSerial.end(),
-					   loweredSerial.begin(),
-					   [](unsigned char c) { return (char)std::tolower(c); });
-		return loweredSerial.find("hand") != std::string::npos;
+		return Config.skeletal.trackingLevel;
 	}
 
 	int HandOfLesser::getHookedControllerSelectionScore(HookedController* controller) const
@@ -1078,13 +1078,16 @@ namespace HOL
 			score -= 1000;
 		}
 
-		// Steam Link / Virtual Desktop hand devices advertise themselves in the serial.
-		// Fallback-only mode wants to stay attached to those hand-driven controllers so it can
-		// keep their high-frequency native pose until we actually need to take over.
-		if (isHandTrackingControllerSerial(controller->serial))
+		bool wantsFullTracking
+			= getRequestedSkeletalTrackingLevel() == vr::VRSkeletalTracking_Full;
+		bool controllerProvidesFullTracking
+			= controller->mSkeletonTrackingLevel == vr::VRSkeletalTracking_Full;
+
+		// When both controller pairs exist, prefer the device whose native skeletal tracking
+		// level best matches the current request.
+		if (controllerProvidesFullTracking)
 		{
-			bool fallbackOnlyActive = Config.handPose.fallbackOnly && !Runtime.isOVR;
-			score += fallbackOnlyActive ? 100 : -100;
+			score += wantsFullTracking ? 100 : -100;
 		}
 
 		// If we have ever seen a real pose from this controller, prefer it slightly over an
@@ -1498,12 +1501,33 @@ namespace HOL
 			}
 		}
 
+		for (auto& controllerContainer : mHookedControllers)
+		{
+			HookedController* controller = controllerContainer.get();
+			if (controller->mDeviceClass != vr::TrackedDeviceClass_Controller
+				|| controller->isActingAsTracker())
+			{
+				continue;
+			}
+
+			if (controller->mSkeletonTrackingLevel == vr::VRSkeletalTracking_Full)
+			{
+				packet.hasHandTrackingControllers = true;
+			}
+			else
+			{
+				packet.hasNormalControllers = true;
+			}
+		}
+
 		packet.hookedControllerCount = (int)mHookedControllers.size();
 		packet.emulatedTrackerCount = (int)mEmulatedTrackers.size();
 
 		this->mTransport.send((char*)&packet, sizeof(packet));
-		DriverLog("Sent driver status: emulated=%d, hooked=%d, trackers=%d",
+		DriverLog("Sent driver status: emulated=%d, normal=%d, hand=%d, hooked=%d, trackers=%d",
 				  packet.emulatedControllersActive,
+				  packet.hasNormalControllers,
+				  packet.hasHandTrackingControllers,
 				  packet.hookedControllerCount,
 				  packet.emulatedTrackerCount);
 	}
@@ -1513,6 +1537,7 @@ namespace HOL
 		DeviceStatePacket packet;
 		strncpy_s(packet.serial, sizeof(packet.serial), device->serial.c_str(), _TRUNCATE);
 		packet.role = device->mDeviceClass;
+		packet.trackingLevel = device->mSkeletonTrackingLevel;
 
 		this->mTransport.send((char*)&packet, sizeof(packet));
 	}

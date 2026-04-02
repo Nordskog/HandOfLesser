@@ -26,6 +26,5 @@ namespace HOL::ControllerCommon
 	void buildSkeletalPoseFromPacket(
 		const HOL::SkeletalPacket& packet,
 		vr::VRBoneTransform_t outPose[SteamVR::HandSkeletonBone::eBone_Count]);
-	vr::EVRSkeletalMotionRange getSkeletalMotionRange(bool augmentControllerSkeleton);
 
 } // namespace HOL::ControllerCommon

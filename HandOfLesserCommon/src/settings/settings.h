@@ -177,7 +177,7 @@ namespace HOL
 
 		struct SkeletalInput
 		{
-			SkeletalInputMode transmitMode = SkeletalInputMode_Unobstructed;
+			vr::EVRSkeletalTrackingLevel trackingLevel = vr::VRSkeletalTracking_Full;
 			float jointLengthMultiplier = 1.05f;
 			bool augmentControllerSkeleton = false;
 			Eigen::Vector3f positionOffset = Eigen::Vector3f(-0.168f, -0.041f, 0.049f);
@@ -213,6 +213,8 @@ namespace HOL
 			std::string serial;
 			vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
 			bool activatedThisSession = false; // Runtime flag, not saved to JSON
+			vr::EVRSkeletalTrackingLevel trackingLevel
+				= vr::VRSkeletalTracking_Estimated; // Runtime flag, not saved to JSON
 
 			// Shadow tracker settings
 			bool actAsTracker = false; // Make this device appear as a tracker

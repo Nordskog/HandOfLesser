@@ -13,7 +13,8 @@ namespace HOL
 	using namespace SteamVR;
 
 	EmulatedControllerDriver::EmulatedControllerDriver(vr::ETrackedControllerRole role,
-													   HOL::EmulatedControllerProfile profile)
+													   HOL::EmulatedControllerProfile profile,
+													   vr::EVRSkeletalTrackingLevel trackingLevel)
 	{
 		// Set a member to keep track of whether we've activated yet or not
 		is_active_ = false;
@@ -22,11 +23,12 @@ namespace HOL
 		// is a left or right hand. Let's store it for later use. We'll need it.
 		my_controller_role_ = role;
 		my_emulated_profile_ = profile;
+		my_tracking_level_ = trackingLevel;
 		const bool isLeftHand = my_controller_role_ == vr::TrackedControllerRole_LeftHand;
 
 		my_controller_model_number_ = getEmulatedControllerModelName(profile, isLeftHand);
-		my_controller_serial_number_
-			= getEmulatedControllerSerial(profile, isLeftHand ? "HandOfLesserL" : "HandOfLesserR");
+		my_controller_serial_number_ = getEmulatedControllerSerial(
+			profile, trackingLevel, isLeftHand ? "HandOfLesserL" : "HandOfLesserR");
 
 		// Here's an example of how to use our logging wrapper around IVRDriverLog
 		// In SteamVR logs (SteamVR Hamburger Menu > Developer Settings > Web console) drivers have
@@ -204,7 +206,7 @@ namespace HOL
 				: "/skeleton/hand/right", // Where on the body this skeleton is.
 			"/pose/raw", // Where the origin for the skeleton is going to be. These pose locations
 						 // are defined in the render model file.
-			vr::VRSkeletalTracking_Full, // Inform the runtime about the capabilities of the device.
+			my_tracking_level_, // Inform the runtime about the capabilities of the device.
 			nullptr, // Used for calculating curl and splay values. If this is null then defaults
 					 // are used.
 			0,		 // How many bones there are in the gripLimitTransforms above.
@@ -379,7 +381,7 @@ namespace HOL
 		ControllerCommon::buildSkeletalPoseFromPacket(*packet, mSkeletalPose);
 
 		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
-													 ControllerCommon::getSkeletalMotionRange(false),
+													 vr::VRSkeletalMotionRange_WithoutController,
 													 mSkeletalPose,
 													 eBone_Count);
 	}

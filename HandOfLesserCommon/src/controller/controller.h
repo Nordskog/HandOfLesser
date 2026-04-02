@@ -3,6 +3,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <src/hand/hand.h>
+#include "openvr_driver.h"
 
 #include <d3d11.h>
 #include <openxr/openxr.h>
@@ -15,6 +16,31 @@ namespace HOL
 		EmulatedControllerProfile_OculusTouch,
 		EmulatedControllerProfile_MAX
 	};
+
+	enum EmulatedControllerVariant
+	{
+		EmulatedControllerVariant_IndexPartial,
+		EmulatedControllerVariant_IndexFull,
+		EmulatedControllerVariant_OculusTouchPartial,
+		EmulatedControllerVariant_OculusTouchFull,
+		EmulatedControllerVariant_MAX
+	};
+
+	inline EmulatedControllerVariant getEmulatedControllerVariant(
+		EmulatedControllerProfile profile,
+		vr::EVRSkeletalTrackingLevel trackingLevel)
+	{
+		bool fullTracking = trackingLevel == vr::VRSkeletalTracking_Full;
+
+		if (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
+		{
+			return fullTracking ? EmulatedControllerVariant_OculusTouchFull
+								: EmulatedControllerVariant_OculusTouchPartial;
+		}
+
+		return fullTracking ? EmulatedControllerVariant_IndexFull
+							: EmulatedControllerVariant_IndexPartial;
+	}
 
 	// TODO: need to be able to save these
 	enum ControllerOffsetPreset

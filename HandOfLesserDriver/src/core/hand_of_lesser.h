@@ -69,6 +69,7 @@ namespace HOL
 		void sendDeviceState(HookedController* device);
 		void sendAllDeviceStates();
 		void refreshPreferredHookedControllers();
+		void sendStatus();
 
 		// Shadow tracker management
 		void updateShadowTrackerState(HookedController* controller);
@@ -80,11 +81,10 @@ private:
 		void refreshRecoveryHookedController(HOL::HandSide side);
 		std::string getPreferredHookedControllerSerial(HOL::HandSide side) const;
 		HookedController* getRecoveryHookedController(HOL::HandSide side) const;
-		bool isHandTrackingControllerSerial(const std::string& serial) const;
+		vr::EVRSkeletalTrackingLevel getRequestedSkeletalTrackingLevel() const;
 		int getHookedControllerSelectionScore(HookedController* controller) const;
 		void ReceiveDataThread();
 		void estimateControllerSide();
-		void sendStatus();
 
 		bool mActive;
 		int mControllerSideEstimationAttemptCount = 0;
@@ -99,7 +99,7 @@ private:
 
 		std::array<EmulatedControllerDriver*, HOL::HandSide_MAX> mEmulatedControllers{};
 		std::array<std::array<std::unique_ptr<EmulatedControllerDriver>, HOL::HandSide_MAX>,
-				   HOL::EmulatedControllerProfile_MAX>
+				   HOL::EmulatedControllerVariant_MAX>
 			mAllEmulatedControllers;
 		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
 		std::unordered_map<HOL::BodyTrackerRole, std::unique_ptr<EmulatedTrackerDriver>>

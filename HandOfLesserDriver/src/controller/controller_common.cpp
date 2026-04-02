@@ -315,29 +315,4 @@ namespace HOL::ControllerCommon
 			outPose[i] = poseLocationToBoneTransform(workingPacket.locations[i]);
 		}
 	}
-
-	vr::EVRSkeletalMotionRange getSkeletalMotionRange(bool augmentControllerSkeleton)
-	{
-		// When augmenting the controller with hand tracking, it should always be obstructed
-		if (augmentControllerSkeleton)
-		{
-			return vr::VRSkeletalMotionRange_WithController;
-		}
-
-		if (HandOfLesser::Runtime.isSteamVR)
-		{
-			return vr::VRSkeletalMotionRange_WithController;
-		}
-
-		switch (HandOfLesser::Config.skeletal.transmitMode)
-		{
-			case SkeletalInputMode_Unobstructed:
-				return vr::VRSkeletalMotionRange_WithoutController;
-			case SkeletalInputMode_DontTransmit:
-			case SkeletalInputMode_Obstructed:
-			default:
-				return vr::VRSkeletalMotionRange_WithController;
-		}
-	}
-
 } // namespace HOL::ControllerCommon

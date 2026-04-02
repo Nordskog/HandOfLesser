@@ -4,6 +4,7 @@
 #include "src/openxr/XrUtils.h"
 #include "src/core/settings_global.h"
 #include "src/core/state_global.h"
+#include "src/core/ui/display_global.h"
 #include "src/vrchat/vrchat_osc.h"
 #include <fstream>
 #include <cstring>
@@ -251,11 +252,19 @@ void HOL::HandOfLesserCore::receiveDataThread()
 
 			case NativePacketType::DriverStatus: {
 				auto* statusPacket = (DriverStatusPacket*)packet;
+				display::DriverStatus.emulatedControllersActive
+					= statusPacket->emulatedControllersActive;
+				display::DriverStatus.hasNormalControllers = statusPacket->hasNormalControllers;
+				display::DriverStatus.hasHandTrackingControllers
+					= statusPacket->hasHandTrackingControllers;
+				display::DriverStatus.hookedControllerCount = statusPacket->hookedControllerCount;
+				display::DriverStatus.emulatedTrackerCount = statusPacket->emulatedTrackerCount;
 				std::cout << "Driver status: emulated controllers="
 						  << statusPacket->emulatedControllersActive
+						  << ", normal=" << statusPacket->hasNormalControllers
+						  << ", hand-tracking=" << statusPacket->hasHandTrackingControllers
 						  << ", hooked=" << statusPacket->hookedControllerCount
 						  << ", trackers=" << statusPacket->emulatedTrackerCount << std::endl;
-				// Future: update UI status indicators
 				break;
 			}
 
@@ -272,6 +281,7 @@ void HOL::HandOfLesserCore::receiveDataThread()
 					settings::DeviceConfig config;
 					config.serial = serial;
 					config.role = devicePacket->role;
+					config.trackingLevel = devicePacket->trackingLevel;
 					config.activatedThisSession = true;
 					Config.deviceSettings.devices[serial] = config;
 					std::cout << "Device registered: " << serial << std::endl;
@@ -280,6 +290,7 @@ void HOL::HandOfLesserCore::receiveDataThread()
 				{
 					// Update existing device
 					it->second.role = devicePacket->role;
+					it->second.trackingLevel = devicePacket->trackingLevel;
 					it->second.activatedThisSession = true;
 				}
 
@@ -455,10 +466,7 @@ void HandOfLesserCore::sendUpdate()
 		}
 	}
 
-	HOL::SkeletalInputMode skeletalTransmitMode = state::Runtime.isSteamVR
-		? HOL::SkeletalInputMode_DontTransmit
-		: Config.skeletal.transmitMode;
-	if (skeletalTransmitMode != HOL::SkeletalInputMode_DontTransmit)
+	if (!state::Runtime.isSteamVR)
 	{
 		for (int i = 0; i < HandSide_MAX; i++)
 		{

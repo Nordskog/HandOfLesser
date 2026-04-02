@@ -586,8 +586,9 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 					return vr::VRInputError_None;
 				}
 
-				bool submittingSkeletalInput = HandOfLesser::Current->Config.skeletal.transmitMode
-											   != SkeletalInputMode_DontTransmit;
+				// The app does not submit its own skeletal data when using the SteamVR OpenXR runtime,
+				// so native controller skeleton updates must still be allowed through in that case.
+				bool submittingSkeletalInput = !HandOfLesser::Runtime.isSteamVR;
 
 				// While possessing a hooked controller, the app is already submitting the skeletal
 				// data we want SteamVR to see. Swallow the native controller's own skeleton updates

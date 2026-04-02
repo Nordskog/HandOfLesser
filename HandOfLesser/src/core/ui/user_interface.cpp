@@ -835,7 +835,7 @@ void HOL::UserInterface::buildSteamVR()
 	// Skeletal
 	/////////////////
 
-	ImGui::SeparatorText("Skeletal Input");
+	ImGui::SeparatorText("Skeletal Tracking Level");
 
 	syncSettings |= ImGui::InputFloat(
 		"Length multiplier", &Config.skeletal.jointLengthMultiplier, 0.01f, 0.1f, "%.3f");
@@ -1220,58 +1220,58 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::EndChild();
 
-	//////////////////
-	// Skeletal input
-	//////////////////
+	///////////////////////////
+	// Skeletal tracking level
+	///////////////////////////
 
-	ImGui::SeparatorText("Skeletal Input");
+	ImGui::SeparatorText("Skeletal Tracking Level");
 
-	if (HOL::state::Runtime.isSteamVR)
+	bool hookedTrackingLevelConfigurable = display::DriverStatus.hasNormalControllers
+		&& display::DriverStatus.hasHandTrackingControllers;
+	bool disableTrackingLevelForHookedAvailability
+		= connected && HOL::Config.handPose.controllerMode == HOL::ControllerMode::HookedControllerMode
+		  && !hookedTrackingLevelConfigurable;
+
+	if (disableTrackingLevelForHookedAvailability)
 	{
 		ImGui::BeginDisabled();
 	}
 
 	ImGui::BeginGroup();
 
-	int skeletalTransmitMode = HOL::state::Runtime.isSteamVR ? HOL::SkeletalInputMode_DontTransmit
-															 : HOL::Config.skeletal.transmitMode;
-	bool updateSkeletalTransmitMode = false;
-	updateSkeletalTransmitMode |= ImGui::RadioButton(
-		"Don't transmit", &skeletalTransmitMode, HOL::SkeletalInputMode_DontTransmit);
+	int skeletalTrackingLevel = HOL::Config.skeletal.trackingLevel;
+	bool updateSkeletalTrackingLevel = false;
+	updateSkeletalTrackingLevel |= ImGui::RadioButton(
+		"Partial", &skeletalTrackingLevel, vr::VRSkeletalTracking_Partial);
 	if (ImGui::IsItemHovered())
 	{
-		showWrappedTooltip("Do not submit skeletal input to SteamVR.");
+		showWrappedTooltip("Expose skeletal input as partial finger tracking only.");
 	}
-	updateSkeletalTransmitMode |= ImGui::RadioButton(
-		"Transmit obstructed", &skeletalTransmitMode, HOL::SkeletalInputMode_Obstructed);
+	updateSkeletalTrackingLevel |= ImGui::RadioButton(
+		"Full", &skeletalTrackingLevel, vr::VRSkeletalTracking_Full);
 	if (ImGui::IsItemHovered())
 	{
-		showWrappedTooltip("VRChat will not enable hand tracking controls.");
-	}
-	updateSkeletalTransmitMode |= ImGui::RadioButton(
-		"Transmit unobstructed", &skeletalTransmitMode, HOL::SkeletalInputMode_Unobstructed);
-	if (ImGui::IsItemHovered())
-	{
-		showWrappedTooltip("VRChat will enable hand tracking controls.");
+		showWrappedTooltip("Expose skeletal input as full hand tracking.");
 	}
 
 	ImGui::EndGroup();
 
-	if (HOL::state::Runtime.isSteamVR)
+	if (disableTrackingLevelForHookedAvailability)
 	{
 		ImGui::EndDisabled();
 
 		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 		{
 			showWrappedTooltip(
-				"Using data from SteamXR to submit data to SteamXR causes a feedback loop, so "
-				"we cannot transmit skeletal input data.");
+				"Hooked mode can only switch tracking level when both partial and full tracking "
+				"controllers are present.");
 		}
 	}
 
-	if (updateSkeletalTransmitMode)
+	if (updateSkeletalTrackingLevel)
 	{
-		HOL::Config.skeletal.transmitMode = static_cast<HOL::SkeletalInputMode>(skeletalTransmitMode);
+		HOL::Config.skeletal.trackingLevel
+			= static_cast<vr::EVRSkeletalTrackingLevel>(skeletalTrackingLevel);
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}
 

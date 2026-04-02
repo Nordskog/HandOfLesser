@@ -145,6 +145,8 @@ namespace HOL
 	{
 		NativePacketType packetType = NativePacketType::DriverStatus;
 		bool emulatedControllersActive = false;
+		bool hasNormalControllers = false;
+		bool hasHandTrackingControllers = false;
 		int hookedControllerCount = 0;
 		int emulatedTrackerCount = 0;
 	};
@@ -154,6 +156,7 @@ namespace HOL
 		NativePacketType packetType = NativePacketType::DeviceState;
 		char serial[128] = {};
 		vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
+		vr::EVRSkeletalTrackingLevel trackingLevel = vr::VRSkeletalTracking_Estimated;
 	};
 
 	struct AppInitializedPacket

@@ -37,12 +37,14 @@ namespace HOL
 	}
 
 	inline std::string getEmulatedControllerSerial(EmulatedControllerProfile profile,
+												   vr::EVRSkeletalTrackingLevel trackingLevel,
 												   const std::string& baseSerial)
 	{
 		return baseSerial
 			   + (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch
 					  ? "_touch"
-					  : "_index");
+					  : "_index")
+			   + (trackingLevel == vr::VRSkeletalTracking_Full ? "_full" : "_partial");
 	}
 
 	inline const char* getEmulatedControllerResourceRoot(EmulatedControllerProfile profile)

@@ -11,6 +11,15 @@ namespace HOL
 		float confidence = 0;
 	};
 
+	struct DriverStatusDisplay
+	{
+		bool emulatedControllersActive = false;
+		bool hasNormalControllers = false;
+		bool hasHandTrackingControllers = false;
+		int hookedControllerCount = 0;
+		int emulatedTrackerCount = 0;
+	};
+
 	struct HandTransformDisplay
 	{
 		bool active;
@@ -36,5 +45,6 @@ namespace HOL
 		extern FingerTrackingDisplay FingerTracking[2];
 		extern HandTransformDisplay HandTransform[2];
 		extern BodyTrackingDisplay BodyTracking;
+		extern DriverStatusDisplay DriverStatus;
 	} // namespace display
 } // namespace HOL

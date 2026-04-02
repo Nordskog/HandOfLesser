@@ -66,6 +66,11 @@ namespace HOL
 		mSkeletonTrackingLevel = level;
 		mSkeletonInputPath = path;
 		mLoggedMissingSkeletonHandle = false;
+		// Hooked-controller preference can depend on whether this device exposes partial or full
+		// skeletal tracking, so refresh the cached choice once the level becomes known.
+		HOL::HandOfLesser::Current->refreshPreferredHookedControllers();
+		sendDeviceState();
+		HOL::HandOfLesser::Current->sendStatus();
 		DriverLog(
 			"Hooked controller %s registered skeleton input %s", serial.c_str(), path.c_str());
 	}
@@ -105,16 +110,6 @@ namespace HOL
 
 	void HookedController::UpdateSkeletal(HOL::SkeletalPacket* packet)
 	{
-		auto& config = HOL::HandOfLesser::Current->Config;
-		const auto& trackingState = HOL::HandOfLesser::Tracking;
-		bool shouldAugment
-			= config.skeletal.augmentControllerSkeleton && trackingState.isMultimodalEnabled;
-
-		if (config.skeletal.transmitMode == SkeletalInputMode_DontTransmit && !shouldAugment)
-		{
-			return;
-		}
-
 		if (packet == nullptr || packet->side != mSide)
 		{
 			return;
@@ -157,7 +152,7 @@ namespace HOL
 			hooks::UpdateSkeletonComponent::FunctionHook.originalFunc(
 				this->driverInput,
 				mSkeletonHandle,
-				HOL::ControllerCommon::getSkeletalMotionRange(shouldAugment),
+				vr::VRSkeletalMotionRange_WithoutController,
 				mSkeletalPose,
 				SteamVR::HandSkeletonBone::eBone_Count);
 		}
@@ -165,7 +160,7 @@ namespace HOL
 		{
 			this->driverInput->UpdateSkeletonComponent(
 				mSkeletonHandle,
-				HOL::ControllerCommon::getSkeletalMotionRange(shouldAugment),
+				vr::VRSkeletalMotionRange_WithoutController,
 				mSkeletalPose,
 				SteamVR::HandSkeletonBone::eBone_Count);
 		}
