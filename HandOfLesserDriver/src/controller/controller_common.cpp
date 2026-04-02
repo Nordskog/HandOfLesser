@@ -15,7 +15,9 @@ namespace HOL::ControllerCommon
 										Eigen::Vector3f& translationOffset,
 										Eigen::Quaternionf& rotationOffset)
 	{
-		auto baseOffset = HOL::getControllerBaseOffset();
+		auto baseOffset = HandOfLesser::Config.handPose.applyBaseOffset
+			? HOL::getControllerBaseOffset()
+			: HOL::PoseLocationEuler{Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 0, 0)};
 		Eigen::Vector3f baseTranslationOffset = baseOffset.position;
 		Eigen::Vector3f baseRotationOffset = baseOffset.orientation;
 

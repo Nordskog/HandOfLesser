@@ -123,6 +123,7 @@ namespace HOL
 			// until the app connects.
 			HOL::ControllerMode controllerMode = HOL::ControllerMode::NoControllerMode;
 			bool fallbackOnly = false;
+			bool applyBaseOffset = true;
 			HOL::EmulatedControllerProfile emulatedControllerProfile
 				= HOL::EmulatedControllerProfile::EmulatedControllerProfile_Index;
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(0, 0, 0);

@@ -1373,6 +1373,13 @@ void HOL::UserInterface::buildMain()
 		Config.general.forceInactive = defaults.forceInactive;
 	}
 
+	ImGui::SeparatorText("Offset");
+
+	if (ImGui::Checkbox("Apply base offset", &Config.handPose.applyBaseOffset))
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+
 	ImGui::SeparatorText("Offset preset");
 
 	if (ImGui::Button("Zero"))

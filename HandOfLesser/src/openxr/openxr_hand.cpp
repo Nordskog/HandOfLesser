@@ -323,7 +323,9 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 
 			// We have a base offset configured to match what VDXR handtracking gives you.
 			// The user-configurable offset is applied in addition to this.
-			auto controllerOffset = HOL::getControllerBaseOffset();
+			auto controllerOffset = Config.handPose.applyBaseOffset
+				? HOL::getControllerBaseOffset()
+				: HOL::PoseLocationEuler{Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 0, 0)};
 
 			// Matches to controller position, matching what VD does
 			Eigen::Vector3f controllerRotationOffset = controllerOffset.orientation;
