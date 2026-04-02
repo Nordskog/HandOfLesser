@@ -16,8 +16,8 @@ namespace HOL
 	{
 		if (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
 		{
-			return left ? "Oculus Quest2 (Left Controller)"
-						: "Oculus Quest2 (Right Controller)";
+			return left ? "Meta Quest 3 (Left Controller)"
+						: "Meta Quest 3 (Right Controller)";
 		}
 
 		return left ? "Knuckles Left" : "Knuckles Right";
@@ -28,8 +28,8 @@ namespace HOL
 	{
 		if (profile == EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch)
 		{
-			return left ? "oculus_quest2_controller_left"
-						: "oculus_quest2_controller_right";
+			return left ? "oculus_quest_plus_controller_left"
+						: "oculus_quest_plus_controller_right";
 		}
 
 		return left ? "{indexcontroller}valve_controller_knu_1_0_left"
