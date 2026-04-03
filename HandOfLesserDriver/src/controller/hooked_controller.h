@@ -85,6 +85,9 @@ namespace HOL
 		void setActingAsTracker(bool acting);
 
 	private:
+		static constexpr int PoseStaleThresholdFrames = 2;
+		static constexpr int HandTrackingDebounceTime = 50;
+
 		vr::DriverPose_t mLastPose;
 		bool mLastHeldState
 			= true; // Controllers not added until held, so should be true on activate
@@ -96,6 +99,9 @@ namespace HOL
 
 		bool mValidWhileOriginalInvalid;
 		bool mHasHadValidOriginalPose = false;
+		bool mHandTrackingTargetState = false;
+		bool mHandTrackingState = false;
+		int32_t mHandTrackingDebounceFrames = HandTrackingDebounceTime;
 
 		HandSide mSide;
 		vr::IVRServerDriverHost* mHookedHost;

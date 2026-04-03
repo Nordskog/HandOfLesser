@@ -232,7 +232,8 @@ namespace HOL::hooks
 
 			if (controller != nullptr)
 			{
-				bool newPoseValid = newPose.deviceIsConnected && newPose.poseIsValid;
+				bool newPoseValid = newPose.deviceIsConnected && newPose.poseIsValid
+									&& newPose.result == vr::TrackingResult_Running_OK;
 				if (config.steamvr.showDevicePoseDiagnostics)
 				{
 					uint64_t nowMs

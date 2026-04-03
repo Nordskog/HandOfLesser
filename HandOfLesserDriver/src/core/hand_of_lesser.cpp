@@ -11,7 +11,6 @@
 
 namespace HOL
 {
-
 	HandOfLesser* HandOfLesser::Current = nullptr;
 	HOL::settings::HandOfLesserSettings HandOfLesser::Config;
 	HOL::state::TrackingState HandOfLesser::Tracking;
@@ -702,7 +701,9 @@ namespace HOL
 
 		bool canPoss = controller->canPossess();
 		bool recoveryPoseValid = recoveryController->mLastOriginalPoseValid;
-		bool recoveryPoseFresh = recoveryPoseValid && recoveryController->framesSinceLastPoseUpdate <= 2;
+		bool recoveryPoseFresh = recoveryPoseValid
+								 && recoveryController->framesSinceLastPoseUpdate
+										<= HookedController::PoseStaleThresholdFrames;
 		if (!recoveryPoseFresh && canPoss)
 		{
 			controller->mValidWhileOriginalInvalid = true;
@@ -713,12 +714,35 @@ namespace HOL
 			controller->mValidWhileOriginalInvalid = false;
 		}
 
-		bool shouldPossess
+		bool shouldUseHandTracking
 			= controller->mLastTransformPacket.tracked
 			  || (canPoss && !recoveryPoseFresh)
 			  || controller->mValidWhileOriginalInvalid;
 
-		return shouldPossess;
+		// Must remain in new target state for x frames before actually changing
+		if (shouldUseHandTracking == controller->mHandTrackingTargetState)
+		{
+			controller->mHandTrackingDebounceFrames++;
+			if (controller->mHandTrackingDebounceFrames
+				> HookedController::HandTrackingDebounceTime)
+			{
+				controller->mHandTrackingDebounceFrames
+					= HookedController::HandTrackingDebounceTime;
+			}
+		}
+		else
+		{
+			controller->mHandTrackingTargetState = shouldUseHandTracking;
+			controller->mHandTrackingDebounceFrames = 0;
+		}
+
+		if (controller->mHandTrackingDebounceFrames
+			>= HookedController::HandTrackingDebounceTime)
+		{
+			controller->mHandTrackingState = controller->mHandTrackingTargetState;
+		}
+
+		return controller->mHandTrackingState;
 	}
 
 	bool HandOfLesser::shouldSuppressHookedController(HookedController* controller)

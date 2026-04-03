@@ -194,7 +194,8 @@ namespace HOL
 
 		if (HOL::HandOfLesser::Current->shouldPossess(this))
 		{
-			bool originalSubmitStale = this->framesSinceLastPoseUpdate > 30;
+			bool originalSubmitStale
+				= this->framesSinceLastPoseUpdate > PoseStaleThresholdFrames;
 			bool shouldSubmitFallbackPose
 				= !fallbackOnlyActive || !this->mLastOriginalPoseValid || originalSubmitStale;
 
