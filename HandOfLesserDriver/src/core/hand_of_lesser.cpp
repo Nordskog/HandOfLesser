@@ -697,21 +697,20 @@ namespace HOL
 
 		bool canPoss = controller->canPossess();
 		bool recoveryPoseValid = recoveryController->mLastOriginalPoseValid;
-		if (!recoveryPoseValid && canPoss)
+		bool recoveryPoseFresh = recoveryPoseValid && recoveryController->framesSinceLastPoseUpdate <= 2;
+		if (!recoveryPoseFresh && canPoss)
 		{
 			controller->mValidWhileOriginalInvalid = true;
 		}
 
-		if (recoveryPoseValid)
+		if (recoveryPoseFresh)
 		{
 			controller->mValidWhileOriginalInvalid = false;
 		}
 
-		bool originalSubmitStale = recoveryController->framesSinceLastPoseUpdate > 30;
-
 		bool shouldPossess
 			= controller->mLastTransformPacket.tracked
-			  || (canPoss && (!recoveryPoseValid || originalSubmitStale))
+			  || (canPoss && !recoveryPoseFresh)
 			  || controller->mValidWhileOriginalInvalid;
 
 		return shouldPossess;
@@ -775,7 +774,7 @@ namespace HOL
 		}
 
 		const HOL::HandTransformPacket& packet = mLastHandTransforms[side];
-		return packet.valid && packet.tracked;
+		return packet.valid;
 	}
 
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)

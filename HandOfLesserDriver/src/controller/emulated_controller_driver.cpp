@@ -331,8 +331,11 @@ namespace HOL
 		// so make a copy now.
 		this->mLastTransformPacket = *packet;
 
-		// Store the pose somewhere
-		this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPacket, true);
+		// Keep updating as long as pose is valid
+		if (this->mLastTransformPacket.valid)
+		{
+			this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPacket, true);
+		}
 	}
 
 	void EmulatedControllerDriver::UpdateBoolInput(const std::string& input, bool value)
