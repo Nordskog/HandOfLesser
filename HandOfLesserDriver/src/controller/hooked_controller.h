@@ -1,6 +1,7 @@
 #pragma once
 
 #include "generic_control_interface.h"
+#include <cstdint>
 #include <openvr_driver.h>
 #include "src/input/InputCommons.h"
 #include "src/steamvr/skeletal_input_joints.h"
@@ -63,6 +64,8 @@ namespace HOL
 
 		vr::DriverPose_t lastOriginalPose;
 		bool mLastOriginalPoseValid;
+		uint64_t mLastOriginalPoseSubmitTimeMs = 0;
+		uint64_t mLastOriginalPoseAgeMs = 0;
 
 		// Frames since last updated by original driver.
 		// Used to detect runtimes that stop submitting poses instead of explicitly going invalid.

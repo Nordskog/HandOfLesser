@@ -2,6 +2,7 @@
 #include "hooks.h"
 #include "src/controller/controller_common.h"
 #include "src/tracker/emulated_tracker_driver.h"
+#include <chrono>
 
 namespace HOL::hooks
 {
@@ -232,6 +233,16 @@ namespace HOL::hooks
 			if (controller != nullptr)
 			{
 				bool newPoseValid = newPose.deviceIsConnected && newPose.poseIsValid;
+				if (config.steamvr.showDevicePoseDiagnostics)
+				{
+					uint64_t nowMs
+						= (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+							  std::chrono::system_clock::now().time_since_epoch())
+							  .count();
+					controller->mLastOriginalPoseAgeMs
+						= nowMs - controller->mLastOriginalPoseSubmitTimeMs;
+					controller->mLastOriginalPoseSubmitTimeMs = nowMs;
+				}
 
 				controller->setLastOriginalPoseState(newPoseValid);
 
@@ -245,6 +256,11 @@ namespace HOL::hooks
 
 				// Update shadow tracker state (may transition controller ↔ tracker)
 				HOL::HandOfLesser::Current->updateShadowTrackerState(controller);
+
+				if (config.steamvr.showDevicePoseDiagnostics)
+				{
+					controller->sendDeviceState();
+				}
 
 				if (!controller->isActingAsTracker()
 					&& config.handPose.controllerMode == ControllerMode::HookedControllerMode)

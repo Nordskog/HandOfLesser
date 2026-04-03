@@ -275,6 +275,11 @@ namespace HOL
 
 		refreshPreferredHookedControllers();
 
+		if (Config.steamvr.showDevicePoseDiagnostics && !oldConfig.steamvr.showDevicePoseDiagnostics)
+		{
+			sendAllDeviceStates();
+		}
+
 		// Update logic wouldn't normally run unless in certain modes, so force upon config change.
 		updateControllerConnectionStates(true);
 		updateTrackerConnectionStates();
@@ -1418,6 +1423,27 @@ namespace HOL
 			this->estimateControllerSide();
 		}
 
+		if (Config.steamvr.showDevicePoseDiagnostics)
+		{
+			uint64_t nowMs = (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
+							 std::chrono::system_clock::now().time_since_epoch())
+							 .count();
+			for (auto& controller : mHookedControllers)
+			{
+				if (controller->mLastOriginalPoseSubmitTimeMs == 0)
+				{
+					controller->mLastOriginalPoseAgeMs = 0;
+				}
+				else
+				{
+					controller->mLastOriginalPoseAgeMs
+						= nowMs - controller->mLastOriginalPoseSubmitTimeMs;
+				}
+			}
+
+			sendAllDeviceStates();
+		}
+
 		// iterate frame counter for all controller
 		for (auto& controller : this->mHookedControllers)
 		{
@@ -1537,6 +1563,10 @@ namespace HOL
 		strncpy_s(packet.serial, sizeof(packet.serial), device->serial.c_str(), _TRUNCATE);
 		packet.role = device->mDeviceClass;
 		packet.trackingLevel = device->mSkeletonTrackingLevel;
+		packet.nativePoseIsValid = device->mLastOriginalPoseValid;
+		packet.nativeDeviceIsConnected = device->lastOriginalPose.deviceIsConnected;
+		packet.nativeTrackingResult = device->lastOriginalPose.result;
+		packet.nativePoseAgeMs = device->mLastOriginalPoseAgeMs;
 
 		this->mTransport.send((char*)&packet, sizeof(packet));
 	}

@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <cstdint>
 #include <src/controller/controller.h>
 #include <map>
 #include <string>
@@ -192,6 +193,7 @@ namespace HOL
 			bool transmitLegacyFingerCurl = true;
 			bool blockControllerInputWhileHandTracking = true;
 			bool disableOtherControllersWhileHandTracking = true;
+			bool showDevicePoseDiagnostics = false;
 			float steamPoseTimeOffset = .0f;
 			bool forceInactive = false;
 			bool jitterLastPoseOnTrackingLoss = true;
@@ -217,6 +219,11 @@ namespace HOL
 			bool activatedThisSession = false; // Runtime flag, not saved to JSON
 			vr::EVRSkeletalTrackingLevel trackingLevel
 				= vr::VRSkeletalTracking_Estimated; // Runtime flag, not saved to JSON
+			bool nativePoseIsValid = false;		  // Runtime flag, not saved to JSON
+			bool nativeDeviceIsConnected = false; // Runtime flag, not saved to JSON
+			vr::ETrackingResult nativeTrackingResult
+				= vr::TrackingResult_Uninitialized; // Runtime flag, not saved to JSON
+			uint64_t nativePoseAgeMs = 0;		 // Runtime flag, not saved to JSON
 
 			// Shadow tracker settings
 			bool actAsTracker = false; // Make this device appear as a tracker

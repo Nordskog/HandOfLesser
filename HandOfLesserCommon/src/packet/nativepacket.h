@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/hand/hand.h"
+#include <cstdint>
 #include <src/settings/settings.h>
 #include "src/steamvr/skeletal_input_joints.h"
 #include "src/state/state.h"
@@ -157,6 +158,10 @@ namespace HOL
 		char serial[128] = {};
 		vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
 		vr::EVRSkeletalTrackingLevel trackingLevel = vr::VRSkeletalTracking_Estimated;
+		bool nativePoseIsValid = false;
+		bool nativeDeviceIsConnected = false;
+		vr::ETrackingResult nativeTrackingResult = vr::TrackingResult_Uninitialized;
+		uint64_t nativePoseAgeMs = 0;
 	};
 
 	struct AppInitializedPacket

@@ -204,6 +204,7 @@ namespace HOL
 				  settings.blockControllerInputWhileHandTracking},
 				 {"disableOtherControllersWhileHandTracking",
 				  settings.disableOtherControllersWhileHandTracking},
+				 {"showDevicePoseDiagnostics", settings.showDevicePoseDiagnostics},
 				 {"steamPoseTimeOffset", settings.steamPoseTimeOffset},
 				 {"forceInactive", settings.forceInactive},
 				 {"jitterLastPoseOnTrackingLoss", settings.jitterLastPoseOnTrackingLoss}};
@@ -222,6 +223,8 @@ namespace HOL
 			nlohmann::get_to_if_present(j,
 										"disableOtherControllersWhileHandTracking",
 										settings.disableOtherControllersWhileHandTracking);
+			nlohmann::get_to_if_present(
+				j, "showDevicePoseDiagnostics", settings.showDevicePoseDiagnostics);
 			nlohmann::get_to_if_present(j, "steamPoseTimeOffset", settings.steamPoseTimeOffset);
 			nlohmann::get_to_if_present(j, "forceInactive", settings.forceInactive);
 			nlohmann::get_to_if_present(

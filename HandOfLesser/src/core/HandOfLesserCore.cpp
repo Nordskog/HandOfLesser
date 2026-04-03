@@ -282,6 +282,10 @@ void HOL::HandOfLesserCore::receiveDataThread()
 					config.serial = serial;
 					config.role = devicePacket->role;
 					config.trackingLevel = devicePacket->trackingLevel;
+					config.nativePoseIsValid = devicePacket->nativePoseIsValid;
+					config.nativeDeviceIsConnected = devicePacket->nativeDeviceIsConnected;
+					config.nativeTrackingResult = devicePacket->nativeTrackingResult;
+					config.nativePoseAgeMs = devicePacket->nativePoseAgeMs;
 					config.activatedThisSession = true;
 					Config.deviceSettings.devices[serial] = config;
 					std::cout << "Device registered: " << serial << std::endl;
@@ -291,6 +295,10 @@ void HOL::HandOfLesserCore::receiveDataThread()
 					// Update existing device
 					it->second.role = devicePacket->role;
 					it->second.trackingLevel = devicePacket->trackingLevel;
+					it->second.nativePoseIsValid = devicePacket->nativePoseIsValid;
+					it->second.nativeDeviceIsConnected = devicePacket->nativeDeviceIsConnected;
+					it->second.nativeTrackingResult = devicePacket->nativeTrackingResult;
+					it->second.nativePoseAgeMs = devicePacket->nativePoseAgeMs;
 					it->second.activatedThisSession = true;
 				}
 
@@ -556,6 +564,10 @@ void HOL::HandOfLesserCore::loadSettings()
 			{
 				device.activatedThisSession = false;
 			}
+
+			// This is a runtime-only diagnostics toggle. Always start with it disabled even if
+			// a previous session saved it as true.
+			Config.steamvr.showDevicePoseDiagnostics = false;
 		}
 		catch (const std::exception& ex)
 		{

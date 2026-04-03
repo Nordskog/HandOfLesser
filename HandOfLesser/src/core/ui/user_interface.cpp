@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cstdio>
 #include <iostream>
 #include <imgui_impl_win32.h>
 #include <iterator>
@@ -837,7 +838,7 @@ void HOL::UserInterface::buildSteamVR()
 	// Skeletal
 	/////////////////
 
-	ImGui::SeparatorText("Skeletal Tracking Level");
+	ImGui::SeparatorText("Skeletal Input");
 
 	syncSettings |= ImGui::InputFloat(
 		"Length multiplier", &Config.skeletal.jointLengthMultiplier, 0.01f, 0.1f, "%.3f");
@@ -886,6 +887,11 @@ void HOL::UserInterface::buildSteamVR()
 	ImGui::SeparatorText("Devices");
 
 	ImGui::Checkbox("Show all devices", &mShowAllDevices);
+	ImGui::SameLine();
+	if (ImGui::Checkbox("Show status", &Config.steamvr.showDevicePoseDiagnostics))
+	{
+		syncSettings = true;
+	}
 
 	// Helper lambda to convert device class to string
 	auto roleToString = [](vr::ETrackedDeviceClass deviceClass) -> const char*
@@ -907,12 +913,71 @@ void HOL::UserInterface::buildSteamVR()
 		}
 	};
 
+	auto trackingResultToString = [](vr::ETrackingResult result) -> const char*
+	{
+		switch (result)
+		{
+			case vr::TrackingResult_Uninitialized:
+				return "Uninitialized";
+			case vr::TrackingResult_Calibrating_InProgress:
+				return "Calibrating";
+			case vr::TrackingResult_Calibrating_OutOfRange:
+				return "Calibrating (Out of Range)";
+			case vr::TrackingResult_Running_OK:
+				return "Running OK";
+			case vr::TrackingResult_Running_OutOfRange:
+				return "Running (Out of Range)";
+			case vr::TrackingResult_Fallback_RotationOnly:
+				return "Fallback Rotation Only";
+			default:
+				return "Unknown";
+		}
+	};
+
+	auto trackingResultColor = [](vr::ETrackingResult result) -> ImVec4
+	{
+		switch (result)
+		{
+			case vr::TrackingResult_Running_OK:
+				return ImVec4(0.2f, 0.9f, 0.2f, 1.0f);
+			case vr::TrackingResult_Running_OutOfRange:
+				return ImVec4(0.9f, 0.85f, 0.2f, 1.0f);
+			case vr::TrackingResult_Fallback_RotationOnly:
+				return ImVec4(1.0f, 0.6f, 0.2f, 1.0f);
+			default:
+				return ImVec4(0.9f, 0.2f, 0.2f, 1.0f);
+		}
+	};
+
+	auto drawStatusDot = [](const std::string& id, ImVec4 color, const std::string& tooltip)
+	{
+		float cellWidth = std::max(1.0f, ImGui::GetContentRegionAvail().x);
+		float size = ImGui::GetTextLineHeight();
+		float xOffset = std::max(0.0f, (cellWidth - size) * 0.5f);
+		float yOffset
+			= std::max(0.0f, (ImGui::GetFrameHeight() - size) * 0.5f);
+		if (xOffset > 0.0f)
+		{
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + xOffset);
+		}
+		if (yOffset > 0.0f)
+		{
+			ImGui::SetCursorPosY(ImGui::GetCursorPosY() + yOffset);
+		}
+		ImGui::ColorButton(
+			id.c_str(), color, ImGuiColorEditFlags_NoTooltip, ImVec2(size, size));
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetTooltip("%s", tooltip.c_str());
+		}
+	};
+
 	// Collect and sort devices (active first, then inactive)
 	std::vector<std::pair<std::string, HOL::settings::DeviceConfig*>> devices;
 	for (auto& [serial, config] : Config.deviceSettings.devices)
 	{
 		const bool isUnsupportedRole = config.role == vr::TrackedDeviceClass_HMD
-			|| config.role == vr::TrackedDeviceClass_GenericTracker;
+									   || config.role == vr::TrackedDeviceClass_GenericTracker;
 		if (isUnsupportedRole)
 		{
 			if (config.actAsTracker || config.alsoWhenHeld)
@@ -942,22 +1007,30 @@ void HOL::UserInterface::buildSteamVR()
 			  });
 
 	// Display devices in a table
+	int tableColumnCount = Config.steamvr.showDevicePoseDiagnostics ? 8 : 4;
 	if (ImGui::BeginTable("DevicesTable",
-						  4,
+						  tableColumnCount,
 						  ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg
-							  | ImGuiTableFlags_SizingStretchSame))
+							  | ImGuiTableFlags_SizingFixedFit))
 	{
-		ImGui::TableSetupColumn("Serial");
-		ImGui::TableSetupColumn("Role");
-		ImGui::TableSetupColumn("Act as Tracker");
-		ImGui::TableSetupColumn("Also When Held");
+		ImGui::TableSetupColumn("Serial", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableSetupColumn("Role", ImGuiTableColumnFlags_WidthFixed, scaleSize(85));
+		ImGui::TableSetupColumn("Tracker", ImGuiTableColumnFlags_WidthFixed, scaleSize(55));
+		ImGui::TableSetupColumn("Held", ImGuiTableColumnFlags_WidthFixed, scaleSize(45));
+		if (Config.steamvr.showDevicePoseDiagnostics)
+		{
+			ImGui::TableSetupColumn("V", ImGuiTableColumnFlags_WidthFixed, scaleSize(30));
+			ImGui::TableSetupColumn("C", ImGuiTableColumnFlags_WidthFixed, scaleSize(30));
+			ImGui::TableSetupColumn("T", ImGuiTableColumnFlags_WidthFixed, scaleSize(30));
+			ImGui::TableSetupColumn("S", ImGuiTableColumnFlags_WidthFixed, scaleSize(30));
+		}
 		ImGui::TableHeadersRow();
 
 		for (const auto& [serial, config] : devices)
 		{
 			ImGui::TableNextRow();
 			const bool isUnsupportedRole = config->role == vr::TrackedDeviceClass_HMD
-				|| config->role == vr::TrackedDeviceClass_GenericTracker;
+										   || config->role == vr::TrackedDeviceClass_GenericTracker;
 
 			// Grey out inactive devices
 			if (!config->activatedThisSession)
@@ -977,6 +1050,10 @@ void HOL::UserInterface::buildSteamVR()
 			{
 				syncSettings = true;
 			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip("Act as Tracker: mirror this controller as an emulated tracker.");
+			}
 
 			ImGui::TableNextColumn();
 			// "Also when held" only relevant if actAsTracker is enabled
@@ -986,7 +1063,49 @@ void HOL::UserInterface::buildSteamVR()
 			{
 				syncSettings = true;
 			}
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				ImGui::SetTooltip(
+					"Also When Held: keep acting as a tracker even while the controller is held.");
+			}
 			ImGui::EndDisabled();
+
+			if (Config.steamvr.showDevicePoseDiagnostics)
+			{
+				bool nativePoseStale = config->nativePoseAgeMs > 50;
+				char ageText[32] = {};
+				snprintf(ageText,
+						 sizeof(ageText),
+						 "%05llu ms",
+						 static_cast<unsigned long long>(config->nativePoseAgeMs));
+
+				ImGui::TableNextColumn();
+				drawStatusDot("##pose_valid_" + serial,
+							  config->nativePoseIsValid ? ImVec4(0.2f, 0.9f, 0.2f, 1.0f)
+														: ImVec4(0.9f, 0.2f, 0.2f, 1.0f),
+							  std::string("Pose Is Valid: ")
+								  + (config->nativePoseIsValid ? "true" : "false"));
+
+				ImGui::TableNextColumn();
+				drawStatusDot("##device_connected_" + serial,
+							  config->nativeDeviceIsConnected ? ImVec4(0.2f, 0.9f, 0.2f, 1.0f)
+															  : ImVec4(0.9f, 0.2f, 0.2f, 1.0f),
+							  std::string("Device Is Connected: ")
+								  + (config->nativeDeviceIsConnected ? "true" : "false"));
+
+				ImGui::TableNextColumn();
+				drawStatusDot("##tracking_result_" + serial,
+							  trackingResultColor(config->nativeTrackingResult),
+							  std::string("Tracking Result: ")
+								  + trackingResultToString(config->nativeTrackingResult));
+
+				ImGui::TableNextColumn();
+				drawStatusDot("##pose_stale_" + serial,
+							  nativePoseStale ? ImVec4(0.9f, 0.2f, 0.2f, 1.0f)
+											  : ImVec4(0.2f, 0.9f, 0.2f, 1.0f),
+							  std::string("Pose Stale: ") + (nativePoseStale ? "true" : "false")
+								  + "\nLast native pose age: " + ageText);
+			}
 
 			if (!config->activatedThisSession)
 			{
