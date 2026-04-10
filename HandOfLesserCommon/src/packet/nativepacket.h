@@ -1,6 +1,8 @@
 #pragma once
 
 #include "src/hand/hand.h"
+#include <array>
+#include <cstddef>
 #include <cstdint>
 #include <src/settings/settings.h>
 #include "src/steamvr/skeletal_input_joints.h"
@@ -11,30 +13,30 @@ namespace HOL
 {
 	enum class NativePacketType : __int32
 	{
-		InvalidPacket = 100,
-		HandTransform = 500,
-		ControllerInput = 600,
-		FloatInput = 601,
-		BoolInput = 602,
-		SkeletalInput = 603,
-		MultimodalPose = 604,
-		BodyTrackerPose = 605,
-		Settings = 700,
-		State = 701,
-
-		// Driver → App messages (800+)
-		DriverInitialized = 800,
-		DriverStatus = 801,
-		DeviceState = 802,
-
-		// App → Driver messages (900+)
-		AppInitialized = 903
+		HandTransform = 0,
+		ControllerInput,
+		FloatInput,
+		BoolInput,
+		SkeletalInput,
+		MultimodalPose,
+		BodyTrackerPose,
+		Settings,
+		State,
+		DriverInitialized,
+		DriverStatus,
+		DeviceState,
+		AppInitialized,
+		PacketType_MAX,
+		InvalidPacket = PacketType_MAX
 	};
 
 	struct NativePacket
 	{
 		NativePacketType packetType = NativePacketType::InvalidPacket;
 	};
+
+	inline constexpr size_t SettingsPacketSize = 8196;
+	inline constexpr size_t SettingsPacketJsonBufferSize = SettingsPacketSize - sizeof(NativePacket);
 
 	// these'll ultimately handle all controller inputs
 	struct FloatInputPacket
@@ -78,8 +80,9 @@ namespace HOL
 	struct SettingsPacket
 	{
 		NativePacketType packetType = NativePacketType::Settings;
-		char jsonData[8192] = {}; // Settings serialized as JSON string
+		char jsonData[SettingsPacketJsonBufferSize] = {}; // Settings serialized as JSON string
 	};
+	static_assert(sizeof(SettingsPacket) == SettingsPacketSize);
 
 	struct SkeletalPacket
 	{
@@ -170,5 +173,33 @@ namespace HOL
 		char appVersion[64] = "0.1.0"; // For future version checks
 		uint32_t capabilities = 0;	   // Bitfield for future features
 	};
+
+	inline constexpr std::array<size_t, static_cast<size_t>(NativePacketType::PacketType_MAX)>
+		NativePacketSizes{{
+			sizeof(HandTransformPacket),
+			sizeof(ControllerInputPacket),
+			sizeof(FloatInputPacket),
+			sizeof(BoolInputPacket),
+			sizeof(SkeletalPacket),
+			sizeof(MultimodalPosePacket),
+			sizeof(BodyTrackerPosePacket),
+			sizeof(SettingsPacket),
+			sizeof(StatePacket),
+			sizeof(DriverInitializedPacket),
+			sizeof(DriverStatusPacket),
+			sizeof(DeviceStatePacket),
+			sizeof(AppInitializedPacket),
+		}};
+
+	inline bool isValidNativePacket(NativePacketType type, size_t length)
+	{
+		size_t index = static_cast<size_t>(type);
+		if (index >= NativePacketSizes.size())
+		{
+			return false;
+		}
+
+		return length == NativePacketSizes[index];
+	}
 
 } // namespace HOL

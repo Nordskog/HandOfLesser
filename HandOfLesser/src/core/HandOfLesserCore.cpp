@@ -527,9 +527,7 @@ void HOL::HandOfLesserCore::syncSettings()
 	std::strncpy(packet.jsonData, jsonStr.c_str(), sizeof(packet.jsonData) - 1);
 	packet.jsonData[sizeof(packet.jsonData) - 1] = '\0'; // Ensure null termination
 
-	// Send only the actual packet size needed (header + string length + null terminator)
-	size_t packetSize = sizeof(packet.packetType) + std::strlen(packet.jsonData) + 1; // +1 for null
-	this->mDriverTransport.send((char*)&packet, packetSize);
+	this->mDriverTransport.send((char*)&packet, sizeof(HOL::SettingsPacket));
 }
 
 void HOL::HandOfLesserCore::syncState()

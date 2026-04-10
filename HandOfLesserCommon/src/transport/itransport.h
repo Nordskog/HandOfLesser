@@ -41,11 +41,13 @@ namespace HOL
 		virtual NativePacket* receivePacket()
 		{
 			size_t length = receive(mReceiveBuffer, sizeof(mReceiveBuffer));
-			if (length > sizeof(NativePacket))
+			if (length < sizeof(NativePacket))
 			{
-				return (NativePacket*)mReceiveBuffer;
+				return nullptr;
 			}
-			return nullptr;
+
+			NativePacket* packet = (NativePacket*)mReceiveBuffer;
+			return isValidNativePacket(packet->packetType, length) ? packet : nullptr;
 		}
 
 		// Check if transport is connected/ready
@@ -54,7 +56,7 @@ namespace HOL
 
 	protected:
 		// Buffer for receivePacket() implementation
-		char mReceiveBuffer[8192] = {};
+		char mReceiveBuffer[16384] = {};
 	};
 
 } // namespace HOL

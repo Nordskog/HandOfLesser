@@ -44,8 +44,8 @@ bool NamedPipeTransport::createServerPipe()
 							 PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE
 								 | PIPE_WAIT, // Message mode, blocking
 							 1,				  // Max instances (only 1 client allowed)
-							 8192,			  // Out buffer size
-							 8192,			  // In buffer size
+							 16384,			  // Out buffer size
+							 16384,			  // In buffer size
 							 0,				  // Default timeout
 							 nullptr);		  // Default security
 

@@ -78,12 +78,14 @@ namespace HOL
 					HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*)rawPacket;
 
 					// Ehhh something might send garbage data and get lucky
-					if (packet->side == HOL::HandSide::LeftHand
-						|| packet->side == HOL::HandSide::RightHand)
+					if (packet->side != HOL::HandSide::LeftHand
+						&& packet->side != HOL::HandSide::RightHand)
 					{
-						mLastHandTransforms[packet->side] = *packet;
-						mHasHandTransform[packet->side] = packet->valid;
+						break;
 					}
+
+					mLastHandTransforms[packet->side] = *packet;
+					mHasHandTransform[packet->side] = packet->valid;
 
 					if (Config.handPose.controllerMode != ControllerMode::HookedControllerMode)
 					{
@@ -822,6 +824,11 @@ namespace HOL
 
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)
 	{
+		if (side < 0 || side >= HOL::HandSide_MAX)
+		{
+			return nullptr;
+		}
+
 		return this->mEmulatedControllers[(int)side];
 	}
 
