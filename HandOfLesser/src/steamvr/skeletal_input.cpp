@@ -6,6 +6,7 @@
 
 #include "src/openxr/XrUtils.h"
 #include <src/core/settings_global.h>
+#include <stdexcept>
 
 namespace HOL::SteamVR
 {
@@ -68,6 +69,9 @@ namespace HOL::SteamVR
 				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_DISTAL_EXT;
 			case HandSkeletonBone::eBone_PinkyFinger4:
 				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_TIP_EXT;
+
+			default:
+				throw std::invalid_argument("OpenVR auxiliary bone does not map to OpenXR");
 		}
 	}
 
@@ -114,8 +118,8 @@ namespace HOL::SteamVR
 		SkeletalPacket& packet
 			= side == HandSide::LeftHand ? this->mLeftPacket : this->mRightPacket;
 
-		// Convert all the raw locations to eigen.
-		for (int i = 1; i < HandSkeletonBone::eBone_Count; i++)
+		// Convert all the raw locations to eigen. Aux joints are generated on the driver side.
+		for (int i = 1; i < HandSkeletonBone::eBone_Aux_Thumb; i++)
 		{
 			getOpenXRJointLocation(
 				hand->getLastJointLocations(), (HandSkeletonBone)i, packet.locations[i]);
@@ -157,7 +161,7 @@ namespace HOL::SteamVR
 		// In my case they're a bit short, so let's stretch them a bit.
 		if (Config.skeletal.jointLengthMultiplier != 1.0f)
 		{
-			for (int i = 2; i < HandSkeletonBone::eBone_Count; i++)
+			for (int i = 2; i < HandSkeletonBone::eBone_Aux_Thumb; i++)
 			{
 				HOL::PoseLocation& joint = packet.locations[(HandSkeletonBone)i];
 				joint.position *= Config.skeletal.jointLengthMultiplier;
