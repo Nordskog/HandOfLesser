@@ -5,6 +5,27 @@
 
 using namespace HOL;
 
+namespace
+{
+	void cancelOverlappedIo(HANDLE pipe, OVERLAPPED& overlapped)
+	{
+		if (pipe == INVALID_HANDLE_VALUE)
+		{
+			return;
+		}
+
+		if (!CancelIoEx(pipe, &overlapped))
+		{
+			return;
+		}
+
+		// Wait until the cancelled operation has actually completed so the OS cannot later
+		// write into a buffer/OVERLAPPED that the next receive/send call has already reused.
+		DWORD bytesTransferred = 0;
+		GetOverlappedResult(pipe, &overlapped, &bytesTransferred, TRUE);
+	}
+}
+
 NamedPipeTransport::~NamedPipeTransport()
 {
 	shutdown();
@@ -180,8 +201,8 @@ bool NamedPipeTransport::waitForConnection(DWORD timeoutMs)
 		}
 		else if (waitResult == WAIT_TIMEOUT)
 		{
-			// Timeout - cancel pending operation
-			CancelIo(mPipe);
+			// Cancel and drain the pending connect before reusing this OVERLAPPED.
+			cancelOverlappedIo(mPipe, mReadOverlapped);
 			return false;
 		}
 	}
@@ -223,8 +244,8 @@ size_t NamedPipeTransport::send(const char* buffer, size_t size)
 		}
 		else
 		{
-			// Timeout or error - cancel operation
-			CancelIo(mPipe);
+			// Cancel and drain the pending write before reusing this OVERLAPPED.
+			cancelOverlappedIo(mPipe, mWriteOverlapped);
 		}
 	}
 
@@ -286,14 +307,14 @@ size_t NamedPipeTransport::receive(char* buffer, size_t maxSize)
 		}
 		else if (waitResult == WAIT_TIMEOUT)
 		{
-			// Timeout - cancel pending operation and return 0
-			CancelIo(mPipe);
+			// Cancel and drain the pending read before reusing this OVERLAPPED and buffer.
+			cancelOverlappedIo(mPipe, mReadOverlapped);
 			return 0;
 		}
 		else
 		{
-			// Wait failed
-			CancelIo(mPipe);
+			// Cancel and drain the pending read before reusing this OVERLAPPED and buffer.
+			cancelOverlappedIo(mPipe, mReadOverlapped);
 			error = GetLastError();
 		}
 	}
