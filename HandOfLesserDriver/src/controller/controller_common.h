@@ -7,7 +7,7 @@
 
 namespace HOL::ControllerCommon
 {
-	extern vr::DriverPose_t generatePose(HOL::HandTransformPacket* packet, bool deviceConnected);
+	extern vr::DriverPose_t generatePose(HOL::HandTransformPayload* payload, bool deviceConnected);
 
 	extern vr::DriverPose_t generateDisconnectedPose();
 
@@ -23,8 +23,8 @@ namespace HOL::ControllerCommon
 								  const vr::DriverPose_t& pose);
 
 	vr::VRBoneTransform_t poseLocationToBoneTransform(HOL::PoseLocation& location);
-	void buildSkeletalPoseFromPacket(
-		const HOL::SkeletalPacket& packet,
+	void buildSkeletalPoseFromPayload(
+		const HOL::SkeletalPayload& payload,
 		vr::VRBoneTransform_t outPose[SteamVR::HandSkeletonBone::eBone_Count]);
 
 } // namespace HOL::ControllerCommon

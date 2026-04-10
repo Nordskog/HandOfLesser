@@ -130,9 +130,9 @@ namespace HOL
 		return mSerialNumber;
 	}
 
-	void EmulatedTrackerDriver::UpdatePose(const HOL::BodyTrackerPosePacket& packet)
+	void EmulatedTrackerDriver::UpdatePose(const HOL::BodyTrackerPosePayload& payload)
 	{
-		// Build DriverPose_t from packet
+		// Build DriverPose_t from payload
 		vr::DriverPose_t pose{};
 		pose.qWorldFromDriverRotation.w = 1.0;
 		pose.qWorldFromDriverRotation.x = 0.0;
@@ -145,31 +145,31 @@ namespace HOL
 		pose.qDriverFromHeadRotation.z = 0.0;
 
 		// Set position
-		pose.vecPosition[0] = packet.location.position.x();
-		pose.vecPosition[1] = packet.location.position.y();
-		pose.vecPosition[2] = packet.location.position.z();
+		pose.vecPosition[0] = payload.location.position.x();
+		pose.vecPosition[1] = payload.location.position.y();
+		pose.vecPosition[2] = payload.location.position.z();
 
 		// Set orientation
-		pose.qRotation.w = packet.location.orientation.w();
-		pose.qRotation.x = packet.location.orientation.x();
-		pose.qRotation.y = packet.location.orientation.y();
-		pose.qRotation.z = packet.location.orientation.z();
+		pose.qRotation.w = payload.location.orientation.w();
+		pose.qRotation.x = payload.location.orientation.x();
+		pose.qRotation.y = payload.location.orientation.y();
+		pose.qRotation.z = payload.location.orientation.z();
 
 		// Set velocities
-		pose.vecVelocity[0] = packet.velocity.linearVelocity.x();
-		pose.vecVelocity[1] = packet.velocity.linearVelocity.y();
-		pose.vecVelocity[2] = packet.velocity.linearVelocity.z();
+		pose.vecVelocity[0] = payload.velocity.linearVelocity.x();
+		pose.vecVelocity[1] = payload.velocity.linearVelocity.y();
+		pose.vecVelocity[2] = payload.velocity.linearVelocity.z();
 
-		pose.vecAngularVelocity[0] = packet.velocity.angularVelocity.x();
-		pose.vecAngularVelocity[1] = packet.velocity.angularVelocity.y();
-		pose.vecAngularVelocity[2] = packet.velocity.angularVelocity.z();
+		pose.vecAngularVelocity[0] = payload.velocity.angularVelocity.x();
+		pose.vecAngularVelocity[1] = payload.velocity.angularVelocity.y();
+		pose.vecAngularVelocity[2] = payload.velocity.angularVelocity.z();
 
 		// Body tracking often provides valid estimated poses without the TRACKED bit for
 		// torso/arm joints. Treat valid poses as running so apps like VRChat don't
 		// discard them while SteamVR still renders them.
-		pose.poseIsValid = packet.valid;
+		pose.poseIsValid = payload.valid;
 		pose.deviceIsConnected = mDeviceConnected;
-		pose.result = packet.valid ? vr::TrackingResult_Running_OK
+		pose.result = payload.valid ? vr::TrackingResult_Running_OK
 								   : vr::TrackingResult_Running_OutOfRange;
 		pose.poseTimeOffset = 0.0;
 

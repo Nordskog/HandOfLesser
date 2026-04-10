@@ -26,10 +26,10 @@ namespace HOL
 					  vr::ETrackedDeviceClass deviceClass,
 					  vr::ETrackedControllerRole role);
 
-		void UpdatePose(HOL::HandTransformPacket* packet) override;
+		void UpdatePose(HOL::HandTransformPayload* payload) override;
 		void UpdateBoolInput(const std::string& input, bool value) override;
 		void UpdateFloatInput(const std::string& input, float value) override;
-		void UpdateSkeletal(HOL::SkeletalPacket* packet) override;
+		void UpdateSkeletal(HOL::SkeletalPayload* payload) override;
 		void SubmitPose() override;
 		void registerSkeletonInput(vr::VRInputComponentHandle_t handle,
 								   vr::EVRSkeletalTrackingLevel level,
@@ -94,8 +94,8 @@ namespace HOL
 		std::chrono::steady_clock::time_point mLastStateChangeTime;
 		const std::chrono::milliseconds STATE_CHANGE_DELAY_MS{500};
 
-		HOL::HandTransformPacket mLastTransformPacket;
-		HOL::ControllerInputPacket mLastInputPacket;
+		HOL::HandTransformPayload mLastTransformPayload;
+		HOL::ControllerInputPayload mLastInputPayload;
 
 		bool mValidWhileOriginalInvalid;
 		bool mHasHadValidOriginalPose = false;

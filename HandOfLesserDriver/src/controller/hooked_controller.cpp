@@ -75,17 +75,15 @@ namespace HOL
 			"Hooked controller %s registered skeleton input %s", serial.c_str(), path.c_str());
 	}
 
-	void HookedController::UpdatePose(HOL::HandTransformPacket* packet)
+	void HookedController::UpdatePose(HOL::HandTransformPayload* payload)
 	{
-		// packet data resides in receive buffer and will be replaced on next receive,
-		// so make a copy now.
-		this->mLastTransformPacket = *packet;
+		this->mLastTransformPayload = *payload;
 
 		// Do not update pose if invalid, because we want to continue submitting
 		// the last valid one. Is this necessary? is there some kind of timeout?
-		if (this->mLastTransformPacket.valid)
+		if (this->mLastTransformPayload.valid)
 		{
-			this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPacket, true);
+			this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPayload, true);
 		}
 	}
 	void HookedController::UpdateBoolInput(const std::string& input, bool value)
@@ -108,9 +106,9 @@ namespace HOL
 		}
 	}
 
-	void HookedController::UpdateSkeletal(HOL::SkeletalPacket* packet)
+	void HookedController::UpdateSkeletal(HOL::SkeletalPayload* payload)
 	{
-		if (packet == nullptr || packet->side != mSide)
+		if (payload == nullptr || payload->side != mSide)
 		{
 			return;
 		}
@@ -145,7 +143,7 @@ namespace HOL
 
 		mLoggedMissingSkeletonHandle = false;
 
-		HOL::ControllerCommon::buildSkeletalPoseFromPacket(*packet, mSkeletalPose);
+		HOL::ControllerCommon::buildSkeletalPoseFromPayload(*payload, mSkeletalPose);
 
 		if (hooks::UpdateSkeletonComponent::FunctionHook.originalFunc != nullptr)
 		{
@@ -210,7 +208,7 @@ namespace HOL
 			// If we are submitting a stale pose to lock it in place, we must jitter it
 			// because vrchat is stupid and ignores all the status information steamvr provides.
 			const auto& pose
-				= (this->mLastTransformPacket.valid || !config.steamvr.jitterLastPoseOnTrackingLoss)
+				= (this->mLastTransformPayload.valid || !config.steamvr.jitterLastPoseOnTrackingLoss)
 					  ? this->mLastPose
 					  : HOL::ControllerCommon::addJitter(this->mLastPose);
 
@@ -275,7 +273,7 @@ namespace HOL
 		}
 
 		// Whether or not the pose is valid pretty much.
-		return this->mLastTransformPacket.valid;
+		return this->mLastTransformPayload.valid;
 	}
 
 	// Assuming other external conditions also say it should.

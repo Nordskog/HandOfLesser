@@ -325,16 +325,14 @@ namespace HOL
 		return mInputHandles[type];
 	}
 
-	void EmulatedControllerDriver::UpdatePose(HOL::HandTransformPacket* packet)
+	void EmulatedControllerDriver::UpdatePose(HOL::HandTransformPayload* payload)
 	{
-		// packet data resides in receive buffer and will be replaced on next receive,
-		// so make a copy now.
-		this->mLastTransformPacket = *packet;
+		this->mLastTransformPayload = *payload;
 
 		// Keep updating as long as pose is valid
-		if (this->mLastTransformPacket.valid)
+		if (this->mLastTransformPayload.valid)
 		{
-			this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPacket, true);
+			this->mLastPose = ControllerCommon::generatePose(&this->mLastTransformPayload, true);
 		}
 	}
 
@@ -374,14 +372,14 @@ namespace HOL
 		}
 	}
 
-	void EmulatedControllerDriver::UpdateSkeletal(HOL::SkeletalPacket* packet)
+	void EmulatedControllerDriver::UpdateSkeletal(HOL::SkeletalPayload* payload)
 	{
 		if (!mDeviceConnected)
 		{
 			return;
 		}
 
-		ControllerCommon::buildSkeletalPoseFromPacket(*packet, mSkeletalPose);
+		ControllerCommon::buildSkeletalPoseFromPayload(*payload, mSkeletalPose);
 
 		vr::VRDriverInput()->UpdateSkeletonComponent(mInputHandles[InputHandleType::skeleton],
 													 vr::VRSkeletalMotionRange_WithoutController,

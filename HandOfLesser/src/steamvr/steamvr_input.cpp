@@ -17,7 +17,7 @@ namespace HOL::SteamVR
 	{
 		//printf("SteamVR Input: %s, %.3f\n", inputName.c_str(), value);
 
-		FloatInputPacket input;
+		FloatInputPayload input;
 		input.side = side;
 		std::strncpy(&input.inputName[0], inputName.c_str(), 64); // max length 64
 		input.value = value;
@@ -29,7 +29,7 @@ namespace HOL::SteamVR
 	{
 		printf("SteamVR Input: %s, %s\n", inputName.c_str(), value ? "True" : "False");
 
-		BoolInputPacket input;
+		BoolInputPayload input;
 		input.side = side;
 		std::strncpy(&input.inputName[0], inputName.c_str(), 64); // max length 64
 		input.value = value;

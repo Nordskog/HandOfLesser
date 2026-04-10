@@ -377,21 +377,21 @@ OpenXRHand* HandTracking::getHand(HOL::HandSide side)
 	}
 }
 
-HOL::HandTransformPacket HandTracking::getTransformPacket(HOL::HandSide side)
+HOL::HandTransformPayload HandTracking::getTransformPayload(HOL::HandSide side)
 {
 	OpenXRHand* hand = getHand(side);
 
-	HOL::HandTransformPacket packet;
+	HOL::HandTransformPayload payload;
 
-	packet.active = hand->handPose.active;
-	packet.valid = hand->handPose.poseValid;
-	packet.tracked = hand->handPose.poseTracked;
-	packet.stale = hand->handPose.poseStale;
-	packet.side = (HOL::HandSide)side;
-	packet.location = hand->handPose.palmLocation;
-	packet.velocity = hand->handPose.palmVelocity;
+	payload.active = hand->handPose.active;
+	payload.valid = hand->handPose.poseValid;
+	payload.tracked = hand->handPose.poseTracked;
+	payload.stale = hand->handPose.poseStale;
+	payload.side = (HOL::HandSide)side;
+	payload.location = hand->handPose.palmLocation;
+	payload.velocity = hand->handPose.palmVelocity;
 
-	return packet;
+	return payload;
 }
 
 HOL::HandPose& HandTracking::getHandPose(HOL::HandSide side)

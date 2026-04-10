@@ -34,7 +34,7 @@ namespace HOL
 
 		// Custom methods
 		const std::string& MyGetSerialNumber();
-		void UpdatePose(const HOL::BodyTrackerPosePacket& packet);
+		void UpdatePose(const HOL::BodyTrackerPosePayload& payload);
 		void UpdatePose(const vr::DriverPose_t& pose);  // Generic pose update
 		void SubmitPose();
 		void setConnectedState(bool connected);

@@ -62,7 +62,7 @@ namespace HOL
 		bool shouldUseHandTracking(HookedController* controller);
 		bool shouldSuppressHookedController(HookedController* controller);
 
-		HOL::MultimodalPosePacket mLastMultimodalPosePacket;
+		HOL::MultimodalPosePayload mLastMultimodalPosePayload;
 		static HOL::state::TrackingState Tracking;
 		static HOL::state::RuntimeState Runtime;
 
@@ -108,7 +108,7 @@ private:
 			mShadowTrackers; // Keyed by source device serial
 		std::array<HookedController*, HOL::HandSide_MAX> mPreferredHookedControllers{};
 		std::array<HookedController*, HOL::HandSide_MAX> mRecoveryHookedControllers{};
-		HOL::HandTransformPacket mLastHandTransforms[HOL::HandSide_MAX]{};
+		HOL::HandTransformPayload mLastHandTransforms[HOL::HandSide_MAX]{};
 		bool mHasHandTransform[HOL::HandSide_MAX]{false, false};
 	};
 } // namespace HOL

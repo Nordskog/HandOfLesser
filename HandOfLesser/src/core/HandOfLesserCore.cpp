@@ -118,10 +118,10 @@ void HandOfLesserCore::init(int serverPort)
 	}
 	else
 	{
-		// Send initialization packet to notify driver we're connected
-		AppInitializedPacket initPacket;
-		this->mDriverTransport.send((char*)&initPacket, sizeof(HOL::AppInitializedPacket));
-		std::cout << "Sent AppInitialized packet to driver" << std::endl;
+		// Send initialization payload to notify driver we're connected
+		AppInitializedPayload initPayload;
+		this->mDriverTransport.sendPayload<NativePacketType::AppInitialized>(initPayload);
+		std::cout << "Sent AppInitialized payload to driver" << std::endl;
 	}
 
 	// Initialize OSC transport (send to port 9000, no listening needed)
@@ -230,21 +230,25 @@ void HOL::HandOfLesserCore::receiveDataThread()
 			printedReconnecting = false;
 		}
 
-		HOL::NativePacket* packet = this->mDriverTransport.receivePacket();
-		if (packet == nullptr)
+		HOL::NativePacketView nativePacket = this->mDriverTransport.receivePacket();
+		if (!nativePacket)
 		{
 			continue; // Timeout, retry
 		}
 
-		switch (packet->packetType)
+		switch (nativePacket.packetType)
 		{
 			case NativePacketType::DriverInitialized: {
-				auto* initPacket = (DriverInitializedPacket*)packet;
-				std::cout << "Driver initialized: version " << initPacket->driverVersion
+				DriverInitializedPayload initPayload;
+				if (!nativePacket.copyPayload(initPayload))
+				{
+					break;
+				}
+				std::cout << "Driver initialized: version " << initPayload.driverVersion
 						  << std::endl;
 
 				// Send runtime state first so the driver can apply runtime-specific config
-				// overrides while parsing the settings packet.
+				// overrides while parsing the settings payload.
 				syncState();
 				syncSettings();
 				onDriverConnected();
@@ -252,27 +256,35 @@ void HOL::HandOfLesserCore::receiveDataThread()
 			}
 
 			case NativePacketType::DriverStatus: {
-				auto* statusPacket = (DriverStatusPacket*)packet;
+				DriverStatusPayload statusPayload;
+				if (!nativePacket.copyPayload(statusPayload))
+				{
+					break;
+				}
 				display::DriverStatus.emulatedControllersActive
-					= statusPacket->emulatedControllersActive;
-				display::DriverStatus.hasNormalControllers = statusPacket->hasNormalControllers;
+					= statusPayload.emulatedControllersActive;
+				display::DriverStatus.hasNormalControllers = statusPayload.hasNormalControllers;
 				display::DriverStatus.hasHandTrackingControllers
-					= statusPacket->hasHandTrackingControllers;
-				display::DriverStatus.hookedControllerCount = statusPacket->hookedControllerCount;
-				display::DriverStatus.emulatedTrackerCount = statusPacket->emulatedTrackerCount;
+					= statusPayload.hasHandTrackingControllers;
+				display::DriverStatus.hookedControllerCount = statusPayload.hookedControllerCount;
+				display::DriverStatus.emulatedTrackerCount = statusPayload.emulatedTrackerCount;
 				std::cout << "Driver status: emulated controllers="
-						  << statusPacket->emulatedControllersActive
-						  << ", normal=" << statusPacket->hasNormalControllers
-						  << ", hand-tracking=" << statusPacket->hasHandTrackingControllers
-						  << ", hooked=" << statusPacket->hookedControllerCount
-						  << ", trackers=" << statusPacket->emulatedTrackerCount << std::endl;
+						  << statusPayload.emulatedControllersActive
+						  << ", normal=" << statusPayload.hasNormalControllers
+						  << ", hand-tracking=" << statusPayload.hasHandTrackingControllers
+						  << ", hooked=" << statusPayload.hookedControllerCount
+						  << ", trackers=" << statusPayload.emulatedTrackerCount << std::endl;
 				break;
 			}
 
 			case NativePacketType::DeviceState: {
-				auto* devicePacket = (DeviceStatePacket*)packet;
+				DeviceStatePayload devicePayload;
+				if (!nativePacket.copyPayload(devicePayload))
+				{
+					break;
+				}
 
-				std::string serial = devicePacket->serial;
+				std::string serial = devicePayload.serial;
 
 				// Add or update device in map
 				auto it = Config.deviceSettings.devices.find(serial);
@@ -281,12 +293,12 @@ void HOL::HandOfLesserCore::receiveDataThread()
 					// New device
 					settings::DeviceConfig config;
 					config.serial = serial;
-					config.role = devicePacket->role;
-					config.trackingLevel = devicePacket->trackingLevel;
-					config.nativePoseIsValid = devicePacket->nativePoseIsValid;
-					config.nativeDeviceIsConnected = devicePacket->nativeDeviceIsConnected;
-					config.nativeTrackingResult = devicePacket->nativeTrackingResult;
-					config.nativePoseAgeMs = devicePacket->nativePoseAgeMs;
+					config.role = devicePayload.role;
+					config.trackingLevel = devicePayload.trackingLevel;
+					config.nativePoseIsValid = devicePayload.nativePoseIsValid;
+					config.nativeDeviceIsConnected = devicePayload.nativeDeviceIsConnected;
+					config.nativeTrackingResult = devicePayload.nativeTrackingResult;
+					config.nativePoseAgeMs = devicePayload.nativePoseAgeMs;
 					config.activatedThisSession = true;
 					Config.deviceSettings.devices[serial] = config;
 					std::cout << "Device registered: " << serial << std::endl;
@@ -294,12 +306,12 @@ void HOL::HandOfLesserCore::receiveDataThread()
 				else
 				{
 					// Update existing device
-					it->second.role = devicePacket->role;
-					it->second.trackingLevel = devicePacket->trackingLevel;
-					it->second.nativePoseIsValid = devicePacket->nativePoseIsValid;
-					it->second.nativeDeviceIsConnected = devicePacket->nativeDeviceIsConnected;
-					it->second.nativeTrackingResult = devicePacket->nativeTrackingResult;
-					it->second.nativePoseAgeMs = devicePacket->nativePoseAgeMs;
+					it->second.role = devicePayload.role;
+					it->second.trackingLevel = devicePayload.trackingLevel;
+					it->second.nativePoseIsValid = devicePayload.nativePoseIsValid;
+					it->second.nativeDeviceIsConnected = devicePayload.nativeDeviceIsConnected;
+					it->second.nativeTrackingResult = devicePayload.nativeTrackingResult;
+					it->second.nativePoseAgeMs = devicePayload.nativePoseAgeMs;
 					it->second.activatedThisSession = true;
 				}
 
@@ -307,7 +319,7 @@ void HOL::HandOfLesserCore::receiveDataThread()
 			}
 
 			default:
-				std::cerr << "Unknown packet type from driver: " << (int)packet->packetType
+				std::cerr << "Unknown packet type from driver: " << (int)nativePacket.packetType
 						  << std::endl;
 		}
 	}
@@ -434,7 +446,7 @@ void HOL::HandOfLesserCore::sendOscData()
 	}
 
 	// VRChat input goes here for now
-	// Finalizing also resets the input packet, which will otherwise overflow.
+	// Finalizing also resets the input OSC packet, which will otherwise overflow.
 	// Better to control here than having every input check the setting.
 	auto [packetPointer, packetSize] = this->mVrchatInput.finalizeInputBundle();
 	if (Config.input.sendOscInput)
@@ -456,9 +468,10 @@ void HandOfLesserCore::sendUpdate()
 			// No point in sending any new data if the data is the same as last time.
 			if (!hand.poseStale)
 			{
-				HOL::HandTransformPacket transPacket
-					= this->mHandTracking.getTransformPacket((HandSide)i);
-				this->mDriverTransport.send((char*)&transPacket, sizeof(HOL::HandTransformPacket));
+				HOL::HandTransformPayload transformPayload
+					= this->mHandTracking.getTransformPayload((HandSide)i);
+				this->mDriverTransport.sendPayload<NativePacketType::HandTransform>(
+					transformPayload);
 			}
 		}
 	}
@@ -466,13 +479,13 @@ void HandOfLesserCore::sendUpdate()
 	if (Config.steamvr.sendSteamVRInput)
 	{
 		// SteamVR inputs are submitted to a global
-		for (auto& packet : SteamVR::SteamVRInput::Current->floatInputs)
+		for (auto& payload : SteamVR::SteamVRInput::Current->floatInputs)
 		{
-			this->mDriverTransport.send((char*)&packet, sizeof(HOL::FloatInputPacket));
+			this->mDriverTransport.sendPayload<NativePacketType::FloatInput>(payload);
 		}
-		for (auto& packet : SteamVR::SteamVRInput::Current->boolInputs)
+		for (auto& payload : SteamVR::SteamVRInput::Current->boolInputs)
 		{
-			this->mDriverTransport.send((char*)&packet, sizeof(HOL::BoolInputPacket));
+			this->mDriverTransport.sendPayload<NativePacketType::BoolInput>(payload);
 		}
 	}
 
@@ -483,8 +496,8 @@ void HandOfLesserCore::sendUpdate()
 			OpenXRHand* hand = this->mHandTracking.getHand((HandSide)i);
 			if (hand->handPose.poseValid) // Only update if valid
 			{
-				SkeletalPacket& packet = this->mSkeletalInput.getSkeletalPacket(hand, (HandSide)i);
-				this->mDriverTransport.send((char*)&packet, sizeof(HOL::SkeletalPacket));
+				SkeletalPayload& payload = this->mSkeletalInput.getSkeletalPayload(hand, (HandSide)i);
+				this->mDriverTransport.sendPayload<NativePacketType::SkeletalInput>(payload);
 			}
 		}
 	}
@@ -492,8 +505,8 @@ void HandOfLesserCore::sendUpdate()
 	// Send body tracking hand positions for controller detection in driver
 	if (state::Tracking.isMultimodalEnabled)
 	{
-		MultimodalPosePacket bodyPosePacket = this->mBodyTracking.getMultimodalPosePacket();
-		this->mDriverTransport.send((char*)&bodyPosePacket, sizeof(HOL::MultimodalPosePacket));
+		MultimodalPosePayload bodyPosePayload = this->mBodyTracking.getMultimodalPosePayload();
+		this->mDriverTransport.sendPayload<NativePacketType::MultimodalPose>(bodyPosePayload);
 	}
 
 	// Send body tracker poses
@@ -507,37 +520,37 @@ void HandOfLesserCore::sendUpdate()
 
 void HOL::HandOfLesserCore::sendBodyTrackerData()
 {
-	// Get body tracker packets from BodyTracking (includes position calculation and visualization)
-	auto packets = mBodyTracking.getBodyTrackerPackets();
+	// Get body tracker payloads from BodyTracking (includes position calculation and visualization)
+	auto payloads = mBodyTracking.getBodyTrackerPayloads();
 
-	// Send each packet
-	for (const auto& packet : packets)
+	// Send each payload
+	for (const auto& payload : payloads)
 	{
-		this->mDriverTransport.send((char*)&packet, sizeof(HOL::BodyTrackerPosePacket));
+		this->mDriverTransport.sendPayload<NativePacketType::BodyTrackerPose>(payload);
 	}
 }
 
 void HOL::HandOfLesserCore::syncSettings()
 {
-	HOL::SettingsPacket packet;
+	HOL::SettingsPayload payload;
 	nlohmann::json j = HOL::Config;
 	std::string jsonStr = j.dump();
 
-	// Copy JSON string to packet buffer
-	std::strncpy(packet.jsonData, jsonStr.c_str(), sizeof(packet.jsonData) - 1);
-	packet.jsonData[sizeof(packet.jsonData) - 1] = '\0'; // Ensure null termination
+	// Copy JSON string to the settings payload buffer
+	std::strncpy(payload.jsonData, jsonStr.c_str(), sizeof(payload.jsonData) - 1);
+	payload.jsonData[sizeof(payload.jsonData) - 1] = '\0'; // Ensure null termination
 
-	this->mDriverTransport.send((char*)&packet, sizeof(HOL::SettingsPacket));
+	this->mDriverTransport.sendPayload<NativePacketType::Settings>(payload);
 }
 
 void HOL::HandOfLesserCore::syncState()
 {
 	state::Runtime.openxrState = this->mInstanceHolder.getState();
 
-	HOL::StatePacket packet;
-	packet.tracking = state::Tracking;
-	packet.runtime = state::Runtime;
-	this->mDriverTransport.send((char*)&packet, sizeof(HOL::StatePacket));
+	HOL::StatePayload payload;
+	payload.tracking = state::Tracking;
+	payload.runtime = state::Runtime;
+	this->mDriverTransport.sendPayload<NativePacketType::State>(payload);
 }
 
 void HOL::HandOfLesserCore::saveSettings()

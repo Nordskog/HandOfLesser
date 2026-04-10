@@ -1,10 +1,34 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
+#include <cstring>
 #include "src/packet/nativepacket.h"
 
 namespace HOL
 {
+	struct NativePacketView
+	{
+		NativePacketType packetType = NativePacketType::InvalidPacket;
+		const char* payload = nullptr;
+		size_t payloadSize = 0;
+
+		explicit operator bool() const
+		{
+			return payload != nullptr;
+		}
+
+		template <typename T> bool copyPayload(T& out) const
+		{
+			if (payload == nullptr || payloadSize != sizeof(T))
+			{
+				return false;
+			}
+
+			std::memcpy(&out, payload, sizeof(T));
+			return true;
+		}
+	};
 
 	/**
 	 * Abstract base interface for all transport implementations.
@@ -25,29 +49,54 @@ namespace HOL
 		// Explicit send - returns bytes sent (0 on failure)
 		virtual size_t send(const char* buffer, size_t size) = 0;
 
-		// Template send for type safety with packet structures
+		// Template send for callers that need to transmit an already-serialized buffer object.
 		template <typename T> size_t send(const T& packet)
 		{
 			return send((const char*)&packet, sizeof(T));
+		}
+
+		// Build the exact wire message as [NativePacket header][payload]. Do not send a typed
+		// envelope struct directly; padding would become part of the protocol.
+		template <NativePacketType Type, typename Payload> size_t sendPayload(const Payload& payload)
+		{
+			static_assert(sizeof(NativePacket) + sizeof(Payload) <= NativePacketBufferSize);
+
+			NativePacket packet{
+				.packetType = Type,
+				.payloadSize = static_cast<uint32_t>(sizeof(Payload)),
+			};
+			std::array<char, sizeof(NativePacket) + sizeof(Payload)> packetBuffer{};
+			std::memcpy(packetBuffer.data(), &packet, sizeof(packet));
+			std::memcpy(packetBuffer.data() + sizeof(packet), &payload, sizeof(payload));
+			return send(packetBuffer.data(), packetBuffer.size());
 		}
 
 		// Receive raw data into buffer - returns bytes received (0 on timeout/error)
 		// Implementations should support a reasonable timeout (e.g., 1 second)
 		virtual size_t receive(char* buffer, size_t maxSize) = 0;
 
-		// Receive and validate NativePacket (null if invalid/timeout)
-		// Pointer valid until next receive call
-		// Default implementation uses mReceiveBuffer
-		virtual NativePacket* receivePacket()
+		// Receive and validate a native packet envelope. The payload pointer is valid until the
+		// next receive call, and callers should copy it into the expected payload type.
+		virtual NativePacketView receivePacket()
 		{
 			size_t length = receive(mReceiveBuffer, sizeof(mReceiveBuffer));
 			if (length < sizeof(NativePacket))
 			{
-				return nullptr;
+				return {};
 			}
 
-			NativePacket* packet = (NativePacket*)mReceiveBuffer;
-			return isValidNativePacket(packet->packetType, length) ? packet : nullptr;
+			NativePacket packet;
+			std::memcpy(&packet, mReceiveBuffer, sizeof(packet));
+			if (length != sizeof(NativePacket) + packet.payloadSize)
+			{
+				return {};
+			}
+
+			return NativePacketView{
+				.packetType = packet.packetType,
+				.payload = mReceiveBuffer + sizeof(NativePacket),
+				.payloadSize = packet.payloadSize,
+			};
 		}
 
 		// Check if transport is connected/ready
@@ -56,7 +105,7 @@ namespace HOL
 
 	protected:
 		// Buffer for receivePacket() implementation
-		char mReceiveBuffer[16384] = {};
+		char mReceiveBuffer[NativePacketBufferSize] = {};
 	};
 
 } // namespace HOL

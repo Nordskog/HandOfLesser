@@ -15,8 +15,8 @@ namespace HOL::SteamVR
 		void submitBoolean(HandSide side, const std::string& inputName, bool value);
 		void clear();
 
-		std::vector<HOL::FloatInputPacket> floatInputs;
-		std::vector<HOL::BoolInputPacket> boolInputs;
+		std::vector<HOL::FloatInputPayload> floatInputs;
+		std::vector<HOL::BoolInputPayload> boolInputs;
 
 
 	};

@@ -94,14 +94,14 @@ OpenXRBody& HOL::OpenXR::BodyTracking::getBodyTracker()
 	return mBodyTracker;
 }
 
-HOL::MultimodalPosePacket HOL::OpenXR::BodyTracking::getMultimodalPosePacket()
+HOL::MultimodalPosePayload HOL::OpenXR::BodyTracking::getMultimodalPosePayload()
 {
-	MultimodalPosePacket packet;
+	MultimodalPosePayload payload;
 
 	auto* bodyJoints = mBodyTracker.getLastJointLocations();
 	if (bodyJoints == nullptr)
 	{
-		return packet;
+		return payload;
 	}
 
 	/////////////
@@ -126,9 +126,9 @@ HOL::MultimodalPosePacket HOL::OpenXR::BodyTracking::getMultimodalPosePacket()
 		rotation = HOL::rotateLocal(
 			rotation, HOL::quaternionFromEulerAnglesDegrees(controllerRotationOffset));
 		*/
-		packet.leftHandPose.position = position;
-		packet.leftHandPose.orientation = rotation;
-		packet.leftHandTracked = leftPalm.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
+		payload.leftHandPose.position = position;
+		payload.leftHandPose.orientation = rotation;
+		payload.leftHandTracked = leftPalm.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
 	}
 
 	// Flip for right hand
@@ -146,25 +146,25 @@ HOL::MultimodalPosePacket HOL::OpenXR::BodyTracking::getMultimodalPosePacket()
 			rotation, HOL::quaternionFromEulerAnglesDegrees(controllerRotationOffset));
 		*/
 
-		packet.rightHandPose.position = position;
-		packet.rightHandPose.orientation = rotation;
-		packet.rightHandTracked = rightPalm.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
+		payload.rightHandPose.position = position;
+		payload.rightHandPose.orientation = rotation;
+		payload.rightHandTracked = rightPalm.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
 	}
 
-	return packet;
+	return payload;
 }
 
-std::vector<HOL::BodyTrackerPosePacket> HOL::OpenXR::BodyTracking::getBodyTrackerPackets()
+std::vector<HOL::BodyTrackerPosePayload> HOL::OpenXR::BodyTracking::getBodyTrackerPayloads()
 {
-	std::vector<HOL::BodyTrackerPosePacket> packets;
+	std::vector<HOL::BodyTrackerPosePayload> payloads;
 
 	// Get body tracking joint data
 	XrBodyJointLocationFB* jointLocations = mBodyTracker.getLastJointLocations();
 
 	if (!jointLocations)
-		return packets;
+		return payloads;
 
-	// Send packet for each enabled tracker
+	// Send payload for each enabled tracker
 	for (int i = 0; i < static_cast<int>(BodyTrackerRole::TrackerRole_MAX); i++)
 	{
 		BodyTrackerRole role = static_cast<BodyTrackerRole>(i);
@@ -245,38 +245,38 @@ std::vector<HOL::BodyTrackerPosePacket> HOL::OpenXR::BodyTracking::getBodyTracke
 				break;
 		}
 
-		// Create packet
-		BodyTrackerPosePacket packet;
-		packet.role = role;
-		packet.active = mBodyTracker.active;
-		packet.valid = (location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0;
-		packet.tracked = (location.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT) != 0;
+		// Create payload
+		BodyTrackerPosePayload payload;
+		payload.role = role;
+		payload.active = mBodyTracker.active;
+		payload.valid = (location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) != 0;
+		payload.tracked = (location.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT) != 0;
 
 		// Set adjusted position
-		packet.location.position = trackerPosition;
+		payload.location.position = trackerPosition;
 
 		// Use orientation from the primary joint
-		packet.location.orientation.w() = location.pose.orientation.w;
-		packet.location.orientation.x() = location.pose.orientation.x;
-		packet.location.orientation.y() = location.pose.orientation.y;
-		packet.location.orientation.z() = location.pose.orientation.z;
+		payload.location.orientation.w() = location.pose.orientation.w;
+		payload.location.orientation.x() = location.pose.orientation.x;
+		payload.location.orientation.y() = location.pose.orientation.y;
+		payload.location.orientation.z() = location.pose.orientation.z;
 
 		// Visualize body tracker axes if enabled
-		if (Config.visualizer.showBodyTrackerAxes && packet.valid)
+		if (Config.visualizer.showBodyTrackerAxes && payload.valid)
 		{
 			auto* vis = HOL::UserInterface::Current->getVisualizer();
 			vis->submitOrientationAxes(trackerPosition,
-									   packet.location.orientation,
+									   payload.location.orientation,
 									   0.060f,	// Half the size of palm axes (0.120f / 2)
 									   3.0f);	// Half the line width (6.0f / 2)
 		}
 
 		// Velocities left at zero (body tracking velocity data is unreliable)
-		packet.velocity.linearVelocity = Eigen::Vector3f::Zero();
-		packet.velocity.angularVelocity = Eigen::Vector3f::Zero();
+		payload.velocity.linearVelocity = Eigen::Vector3f::Zero();
+		payload.velocity.angularVelocity = Eigen::Vector3f::Zero();
 
-		packets.push_back(packet);
+		payloads.push_back(payload);
 	}
 
-	return packets;
+	return payloads;
 }

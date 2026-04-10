@@ -144,10 +144,10 @@ namespace HOL
 														   vr::IVRDriverInput* input,
 														   InputHandleType type);
 
-		void UpdatePose(HOL::HandTransformPacket* packet) override;
+		void UpdatePose(HOL::HandTransformPayload* payload) override;
 		void UpdateBoolInput(const std::string& input, bool value) override;
 		void UpdateFloatInput(const std::string& input, float value) override;
-		void UpdateSkeletal(HOL::SkeletalPacket* packet) override;
+		void UpdateSkeletal(HOL::SkeletalPayload* payload) override;
 		void SubmitPose() override;
 		bool isConnected() const;
 
@@ -187,7 +187,7 @@ namespace HOL
 
 		vr::DriverPose_t mLastPose;
 
-		HOL::HandTransformPacket mLastTransformPacket;
+		HOL::HandTransformPayload mLastTransformPayload;
 	};
 
 } // namespace HOL

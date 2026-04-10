@@ -1,7 +1,6 @@
 #pragma once
 
 #include "src/hand/hand.h"
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <src/settings/settings.h>
@@ -11,6 +10,9 @@
 
 namespace HOL
 {
+	inline constexpr size_t SettingsNativePacketSize = 8196;
+	inline constexpr size_t NativePacketBufferSize = 16384;
+
 	enum class NativePacketType : __int32
 	{
 		HandTransform = 0,
@@ -26,38 +28,35 @@ namespace HOL
 		DriverStatus,
 		DeviceState,
 		AppInitialized,
-		PacketType_MAX,
-		InvalidPacket = PacketType_MAX
+		InvalidPacket
 	};
 
 	struct NativePacket
 	{
 		NativePacketType packetType = NativePacketType::InvalidPacket;
+		uint32_t payloadSize = 0;
 	};
 
-	inline constexpr size_t SettingsPacketSize = 8196;
-	inline constexpr size_t SettingsPacketJsonBufferSize = SettingsPacketSize - sizeof(NativePacket);
+	inline constexpr size_t SettingsPayloadJsonBufferSize
+		= SettingsNativePacketSize - sizeof(NativePacket);
 
 	// these'll ultimately handle all controller inputs
-	struct FloatInputPacket
+	struct FloatInputPayload
 	{
-		NativePacketType packetType = NativePacketType::FloatInput;
 		HOL::HandSide side = HOL::HandSide::LeftHand;
 		char inputName[64];
 		float value = 0;
 	};
 
-	struct BoolInputPacket
+	struct BoolInputPayload
 	{
-		NativePacketType packetType = NativePacketType::BoolInput;
 		HOL::HandSide side = HOL::HandSide::LeftHand;
 		char inputName[64];
 		bool value = 0;
 	};
 
-	struct ControllerInputPacket
+	struct ControllerInputPayload
 	{
-		NativePacketType packetType = NativePacketType::ControllerInput;
 		bool valid = 0;
 		HOL::HandSide side = HOL::HandSide::LeftHand;
 
@@ -77,25 +76,20 @@ namespace HOL
 		float fingerCurlPinky = 0.0f;
 	};
 
-	struct SettingsPacket
+	struct SettingsPayload
 	{
-		NativePacketType packetType = NativePacketType::Settings;
-		char jsonData[SettingsPacketJsonBufferSize] = {}; // Settings serialized as JSON string
+		char jsonData[SettingsPayloadJsonBufferSize] = {}; // Settings serialized as JSON string
 	};
-	static_assert(sizeof(SettingsPacket) == SettingsPacketSize);
 
-	struct SkeletalPacket
+	struct SkeletalPayload
 	{
-		NativePacketType packetType = NativePacketType::SkeletalInput;
 		HOL::HandSide side;
 		HOL::PoseLocation
 			locations[SteamVR::HandSkeletonBone::eBone_Count]; // HandSkeletonBone::eBone_Count
 	};
 
-	struct MultimodalPosePacket
+	struct MultimodalPosePayload
 	{
-		NativePacketType packetType = NativePacketType::MultimodalPose;
-
 		// Controller pose, transformed from palm position
 		HOL::PoseLocation leftHandPose;
 		HOL::PoseLocation rightHandPose;
@@ -107,10 +101,8 @@ namespace HOL
 
 	// Mimics vr::DriverPose_t, but only contains the bits we care about.
 	// Subject to change.
-	// include packet type in packet itself so we can just memcpy the whole thing
-	struct HandTransformPacket
+	struct HandTransformPayload
 	{
-		NativePacketType packetType = NativePacketType::HandTransform;
 		bool active = false;  // Got a result
 		bool valid = false;	  // Is a proper pose of some kind
 		bool tracked = false; // Is directly tracked instead of inferred or frozen
@@ -120,9 +112,8 @@ namespace HOL
 		HOL::PoseVelocity velocity;
 	};
 
-	struct BodyTrackerPosePacket
+	struct BodyTrackerPosePayload
 	{
-		NativePacketType packetType = NativePacketType::BodyTrackerPose;
 		HOL::BodyTrackerRole role;
 		HOL::PoseLocation location;
 		HOL::PoseVelocity velocity;
@@ -131,23 +122,20 @@ namespace HOL
 		bool tracked = false;
 	};
 
-	struct StatePacket
+	struct StatePayload
 	{
-		NativePacketType packetType = NativePacketType::State;
 		HOL::state::TrackingState tracking;
 		HOL::state::RuntimeState runtime;
 	};
 
-	struct DriverInitializedPacket
+	struct DriverInitializedPayload
 	{
-		NativePacketType packetType = NativePacketType::DriverInitialized;
 		char driverVersion[64] = "0.1.0"; // For future version checks
 		uint32_t capabilities = 0;		  // Bitfield for future features
 	};
 
-	struct DriverStatusPacket
+	struct DriverStatusPayload
 	{
-		NativePacketType packetType = NativePacketType::DriverStatus;
 		bool emulatedControllersActive = false;
 		bool hasNormalControllers = false;
 		bool hasHandTrackingControllers = false;
@@ -155,9 +143,8 @@ namespace HOL
 		int emulatedTrackerCount = 0;
 	};
 
-	struct DeviceStatePacket
+	struct DeviceStatePayload
 	{
-		NativePacketType packetType = NativePacketType::DeviceState;
 		char serial[128] = {};
 		vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
 		vr::EVRSkeletalTrackingLevel trackingLevel = vr::VRSkeletalTracking_Estimated;
@@ -167,39 +154,12 @@ namespace HOL
 		uint64_t nativePoseAgeMs = 0;
 	};
 
-	struct AppInitializedPacket
+	struct AppInitializedPayload
 	{
-		NativePacketType packetType = NativePacketType::AppInitialized;
 		char appVersion[64] = "0.1.0"; // For future version checks
 		uint32_t capabilities = 0;	   // Bitfield for future features
 	};
 
-	inline constexpr std::array<size_t, static_cast<size_t>(NativePacketType::PacketType_MAX)>
-		NativePacketSizes{{
-			sizeof(HandTransformPacket),
-			sizeof(ControllerInputPacket),
-			sizeof(FloatInputPacket),
-			sizeof(BoolInputPacket),
-			sizeof(SkeletalPacket),
-			sizeof(MultimodalPosePacket),
-			sizeof(BodyTrackerPosePacket),
-			sizeof(SettingsPacket),
-			sizeof(StatePacket),
-			sizeof(DriverInitializedPacket),
-			sizeof(DriverStatusPacket),
-			sizeof(DeviceStatePacket),
-			sizeof(AppInitializedPacket),
-		}};
-
-	inline bool isValidNativePacket(NativePacketType type, size_t length)
-	{
-		size_t index = static_cast<size_t>(type);
-		if (index >= NativePacketSizes.size())
-		{
-			return false;
-		}
-
-		return length == NativePacketSizes[index];
-	}
+	static_assert(sizeof(NativePacket) + sizeof(SettingsPayload) == SettingsNativePacketSize);
 
 } // namespace HOL

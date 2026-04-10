@@ -20,7 +20,7 @@ namespace HOL::OpenXR
 		void init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSession& session);
 		void updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker);
 		void updateInputs();
-		HOL::HandTransformPacket getTransformPacket(HOL::HandSide side);
+		HOL::HandTransformPayload getTransformPayload(HOL::HandSide side);
 		HOL::HandPose& getHandPose(HOL::HandSide side);
 		void drawHands();
 		OpenXRHand* getHand(HOL::HandSide side);

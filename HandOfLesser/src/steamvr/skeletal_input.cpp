@@ -87,7 +87,7 @@ namespace HOL::SteamVR
 		return;
 	}
 
-	HOL::SkeletalPacket& SkeletalInput::getSkeletalPacket(OpenXRHand* hand, HandSide side)
+	HOL::SkeletalPayload& SkeletalInput::getSkeletalPayload(OpenXRHand* hand, HandSide side)
 	{
 		// Root is where the controller origin is.
 		// Wrist should be the offset from that to the wrist location.
@@ -114,19 +114,19 @@ namespace HOL::SteamVR
 			5, // pinky
 		};
 
-		// Might as well write directly to the packet
-		SkeletalPacket& packet
-			= side == HandSide::LeftHand ? this->mLeftPacket : this->mRightPacket;
+		// Might as well write directly to the payload
+		SkeletalPayload& payload
+			= side == HandSide::LeftHand ? this->mLeftPayload : this->mRightPayload;
 
 		// Convert all the raw locations to eigen. Aux joints are generated on the driver side.
 		for (int i = 1; i < HandSkeletonBone::eBone_Aux_Thumb; i++)
 		{
 			getOpenXRJointLocation(
-				hand->getLastJointLocations(), (HandSkeletonBone)i, packet.locations[i]);
+				hand->getLastJointLocations(), (HandSkeletonBone)i, payload.locations[i]);
 		}
 
-		HOL::PoseLocation& rootJoint = packet.locations[HandSkeletonBone::eBone_Root];
-		HOL::PoseLocation& wristJoint = packet.locations[HandSkeletonBone::eBone_Wrist];
+		HOL::PoseLocation& rootJoint = payload.locations[HandSkeletonBone::eBone_Root];
+		HOL::PoseLocation& wristJoint = payload.locations[HandSkeletonBone::eBone_Wrist];
 
 		// root should be 0
 		rootJoint.position.setZero();
@@ -143,9 +143,9 @@ namespace HOL::SteamVR
 				// index.
 				bool lastIteration = j == jointCount - 1;
 				HandSkeletonBone currentJoint = (HandSkeletonBone)(lastJoint - j);
-				PoseLocation& joint = packet.locations[currentJoint];
+				PoseLocation& joint = payload.locations[currentJoint];
 				PoseLocation& parent
-					= lastIteration ? wristJoint : packet.locations[currentJoint - 1];
+					= lastIteration ? wristJoint : payload.locations[currentJoint - 1];
 
 				joint.position = parent.orientation.inverse() * (joint.position - parent.position);
 				joint.orientation = parent.orientation.inverse() * joint.orientation;
@@ -163,7 +163,7 @@ namespace HOL::SteamVR
 		{
 			for (int i = 2; i < HandSkeletonBone::eBone_Aux_Thumb; i++)
 			{
-				HOL::PoseLocation& joint = packet.locations[(HandSkeletonBone)i];
+				HOL::PoseLocation& joint = payload.locations[(HandSkeletonBone)i];
 				joint.position *= Config.skeletal.jointLengthMultiplier;
 			}
 		}
@@ -187,8 +187,8 @@ namespace HOL::SteamVR
 		// so you can submit without having to think too much about it.
 
 		// also TODO the aux joints
-		packet.side = side;
+		payload.side = side;
 
-		return packet;
+		return payload;
 	}
 } // namespace HOL::SteamVR

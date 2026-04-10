@@ -44,17 +44,17 @@ namespace HOL
 				DriverLog("App connected!");
 
 				// Send initialization message
-				DriverInitializedPacket initPacket;
-				this->mTransport.send((char*)&initPacket, sizeof(initPacket));
-				DriverLog("Sent DriverInitialized packet");
+				DriverInitializedPayload initPayload;
+				this->mTransport.sendPayload<NativePacketType::DriverInitialized>(initPayload);
+				DriverLog("Sent DriverInitialized payload");
 				break;
 			}
 		}
 
 		while (this->mActive)
 		{
-			HOL::NativePacket* rawPacket = this->mTransport.receivePacket();
-			if (rawPacket == nullptr)
+			HOL::NativePacketView nativePacket = this->mTransport.receivePacket();
+			if (!nativePacket)
 			{
 				// Check if disconnected
 				if (!this->mTransport.isConnected())
@@ -65,41 +65,46 @@ namespace HOL
 						DriverLog("App reconnected!");
 
 						// Send initialization message again
-						DriverInitializedPacket initPacket;
-						this->mTransport.send((char*)&initPacket, sizeof(initPacket));
-						DriverLog("Sent DriverInitialized packet");
+						DriverInitializedPayload initPayload;
+						this->mTransport.sendPayload<NativePacketType::DriverInitialized>(
+							initPayload);
+						DriverLog("Sent DriverInitialized payload");
 					}
 				}
 				continue;
 			}
-			switch (rawPacket->packetType)
+			switch (nativePacket.packetType)
 			{
 				case HOL::NativePacketType::HandTransform: {
-					HOL::HandTransformPacket* packet = (HOL::HandTransformPacket*)rawPacket;
-
-					// Ehhh something might send garbage data and get lucky
-					if (packet->side != HOL::HandSide::LeftHand
-						&& packet->side != HOL::HandSide::RightHand)
+					HOL::HandTransformPayload payload;
+					if (!nativePacket.copyPayload(payload))
 					{
 						break;
 					}
 
-					mLastHandTransforms[packet->side] = *packet;
-					mHasHandTransform[packet->side] = packet->valid;
+					// Ehhh something might send garbage data and get lucky
+					if (payload.side != HOL::HandSide::LeftHand
+						&& payload.side != HOL::HandSide::RightHand)
+					{
+						break;
+					}
+
+					const int sideIndex = static_cast<int>(payload.side);
+					mLastHandTransforms[sideIndex] = payload;
+					mHasHandTransform[sideIndex] = payload.valid;
 
 					if (Config.handPose.controllerMode != ControllerMode::HookedControllerMode)
 					{
-						if (auto hooked = getHookedController(packet->side))
+						if (auto hooked = getHookedController(payload.side))
 						{
-							hooked->UpdatePose(packet);
+							hooked->UpdatePose(&payload);
 						}
 					}
 
-					GenericControllerInterface* controller
-						= this->GetActiveController(packet->side);
+					GenericControllerInterface* controller = this->GetActiveController(payload.side);
 					if (controller != nullptr)
 					{
-						controller->UpdatePose(packet);
+						controller->UpdatePose(&payload);
 						controller->SubmitPose();
 					}
 
@@ -109,14 +114,18 @@ namespace HOL
 				}
 
 				case HOL::NativePacketType::Settings: {
-					HOL::SettingsPacket* packet = (HOL::SettingsPacket*)rawPacket;
+					HOL::SettingsPayload payload;
+					if (!nativePacket.copyPayload(payload))
+					{
+						break;
+					}
 
 					try
 					{
 						HOL::settings::HandOfLesserSettings oldSettings = Config;
 
-						// Parse JSON from packet
-						nlohmann::json j = nlohmann::json::parse(packet->jsonData);
+						// Parse JSON from payload
+						nlohmann::json j = nlohmann::json::parse(payload.jsonData);
 						HandOfLesser::Config = j.get<HOL::settings::HandOfLesserSettings>();
 						if (Runtime.isSteamVR)
 						{
@@ -136,11 +145,15 @@ namespace HOL
 				}
 
 				case HOL::NativePacketType::FloatInput: {
-					HOL::FloatInputPacket* packet = (HOL::FloatInputPacket*)rawPacket;
-					auto controller = this->GetActiveController(packet->side);
+					HOL::FloatInputPayload payload;
+					if (!nativePacket.copyPayload(payload))
+					{
+						break;
+					}
+					auto controller = this->GetActiveController(payload.side);
 					if (controller != nullptr)
 					{
-						controller->UpdateFloatInput(packet->inputName, packet->value);
+						controller->UpdateFloatInput(payload.inputName, payload.value);
 					}
 
 					break;
@@ -148,24 +161,32 @@ namespace HOL
 
 				case HOL::NativePacketType::BoolInput: {
 
-					HOL::BoolInputPacket* packet = (HOL::BoolInputPacket*)rawPacket;
-					auto controller = this->GetActiveController(packet->side);
+					HOL::BoolInputPayload payload;
+					if (!nativePacket.copyPayload(payload))
+					{
+						break;
+					}
+					auto controller = this->GetActiveController(payload.side);
 					if (controller != nullptr)
 					{
-						controller->UpdateBoolInput(packet->inputName, packet->value);
+						controller->UpdateBoolInput(payload.inputName, payload.value);
 					}
 
 					break;
 				}
 
 				case HOL::NativePacketType::SkeletalInput: {
-					HOL::SkeletalPacket* packet = (HOL::SkeletalPacket*)rawPacket;
+					HOL::SkeletalPayload payload;
+					if (!nativePacket.copyPayload(payload))
+					{
+						break;
+					}
 
 					// Send to active controller (for normal skeletal input)
-					auto activeController = this->GetActiveController(packet->side);
+					auto activeController = this->GetActiveController(payload.side);
 					if (activeController != nullptr)
 					{
-						activeController->UpdateSkeletal(packet);
+						activeController->UpdateSkeletal(&payload);
 					}
 					else
 					{
@@ -173,10 +194,10 @@ namespace HOL
 						if (Config.skeletal.augmentControllerSkeleton
 							&& Tracking.isMultimodalEnabled)
 						{
-							auto hookedController = getHookedController(packet->side);
+							auto hookedController = getHookedController(payload.side);
 							if (hookedController != nullptr)
 							{
-								hookedController->UpdateSkeletal(packet);
+								hookedController->UpdateSkeletal(&payload);
 							}
 						}
 					}
@@ -185,19 +206,26 @@ namespace HOL
 				}
 
 				case HOL::NativePacketType::MultimodalPose: {
-					mLastMultimodalPosePacket = *(HOL::MultimodalPosePacket*)rawPacket;
+					if (!nativePacket.copyPayload(mLastMultimodalPosePayload))
+					{
+						break;
+					}
 
 					break;
 				}
 
 				case HOL::NativePacketType::BodyTrackerPose: {
-					HOL::BodyTrackerPosePacket* packet = (HOL::BodyTrackerPosePacket*)rawPacket;
+					HOL::BodyTrackerPosePayload payload;
+					if (!nativePacket.copyPayload(payload))
+					{
+						break;
+					}
 
 					// Find the tracker for this role
-					auto it = mEmulatedTrackers.find(packet->role);
+					auto it = mEmulatedTrackers.find(payload.role);
 					if (it != mEmulatedTrackers.end())
 					{
-						it->second->UpdatePose(*packet);
+						it->second->UpdatePose(payload);
 						it->second->SubmitPose();
 					}
 
@@ -205,10 +233,14 @@ namespace HOL
 				}
 
 				case HOL::NativePacketType::State: {
-					HOL::StatePacket* packet = (HOL::StatePacket*)rawPacket;
+					HOL::StatePayload payload;
+					if (!nativePacket.copyPayload(payload))
+					{
+						break;
+					}
 
-					Tracking = packet->tracking;
-					Runtime = packet->runtime;
+					Tracking = payload.tracking;
+					Runtime = payload.runtime;
 
 					if (Runtime.isSteamVR
 						&& Config.handPose.controllerMode != ControllerMode::NoControllerMode)
@@ -223,6 +255,12 @@ namespace HOL
 				}
 
 				case HOL::NativePacketType::AppInitialized: {
+					HOL::AppInitializedPayload payload;
+					if (!nativePacket.copyPayload(payload))
+					{
+						break;
+					}
+
 					DriverLog("App initialized, sending current device state");
 					sendAllDeviceStates();
 					sendStatus();
@@ -731,7 +769,7 @@ namespace HOL
 		}
 
 		bool shouldUseHandTracking
-			= controller->mLastTransformPacket.tracked
+			= controller->mLastTransformPayload.tracked
 			  || (canPoss && !recoveryPoseFresh)
 			  || controller->mValidWhileOriginalInvalid;
 
@@ -818,8 +856,8 @@ namespace HOL
 			return false;
 		}
 
-		const HOL::HandTransformPacket& packet = mLastHandTransforms[side];
-		return packet.valid;
+		const HOL::HandTransformPayload& payload = mLastHandTransforms[side];
+		return payload.valid;
 	}
 
 	EmulatedControllerDriver* HandOfLesser::getEmulatedController(HOL::HandSide side)
@@ -1530,7 +1568,7 @@ namespace HOL
 			return (std::numeric_limits<float>::max)();
 		}
 
-		auto& multimodal = HOL::HandOfLesser::Current->mLastMultimodalPosePacket;
+		auto& multimodal = HOL::HandOfLesser::Current->mLastMultimodalPosePayload;
 
 		// You would think upper-body tracking would be used to augment controller tracker
 		// when it gives up tracking the controller, but no. Likewise, Controller rotation, which
@@ -1560,13 +1598,13 @@ namespace HOL
 
 	void HandOfLesser::sendStatus()
 	{
-		DriverStatusPacket packet;
-		packet.emulatedControllersActive = false;
+		DriverStatusPayload payload;
+		payload.emulatedControllersActive = false;
 		for (auto& controller : mEmulatedControllers)
 		{
 			if (controller != nullptr)
 			{
-				packet.emulatedControllersActive = true;
+				payload.emulatedControllersActive = true;
 				break;
 			}
 		}
@@ -1582,38 +1620,38 @@ namespace HOL
 
 			if (controller->mSkeletonTrackingLevel == vr::VRSkeletalTracking_Full)
 			{
-				packet.hasHandTrackingControllers = true;
+				payload.hasHandTrackingControllers = true;
 			}
 			else
 			{
-				packet.hasNormalControllers = true;
+				payload.hasNormalControllers = true;
 			}
 		}
 
-		packet.hookedControllerCount = (int)mHookedControllers.size();
-		packet.emulatedTrackerCount = (int)mEmulatedTrackers.size();
+		payload.hookedControllerCount = (int)mHookedControllers.size();
+		payload.emulatedTrackerCount = (int)mEmulatedTrackers.size();
 
-		this->mTransport.send((char*)&packet, sizeof(packet));
+		this->mTransport.sendPayload<NativePacketType::DriverStatus>(payload);
 		DriverLog("Sent driver status: emulated=%d, normal=%d, hand=%d, hooked=%d, trackers=%d",
-				  packet.emulatedControllersActive,
-				  packet.hasNormalControllers,
-				  packet.hasHandTrackingControllers,
-				  packet.hookedControllerCount,
-				  packet.emulatedTrackerCount);
+				  payload.emulatedControllersActive,
+				  payload.hasNormalControllers,
+				  payload.hasHandTrackingControllers,
+				  payload.hookedControllerCount,
+				  payload.emulatedTrackerCount);
 	}
 
 	void HandOfLesser::sendDeviceState(HookedController* device)
 	{
-		DeviceStatePacket packet;
-		strncpy_s(packet.serial, sizeof(packet.serial), device->serial.c_str(), _TRUNCATE);
-		packet.role = device->mDeviceClass;
-		packet.trackingLevel = device->mSkeletonTrackingLevel;
-		packet.nativePoseIsValid = device->mLastOriginalPoseValid;
-		packet.nativeDeviceIsConnected = device->lastOriginalPose.deviceIsConnected;
-		packet.nativeTrackingResult = device->lastOriginalPose.result;
-		packet.nativePoseAgeMs = device->mLastOriginalPoseAgeMs;
+		DeviceStatePayload payload;
+		strncpy_s(payload.serial, sizeof(payload.serial), device->serial.c_str(), _TRUNCATE);
+		payload.role = device->mDeviceClass;
+		payload.trackingLevel = device->mSkeletonTrackingLevel;
+		payload.nativePoseIsValid = device->mLastOriginalPoseValid;
+		payload.nativeDeviceIsConnected = device->lastOriginalPose.deviceIsConnected;
+		payload.nativeTrackingResult = device->lastOriginalPose.result;
+		payload.nativePoseAgeMs = device->mLastOriginalPoseAgeMs;
 
-		this->mTransport.send((char*)&packet, sizeof(packet));
+		this->mTransport.sendPayload<NativePacketType::DeviceState>(payload);
 	}
 
 	void HandOfLesser::sendAllDeviceStates()

@@ -42,7 +42,7 @@ namespace HOL::ControllerCommon
 		translationOffset = baseTranslationOffset + (baseRotation * userTranslationOffset);
 	}
 
-	vr::DriverPose_t generatePose(HOL::HandTransformPacket* packet, bool deviceConnected)
+	vr::DriverPose_t generatePose(HOL::HandTransformPayload* payload, bool deviceConnected)
 	{
 		// Let's retrieve the Hmd pose to base our controller pose off.
 
@@ -61,21 +61,21 @@ namespace HOL::ControllerCommon
 		// I guess this would be to align coordinate systems if they were offset.
 		// Probably won't need that for quest
 
-		// HandTransform packets now carry the raw palm pose/velocity from the runtime.
+		// HandTransform payloads carry the raw palm pose/velocity from the runtime.
 		// Keep that as the sensor origin and express the controller alignment through
 		// DriverFromHead so SteamVR can predict the offset controller point correctly.
 		Eigen::Vector3f driverFromHeadTranslation;
 		Eigen::Quaternionf qDriverFromHead;
-		getControllerPoseOffset(packet->side, driverFromHeadTranslation, qDriverFromHead);
+		getControllerPoseOffset(payload->side, driverFromHeadTranslation, qDriverFromHead);
 
-		pose.vecPosition[0] = packet->location.position.x();
-		pose.vecPosition[1] = packet->location.position.y();
-		pose.vecPosition[2] = packet->location.position.z();
+		pose.vecPosition[0] = payload->location.position.x();
+		pose.vecPosition[1] = payload->location.position.y();
+		pose.vecPosition[2] = payload->location.position.z();
 
-		pose.qRotation.w = packet->location.orientation.w();
-		pose.qRotation.x = packet->location.orientation.x();
-		pose.qRotation.y = packet->location.orientation.y();
-		pose.qRotation.z = packet->location.orientation.z();
+		pose.qRotation.w = payload->location.orientation.w();
+		pose.qRotation.x = payload->location.orientation.x();
+		pose.qRotation.y = payload->location.orientation.y();
+		pose.qRotation.z = payload->location.orientation.z();
 
 		pose.vecDriverFromHeadTranslation[0] = driverFromHeadTranslation.x();
 		pose.vecDriverFromHeadTranslation[1] = driverFromHeadTranslation.y();
@@ -92,13 +92,13 @@ namespace HOL::ControllerCommon
 		// everything goes to shit. Use OpenXR predicition instead where it works.
 
 		// Controllers will vanish if velocities are invalid? not initialized?
-		pose.vecVelocity[0] = packet->velocity.linearVelocity.x();
-		pose.vecVelocity[1] = packet->velocity.linearVelocity.y();
-		pose.vecVelocity[2] = packet->velocity.linearVelocity.z();
+		pose.vecVelocity[0] = payload->velocity.linearVelocity.x();
+		pose.vecVelocity[1] = payload->velocity.linearVelocity.y();
+		pose.vecVelocity[2] = payload->velocity.linearVelocity.z();
 		//
-		pose.vecAngularVelocity[0] = packet->velocity.angularVelocity.x();
-		pose.vecAngularVelocity[1] = packet->velocity.angularVelocity.y();
-		pose.vecAngularVelocity[2] = packet->velocity.angularVelocity.z();
+		pose.vecAngularVelocity[0] = payload->velocity.angularVelocity.x();
+		pose.vecAngularVelocity[1] = payload->velocity.angularVelocity.y();
+		pose.vecAngularVelocity[2] = payload->velocity.angularVelocity.z();
 
 		// Acceleration being wrong can make controllers not appear
 		pose.vecAcceleration[0] = 0;
@@ -270,16 +270,16 @@ namespace HOL::ControllerCommon
 		return trans;
 	}
 
-	void buildSkeletalPoseFromPacket(
-		const HOL::SkeletalPacket& packet,
+	void buildSkeletalPoseFromPayload(
+		const HOL::SkeletalPayload& payload,
 		vr::VRBoneTransform_t outPose[SteamVR::HandSkeletonBone::eBone_Count])
 	{
-		HOL::SkeletalPacket workingPacket = packet;
+		HOL::SkeletalPayload workingPayload = payload;
 
-		if (workingPacket.side == HandSide::RightHand)
+		if (workingPayload.side == HandSide::RightHand)
 		{
 			HOL::PoseLocation& wristJoint
-				= workingPacket.locations[SteamVR::HandSkeletonBone::eBone_Wrist];
+				= workingPayload.locations[SteamVR::HandSkeletonBone::eBone_Wrist];
 
 			wristJoint.position.x() *= -1.f;
 			wristJoint.position.y() *= -1.f;
@@ -291,7 +291,7 @@ namespace HOL::ControllerCommon
 		for (int i = 1; i < SteamVR::HandSkeletonBone::eBone_Count; i++)
 		{
 			auto bone = static_cast<SteamVR::HandSkeletonBone>(i);
-			auto& joint = workingPacket.locations[bone];
+			auto& joint = workingPayload.locations[bone];
 
 			std::swap(joint.position.x(), joint.position.z());
 			joint.position.z() *= -1.f;
@@ -299,7 +299,7 @@ namespace HOL::ControllerCommon
 			std::swap(joint.orientation.x(), joint.orientation.z());
 			joint.orientation.z() *= -1.f;
 
-			if (workingPacket.side == HandSide::LeftHand)
+			if (workingPayload.side == HandSide::LeftHand)
 			{
 				joint.position.x() *= -1.f;
 				joint.position.y() *= -1.f;
@@ -322,15 +322,15 @@ namespace HOL::ControllerCommon
 		const Eigen::Quaternionf rightMagic(-0.5f, 0.5f, -0.5f, -0.5f);
 		for (int finger = 0; finger < 5; finger++)
 		{
-			auto& joint = workingPacket.locations[startingJoint[finger]];
+			auto& joint = workingPayload.locations[startingJoint[finger]];
 			const Eigen::Quaternionf magic
-				= workingPacket.side == HandSide::LeftHand ? leftMagic : rightMagic;
+				= workingPayload.side == HandSide::LeftHand ? leftMagic : rightMagic;
 
 			joint.orientation = magic * joint.orientation;
 			joint.position = magic * joint.position;
 		}
 
-		auto& wristJoint = workingPacket.locations[SteamVR::HandSkeletonBone::eBone_Wrist];
+		auto& wristJoint = workingPayload.locations[SteamVR::HandSkeletonBone::eBone_Wrist];
 		for (int finger = 0; finger < 5; finger++)
 		{
 			SteamVR::HandSkeletonBone firstJoint = startingJoint[finger];
@@ -338,7 +338,7 @@ namespace HOL::ControllerCommon
 
 			auto auxIndex = static_cast<SteamVR::HandSkeletonBone>(
 				SteamVR::HandSkeletonBone::eBone_Aux_Thumb + finger);
-			auto& auxJoint = workingPacket.locations[auxIndex];
+			auto& auxJoint = workingPayload.locations[auxIndex];
 			auxJoint.position = wristJoint.position;
 			auxJoint.orientation = wristJoint.orientation;
 
@@ -346,7 +346,7 @@ namespace HOL::ControllerCommon
 			{
 				int childIndex = static_cast<int>(firstJoint) + 1 + j;
 				auto childBone = static_cast<SteamVR::HandSkeletonBone>(childIndex);
-				auto& child = workingPacket.locations[childBone];
+				auto& child = workingPayload.locations[childBone];
 				auxJoint.position += auxJoint.orientation * child.position;
 				auxJoint.orientation = auxJoint.orientation * child.orientation;
 			}
@@ -354,7 +354,7 @@ namespace HOL::ControllerCommon
 
 		for (int i = 0; i < SteamVR::HandSkeletonBone::eBone_Count; i++)
 		{
-			outPose[i] = poseLocationToBoneTransform(workingPacket.locations[i]);
+			outPose[i] = poseLocationToBoneTransform(workingPayload.locations[i]);
 		}
 	}
 } // namespace HOL::ControllerCommon
