@@ -1266,6 +1266,18 @@ void HOL::UserInterface::buildMain()
 		   {"Emulate separate controller", HOL::ControllerMode::EmulateControllerMode},
 		   {"Possess existing controller", HOL::ControllerMode::HookedControllerMode}};
 
+	bool steamVrControllerModeDisabled = HOL::state::Runtime.isSteamVR;
+	int displayedControllerMode = steamVrControllerModeDisabled
+		? HOL::ControllerMode::NoControllerMode
+		: HOL::Config.handPose.controllerMode;
+
+	if (steamVrControllerModeDisabled)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	ImVec2 handTrackingModeStart = ImGui::GetCursorScreenPos();
+
 	ImGui::BeginChild("HandTrackingModeLeft",
 					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
 					  ImGuiChildFlags_AutoResizeY);
@@ -1273,27 +1285,32 @@ void HOL::UserInterface::buildMain()
 	for (const auto& buttonContent : modeRadioButtons)
 	{
 		if (ImGui::RadioButton(std::get<0>(buttonContent).c_str(),
-							   (int*)&HOL::Config.handPose.controllerMode,
+							   &displayedControllerMode,
 							   std::get<1>(buttonContent)))
 		{
+			HOL::Config.handPose.controllerMode
+				= static_cast<HOL::ControllerMode>(displayedControllerMode);
 			HOL::HandOfLesserCore::Current->syncSettings();
 		}
 
-		if (ImGui::IsItemHovered())
+		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
 		{
-			switch (std::get<1>(buttonContent))
+			if (!steamVrControllerModeDisabled)
 			{
-				case HOL::ControllerMode::NoControllerMode:
-					showWrappedTooltip("Do nothing.");
-					break;
-				case HOL::ControllerMode::EmulateControllerMode:
-					showWrappedTooltip("Emulate a brand new controller.");
-					break;
-				case HOL::ControllerMode::HookedControllerMode:
-					showWrappedTooltip("Take control of existing controllers.");
-					break;
-				default:
-					break;
+				switch (std::get<1>(buttonContent))
+				{
+					case HOL::ControllerMode::NoControllerMode:
+						showWrappedTooltip("Do nothing.");
+						break;
+					case HOL::ControllerMode::EmulateControllerMode:
+						showWrappedTooltip("Emulate a brand new controller.");
+						break;
+					case HOL::ControllerMode::HookedControllerMode:
+						showWrappedTooltip("Take control of existing controllers.");
+						break;
+					default:
+						break;
+				}
 			}
 		}
 	}
@@ -1310,7 +1327,8 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::BeginDisabled(HOL::Config.handPose.controllerMode
 							 != HOL::ControllerMode::HookedControllerMode
-						 || !fallbackOnlyAllowed);
+						 || !fallbackOnlyAllowed
+						 || steamVrControllerModeDisabled);
 
 	drawPreferredPossessionCombo("Possess Left##PreferredPossessLeft",
 								 Config.deviceSettings.preferredLeftControllerSerial);
@@ -1337,6 +1355,20 @@ void HOL::UserInterface::buildMain()
 	ImGui::EndDisabled();
 
 	ImGui::EndChild();
+
+	if (steamVrControllerModeDisabled)
+	{
+		ImVec2 handTrackingModeEnd = ImGui::GetItemRectMax();
+		ImGui::EndDisabled();
+
+		if (ImGui::IsMouseHoveringRect(handTrackingModeStart, handTrackingModeEnd))
+		{
+			showWrappedTooltip(
+				"SteamVR cannot be the source of our OpenXR data when emulating or possessing "
+				"controllers. This is because we send this data to SteamVR, which causes a "
+				"feedback loop.");
+		}
+	}
 
 	///////////////////////////
 	// Skeletal tracking level

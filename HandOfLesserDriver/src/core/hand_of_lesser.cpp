@@ -116,6 +116,11 @@ namespace HOL
 						// Parse JSON from packet
 						nlohmann::json j = nlohmann::json::parse(packet->jsonData);
 						HandOfLesser::Config = j.get<HOL::settings::HandOfLesserSettings>();
+						if (Runtime.isSteamVR)
+						{
+							HandOfLesser::Config.handPose.controllerMode
+								= ControllerMode::NoControllerMode;
+						}
 
 						// Handle any configuration changes
 						handleConfigurationChange(oldSettings);
@@ -202,6 +207,15 @@ namespace HOL
 
 					Tracking = packet->tracking;
 					Runtime = packet->runtime;
+
+					if (Runtime.isSteamVR
+						&& Config.handPose.controllerMode != ControllerMode::NoControllerMode)
+					{
+						HOL::settings::HandOfLesserSettings oldSettings = Config;
+						Config.handPose.controllerMode = ControllerMode::NoControllerMode;
+						handleConfigurationChange(oldSettings);
+					}
+
 					updateControllerConnectionStates();
 					break;
 				}

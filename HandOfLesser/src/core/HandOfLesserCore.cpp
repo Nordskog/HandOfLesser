@@ -243,9 +243,10 @@ void HOL::HandOfLesserCore::receiveDataThread()
 				std::cout << "Driver initialized: version " << initPacket->driverVersion
 						  << std::endl;
 
-				// Respond by sending current settings
-				syncSettings();
+				// Send runtime state first so the driver can apply runtime-specific config
+				// overrides while parsing the settings packet.
 				syncState();
+				syncSettings();
 				onDriverConnected();
 				break;
 			}
@@ -445,7 +446,8 @@ void HOL::HandOfLesserCore::sendOscData()
 void HandOfLesserCore::sendUpdate()
 {
 
-	if (Config.handPose.controllerMode != ControllerMode::NoControllerMode)
+	if (!state::Runtime.isSteamVR
+		&& Config.handPose.controllerMode != ControllerMode::NoControllerMode)
 	{
 		for (int i = 0; i < HandSide_MAX; i++)
 		{
