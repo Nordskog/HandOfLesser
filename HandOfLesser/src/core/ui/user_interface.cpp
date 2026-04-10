@@ -793,9 +793,6 @@ void HOL::UserInterface::buildSteamVR()
 
 	ImGui::SeparatorText("Transmission");
 
-	syncSettings |= ImGui::Checkbox("Transmit Controller position",
-									&Config.steamvr.sendSteamVRControllerPosition);
-
 	syncSettings |= ImGui::Checkbox("Transmit legacy finger curl",
 									&Config.steamvr.transmitLegacyFingerCurl);
 

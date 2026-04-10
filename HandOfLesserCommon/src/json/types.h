@@ -197,8 +197,7 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const SteamVRSettings& settings)
 		{
-			j = {{"sendSteamVRControllerPosition", settings.sendSteamVRControllerPosition},
-				 {"sendSteamVRInput", settings.sendSteamVRInput},
+			j = {{"sendSteamVRInput", settings.sendSteamVRInput},
 				 {"transmitLegacyFingerCurl", settings.transmitLegacyFingerCurl},
 				 {"blockControllerInputWhileHandTracking",
 				  settings.blockControllerInputWhileHandTracking},
@@ -212,8 +211,6 @@ namespace HOL
 
 		inline void from_json(const nlohmann::json& j, SteamVRSettings& settings)
 		{
-			nlohmann::get_to_if_present(
-				j, "sendSteamVRControllerPosition", settings.sendSteamVRControllerPosition);
 			nlohmann::get_to_if_present(j, "sendSteamVRInput", settings.sendSteamVRInput);
 			nlohmann::get_to_if_present(
 				j, "transmitLegacyFingerCurl", settings.transmitLegacyFingerCurl);

@@ -188,7 +188,6 @@ namespace HOL
 
 		struct SteamVRSettings
 		{
-			bool sendSteamVRControllerPosition = true;
 			bool sendSteamVRInput = true;
 			bool transmitLegacyFingerCurl = true;
 			bool blockControllerInputWhileHandTracking = true;
