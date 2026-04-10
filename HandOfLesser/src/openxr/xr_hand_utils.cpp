@@ -70,6 +70,8 @@ namespace HOL::OpenXR
 				return XrHandJointEXT::XR_HAND_JOINT_RING_METACARPAL_EXT;
 			case FingerType::FingerLittle:
 				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_METACARPAL_EXT;
+			default:
+				return XrHandJointEXT::XR_HAND_JOINT_WRIST_EXT;
 		}
 	}
 
@@ -87,15 +89,14 @@ namespace HOL::OpenXR
 				return XrHandJointEXT::XR_HAND_JOINT_RING_PROXIMAL_EXT;
 			case FingerType::FingerLittle:
 				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_PROXIMAL_EXT;
+			default:
+				return XrHandJointEXT::XR_HAND_JOINT_WRIST_EXT;
 		}
 	}
 
 	XrHandJointEXT getSecondFingerJoint(HOL::FingerType fingerType)
 	{
-		switch (fingerType)
-		{
-			return (XrHandJointEXT)(getFirstFingerJoint(fingerType) + 1);
-		}
+		return (XrHandJointEXT)(getFirstFingerJoint(fingerType) + 1);
 	}
 
 	XrHandJointEXT getFingerTip(HOL::FingerType fingerType)
@@ -112,6 +113,8 @@ namespace HOL::OpenXR
 				return XrHandJointEXT::XR_HAND_JOINT_RING_TIP_EXT;
 			case FingerType::FingerLittle:
 				return XrHandJointEXT::XR_HAND_JOINT_LITTLE_TIP_EXT;
+			default:
+				return XrHandJointEXT::XR_HAND_JOINT_WRIST_EXT;
 		}
 	}
 

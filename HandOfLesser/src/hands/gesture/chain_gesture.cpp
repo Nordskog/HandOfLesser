@@ -15,9 +15,11 @@ namespace HOL::Gesture
 	{
 		// printf("Evaluate\n");
 
-		if (this->mCurrentGestureIndex > this->mChainedGestures.size())
+		if (this->mCurrentGestureIndex >= this->mChainedGestures.size())
 		{
 			printf("index Out of range\n");
+			this->mCurrentGestureIndex = 0;
+			this->mActivated = false;
 			return 0;
 		}
 
@@ -68,6 +70,8 @@ namespace HOL::Gesture
 				return 0;
 			}
 		}
+
+		return 0;
 	}
 
 	void ChainGesture::Gesture::addGesture(std::shared_ptr<BaseGesture::Gesture> gesture)

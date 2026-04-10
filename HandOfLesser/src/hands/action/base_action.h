@@ -19,10 +19,10 @@ namespace HOL
 	
 	struct ActionParameters
 	{
-		std::chrono::milliseconds minDownTime;	  // Configurable long-press basically
-		std::chrono::milliseconds minReleaseTime; // no up until this amount of time
-		std::chrono::milliseconds maxTapTime;
-		std::chrono::milliseconds minTapTime;
+		std::chrono::milliseconds minDownTime{0};	  // Configurable long-press basically
+		std::chrono::milliseconds minReleaseTime{0}; // no up until this amount of time
+		std::chrono::milliseconds maxTapTime{500};
+		std::chrono::milliseconds minTapTime{0};
 
 		// Iterate if down occurs within mMaxDoubleTapTime of up
 		int minTapCount = 1; // taps required to trigger. 1 is single press.
