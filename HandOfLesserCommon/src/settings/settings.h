@@ -111,8 +111,6 @@ namespace HOL
 		{
 			int motionPredictionMS = 15; // ms
 			int updateIntervalMS = 1;
-			float linearVelocityMultiplier = 0.f;
-			float angularVelocityMultiplier = 0.f;
 			bool forceInactive = false;
 			int minTrackedJointsForQuality
 				= 26; // Minimum tracked joints to consider tracking valid
@@ -194,6 +192,8 @@ namespace HOL
 			bool disableOtherControllersWhileHandTracking = true;
 			bool showDevicePoseDiagnostics = false;
 			float steamPoseTimeOffset = .0f;
+			float linearVelocityMultiplier = 0.1f;
+			float angularVelocityMultiplier = 0.1f;
 			bool forceInactive = false;
 			bool jitterLastPoseOnTrackingLoss = true;
 		};

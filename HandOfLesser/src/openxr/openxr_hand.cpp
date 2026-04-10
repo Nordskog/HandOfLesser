@@ -319,9 +319,9 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 				= toEigenVector(palmVelocity.angularVelocity);
 
 			this->handPose.palmVelocity.linearVelocity
-				*= HOL::Config.general.linearVelocityMultiplier;
+				*= HOL::Config.steamvr.linearVelocityMultiplier;
 			this->handPose.palmVelocity.angularVelocity
-				*= HOL::Config.general.angularVelocityMultiplier;
+				*= HOL::Config.steamvr.angularVelocityMultiplier;
 
 			// The final controller pose remains offset for local display and any logic that wants
 			// the controller-aligned transform, but the raw palm values are kept separately so the

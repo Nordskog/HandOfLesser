@@ -65,8 +65,6 @@ namespace HOL
 		{
 			j = {{"motionPredictionMS", settings.motionPredictionMS},
 				 {"updateIntervalMS", settings.updateIntervalMS},
-				 {"linearVelocityMultiplier", settings.linearVelocityMultiplier},
-				 {"angularVelocityMultiplier", settings.angularVelocityMultiplier},
 				 {"forceInactive", settings.forceInactive},
 				 {"minTrackedJointsForQuality", settings.minTrackedJointsForQuality}};
 		}
@@ -75,10 +73,6 @@ namespace HOL
 		{
 			nlohmann::get_to_if_present(j, "motionPredictionMS", settings.motionPredictionMS);
 			nlohmann::get_to_if_present(j, "updateIntervalMS", settings.updateIntervalMS);
-			nlohmann::get_to_if_present(
-				j, "linearVelocityMultiplier", settings.linearVelocityMultiplier);
-			nlohmann::get_to_if_present(
-				j, "angularVelocityMultiplier", settings.angularVelocityMultiplier);
 			nlohmann::get_to_if_present(j, "forceInactive", settings.forceInactive);
 			nlohmann::get_to_if_present(
 				j, "minTrackedJointsForQuality", settings.minTrackedJointsForQuality);
@@ -205,6 +199,8 @@ namespace HOL
 				  settings.disableOtherControllersWhileHandTracking},
 				 {"showDevicePoseDiagnostics", settings.showDevicePoseDiagnostics},
 				 {"steamPoseTimeOffset", settings.steamPoseTimeOffset},
+				 {"linearVelocityMultiplier", settings.linearVelocityMultiplier},
+				 {"angularVelocityMultiplier", settings.angularVelocityMultiplier},
 				 {"forceInactive", settings.forceInactive},
 				 {"jitterLastPoseOnTrackingLoss", settings.jitterLastPoseOnTrackingLoss}};
 		}
@@ -223,6 +219,10 @@ namespace HOL
 			nlohmann::get_to_if_present(
 				j, "showDevicePoseDiagnostics", settings.showDevicePoseDiagnostics);
 			nlohmann::get_to_if_present(j, "steamPoseTimeOffset", settings.steamPoseTimeOffset);
+			nlohmann::get_to_if_present(
+				j, "linearVelocityMultiplier", settings.linearVelocityMultiplier);
+			nlohmann::get_to_if_present(
+				j, "angularVelocityMultiplier", settings.angularVelocityMultiplier);
 			nlohmann::get_to_if_present(j, "forceInactive", settings.forceInactive);
 			nlohmann::get_to_if_present(
 				j, "jitterLastPoseOnTrackingLoss", settings.jitterLastPoseOnTrackingLoss);
