@@ -1378,11 +1378,13 @@ void HOL::UserInterface::buildMain()
 
 	bool hookedTrackingLevelConfigurable = display::DriverStatus.hasNormalControllers
 		&& display::DriverStatus.hasHandTrackingControllers;
-	bool disableTrackingLevelForHookedAvailability
+	bool trackingLevelLocked
 		= connected && HOL::Config.handPose.controllerMode == HOL::ControllerMode::HookedControllerMode
 		  && !hookedTrackingLevelConfigurable;
 
-	if (disableTrackingLevelForHookedAvailability)
+	ImVec2 trackingLevelStart = ImGui::GetCursorScreenPos();
+
+	if (trackingLevelLocked)
 	{
 		ImGui::BeginDisabled();
 	}
@@ -1390,6 +1392,13 @@ void HOL::UserInterface::buildMain()
 	ImGui::BeginGroup();
 
 	int skeletalTrackingLevel = HOL::Config.skeletal.trackingLevel;
+	if (trackingLevelLocked)
+	{
+		skeletalTrackingLevel = display::DriverStatus.hasHandTrackingControllers
+			? vr::VRSkeletalTracking_Full
+			: vr::VRSkeletalTracking_Partial;
+	}
+
 	bool updateSkeletalTrackingLevel = false;
 	updateSkeletalTrackingLevel |= ImGui::RadioButton(
 		"Partial", &skeletalTrackingLevel, vr::VRSkeletalTracking_Partial);
@@ -1406,15 +1415,15 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::EndGroup();
 
-	if (disableTrackingLevelForHookedAvailability)
+	if (trackingLevelLocked)
 	{
+		ImVec2 trackingLevelEnd = ImGui::GetItemRectMax();
 		ImGui::EndDisabled();
 
-		if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+		if (ImGui::IsMouseHoveringRect(trackingLevelStart, trackingLevelEnd))
 		{
-			showWrappedTooltip(
-				"Hooked mode can only switch tracking level when both partial and full tracking "
-				"controllers are present.");
+			showWrappedTooltip("Possess mode can only switch tracking level when both partial and "
+							   "full controllers are present.");
 		}
 	}
 
