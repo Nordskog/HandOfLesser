@@ -34,4 +34,8 @@ private:
 	XrHandTrackingDataSourceStateEXT mDataSourceState{XR_TYPE_HAND_TRACKING_DATA_SOURCE_STATE_EXT};
 
 	HOL::PoseLocation mPrevRawPose{};
+	bool mPrevActive = false;
+	bool mPrevPoseValid = false;
+	bool mPrevPoseTracked = false;
+	bool mHasPrevRawPose = false;
 };

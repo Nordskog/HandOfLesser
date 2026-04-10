@@ -157,6 +157,9 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	// Copy to prev
 	std::copy(
 		std::begin(mJointLocations), std::end(mJointLocations), std::begin(mPrevJointLocations));
+	bool prevActive = mPrevActive;
+	bool prevPoseValid = mPrevPoseValid;
+	bool prevPoseTracked = mPrevPoseTracked;
 
 	bool handActive = false;
 	bool useHandTrackingDataSource = HOL::state::Runtime.supportsHandTrackingDataSource;
@@ -174,6 +177,11 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	if (result != XR_SUCCESS)
 	{
 		this->handPose = {};
+		this->handPose.poseStale = !prevActive && !prevPoseValid && !prevPoseTracked;
+		this->mHasPrevRawPose = false;
+		this->mPrevActive = this->handPose.active;
+		this->mPrevPoseValid = this->handPose.poseValid;
+		this->mPrevPoseTracked = this->handPose.poseTracked;
 		HOL::display::HandTransform[this->mSide].trackedJointCount = 0;
 		HOL::display::HandTransform[this->mSide].active = false;
 		HOL::display::HandTransform[this->mSide].positionValid = false;
@@ -225,9 +233,6 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->handPose.poseTracked = false;
 	}
 
-	// Never stale if invalid?
-	this->handPose.poseStale = false;
-
 	// Replace current data with past, but insert palm position from body tracker
 	// Airlink provides incorrect values for anything but handtracking without controllers,
 	// so using the body trackign values actually breaks things.
@@ -276,10 +281,16 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->handPose.poseTracked = false;
 	}
 
+	bool poseStateChanged = this->handPose.active != prevActive
+							|| this->handPose.poseValid != prevPoseValid
+							|| this->handPose.poseTracked != prevPoseTracked;
+	this->handPose.poseStale = false;
+
 	if (this->handPose.poseValid)
 	{
 		Eigen::Vector3f newPalmPosition = toEigenVector(palmLocation.pose.position);
 		Eigen::Quaternionf newPalmOrientation = toEigenQuaternion(palmLocation.pose.orientation);
+		auto palmVelocity = this->mJointVelocities[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 
 		//////////////
 		// Staleness
@@ -288,8 +299,10 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		// Don't bother doing anything with stale data.
 		// VDXR updates at intervals of 7-16ms, Airlink updates constantly.
 		// Prediction also does nothing for VDXR.
-		this->handPose.poseStale = false; // this->mPrevRawPose.position.isApprox(newPalmPosition);
-		 // TODO: better staleness check that considers body fallback data.
+		this->handPose.poseStale = mHasPrevRawPose && !poseStateChanged
+								   && this->mPrevRawPose.position.isApprox(newPalmPosition)
+								   && this->mPrevRawPose.orientation.coeffs().isApprox(
+									  newPalmOrientation.coeffs());
 
 		if (!this->handPose.poseStale)
 		{
@@ -300,8 +313,6 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 			this->handPose.palmLocation.orientation = newPalmOrientation;
 
 			this->handPose.controllerLocation = this->handPose.palmLocation;
-
-			auto palmVelocity = this->mJointVelocities[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
 
 			this->handPose.palmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
 			this->handPose.palmVelocity.angularVelocity
@@ -392,6 +403,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 			// Set prev
 			this->mPrevRawPose.position = newPalmPosition;
 			this->mPrevRawPose.orientation = newPalmOrientation;
+			this->mHasPrevRawPose = true;
 
 			///////////////////////////
 			// Update display values
@@ -422,6 +434,15 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 			}
 		}
 	}
+	else
+	{
+		this->handPose.poseStale = !poseStateChanged;
+		this->mHasPrevRawPose = false;
+	}
+
+	mPrevActive = this->handPose.active;
+	mPrevPoseValid = this->handPose.poseValid;
+	mPrevPoseTracked = this->handPose.poseTracked;
 
 	///////////////////////////
 	// Update display values
