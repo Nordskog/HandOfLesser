@@ -606,10 +606,10 @@ namespace HOL
 		{
 			if (existingSerials[it->get()->serial] > 1)
 			{
-				DriverLog("Removing duplicate device with serial: %s", it->get()->serial.c_str());
+				std::string serial = it->get()->serial;
+				DriverLog("Removing duplicate device with serial: %s", serial.c_str());
 
-				it->reset();
-				existingSerials[it->get()->serial]--;
+				existingSerials[serial]--;
 				it = mHookedControllers.erase(it);
 			}
 			else
