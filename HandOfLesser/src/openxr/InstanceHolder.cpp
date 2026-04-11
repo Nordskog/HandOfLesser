@@ -5,6 +5,7 @@
 #include <thread>
 #include "src/core/state_global.h"
 #include "src/core/HandOfLesserCore.h"
+#include "src/windows/windows_utils.h"
 #include <meta_body_tracking_fidelity.h>
 
 using namespace HOL::OpenXR;
@@ -82,24 +83,38 @@ void InstanceHolder::initSession()
 	// Non-headless requires that we at least pretend we're going to display stuff
 	if (!this->isHeadless())
 	{
-		xr::GraphicsBindingD3D11KHR D3D11Binding;
+		xr::GraphicsBindingD3D11KHR D3D11Binding{};
 		D3D11Binding.type = xr::StructureType::GraphicsBindingD3D11KHR;
 
 		auto requirements
 			= this->mInstance->getD3D11GraphicsRequirementsKHR(this->mSystemId, this->mDispatcher);
 		createInfo.next = get(D3D11Binding);
 
-		ID3D11Device* Device;
-		D3D11CreateDevice(NULL,
-						  D3D_DRIVER_TYPE_HARDWARE,
-						  NULL,
-						  0x00,
-						  NULL,
-						  0,
-						  D3D11_SDK_VERSION,
-						  &Device,
-						  NULL,
-						  NULL);
+		ID3D11Device* Device = nullptr;
+		D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
+		HRESULT result = D3D11CreateDevice(NULL,
+											 D3D_DRIVER_TYPE_HARDWARE,
+											 NULL,
+											 0,
+											 NULL,
+											 0,
+											 D3D11_SDK_VERSION,
+											 &Device,
+											 &featureLevel,
+											 NULL);
+		if (FAILED(result) || Device == nullptr)
+		{
+			throw std::runtime_error("Failed to create D3D11 device for OpenXR foreground session: "
+									 + FormatWindowsError(static_cast<DWORD>(result)));
+		}
+
+		if (featureLevel < requirements.minFeatureLevel)
+		{
+			Device->Release();
+			throw std::runtime_error(
+				"D3D11 device does not meet OpenXR runtime minimum feature level");
+		}
+
 		D3D11Binding.device = Device;
 	}
 
