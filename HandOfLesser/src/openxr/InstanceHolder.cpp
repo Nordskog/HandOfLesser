@@ -78,17 +78,15 @@ void InstanceHolder::initSession()
 	this->mSystemId = this->mInstance->getSystem(
 		xr::SystemGetInfo{xr::FormFactor::HeadMountedDisplay}, this->mDispatcher);
 
-	xr::SessionCreateInfo createInfo{xr::SessionCreateFlagBits::None, this->mSystemId};
+	XrGraphicsBindingD3D11KHR D3D11Binding{XR_TYPE_GRAPHICS_BINDING_D3D11_KHR};
+	XrSessionCreateInfo createInfo{XR_TYPE_SESSION_CREATE_INFO};
+	createInfo.systemId = this->mSystemId.get();
 
 	// Non-headless requires that we at least pretend we're going to display stuff
 	if (!this->isHeadless())
 	{
-		xr::GraphicsBindingD3D11KHR D3D11Binding{};
-		D3D11Binding.type = xr::StructureType::GraphicsBindingD3D11KHR;
-
 		auto requirements
 			= this->mInstance->getD3D11GraphicsRequirementsKHR(this->mSystemId, this->mDispatcher);
-		createInfo.next = get(D3D11Binding);
 
 		ID3D11Device* Device = nullptr;
 		D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
@@ -116,11 +114,18 @@ void InstanceHolder::initSession()
 		}
 
 		D3D11Binding.device = Device;
+		createInfo.next = &D3D11Binding;
 	}
 
-	createInfo.systemId = this->mSystemId;
+	XrSession rawSession = XR_NULL_HANDLE;
+	if (!handleXR("xrCreateSession call",
+				  xrCreateSession(this->mInstance.get(), &createInfo, &rawSession)))
+	{
+		throw std::runtime_error("Failed to create OpenXR session");
+	}
 
-	this->mSession = this->mInstance->createSessionUnique(createInfo, this->mDispatcher);
+	this->mSession = xr::UniqueDynamicSession(
+		xr::Session(rawSession), xr::ObjectDestroy<xr::DispatchLoaderDynamic>{this->mDispatcher});
 
 	pollEvent();
 
