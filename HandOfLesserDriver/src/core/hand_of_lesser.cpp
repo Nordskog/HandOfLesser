@@ -59,6 +59,7 @@ namespace HOL
 				// Check if disconnected
 				if (!this->mTransport.isConnected())
 				{
+					disableAppDrivenState();
 					DriverLog("App disconnected, waiting for reconnection...");
 					if (this->mTransport.waitForConnection(5000))
 					{
@@ -272,6 +273,22 @@ namespace HOL
 				}
 			}
 		}
+	}
+
+	void HandOfLesser::disableAppDrivenState()
+	{
+		if (Config.handPose.controllerMode == ControllerMode::NoControllerMode
+			&& !Config.skeletal.augmentControllerSkeleton
+			&& !Config.bodyTrackers.enableBodyTrackers)
+		{
+			return;
+		}
+
+		HOL::settings::HandOfLesserSettings oldConfig = Config;
+		Config.handPose.controllerMode = ControllerMode::NoControllerMode;
+		Config.skeletal.augmentControllerSkeleton = false;
+		Config.bodyTrackers.enableBodyTrackers = false;
+		handleConfigurationChange(oldConfig);
 	}
 
 	void HandOfLesser::handleConfigurationChange(HOL::settings::HandOfLesserSettings& oldConfig)

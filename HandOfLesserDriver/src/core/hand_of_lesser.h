@@ -83,6 +83,7 @@ private:
 		HookedController* getRecoveryHookedController(HOL::HandSide side) const;
 		vr::EVRSkeletalTrackingLevel getRequestedSkeletalTrackingLevel() const;
 		int getHookedControllerSelectionScore(HookedController* controller) const;
+		void disableAppDrivenState();
 		void ReceiveDataThread();
 		void estimateControllerSide();
 
