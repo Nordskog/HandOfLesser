@@ -15,6 +15,38 @@
 using namespace HOL;
 using namespace HOL::OpenXR;
 
+namespace
+{
+	void applyOculusThumbOrientationFix(XrHandJointLocationEXT jointLocations[], HandSide side)
+	{
+		constexpr XrHandJointEXT ThumbJoints[] = {
+			XR_HAND_JOINT_THUMB_METACARPAL_EXT,
+			XR_HAND_JOINT_THUMB_PROXIMAL_EXT,
+			XR_HAND_JOINT_THUMB_DISTAL_EXT,
+			XR_HAND_JOINT_THUMB_TIP_EXT,
+		};
+
+		Eigen::Quaternionf thumbRotationFix
+			= HOL::quaternionFromEulerAnglesDegrees(0.0f, 0.0f, side == HandSide::LeftHand ? - 90.0f : 90.0f);
+
+		for (XrHandJointEXT joint : ThumbJoints)
+		{
+			XrHandJointLocationEXT& location = jointLocations[joint];
+			if (!(location.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+			{
+				continue;
+			}
+
+			Eigen::Quaternionf orientation = HOL::OpenXR::toEigenQuaternion(location.pose.orientation);
+			orientation = HOL::rotateLocal(orientation, thumbRotationFix);
+			location.pose.orientation.w = orientation.w();
+			location.pose.orientation.x = orientation.x();
+			location.pose.orientation.y = orientation.y();
+			location.pose.orientation.z = orientation.z();
+		}
+	}
+} // namespace
+
 OpenXRHand::~OpenXRHand()
 {
 	this->shutdown();
@@ -231,6 +263,13 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->handPose.active = false;
 		this->handPose.poseValid = false;
 		this->handPose.poseTracked = false;
+	}
+
+	// Oculus reports the thumb-joint basis rotated 90 degrees around the local Z axis.
+	// Correct the raw joint orientations here so every downstream consumer sees the same fixed data.
+	if (HOL::state::Runtime.isOVR)
+	{
+		applyOculusThumbOrientationFix(this->mJointLocations, mSide);
 	}
 
 	// Replace current data with past, but insert palm position from body tracker
