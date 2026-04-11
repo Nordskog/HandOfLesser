@@ -129,6 +129,8 @@ namespace HOL
 		ImGui::Checkbox("Show Body Palm Axes", &HOL::Config.visualizer.showBodyTrackingPalmAxes);
 		ImGui::SameLine();
 		ImGui::Checkbox("Show Hand Palm Axes", &HOL::Config.visualizer.showHandTrackingPalmAxes);
+		ImGui::SameLine();
+		ImGui::Checkbox("Show Hand Joint Axes", &HOL::Config.visualizer.showHandTrackingJointAxes);
 		ImGui::Checkbox("Show Body Tracker Axes", &HOL::Config.visualizer.showBodyTrackerAxes);
 
 		ImVec2 uiBounds = ImVec2(0, ImGui::GetCursorScreenPos().y);

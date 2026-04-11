@@ -454,6 +454,26 @@ void HOL::OpenXR::HandTracking::drawHands()
 			}
 		}
 
+		// Display the raw OpenXR hand-joint orientations directly so runtime-specific issues can
+		// be inspected without any downstream skeletal/OSC processing in the way.
+		if (Config.visualizer.showHandTrackingJointAxes)
+		{
+			for (int j = 0; j < XR_HAND_JOINT_COUNT_EXT; j++)
+			{
+				XrHandJointLocationEXT& joint = jointLocations[j];
+				if (!(joint.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+					|| !(joint.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+				{
+					continue;
+				}
+
+				vis->submitOrientationAxes(OpenXR::toEigenVector(joint.pose.position),
+										   OpenXR::toEigenQuaternion(joint.pose.orientation),
+										   0.040f,
+										   2.0f);
+			}
+		}
+
 		// This doesn't super go here but it's a good place for it.
 		if (i == HandSide::LeftHand && HOL::Config.visualizer.followLeftHand)
 		{
