@@ -261,12 +261,13 @@ std::vector<HOL::BodyTrackerPosePayload> HOL::OpenXR::BodyTracking::getBodyTrack
 		payload.location.orientation.y() = location.pose.orientation.y;
 		payload.location.orientation.z() = location.pose.orientation.z;
 
+		
 		// Arm-mounted trackers look visually upside down with the raw body-joint
 		// orientation, so flip them 180 degrees around their local forward axis.
-		if (role == BodyTrackerRole::RightUpperArm || role == BodyTrackerRole::RightLowerArm)
+		if (role == BodyTrackerRole::LeftUpperArm || role == BodyTrackerRole::LeftLowerArm)
 		{
 			payload.location.orientation = HOL::rotateLocal(
-				payload.location.orientation, HOL::quaternionFromEulerAnglesDegrees(0, 0, 180));
+				payload.location.orientation, HOL::quaternionFromEulerAnglesDegrees(180, 0, 0));
 		}
 
 		// Visualize body tracker axes if enabled
