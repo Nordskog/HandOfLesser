@@ -42,6 +42,7 @@ namespace HOL
 		bool isShadowTracker() const { return !mRole.has_value(); }
 
 	private:
+		std::string getTrackingSystemName() const;
 		std::optional<HOL::BodyTrackerRole> mRole;  // Empty for shadow trackers
 		std::string mSourceSerial;                   // For shadow trackers
 		std::string mSerialNumber;

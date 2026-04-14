@@ -7,6 +7,33 @@
 
 namespace HOL
 {
+	std::string EmulatedTrackerDriver::getTrackingSystemName() const
+	{
+		auto props = vr::VRProperties();
+
+		if (isShadowTracker())
+		{
+			HookedController* sourceController
+				= HandOfLesser::Current->getHookedControllerBySerial(mSourceSerial);
+			if (sourceController != nullptr)
+			{
+				return props->GetStringProperty(sourceController->propertyContainer,
+												vr::Prop_TrackingSystemName_String);
+			}
+		}
+		else
+		{
+			HookedController* hmd = HandOfLesser::Current->getHMD();
+			if (hmd != nullptr)
+			{
+				return props->GetStringProperty(
+					hmd->propertyContainer, vr::Prop_TrackingSystemName_String);
+			}
+		}
+
+		return {};
+	}
+
 	EmulatedTrackerDriver::EmulatedTrackerDriver(HOL::BodyTrackerRole role)
 	{
 		mIsActive = false;
@@ -64,6 +91,16 @@ namespace HOL
 		props->SetStringProperty(container, vr::Prop_ResourceRoot_String, "htc");
 
 		props->SetStringProperty(container, vr::Prop_ControllerType_String, "vive_tracker");
+
+		// OpenVR Space Calibrator groups devices into playspaces using the tracking-system name.
+		// Body trackers should live with the HMD's playspace, while shadow trackers should live
+		// with the original controller they mirror.
+		std::string trackingSystemName = getTrackingSystemName();
+		if (!trackingSystemName.empty())
+		{
+			props->SetStringProperty(
+				container, vr::Prop_TrackingSystemName_String, trackingSystemName.c_str());
+		}
 
 		// Reference HTC's input profile (minimal - just pose)
 		props->SetStringProperty(
