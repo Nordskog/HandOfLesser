@@ -32,7 +32,25 @@ void HandOfLesserCore::init(int serverPort)
 {
 	this->Current = this;
 	this->loadSettings();
-	HOL::OpenXR::setOpenXRRuntimeOverride(Config.openxr.runtimeOverridePath);
+
+	if (!Config.openxr.runtimeOverridePath.empty())
+	{
+		DWORD attributes = GetFileAttributesA(Config.openxr.runtimeOverridePath.c_str());
+		if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_DIRECTORY))
+		{
+			std::cout << "Configured OpenXR runtime override is missing, ignoring: "
+					  << Config.openxr.runtimeOverridePath << std::endl;
+			HOL::OpenXR::setOpenXRRuntimeOverride("");
+		}
+		else
+		{
+			HOL::OpenXR::setOpenXRRuntimeOverride(Config.openxr.runtimeOverridePath);
+		}
+	}
+	else
+	{
+		HOL::OpenXR::setOpenXRRuntimeOverride("");
+	}
 
 	std::string runtimePath = HOL::OpenXR::getActiveOpenXRRuntimePath(1);
 	std::string runtimeName = HOL::OpenXR::getActiveOpenXRRuntimeName(1);
