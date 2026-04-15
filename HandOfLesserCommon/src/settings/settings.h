@@ -109,7 +109,7 @@ namespace HOL
 
 		struct GeneralSettings
 		{
-			int motionPredictionMS = 15; // ms
+			int motionPredictionMS = 0; // ms
 			int updateIntervalMS = 1;
 			bool forceInactive = false;
 			int minTrackedJointsForQuality
@@ -192,9 +192,9 @@ namespace HOL
 			bool blockControllerInputWhileHandTracking = true;
 			bool disableOtherControllersWhileHandTracking = true;
 			bool showDevicePoseDiagnostics = false;
-			float steamPoseTimeOffset = .0f;
-			float linearVelocityMultiplier = 0.1f;
-			float angularVelocityMultiplier = 0.1f;
+			float steamPoseTimeOffset = .050f;	// Seconds
+			float linearVelocityMultiplier = 1.0f;
+			float angularVelocityMultiplier = 1.0f;
 			bool forceInactive = false;
 			bool jitterLastPoseOnTrackingLoss = true;
 		};
