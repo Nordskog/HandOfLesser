@@ -109,7 +109,7 @@ namespace HOL
 
 		struct GeneralSettings
 		{
-			int motionPredictionMS = 0; // ms
+			int motionPredictionMS = 15; // Ignored by VD, reasonable for Oculus
 			int updateIntervalMS = 1;
 			bool forceInactive = false;
 			int minTrackedJointsForQuality
@@ -192,7 +192,7 @@ namespace HOL
 			bool blockControllerInputWhileHandTracking = true;
 			bool disableOtherControllersWhileHandTracking = true;
 			bool showDevicePoseDiagnostics = false;
-			float steamPoseTimeOffset = .050f;	// Seconds
+			float steamPoseTimeOffsetMS = 50.0f;
 			float linearVelocityMultiplier = 1.0f;
 			float angularVelocityMultiplier = 1.0f;
 			bool forceInactive = false;

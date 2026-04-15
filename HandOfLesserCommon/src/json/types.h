@@ -198,7 +198,7 @@ namespace HOL
 				 {"disableOtherControllersWhileHandTracking",
 				  settings.disableOtherControllersWhileHandTracking},
 				 {"showDevicePoseDiagnostics", settings.showDevicePoseDiagnostics},
-				 {"steamPoseTimeOffset", settings.steamPoseTimeOffset},
+				 {"steamPoseTimeOffsetMS", settings.steamPoseTimeOffsetMS},
 				 {"linearVelocityMultiplier", settings.linearVelocityMultiplier},
 				 {"angularVelocityMultiplier", settings.angularVelocityMultiplier},
 				 {"forceInactive", settings.forceInactive},
@@ -218,7 +218,7 @@ namespace HOL
 										settings.disableOtherControllersWhileHandTracking);
 			nlohmann::get_to_if_present(
 				j, "showDevicePoseDiagnostics", settings.showDevicePoseDiagnostics);
-			nlohmann::get_to_if_present(j, "steamPoseTimeOffset", settings.steamPoseTimeOffset);
+			nlohmann::get_to_if_present(j, "steamPoseTimeOffsetMS", settings.steamPoseTimeOffsetMS);
 			nlohmann::get_to_if_present(
 				j, "linearVelocityMultiplier", settings.linearVelocityMultiplier);
 			nlohmann::get_to_if_present(
