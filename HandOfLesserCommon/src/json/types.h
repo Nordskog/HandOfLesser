@@ -199,6 +199,8 @@ namespace HOL
 				  settings.disableOtherControllersWhileHandTracking},
 				 {"showDevicePoseDiagnostics", settings.showDevicePoseDiagnostics},
 				 {"steamPoseTimeOffsetMS", settings.steamPoseTimeOffsetMS},
+				 {"positionSmoothingMS", settings.positionSmoothingMS},
+				 {"rotationSmoothingMS", settings.rotationSmoothingMS},
 				 {"linearVelocityMultiplier", settings.linearVelocityMultiplier},
 				 {"angularVelocityMultiplier", settings.angularVelocityMultiplier},
 				 {"forceInactive", settings.forceInactive},
@@ -219,6 +221,10 @@ namespace HOL
 			nlohmann::get_to_if_present(
 				j, "showDevicePoseDiagnostics", settings.showDevicePoseDiagnostics);
 			nlohmann::get_to_if_present(j, "steamPoseTimeOffsetMS", settings.steamPoseTimeOffsetMS);
+			nlohmann::get_to_if_present(
+				j, "positionSmoothingMS", settings.positionSmoothingMS);
+			nlohmann::get_to_if_present(
+				j, "rotationSmoothingMS", settings.rotationSmoothingMS);
 			nlohmann::get_to_if_present(
 				j, "linearVelocityMultiplier", settings.linearVelocityMultiplier);
 			nlohmann::get_to_if_present(

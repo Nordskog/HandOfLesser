@@ -809,6 +809,10 @@ void HOL::UserInterface::buildSteamVR()
 
 	syncSettings |= ImGui::InputFloat(
 		"Steam Pose offset (ms)", &Config.steamvr.steamPoseTimeOffsetMS, 1.0f, 5.0f, "%.0f");
+	syncSettings |= ImGui::InputFloat(
+		"Position smoothing (ms)", &Config.steamvr.positionSmoothingMS, 1.0f, 5.0f, "%.0f");
+	syncSettings |= ImGui::InputFloat(
+		"Rotation smoothing (ms)", &Config.steamvr.rotationSmoothingMS, 1.0f, 5.0f, "%.0f");
 
 	syncSettings |= ImGui::InputFloat("Linear Velocity multiplier",
 									  &Config.steamvr.linearVelocityMultiplier,
@@ -825,6 +829,8 @@ void HOL::UserInterface::buildSteamVR()
 	{
 		HOL::settings::SteamVRSettings steamVrDefaults;
 		Config.steamvr.steamPoseTimeOffsetMS = steamVrDefaults.steamPoseTimeOffsetMS;
+		Config.steamvr.positionSmoothingMS = steamVrDefaults.positionSmoothingMS;
+		Config.steamvr.rotationSmoothingMS = steamVrDefaults.rotationSmoothingMS;
 		Config.steamvr.linearVelocityMultiplier = steamVrDefaults.linearVelocityMultiplier;
 		Config.steamvr.angularVelocityMultiplier = steamVrDefaults.angularVelocityMultiplier;
 		syncSettings = true;

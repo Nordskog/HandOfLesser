@@ -6,6 +6,7 @@
 #include "src/core/settings_global.h"
 #include "src/core/state_global.h"
 #include "src/core/ui/display_global.h"
+#include <cmath>
 #include <iostream>
 #include <utility>
 
@@ -17,6 +18,35 @@ using namespace HOL::OpenXR;
 
 namespace
 {
+	float getSmoothingAlpha(float smoothingMS,
+							bool hasPreviousSample,
+							bool poseStateChanged,
+							XrTime previousSampleTime,
+							XrTime currentSampleTime)
+	{
+		if (!hasPreviousSample || poseStateChanged || previousSampleTime <= 0
+			|| currentSampleTime <= previousSampleTime)
+		{
+			return 1.0f;
+		}
+
+		float smoothingTimeSeconds = smoothingMS / 1000.0f;
+		if (smoothingTimeSeconds <= 0.0f)
+		{
+			return 1.0f;
+		}
+
+		float sampleDeltaSeconds
+			= (float)(currentSampleTime - previousSampleTime) / 1000000000.0f;
+		if (sampleDeltaSeconds >= 0.25f)
+		{
+			// A long gap means the old filtered state is no longer representative.
+			return 1.0f;
+		}
+
+		return 1.0f - std::exp(-sampleDeltaSeconds / smoothingTimeSeconds);
+	}
+
 	void applyOculusThumbOrientationFix(XrHandJointLocationEXT jointLocations[], HandSide side)
 	{
 		constexpr XrHandJointEXT ThumbJoints[] = {
@@ -211,6 +241,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->handPose = {};
 		this->handPose.poseStale = !prevActive && !prevPoseValid && !prevPoseTracked;
 		this->mHasPrevRawPose = false;
+		this->mHasFilteredPalmPose = false;
+		this->mPrevFilteredSampleTime = 0;
 		this->mPrevActive = this->handPose.active;
 		this->mPrevPoseValid = this->handPose.poseValid;
 		this->mPrevPoseTracked = this->handPose.poseTracked;
@@ -348,19 +380,63 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 			//////////////////////////////////
 			// Update transform and velocity
 			//////////////////////////////////
-			this->handPose.palmLocation.position = newPalmPosition;
-			this->handPose.palmLocation.orientation = newPalmOrientation;
+			HOL::PoseLocation rawPalmPose;
+			rawPalmPose.position = newPalmPosition;
+			rawPalmPose.orientation = newPalmOrientation;
+
+			HOL::PoseVelocity rawPalmVelocity;
+			rawPalmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
+			rawPalmVelocity.angularVelocity = toEigenVector(palmVelocity.angularVelocity);
+
+			rawPalmVelocity.linearVelocity *= HOL::Config.steamvr.linearVelocityMultiplier;
+			rawPalmVelocity.angularVelocity *= HOL::Config.steamvr.angularVelocityMultiplier;
+
+			float positionSmoothingAlpha
+				= getSmoothingAlpha(HOL::Config.steamvr.positionSmoothingMS,
+									this->mHasFilteredPalmPose,
+									poseStateChanged,
+									this->mPrevFilteredSampleTime,
+									time);
+			float rotationSmoothingAlpha
+				= getSmoothingAlpha(HOL::Config.steamvr.rotationSmoothingMS,
+									this->mHasFilteredPalmPose,
+									poseStateChanged,
+									this->mPrevFilteredSampleTime,
+									time);
+
+			if (positionSmoothingAlpha >= 1.0f && rotationSmoothingAlpha >= 1.0f)
+			{
+				this->mFilteredPalmPose = rawPalmPose;
+				this->mFilteredPalmVelocity = rawPalmVelocity;
+			}
+			else
+			{
+				this->mFilteredPalmPose.position
+					= this->mFilteredPalmPose.position
+					  + positionSmoothingAlpha
+							* (rawPalmPose.position - this->mFilteredPalmPose.position);
+				this->mFilteredPalmPose.orientation
+					= this->mFilteredPalmPose.orientation.slerp(rotationSmoothingAlpha,
+															   rawPalmPose.orientation);
+				this->mFilteredPalmVelocity.linearVelocity
+					= this->mFilteredPalmVelocity.linearVelocity
+					  + positionSmoothingAlpha
+							* (rawPalmVelocity.linearVelocity
+							   - this->mFilteredPalmVelocity.linearVelocity);
+				this->mFilteredPalmVelocity.angularVelocity
+					= this->mFilteredPalmVelocity.angularVelocity
+					  + rotationSmoothingAlpha
+							* (rawPalmVelocity.angularVelocity
+							   - this->mFilteredPalmVelocity.angularVelocity);
+			}
+
+			this->mHasFilteredPalmPose = true;
+			this->mPrevFilteredSampleTime = time;
+
+			this->handPose.palmLocation = this->mFilteredPalmPose;
+			this->handPose.palmVelocity = this->mFilteredPalmVelocity;
 
 			this->handPose.controllerLocation = this->handPose.palmLocation;
-
-			this->handPose.palmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
-			this->handPose.palmVelocity.angularVelocity
-				= toEigenVector(palmVelocity.angularVelocity);
-
-			this->handPose.palmVelocity.linearVelocity
-				*= HOL::Config.steamvr.linearVelocityMultiplier;
-			this->handPose.palmVelocity.angularVelocity
-				*= HOL::Config.steamvr.angularVelocityMultiplier;
 
 			// The final controller pose remains offset for local display and any logic that wants
 			// the controller-aligned transform, but the raw palm values are kept separately so the
@@ -477,6 +553,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	{
 		this->handPose.poseStale = !poseStateChanged;
 		this->mHasPrevRawPose = false;
+		this->mHasFilteredPalmPose = false;
+		this->mPrevFilteredSampleTime = 0;
 	}
 
 	mPrevActive = this->handPose.active;
