@@ -879,6 +879,14 @@ void HOL::UserInterface::buildSteamVR()
 	ImGui::InputFloat("rotY##Skeletal", &orientationOffset.y(), 1.0f, 5.0f, "%.3f");
 	ImGui::InputFloat("rotZ##Skeletal", &orientationOffset.z(), 1.0f, 5.0f, "%.3f");
 
+	if (rightAlignButton("Reset##SkeletalOffset"))
+	{
+		HOL::settings::SkeletalInput defaults;
+		Config.skeletal.positionOffset = defaults.positionOffset;
+		Config.skeletal.orientationOffset = defaults.orientationOffset;
+		syncSettings = true;
+	}
+
 	ImGui::EndChild();
 	ImGui::EndChild();
 
