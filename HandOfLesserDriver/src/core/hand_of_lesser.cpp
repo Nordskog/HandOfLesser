@@ -29,6 +29,7 @@ namespace HOL
 		this->mTransport.init(PipeRole::Server, R"(\\.\pipe\HandOfLesser)");
 
 		my_pose_update_thread_ = std::thread(&HandOfLesser::ReceiveDataThread, this);
+		mAppLauncher.start();
 	}
 
 	void HandOfLesser::ReceiveDataThread()
@@ -128,6 +129,7 @@ namespace HOL
 						// Parse JSON from payload
 						nlohmann::json j = nlohmann::json::parse(payload.jsonData);
 						HandOfLesser::Config = j.get<HOL::settings::HandOfLesserSettings>();
+						persistAutoLaunchSetting();
 						if (Runtime.isSteamVR)
 						{
 							HandOfLesser::Config.handPose.controllerMode
@@ -289,6 +291,24 @@ namespace HOL
 		Config.skeletal.augmentControllerSkeleton = false;
 		Config.bodyTrackers.enableBodyTrackers = false;
 		handleConfigurationChange(oldConfig);
+	}
+
+	void HandOfLesser::persistAutoLaunchSetting()
+	{
+		vr::EVRSettingsError error = vr::VRSettingsError_None;
+		vr::VRSettings()->SetBool("driver_00handoflesser",
+								  "autoLaunchApp",
+								  Config.steamvr.autoLaunchApp,
+								  &error);
+		if (error != vr::VRSettingsError_None)
+		{
+			DriverLog("Failed to persist autoLaunchApp setting. value=%d, settingsError=%d",
+					  Config.steamvr.autoLaunchApp,
+					  error);
+			return;
+		}
+
+		DriverLog("Persisted autoLaunchApp setting: %d", Config.steamvr.autoLaunchApp);
 	}
 
 	void HandOfLesser::handleConfigurationChange(HOL::settings::HandOfLesserSettings& oldConfig)
@@ -1558,6 +1578,8 @@ namespace HOL
 
 	void HandOfLesser::cleanup()
 	{
+		mAppLauncher.stop();
+
 		// Let's join our pose thread that's running
 		// by first checking then setting is_active_ to false to break out
 		// of the while loop, if it's running, then call .join() on the thread

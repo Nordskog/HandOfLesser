@@ -1159,6 +1159,11 @@ void HOL::UserInterface::buildMain()
 		ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "Driver: Disconnected");
 	}
 
+	if (ImGui::Checkbox("Launch app automatically with SteamVR", &Config.steamvr.autoLaunchApp))
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+
 	//////////////////
 	// OpenXR Runtime
 	////////////////////

@@ -20,6 +20,7 @@ add_library(${DRIVER_NAME} SHARED
     src/hooking/hooks.cpp
     src/input/InputCommons.h
     src/utils/math_utils.cpp
+    src/utils/app_launcher.cpp
 )
 
 message( "\${CMAKE_RUNTIME_OUTPUT_DIRECTORY}: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" )

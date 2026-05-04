@@ -6,6 +6,7 @@
 #include "src/controller/emulated_controller_driver.h"
 #include "src/controller/hooked_controller.h"
 #include "src/tracker/emulated_tracker_driver.h"
+#include "src/utils/app_launcher.h"
 
 namespace HOL
 {
@@ -83,6 +84,7 @@ private:
 		HookedController* getRecoveryHookedController(HOL::HandSide side) const;
 		vr::EVRSkeletalTrackingLevel getRequestedSkeletalTrackingLevel() const;
 		int getHookedControllerSelectionScore(HookedController* controller) const;
+		void persistAutoLaunchSetting();
 		void disableAppDrivenState();
 		void ReceiveDataThread();
 		void estimateControllerSide();
@@ -96,6 +98,7 @@ private:
 		void updateControllerConnectionStates(bool forceUpdate = false);
 
 		std::thread my_pose_update_thread_;
+		AppLauncher mAppLauncher;
 		HOL::NamedPipeTransport mTransport;
 
 		std::array<EmulatedControllerDriver*, HOL::HandSide_MAX> mEmulatedControllers{};
