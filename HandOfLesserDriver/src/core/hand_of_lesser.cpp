@@ -61,7 +61,7 @@ namespace HOL
 				{
 					disableAppDrivenState();
 					DriverLog("App disconnected, waiting for reconnection...");
-					if (this->mTransport.waitForConnection(5000))
+					if (this->mTransport.waitForConnection(1000))
 					{
 						DriverLog("App reconnected!");
 

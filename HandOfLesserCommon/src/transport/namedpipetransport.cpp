@@ -7,22 +7,30 @@ using namespace HOL;
 
 namespace
 {
-	void cancelOverlappedIo(HANDLE pipe, OVERLAPPED& overlapped)
+	bool cancelOverlappedIo(HANDLE pipe, OVERLAPPED& overlapped)
 	{
 		if (pipe == INVALID_HANDLE_VALUE)
 		{
-			return;
+			return true;
 		}
 
 		if (!CancelIoEx(pipe, &overlapped))
 		{
-			return;
+			DWORD error = GetLastError();
+			return error == ERROR_NOT_FOUND;
 		}
 
-		// Wait until the cancelled operation has actually completed so the OS cannot later
-		// write into a buffer/OVERLAPPED that the next receive/send call has already reused.
+		// Cancellation is asynchronous. Drain it with a bounded wait so we do not reuse this
+		// OVERLAPPED while the OS may still complete into it, but also do not hang shutdown.
+		DWORD waitResult = WaitForSingleObject(overlapped.hEvent, 100);
+		if (waitResult != WAIT_OBJECT_0)
+		{
+			return false;
+		}
+
 		DWORD bytesTransferred = 0;
-		GetOverlappedResult(pipe, &overlapped, &bytesTransferred, TRUE);
+		return GetOverlappedResult(pipe, &overlapped, &bytesTransferred, FALSE)
+			   || GetLastError() == ERROR_OPERATION_ABORTED;
 	}
 }
 
@@ -202,7 +210,11 @@ bool NamedPipeTransport::waitForConnection(DWORD timeoutMs)
 		else if (waitResult == WAIT_TIMEOUT)
 		{
 			// Cancel and drain the pending connect before reusing this OVERLAPPED.
-			cancelOverlappedIo(mPipe, mReadOverlapped);
+			if (!cancelOverlappedIo(mPipe, mReadOverlapped))
+			{
+				std::cerr << "Timed out cancelling pending pipe connection" << std::endl;
+				cleanup();
+			}
 			return false;
 		}
 	}
@@ -245,7 +257,12 @@ size_t NamedPipeTransport::send(const char* buffer, size_t size)
 		else
 		{
 			// Cancel and drain the pending write before reusing this OVERLAPPED.
-			cancelOverlappedIo(mPipe, mWriteOverlapped);
+			if (!cancelOverlappedIo(mPipe, mWriteOverlapped))
+			{
+				std::cerr << "Timed out cancelling pending pipe write" << std::endl;
+				cleanup();
+				return 0;
+			}
 		}
 	}
 
@@ -308,13 +325,22 @@ size_t NamedPipeTransport::receive(char* buffer, size_t maxSize)
 		else if (waitResult == WAIT_TIMEOUT)
 		{
 			// Cancel and drain the pending read before reusing this OVERLAPPED and buffer.
-			cancelOverlappedIo(mPipe, mReadOverlapped);
+			if (!cancelOverlappedIo(mPipe, mReadOverlapped))
+			{
+				std::cerr << "Timed out cancelling pending pipe read" << std::endl;
+				cleanup();
+			}
 			return 0;
 		}
 		else
 		{
 			// Cancel and drain the pending read before reusing this OVERLAPPED and buffer.
-			cancelOverlappedIo(mPipe, mReadOverlapped);
+			if (!cancelOverlappedIo(mPipe, mReadOverlapped))
+			{
+				std::cerr << "Timed out cancelling pending pipe read" << std::endl;
+				cleanup();
+				return 0;
+			}
 			error = GetLastError();
 		}
 	}
