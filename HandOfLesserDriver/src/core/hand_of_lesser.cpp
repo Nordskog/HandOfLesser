@@ -747,6 +747,11 @@ namespace HOL
 
 		if (trackingState.isMultimodalEnabled)
 		{
+			if (Config.trackingFeatures.forceMultimodalHandPrimary)
+			{
+				return true;
+			}
+
 			// If controller is configured to always act as tracker (alsoWhenHeld),
 			// the real controller will never come back, so keep using hand tracking
 			auto it = Config.deviceSettings.devices.find(controller->serial);

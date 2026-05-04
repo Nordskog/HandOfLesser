@@ -244,6 +244,7 @@ namespace HOL
 		{
 			bool enableUpperBodyTracking = false;
 			bool enableSimultaneousTracking = false;
+			bool forceMultimodalHandPrimary = false;
 		};
 
 		struct HandOfLesserSettings

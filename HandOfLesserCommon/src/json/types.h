@@ -291,7 +291,8 @@ namespace HOL
 		inline void to_json(nlohmann::json& j, const TrackingFeaturesSettings& settings)
 		{
 			j = {{"enableUpperBodyTracking", settings.enableUpperBodyTracking},
-				 {"enableSimultaneousTracking", settings.enableSimultaneousTracking}};
+				 {"enableSimultaneousTracking", settings.enableSimultaneousTracking},
+				 {"forceMultimodalHandPrimary", settings.forceMultimodalHandPrimary}};
 		}
 
 		inline void from_json(const nlohmann::json& j, TrackingFeaturesSettings& settings)
@@ -300,6 +301,8 @@ namespace HOL
 				j, "enableUpperBodyTracking", settings.enableUpperBodyTracking);
 			nlohmann::get_to_if_present(
 				j, "enableSimultaneousTracking", settings.enableSimultaneousTracking);
+			nlohmann::get_to_if_present(
+				j, "forceMultimodalHandPrimary", settings.forceMultimodalHandPrimary);
 		}
 
 		inline void to_json(nlohmann::json& j, const HandOfLesserSettings& settings)

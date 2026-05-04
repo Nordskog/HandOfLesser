@@ -1494,6 +1494,23 @@ void HOL::UserInterface::buildMain()
 			Config.trackingFeatures.enableUpperBodyTracking,
 			Config.trackingFeatures.enableSimultaneousTracking);
 	}
+	ImGui::SameLine();
+
+	if (!Config.trackingFeatures.enableSimultaneousTracking)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	if (ImGui::Checkbox("Force hand primary",
+						&Config.trackingFeatures.forceMultimodalHandPrimary))
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+
+	if (!Config.trackingFeatures.enableSimultaneousTracking)
+	{
+		ImGui::EndDisabled();
+	}
 
 	// Disable (grey out) augment checkbox when simultaneous tracking not enabled
 	if (!Config.trackingFeatures.enableSimultaneousTracking)
