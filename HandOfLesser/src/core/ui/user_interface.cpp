@@ -1143,20 +1143,45 @@ void HOL::UserInterface::buildMain()
 
 	ImGui::SeparatorText("State");
 
-	ImGui::Text("OpenXR Runtime: %s", HOL::state::Runtime.runtimeName);
+	ImVec4 openXrStateColor = ImVec4(1.0f, 0.6f, 0.0f, 1.0f);
+	switch (HOL::state::Runtime.openxrState)
+	{
+		case HOL::OpenXR::OpenXrState::Running:
+			openXrStateColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+			break;
+		case HOL::OpenXR::OpenXrState::Failed:
+			openXrStateColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+			break;
+		case HOL::OpenXR::OpenXrState::Initialized:
+			openXrStateColor = ImVec4(0.9f, 0.85f, 0.2f, 1.0f);
+			break;
+		case HOL::OpenXR::OpenXrState::Uninitialized:
+		case HOL::OpenXR::OpenXrState::Exited:
+		default:
+			break;
+	}
 
-	ImGui::Text("OpenXR Session state: %s",
-				HOL::OpenXR::getOpenXrStateString(HOL::state::Runtime.openxrState));
+	ImGui::Text("OpenXR Runtime:");
+	ImGui::SameLine();
+	ImGui::Text("%s", HOL::state::Runtime.runtimeName);
+
+	ImGui::Text("OpenXR Session state:");
+	ImGui::SameLine();
+	ImGui::TextColored(openXrStateColor,
+					   "%s",
+					   HOL::OpenXR::getOpenXrStateString(HOL::state::Runtime.openxrState));
 
 	// Driver connection status
 	bool connected = HOL::HandOfLesserCore::Current->isDriverConnected();
+	ImGui::Text("Driver:");
+	ImGui::SameLine();
 	if (connected)
 	{
-		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Driver: Connected");
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Connected");
 	}
 	else
 	{
-		ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "Driver: Disconnected");
+		ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.0f, 1.0f), "Disconnected");
 	}
 
 	if (ImGui::Checkbox("Launch app automatically with SteamVR", &Config.steamvr.autoLaunchApp))
