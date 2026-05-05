@@ -59,7 +59,10 @@ namespace HOL::OpenXR
 		// Foreground mode
 		XrViewConfigurationProperties mViewportConfiguration{XR_TYPE_VIEW_CONFIGURATION_PROPERTIES};
 		XrViewConfigurationView mViewConfigurationView[2];
-		xr::SessionState mSessionState;
+
+		// This is the actual state of the session, which we don't usually care about.
+		// When in headless mode we either get initialized or we don't. 
+		xr::SessionState mSessionState = xr::SessionState::Unknown;	
 		void doForegroundRendering(XrFrameState frameState);
 		void setupForegroundRendering();
 
@@ -86,6 +89,7 @@ namespace HOL::OpenXR
 				if (event.type == xr::StructureType::EventDataSessionStateChanged)
 				{
 					auto& change = reinterpret_cast<xr::EventDataSessionStateChanged&>(event);
+					this->mSessionState = change.state;
 					std::cout << to_string(change.state) << std::endl;
 				}
 			}
