@@ -20,7 +20,7 @@ namespace HOL
 
 		if (this->mUseHoldGesture)
 		{
-			holdGesture = this->mTriggerGesture->evaluate(data);
+			holdGesture = this->mHoldGesture->evaluate(data);
 		}
 
 		// Regardless of whether a separate hold gesture is present, 
@@ -130,7 +130,7 @@ namespace HOL
 	void BaseAction::setHoldGesture(std::shared_ptr<BaseGesture::Gesture> gesture)
 	{
 		this->mHoldGesture = gesture;
-		this->mUseHoldGesture = false;
+		this->mUseHoldGesture = true;
 	}
 
 	void BaseAction::setParameters(ActionParameters params)
