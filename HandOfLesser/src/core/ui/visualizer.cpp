@@ -315,7 +315,7 @@ namespace HOL
 						  const float& r,
 						  const float& n,
 						  const float& f,
-						  Eigen::Matrix4Xf& M)
+						  Eigen::Matrix4f& M)
 	{
 		// Set OpenGL perspective projection matrix
 		M(0, 0) = 2.f * n / (r - l);
@@ -341,7 +341,7 @@ namespace HOL
 
 	void Visualizer::calculateProjectionMatrix()
 	{
-		Eigen::Matrix4Xf rotationMatrix = Eigen::Matrix4f::Identity();
+		Eigen::Matrix4f rotationMatrix = Eigen::Matrix4f::Identity();
 
 		rotationMatrix.block<3, 3>(0, 0) = mCameraOrientation.toRotationMatrix();
 
@@ -351,7 +351,7 @@ namespace HOL
 		this->mViewMatrix = translationAff.matrix() * rotationMatrix;
 
 		// World -> camera, so inverse
-		this->mViewMatrix = this->mViewMatrix.matrix().inverse();
+		this->mViewMatrix = this->mViewMatrix.matrix().inverse().eval();
 
 		ImVec2 upperLeft = ImGui::GetCursorScreenPos();
 		ImVec2 lowerRight = ImGui::GetContentRegionAvail();
@@ -439,11 +439,6 @@ namespace HOL
 		this->submitPoint(bottomLeft, colorGrey, 5);
 
 		this->submitPoint(this->mCameraAim, colorGrey, 8);
-	}
-	void Visualizer::clearDraw()
-	{
-		this->mActiveDrawQueue->points.clear();
-		this->mActiveDrawQueue->lines.clear();
 	}
 	void Visualizer::centerToAim()
 	{

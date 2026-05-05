@@ -5,7 +5,7 @@
 
 namespace HOL::Gesture::FingerCurlGesture
 {
-	struct Paremters
+	struct Parameters
 	{
 		HOL::FingerType finger;
 		HOL::HandSide side;
@@ -29,7 +29,7 @@ namespace HOL::Gesture::FingerCurlGesture
 			return std::make_shared<Gesture>();
 		}
 
-		FingerCurlGesture::Paremters parameters;
+		FingerCurlGesture::Parameters parameters;
 
 	private:
 

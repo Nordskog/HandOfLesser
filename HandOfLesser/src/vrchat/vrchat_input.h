@@ -13,7 +13,7 @@ namespace HOL::VRChat
 	public:
 		VRChatInput();
 		std::tuple<char*, size_t> finalizeInputBundle();
-		void submitFloat(std::string& inputName, float value);
+		void submitFloat(const std::string& inputName, float value);
 		static VRChatInput* Current;
 
 	private:

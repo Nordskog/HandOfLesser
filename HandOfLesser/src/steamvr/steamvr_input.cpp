@@ -44,4 +44,4 @@ namespace HOL::SteamVR
 	}
 
 
-} // namespace HOL::VRChat
+} // namespace HOL::SteamVR

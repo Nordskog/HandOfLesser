@@ -68,7 +68,6 @@ namespace HOL
 		ImVec2 projectToScreen(const Eigen::Vector3f& position);
 
 		void drawAxis();
-		void clearDraw();
 		void centerToAim();
 		void applyZoom();
 
@@ -80,8 +79,8 @@ namespace HOL
 		float mRawZoom = 25;
 		float mCameraZoom = 700;
 
-		Eigen::Matrix4Xf mViewMatrix;
-		Eigen::Matrix4Xf mProjectionMatrix;
+		Eigen::Matrix4f mViewMatrix;
+		Eigen::Matrix4f mProjectionMatrix;
 
 		std::mutex mDrawSwapLock;
 

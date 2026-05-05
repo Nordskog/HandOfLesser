@@ -23,7 +23,7 @@ namespace HOL::VRChat
 
 		return std::make_tuple(this->mOscPacketBuffer, this->mPacket.size());
 	}
-	void VRChatInput::submitFloat(std::string& inputName, float value)
+	void VRChatInput::submitFloat(const std::string& inputName, float value)
 	{
 		if (!this->mPacketOpen)
 		{

@@ -287,8 +287,6 @@ void HandTracking::updateInputs()
 	submitLegacyFingerCurl();
 }
 
-static bool firstRun = true;
-
 void HOL::OpenXR::HandTracking::updateGestures()
 {
 	// printf("################\n");
