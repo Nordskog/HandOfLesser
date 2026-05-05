@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <atomic>
 #include <thread>
 #include <unordered_map>
 #include <HandOfLesserCommon.h>
@@ -89,7 +90,7 @@ private:
 		void ReceiveDataThread();
 		void estimateControllerSide();
 
-		bool mActive;
+		std::atomic<bool> mActive = false;
 		int mControllerSideEstimationAttemptCount = 0;
 
 		bool mEstimateControllerSideWhenPositionValid = false;

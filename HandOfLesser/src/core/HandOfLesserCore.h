@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include "src/openxr/InstanceHolder.h"
 #include "src/openxr/HandTracking.h"
@@ -54,7 +55,7 @@ namespace HOL
 
 		std::thread mUserInterfaceThread;
 		std::thread mReceiveThread;
-		bool mActive = false;
+		std::atomic<bool> mActive = false;
 
 		void userInterfaceLoop();
 		void receiveDataThread();

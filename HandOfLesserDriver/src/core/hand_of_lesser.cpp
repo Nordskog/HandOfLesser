@@ -22,7 +22,7 @@ namespace HOL
 
 	void HandOfLesser::init()
 	{
-		this->mActive = true;
+		this->mActive.store(true);
 		HandOfLesser::Current = this;
 
 		// Initialize transport as server (creates named pipe and waits for client)
@@ -34,11 +34,12 @@ namespace HOL
 
 	void HandOfLesser::ReceiveDataThread()
 	{
-		DriverLog("ReceiveDataThread() start, active: %s", this->mActive ? "true" : "false");
+		DriverLog("ReceiveDataThread() start, active: %s",
+				  this->mActive.load() ? "true" : "false");
 
 		// Wait for client connection (app to connect to our pipe)
 		DriverLog("Waiting for app to connect...");
-		while (this->mActive && !this->mTransport.isConnected())
+		while (this->mActive.load() && !this->mTransport.isConnected())
 		{
 			if (this->mTransport.waitForConnection(1000))
 			{
@@ -52,7 +53,7 @@ namespace HOL
 			}
 		}
 
-		while (this->mActive)
+		while (this->mActive.load())
 		{
 			HOL::NativePacketView nativePacket = this->mTransport.receivePacket();
 			if (!nativePacket)
@@ -1580,11 +1581,8 @@ namespace HOL
 	{
 		mAppLauncher.stop();
 
-		// Let's join our pose thread that's running
-		// by first checking then setting is_active_ to false to break out
-		// of the while loop, if it's running, then call .join() on the thread
-		// if (is_active_.exchange(false))
-		this->mActive = false;
+		// Signal the receive thread to stop before waiting for it to exit.
+		this->mActive.store(false);
 		{
 			my_pose_update_thread_.join();
 		}

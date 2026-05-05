@@ -155,7 +155,7 @@ void HandOfLesserCore::init(int serverPort)
 
 bool HandOfLesserCore::start()
 {
-	this->mActive = true;
+	this->mActive.store(true);
 	this->mUserInterfaceThread = std::thread(&HandOfLesserCore::userInterfaceLoop, this);
 	this->mReceiveThread = std::thread(&HandOfLesserCore::receiveDataThread, this);
 
@@ -201,7 +201,7 @@ void HOL::HandOfLesserCore::receiveDataThread()
 	bool wasConnected = false;
 	bool printedReconnecting = false;
 
-	while (this->mActive)
+	while (this->mActive.load())
 	{
 		// Check if we need to (re)connect
 		if (!this->mDriverTransport.isConnected())
@@ -379,7 +379,7 @@ void HandOfLesserCore::mainLoop()
 	std::cout << "Exiting loop" << std::endl;
 
 	// Signal threads to stop
-	this->mActive = false;
+	this->mActive.store(false);
 
 	// Wait for threads to finish
 	if (this->mUserInterfaceThread.joinable())
