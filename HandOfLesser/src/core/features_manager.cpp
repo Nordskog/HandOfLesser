@@ -106,27 +106,27 @@ namespace HOL
 		if (enableMultimodal)
 			this->setMultimodalEnabled(true);
 	}
-} // namespace HOL
 
-void FeaturesManager::performPeriodicCheck()
-{
-	auto now = std::chrono::steady_clock::now();
-	if (std::chrono::duration_cast<std::chrono::milliseconds>(now
-															  - this->mLastTrackingFeatureCheckTime)
-		>= TRACKING_FEATURE_CHECK_INTERVAL_MS)
+	void FeaturesManager::performPeriodicCheck()
 	{
-		// Re-request High Fidelity if enabled
-		if (Config.trackingFeatures.enableUpperBodyTracking)
+		auto now = std::chrono::steady_clock::now();
+		if (std::chrono::duration_cast<std::chrono::milliseconds>(
+				now - this->mLastTrackingFeatureCheckTime)
+			>= TRACKING_FEATURE_CHECK_INTERVAL_MS)
 		{
-			requestBodyTrackingFidelity(true);
-		}
+			// Re-request High Fidelity if enabled
+			if (Config.trackingFeatures.enableUpperBodyTracking)
+			{
+				requestBodyTrackingFidelity(true);
+			}
 
-		// Re-enable Multimodal if enabled
-		if (Config.trackingFeatures.enableSimultaneousTracking)
-		{
-			setMultimodalEnabled(true);
-		}
+			// Re-enable Multimodal if enabled
+			if (Config.trackingFeatures.enableSimultaneousTracking)
+			{
+				setMultimodalEnabled(true);
+			}
 
-		this->mLastTrackingFeatureCheckTime = now;
+			this->mLastTrackingFeatureCheckTime = now;
+		}
 	}
 } // namespace HOL
