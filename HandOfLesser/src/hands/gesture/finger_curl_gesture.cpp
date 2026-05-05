@@ -50,7 +50,7 @@ namespace HOL::Gesture::FingerCurlGesture
 		float rangeEnd = HOL::degreesToRadians(this->parameters.maxDegrees);
 
 		// ratio of val between start and end
-		val = (val - rangeStart) / rangeEnd - rangeStart;
+		val = (val - rangeStart) / (rangeEnd - rangeStart);
 
 		return std::clamp(val, 0.f, 1.f);
 	}
