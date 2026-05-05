@@ -87,7 +87,15 @@ namespace HOL
 
 			NativePacket packet;
 			std::memcpy(&packet, mReceiveBuffer, sizeof(packet));
-			if (length != sizeof(NativePacket) + packet.payloadSize)
+
+			constexpr size_t MaxPayloadSize = NativePacketBufferSize - sizeof(NativePacket);
+			if (packet.payloadSize > MaxPayloadSize)
+			{
+				return {};
+			}
+
+			const size_t expectedLength = sizeof(NativePacket) + packet.payloadSize;
+			if (length != expectedLength)
 			{
 				return {};
 			}
