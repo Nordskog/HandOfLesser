@@ -15,16 +15,16 @@ namespace HOL::Gesture
 {
 	float ComboGesture::Gesture::evaluateInternal(GestureData data)
 	{
-		// float average = 0;
 		float min = 1;
+		float max = 0;
 		for (auto& gesture : this->mComboGestures)
 		{
 			float val = gesture.get()->evaluate(data);
 			if (val < min)
 				min = val;
-			// average += val;
+			if (val > max)
+				max = val;
 		}
-		// average /= (float)this->mComboGestures.size();
 
 		if (min >= 1)
 		{
@@ -32,16 +32,14 @@ namespace HOL::Gesture
 			return 1;
 		}
 
-		if (mActivated && this->parameters.holdUntilAllReleased && min >= 1.f)
+		if (this->parameters.holdUntilAllReleased && this->mActivated && max >= 1)
 		{
-			return true;
-		}
-		else
-		{
-			this->mActivated = false;
+			return 1;
 		}
 
-		return min;
+		this->mActivated = false;
+
+		return max;
 	}
 
 	void ComboGesture::Gesture::addGesture(std::shared_ptr<BaseGesture::Gesture> gesture)
