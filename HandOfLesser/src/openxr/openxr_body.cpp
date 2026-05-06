@@ -205,7 +205,7 @@ bool OpenXRBody::canUseArmTrackingAnchor() const
 	return false;
 }
 
-Eigen::Quaternionf OpenXRBody::getReferenceOrientation() const
+Eigen::Quaternionf OpenXRBody::getReferenceOrientation(bool& valid) const
 {
 	auto& chest = mJointLocations[XR_BODY_JOINT_CHEST_FB];
 	auto& head = mJointLocations[XR_BODY_JOINT_HEAD_FB];
@@ -214,6 +214,7 @@ Eigen::Quaternionf OpenXRBody::getReferenceOrientation() const
 		&& (chest.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
 		&& (chest.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 	{
+		valid = true;
 		// Upper body tracking active - use chest orientation
 		return Eigen::Quaternionf(chest.pose.orientation.w,
 								  chest.pose.orientation.x,
@@ -225,12 +226,14 @@ Eigen::Quaternionf OpenXRBody::getReferenceOrientation() const
 	if (head.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT
 		&& head.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
 	{
+		valid = true;
 		return Eigen::Quaternionf(head.pose.orientation.w,
 								  head.pose.orientation.x,
 								  head.pose.orientation.y,
 								  head.pose.orientation.z);
 	}
 
+	valid = false;
 	// No valid data - return identity
 	return Eigen::Quaternionf::Identity();
 }

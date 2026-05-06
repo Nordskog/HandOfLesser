@@ -282,7 +282,7 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 
 	// Populate gesture data
 	HOL::Gesture::GestureData data;
-	data.ReferenceOrientation = bodyTracker.getReferenceOrientation();
+	data.ReferenceOrientation = bodyTracker.getReferenceOrientation(data.ReferenceOrientationValid);
 
 	for (int i = 0; i < HandSide::HandSide_MAX; i++)
 	{

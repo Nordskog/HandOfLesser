@@ -18,6 +18,7 @@ namespace HOL::Gesture
 		HandPose* handPose[HandSide::HandSide_MAX];
 		// Body tracking reference orientation: chest if upper body tracking active, head otherwise
 		Eigen::Quaternionf ReferenceOrientation = Eigen::Quaternionf::Identity();
+		bool ReferenceOrientationValid = false;
 	};
 
 	namespace BaseGesture 
