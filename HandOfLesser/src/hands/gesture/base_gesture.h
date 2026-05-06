@@ -16,7 +16,8 @@ namespace HOL::Gesture
 		XrHandJointLocationEXT* joints[HandSide::HandSide_MAX];
 		const XrHandTrackingAimStateFB* aimState[HandSide::HandSide_MAX];
 		HandPose* handPose[HandSide::HandSide_MAX];
-		XrPosef HMDPose;
+		// Body tracking reference orientation: chest if upper body tracking active, head otherwise
+		Eigen::Quaternionf ReferenceOrientation = Eigen::Quaternionf::Identity();
 	};
 
 	namespace BaseGesture 

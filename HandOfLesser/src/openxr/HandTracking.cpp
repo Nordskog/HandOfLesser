@@ -279,37 +279,29 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 {
 	this->mLeftHand.updateJointLocations(space, time, bodyTracker);
 	this->mRightHand.updateJointLocations(space, time, bodyTracker);
-}
 
-void HandTracking::updateInputs()
-{
-	updateGestures();
-	submitLegacyFingerCurl();
-}
-
-void HOL::OpenXR::HandTracking::updateGestures()
-{
-	// printf("################\n");
-
+	// Populate gesture data
 	HOL::Gesture::GestureData data;
+	data.ReferenceOrientation = bodyTracker.getReferenceOrientation();
+
 	for (int i = 0; i < HandSide::HandSide_MAX; i++)
 	{
 		OpenXRHand* hand = getHand((HandSide)i);
-
 		data.handPose[i] = &hand->handPose;
 		data.joints[i] = hand->getLastJointLocations();
 		data.aimState[i] = hand->getAimState();
 	}
 
-	// TODO: HMD pose
-
+	// Evaluate gestures
 	for (auto& action : this->mActions)
 	{
 		action->evaluate(data);
 	}
+}
 
-	// float combo = this->mComboGesture.get()->evaluate(data);
-	// printf("Combo: %.3f\n", combo);
+void HandTracking::updateInputs()
+{
+	submitLegacyFingerCurl();
 }
 
 void HOL::OpenXR::HandTracking::submitLegacyFingerCurl()

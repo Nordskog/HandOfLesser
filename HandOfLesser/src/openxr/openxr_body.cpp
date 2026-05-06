@@ -186,9 +186,9 @@ void OpenXRBody::preservePalmPose(HandSide side)
 bool OpenXRBody::canUseArmTrackingAnchor() const
 {
 	// With the oculus runtime we decide whether or not upper body tracking is enabled.
-	// With VDXR, we don't know if it is enabled. However, VDXR will mark the body joints as 
-	// valid AND tracked when using a Quest2. With a Quest 3 where upper body is always enabled 
-	// they are instead untracked. Use this to determine whether or not we actually have upper body tracking. 
+	// With VDXR, we don't know if it is enabled. However, VDXR will mark the body joints as
+	// valid AND tracked when using a Quest2. With a Quest 3 where upper body is always enabled
+	// they are instead untracked. Use this to determine whether or not we actually have upper body tracking.
 
 	if (HOL::state::Runtime.isOVR)
 	{
@@ -203,6 +203,36 @@ bool OpenXRBody::canUseArmTrackingAnchor() const
 	}
 
 	return false;
+}
+
+Eigen::Quaternionf OpenXRBody::getReferenceOrientation() const
+{
+	auto& chest = mJointLocations[XR_BODY_JOINT_CHEST_FB];
+	auto& head = mJointLocations[XR_BODY_JOINT_HEAD_FB];
+
+	if (canUseArmTrackingAnchor()
+		&& (chest.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+		&& (chest.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+	{
+		// Upper body tracking active - use chest orientation
+		return Eigen::Quaternionf(chest.pose.orientation.w,
+								  chest.pose.orientation.x,
+								  chest.pose.orientation.y,
+								  chest.pose.orientation.z);
+	}
+
+	// Fallback to head orientation
+	if (head.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT
+		&& head.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+	{
+		return Eigen::Quaternionf(head.pose.orientation.w,
+								  head.pose.orientation.x,
+								  head.pose.orientation.y,
+								  head.pose.orientation.z);
+	}
+
+	// No valid data - return identity
+	return Eigen::Quaternionf::Identity();
 }
 
 void OpenXRBody::calculateRelativeTransform(const XrBodyJointLocationFB& baseJoint,

@@ -30,7 +30,6 @@ namespace HOL::OpenXR
 		void initGestures();
 		void submitLegacyFingerCurl();
 		void updateSimpleGestures();
-		void updateGestures();
 		OpenXRHand mLeftHand;
 		OpenXRHand mRightHand;
 

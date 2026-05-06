@@ -17,6 +17,7 @@ public:
 	XrBodyJointLocationFB* getLastJointLocations();
 	bool isAvailable() const;
 	XrBodyTrackerFB getBodyTrackerFB();
+	Eigen::Quaternionf getReferenceOrientation() const;
 	float confidence = 0.0f;
 	bool active = false;
 

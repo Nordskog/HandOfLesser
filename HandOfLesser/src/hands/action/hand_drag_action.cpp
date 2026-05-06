@@ -25,27 +25,36 @@ namespace HOL
 			{
 				Eigen::Vector3f diff = currentPos - this->mStartPosition;
 
-				// We don't have access to HMD position in VD, so use hand orientation as reference
-				// instead
-				Eigen::Quaternionf currentOrientation = OpenXR::toEigenQuaternion(
-					gestureData.joints[this->mHandSide][this->mTargetJoint].pose.orientation);
+				// Get reference forward/right from body tracking (chest if upper body tracking
+				// active, head otherwise). Zero Y to lock the locomotion plane to horizontal,
+				// avoiding pitch/roll affecting locomotion direction.
+				const Eigen::Quaternionf& refQuat = gestureData.ReferenceOrientation;
+				Eigen::Vector3f forward = refQuat * Eigen::Vector3f(0, 0, -1);
+				forward.y() = 0.0f;
+				if (forward.squaredNorm() > 1e-6f)
+				{
+					forward.normalize();
+				}
+				else
+				{
+					forward = Eigen::Vector3f(0, 0, -1);
+				}
+				Eigen::Vector3f right = forward.cross(Eigen::Vector3f::UnitY()).normalized();
 
-				diff = currentOrientation.inverse() * diff;
+				// Project diff onto reference axes
+				float forwardAmount = diff.dot(forward);
+				float rightAmount = diff.dot(right);
 
-				// rotate a bit more so forward is kinda forward
-				// Will use HMD position eventually
-				diff = HOL::quaternionFromEulerAnglesDegrees(0, -35, 0) * diff;
+				forwardAmount *= mMultiplier;
+				rightAmount *= mMultiplier;
 
-
-				diff.z() = -diff.z();
-				diff *= mMultiplier;
-				diff.x() = std::clamp(diff.x(), -1.0f, 1.0f);
-				diff.z() = std::clamp(diff.z(), -1.0f, 1.0f);
+				forwardAmount = std::clamp(forwardAmount, -1.0f, 1.0f);
+				rightAmount = std::clamp(rightAmount, -1.0f, 1.0f);
 
 				// Joystick requires touch to be recognized
 				this->submitInput(InputType::Touch, true);
-				this->submitInput(InputType::XAxis, diff.x());
-				this->submitInput(InputType::ZAxis, diff.z());
+				this->submitInput(InputType::XAxis, rightAmount);
+				this->submitInput(InputType::ZAxis, forwardAmount);
 			}
 		}
 		else if (actionData.onUp)
