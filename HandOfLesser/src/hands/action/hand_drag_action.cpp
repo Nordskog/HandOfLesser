@@ -33,7 +33,7 @@ namespace HOL
 					// Body tracking available — use chest or head orientation as reference.
 					// Zero Y to lock the locomotion plane to horizontal, avoiding pitch/roll
 					// affecting locomotion direction.
-					Eigen::Vector3f forward = refQuat * Eigen::Vector3f(0, 0, -1);
+					Eigen::Vector3f forward = refQuat * Eigen::Vector3f::UnitY();
 					forward.y() = 0.0f;
 					if (forward.squaredNorm() > 1e-6f)
 					{
