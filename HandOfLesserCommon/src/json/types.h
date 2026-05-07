@@ -152,12 +152,15 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const InputSettings& settings)
 		{
-			j = {{"sendOscInput", settings.sendOscInput}};
+			j = {{"sendOscInput", settings.sendOscInput},
+				 {"joystickReferenceMode", settings.joystickReferenceMode}};
 		}
 
 		inline void from_json(const nlohmann::json& j, InputSettings& settings)
 		{
 			nlohmann::get_to_if_present(j, "sendOscInput", settings.sendOscInput);
+			nlohmann::get_to_if_present(
+				j, "joystickReferenceMode", settings.joystickReferenceMode);
 		}
 
 		inline void to_json(nlohmann::json& j, const OpenXRSettings& settings)

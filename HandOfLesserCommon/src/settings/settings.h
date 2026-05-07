@@ -166,9 +166,17 @@ namespace HOL
 			Eigen::Vector3f rotationOut = Eigen::Vector3f(0, 0, 0);
 		};
 
+		enum class JoystickReferenceMode
+		{
+			Chest = 0,
+			Head,
+			Hand
+		};
+
 		struct InputSettings
 		{
 			bool sendOscInput = true;
+			JoystickReferenceMode joystickReferenceMode = JoystickReferenceMode::Head;
 		};
 
 		struct OpenXRSettings

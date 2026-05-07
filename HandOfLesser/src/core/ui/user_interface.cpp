@@ -550,6 +550,57 @@ void HOL::UserInterface::buildInput()
 	ImGui::SeparatorText("Hard-coded SteamVR Input");
 	ImGui::TextWrapped("Minimal hard-coded bindings. These are not intended to be comprehensive.");
 
+	ImGui::SeparatorText("Joystick Reference");
+	ImGui::TextWrapped(
+		"Choose the reference direction used by the left-hand movement gesture.");
+
+	const bool bodyTrackingAvailable = HOL::state::Runtime.supportsBodyTracking;
+	const bool chestReferenceAvailable
+		= bodyTrackingAvailable
+		  && (HOL::state::Runtime.isVDXR || Config.trackingFeatures.enableUpperBodyTracking);
+	const bool headReferenceAvailable = bodyTrackingAvailable;
+	auto drawReferenceRadio = [&](const char* label,
+								  HOL::settings::JoystickReferenceMode mode,
+								  bool enabled,
+								  const char* disabledTooltip)
+	{
+		if (!enabled)
+		{
+			ImGui::BeginDisabled();
+		}
+
+		if (ImGui::RadioButton(
+				label, Config.input.joystickReferenceMode == mode))
+		{
+			Config.input.joystickReferenceMode = mode;
+			syncSettings = true;
+		}
+
+		if (!enabled)
+		{
+			ImGui::EndDisabled();
+			if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+			{
+				showWrappedTooltip(disabledTooltip);
+			}
+		}
+	};
+
+	drawReferenceRadio("Chest",
+					   HOL::settings::JoystickReferenceMode::Chest,
+					   chestReferenceAvailable,
+					   "Chest reference requires upper body tracking.");
+	ImGui::SameLine();
+	drawReferenceRadio("Head",
+					   HOL::settings::JoystickReferenceMode::Head,
+					   headReferenceAvailable,
+					   "Head reference requires body tracking.");
+	ImGui::SameLine();
+	drawReferenceRadio("Hand",
+					   HOL::settings::JoystickReferenceMode::Hand,
+					   true,
+					   "");
+
 	using FingerHighlights = UiGraphics::FingerHighlights;
 	using FingerFlags = UiGraphics::FingerFlags;
 	auto makeFingerHighlights

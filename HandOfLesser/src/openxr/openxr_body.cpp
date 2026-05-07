@@ -205,32 +205,37 @@ bool OpenXRBody::canUseArmTrackingAnchor() const
 	return false;
 }
 
-Eigen::Quaternionf OpenXRBody::getReferenceOrientation(bool& valid) const
+Eigen::Quaternionf OpenXRBody::getReferenceOrientation(HOL::settings::JoystickReferenceMode mode,
+													   bool& valid) const
 {
 	auto& chest = mJointLocations[XR_BODY_JOINT_CHEST_FB];
 	auto& head = mJointLocations[XR_BODY_JOINT_HEAD_FB];
 
-	if (canUseArmTrackingAnchor()
-		&& (chest.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
-		&& (chest.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+	auto getOrientation = [](const XrBodyJointLocationFB& joint)
+	{
+		return Eigen::Quaternionf(joint.pose.orientation.w,
+								  joint.pose.orientation.x,
+								  joint.pose.orientation.y,
+								  joint.pose.orientation.z);
+	};
+
+	const bool chestValid = canUseArmTrackingAnchor()
+							&& (chest.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+							&& (chest.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT);
+	const bool headValid = (head.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+						   && (head.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT);
+
+	if (mode == HOL::settings::JoystickReferenceMode::Chest && chestValid)
 	{
 		valid = true;
 		// Upper body tracking active - use chest orientation
-		return Eigen::Quaternionf(chest.pose.orientation.w,
-								  chest.pose.orientation.x,
-								  chest.pose.orientation.y,
-								  chest.pose.orientation.z);
+		return getOrientation(chest);
 	}
 
-	// Fallback to head orientation
-	if (head.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT
-		&& head.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+	if (mode != HOL::settings::JoystickReferenceMode::Hand && headValid)
 	{
 		valid = true;
-		return Eigen::Quaternionf(head.pose.orientation.w,
-								  head.pose.orientation.x,
-								  head.pose.orientation.y,
-								  head.pose.orientation.z);
+		return getOrientation(head);
 	}
 
 	valid = false;

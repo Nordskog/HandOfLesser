@@ -30,7 +30,7 @@ namespace HOL
 				const Eigen::Quaternionf& refQuat = gestureData.ReferenceOrientation;
 				if (gestureData.ReferenceOrientationValid)
 				{
-					// Body tracking available — use chest or head orientation as reference.
+					// Body tracking available - use chest or head orientation as reference.
 					// Zero Y to lock the locomotion plane to horizontal, avoiding pitch/roll
 					// affecting locomotion direction.
 					Eigen::Vector3f forward = refQuat * Eigen::Vector3f::UnitY();
@@ -61,7 +61,7 @@ namespace HOL
 				}
 				else
 				{
-					// Body tracking unavailable — fall back to hand orientation as reference.
+					// Body tracking unavailable - fall back to hand orientation as reference.
 					Eigen::Quaternionf currentOrientation
 						= OpenXR::toEigenQuaternion(
 							gestureData.joints[this->mHandSide][this->mTargetJoint].pose.orientation);
