@@ -206,6 +206,13 @@ void HOL::HandOfLesserCore::receiveDataThread()
 		// Check if we need to (re)connect
 		if (!this->mDriverTransport.isConnected())
 		{
+			if (wasConnected && Config.steamvr.closeAppOnSteamVRExit)
+			{
+				std::cout << "Driver disconnected, closing app" << std::endl;
+				this->mUserInterface.requestTerminate();
+				break;
+			}
+
 			// Only print once when transitioning to disconnected
 			if (wasConnected && !printedReconnecting)
 			{
@@ -251,6 +258,14 @@ void HOL::HandOfLesserCore::receiveDataThread()
 		HOL::NativePacketView nativePacket = this->mDriverTransport.receivePacket();
 		if (!nativePacket)
 		{
+			if (wasConnected && !this->mDriverTransport.isConnected()
+				&& Config.steamvr.closeAppOnSteamVRExit)
+			{
+				std::cout << "Driver disconnected, closing app" << std::endl;
+				this->mUserInterface.requestTerminate();
+				break;
+			}
+
 			continue; // Timeout, retry
 		}
 

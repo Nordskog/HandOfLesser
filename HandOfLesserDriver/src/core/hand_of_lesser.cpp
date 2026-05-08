@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <src/json/types.h>
 #include <algorithm>
+#include <chrono>
 #include <limits>
 
 namespace HOL
@@ -1585,6 +1586,7 @@ namespace HOL
 		{
 			this->mTransport.sendPacket<NativePacketType::AppShutdownRequested>();
 			DriverLog("Sent app shutdown request");
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
 		// Signal the receive thread to stop before waiting for it to exit.
