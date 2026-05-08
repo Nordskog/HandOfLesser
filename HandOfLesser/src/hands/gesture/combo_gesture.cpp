@@ -32,14 +32,16 @@ namespace HOL::Gesture
 			return 1;
 		}
 
-		if (this->parameters.holdUntilAllReleased && this->mActivated && max >= 1)
+		if (this->parameters.holdUntilAllReleased && this->mActivated && max >= 1.f)
 		{
 			return 1;
 		}
+		else
+		{
+			this->mActivated = false;
+		}
 
-		this->mActivated = false;
-
-		return max;
+		return min;
 	}
 
 	void ComboGesture::Gesture::addGesture(std::shared_ptr<BaseGesture::Gesture> gesture)
@@ -47,4 +49,3 @@ namespace HOL::Gesture
 		this->mComboGestures.push_back(gesture);
 	}
 }
-
