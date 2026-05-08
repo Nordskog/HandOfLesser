@@ -240,6 +240,9 @@ void HOL::OpenXR::HandTracking::initGestures()
 			grabAction.get()->addSink(
 				InputType::Button,
 				SteamVRBoolInput::Create()->setup((HandSide)i, SteamVR::Input::Grip.click()));
+			// Touch-style controllers do not expose a real grip click; SteamVR/Oculus treat a
+			// low analog pull threshold as the button press. Drive value from the binary button
+			// path for now so apps see reliable grip activation instead of only analog movement.
 			grabAction.get()->addSink(
 				InputType::Button,	// Using button instead of sink because quest controller has no click action
 				SteamVRFloatInput::Create()->setup((HandSide)i, SteamVR::Input::Grip.value()));
@@ -289,6 +292,8 @@ void HOL::OpenXR::HandTracking::initGestures()
 			triggerAction.get()->addSink(
 				InputType::Button,
 				SteamVRBoolInput::Create()->setup((HandSide)i, SteamVR::Input::Trigger.click()));
+			// Same as grip: Touch-style trigger button state is effectively value-thresholded
+			// rather than backed by a real click component, so keep value binary for reliability.
 			triggerAction.get()->addSink(
 				InputType::Button,
 				SteamVRFloatInput::Create()->setup((HandSide)i, SteamVR::Input::Trigger.value()));
