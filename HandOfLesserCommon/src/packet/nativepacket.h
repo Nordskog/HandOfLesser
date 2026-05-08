@@ -10,6 +10,10 @@
 
 namespace HOL
 {
+#ifndef HOL_VERSION_STRING
+#define HOL_VERSION_STRING "0.0.0.0"
+#endif
+
 	inline constexpr size_t SettingsNativePacketSize = 8196;
 	inline constexpr size_t NativePacketBufferSize = 16384;
 
@@ -131,7 +135,7 @@ namespace HOL
 
 	struct DriverInitializedPayload
 	{
-		char driverVersion[64] = "0.1.0"; // For future version checks
+		char driverVersion[64] = HOL_VERSION_STRING; // For future version checks
 		uint32_t capabilities = 0;		  // Bitfield for future features
 	};
 
@@ -157,7 +161,7 @@ namespace HOL
 
 	struct AppInitializedPayload
 	{
-		char appVersion[64] = "0.1.0"; // For future version checks
+		char appVersion[64] = HOL_VERSION_STRING; // For future version checks
 		uint32_t capabilities = 0;	   // Bitfield for future features
 	};
 

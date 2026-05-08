@@ -1,13 +1,22 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
+set(HOL_VERSION "0.9.0.0")
+
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
 	cmake_policy(SET CMP0141 NEW)
 	set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug>:EditAndContinue>$<$<CONFIG:RelWithDebInfo>:ProgramDatabase>")
 endif()
 
-project(HandOfLesser)
+project(HandOfLesser VERSION ${HOL_VERSION})
 set(CMAKE_CXX_STANDARD 20)
+
+
+# App and driver are copied to output directory, along with version string.
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/output")
+file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/output/version.txt" "${PROJECT_VERSION}\n")
+
+add_compile_definitions(HOL_VERSION_STRING=\"${PROJECT_VERSION}\")
 
 # Silence C++17 deprecation warnings
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
