@@ -117,16 +117,8 @@ bool UserInterface::shouldCloseWindow()
 	return glfwWindowShouldClose(this->mWindow);
 }
 
-void UserInterface::requestTerminate()
-{
-	this->mShouldTerminate = true;
-}
-
 void UserInterface::onFrame()
 {
-	this->mShouldTerminate
-		= this->mShouldTerminate || this->shouldCloseWindow() || this->mShouldRestart;
-
 	glfwPollEvents();
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -1309,7 +1301,7 @@ void HOL::UserInterface::buildMain()
 	ImGui::SameLine();
 	if (ImGui::Button("Restart"))
 	{
-		this->mShouldRestart = true;
+		HOL::HandOfLesserCore::Current->requestTerminate(true);
 	}
 	if (ImGui::IsItemHovered())
 	{
@@ -1990,16 +1982,6 @@ void UserInterface::buildInterface()
 	this->mVisualizer.setActive(visualTabOpen);
 
 	ImGui::End();
-}
-
-bool HOL::UserInterface::shouldTerminate()
-{
-	return mShouldTerminate;
-}
-
-bool HOL::UserInterface::shouldRestart()
-{
-	return mShouldRestart;
 }
 
 Visualizer* HOL::UserInterface::getVisualizer()

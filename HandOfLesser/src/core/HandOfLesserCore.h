@@ -29,6 +29,9 @@ namespace HOL
 		HandOfLesserCore();
 		void init(int serverPort);
 		bool start();
+		void requestTerminate(bool restart = false);
+		bool shouldTerminate() const;
+		bool shouldRestart() const;
 		static HandOfLesserCore* Current; // Time to commit sinss
 
 		void syncSettings();
@@ -56,6 +59,8 @@ namespace HOL
 		std::thread mUserInterfaceThread;
 		std::thread mReceiveThread;
 		std::atomic<bool> mActive = false;
+		std::atomic<bool> mShouldTerminate = false;
+		std::atomic<bool> mShouldRestart = false;
 
 		void userInterfaceLoop();
 		void receiveDataThread();

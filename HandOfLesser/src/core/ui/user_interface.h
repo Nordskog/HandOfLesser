@@ -16,11 +16,9 @@ namespace HOL
 		void terminate();
 		void onFrame();
 		void buildInterface();
-		bool shouldTerminate();
-		bool shouldRestart();
-		void requestTerminate();
 		static UserInterface* Current; // We only have a single window for now
 		Visualizer* getVisualizer();
+		bool shouldCloseWindow();
 
 	private:
 		static constexpr int PanelWidth = 600;
@@ -35,9 +33,6 @@ namespace HOL
 		static void windows_scale_callback(GLFWwindow* window, float xscale, float yscale);
 		float scaleSize(float size);
 		void updateWindowSize(bool preserveHeight = true);
-		bool mShouldTerminate = false;
-		bool mShouldRestart = false;
-		bool shouldCloseWindow();
 
 		Visualizer mVisualizer;
 

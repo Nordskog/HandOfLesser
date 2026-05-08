@@ -156,13 +156,31 @@ void HandOfLesserCore::init(int serverPort)
 bool HandOfLesserCore::start()
 {
 	this->mActive.store(true);
+	this->mShouldTerminate.store(false);
+	this->mShouldRestart.store(false);
 	this->mUserInterfaceThread = std::thread(&HandOfLesserCore::userInterfaceLoop, this);
 	this->mReceiveThread = std::thread(&HandOfLesserCore::receiveDataThread, this);
 
 	this->mainLoop();
 	this->saveSettings();
 
-	return this->mUserInterface.shouldRestart();
+	return this->shouldRestart();
+}
+
+void HOL::HandOfLesserCore::requestTerminate(bool restart)
+{
+	this->mShouldRestart.store(restart || this->mShouldRestart.load());
+	this->mShouldTerminate.store(true);
+}
+
+bool HOL::HandOfLesserCore::shouldTerminate() const
+{
+	return this->mShouldTerminate.load();
+}
+
+bool HOL::HandOfLesserCore::shouldRestart() const
+{
+	return this->mShouldRestart.load();
 }
 
 std::vector<const char*> HandOfLesserCore::getRequiredExtensions()
@@ -182,7 +200,13 @@ void HOL::HandOfLesserCore::userInterfaceLoop()
 			this->mBodyTracking.drawBody();
 		}
 		this->mUserInterface.onFrame();
-		if (this->mUserInterface.shouldTerminate())
+
+		if (this->mUserInterface.shouldCloseWindow())
+		{
+			this->requestTerminate();
+		}
+
+		if (this->shouldTerminate())
 		{
 			break;
 		}
@@ -209,7 +233,7 @@ void HOL::HandOfLesserCore::receiveDataThread()
 			if (wasConnected && Config.steamvr.closeAppOnSteamVRExit)
 			{
 				std::cout << "Driver disconnected, closing app" << std::endl;
-				this->mUserInterface.requestTerminate();
+				this->requestTerminate();
 				break;
 			}
 
@@ -262,7 +286,7 @@ void HOL::HandOfLesserCore::receiveDataThread()
 				&& Config.steamvr.closeAppOnSteamVRExit)
 			{
 				std::cout << "Driver disconnected, closing app" << std::endl;
-				this->mUserInterface.requestTerminate();
+				this->requestTerminate();
 				break;
 			}
 
@@ -358,7 +382,7 @@ void HOL::HandOfLesserCore::receiveDataThread()
 				}
 
 				std::cout << "Driver requested app shutdown" << std::endl;
-				this->mUserInterface.requestTerminate();
+				this->requestTerminate();
 				break;
 			}
 
@@ -378,7 +402,7 @@ void HandOfLesserCore::mainLoop()
 		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 		this->mUserInterface.Current->getVisualizer()->clearDrawQueue();
 
-		if (this->mUserInterface.shouldTerminate())
+		if (this->shouldTerminate())
 		{
 			break;
 		}
