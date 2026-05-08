@@ -336,6 +336,17 @@ void HOL::HandOfLesserCore::receiveDataThread()
 				break;
 			}
 
+			case NativePacketType::AppShutdownRequested: {
+				if (nativePacket.payloadSize != 0)
+				{
+					break;
+				}
+
+				std::cout << "Driver requested app shutdown" << std::endl;
+				this->mUserInterface.requestTerminate();
+				break;
+			}
+
 			default:
 				std::cerr << "Unknown packet type from driver: " << (int)nativePacket.packetType
 						  << std::endl;

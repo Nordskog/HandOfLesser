@@ -71,6 +71,15 @@ namespace HOL
 			return send(packetBuffer.data(), packetBuffer.size());
 		}
 
+		template <NativePacketType Type> size_t sendPacket()
+		{
+			NativePacket packet{
+				.packetType = Type,
+				.payloadSize = 0,
+			};
+			return send(packet);
+		}
+
 		// Receive raw data into buffer - returns bytes received (0 on timeout/error)
 		// Implementations should support a reasonable timeout (e.g., 1 second)
 		virtual size_t receive(char* buffer, size_t maxSize) = 0;

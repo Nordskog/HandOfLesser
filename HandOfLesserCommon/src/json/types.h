@@ -195,6 +195,7 @@ namespace HOL
 		inline void to_json(nlohmann::json& j, const SteamVRSettings& settings)
 		{
 			j = {{"autoLaunchApp", settings.autoLaunchApp},
+				 {"closeAppOnSteamVRExit", settings.closeAppOnSteamVRExit},
 				 {"sendSteamVRInput", settings.sendSteamVRInput},
 				 {"transmitLegacyFingerCurl", settings.transmitLegacyFingerCurl},
 				 {"blockControllerInputWhileHandTracking",
@@ -214,6 +215,8 @@ namespace HOL
 		inline void from_json(const nlohmann::json& j, SteamVRSettings& settings)
 		{
 			nlohmann::get_to_if_present(j, "autoLaunchApp", settings.autoLaunchApp);
+			nlohmann::get_to_if_present(
+				j, "closeAppOnSteamVRExit", settings.closeAppOnSteamVRExit);
 			nlohmann::get_to_if_present(j, "sendSteamVRInput", settings.sendSteamVRInput);
 			nlohmann::get_to_if_present(
 				j, "transmitLegacyFingerCurl", settings.transmitLegacyFingerCurl);

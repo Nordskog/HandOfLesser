@@ -18,6 +18,7 @@ namespace HOL
 		void buildInterface();
 		bool shouldTerminate();
 		bool shouldRestart();
+		void requestTerminate();
 		static UserInterface* Current; // We only have a single window for now
 		Visualizer* getVisualizer();
 

@@ -1581,6 +1581,12 @@ namespace HOL
 	{
 		mAppLauncher.stop();
 
+		if (Config.steamvr.closeAppOnSteamVRExit && this->mTransport.isConnected())
+		{
+			this->mTransport.sendPacket<NativePacketType::AppShutdownRequested>();
+			DriverLog("Sent app shutdown request");
+		}
+
 		// Signal the receive thread to stop before waiting for it to exit.
 		this->mActive.store(false);
 		{

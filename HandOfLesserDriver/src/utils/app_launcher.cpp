@@ -11,7 +11,7 @@ namespace HOL
 {
 	namespace
 	{
-		constexpr int AutoLaunchDelayMs = 3000;
+		constexpr int AutoLaunchDelayMs = 5000;
 
 		bool equalsIgnoreCase(const char* left, const char* right)
 		{

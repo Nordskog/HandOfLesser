@@ -196,6 +196,7 @@ namespace HOL
 		struct SteamVRSettings
 		{
 			bool autoLaunchApp = true;
+			bool closeAppOnSteamVRExit = true;
 			bool sendSteamVRInput = true;
 			bool transmitLegacyFingerCurl = true;
 			bool blockControllerInputWhileHandTracking = true;

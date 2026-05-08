@@ -28,6 +28,7 @@ namespace HOL
 		DriverStatus,
 		DeviceState,
 		AppInitialized,
+		AppShutdownRequested,
 		InvalidPacket
 	};
 

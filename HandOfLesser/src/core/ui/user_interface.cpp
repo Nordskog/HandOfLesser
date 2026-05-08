@@ -117,9 +117,15 @@ bool UserInterface::shouldCloseWindow()
 	return glfwWindowShouldClose(this->mWindow);
 }
 
+void UserInterface::requestTerminate()
+{
+	this->mShouldTerminate = true;
+}
+
 void UserInterface::onFrame()
 {
-	this->mShouldTerminate = this->shouldCloseWindow() || this->mShouldRestart;
+	this->mShouldTerminate
+		= this->mShouldTerminate || this->shouldCloseWindow() || this->mShouldRestart;
 
 	glfwPollEvents();
 	ImGui_ImplOpenGL3_NewFrame();
@@ -1236,6 +1242,10 @@ void HOL::UserInterface::buildMain()
 	}
 
 	if (ImGui::Checkbox("Launch app automatically with SteamVR", &Config.steamvr.autoLaunchApp))
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+	if (ImGui::Checkbox("Close app automatically with SteamVR", &Config.steamvr.closeAppOnSteamVRExit))
 	{
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}
