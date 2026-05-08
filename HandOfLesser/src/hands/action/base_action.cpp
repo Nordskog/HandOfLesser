@@ -32,7 +32,8 @@ namespace HOL
 		}
 
 		// Down if trigger down or already down and hold down.
-		if (triggerGesture >= 1 || (holdGesture >= 1 && this->mActionData.isDown))
+		if (triggerGesture >= this->mParameters.triggerThreshold
+			|| (holdGesture >= 1 && this->mActionData.isDown))
 		{
 			// Can't be up when you're down
 			mDelayedUp = false;

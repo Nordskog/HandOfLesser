@@ -1,5 +1,6 @@
 #include "proximity_gesture.h"
 
+#include <algorithm>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include "src/openxr/xr_hand_utils.h"
@@ -17,6 +18,7 @@ namespace HOL::Gesture
 	{
 		float min = 1;
 		float max = 0;
+		float product = 1;
 		for (auto& gesture : this->mComboGestures)
 		{
 			float val = gesture.get()->evaluate(data);
@@ -24,9 +26,12 @@ namespace HOL::Gesture
 				min = val;
 			if (val > max)
 				max = val;
+			product *= std::clamp(val, 0.0f, 1.0f);
 		}
 
-		if (min >= 1)
+		float value = this->parameters.valueMode == ComboGesture::ValueMode::Product ? product : min;
+
+		if (value >= 1)
 		{
 			this->mActivated = true;
 			return 1;
@@ -41,7 +46,7 @@ namespace HOL::Gesture
 			this->mActivated = false;
 		}
 
-		return min;
+		return value;
 	}
 
 	void ComboGesture::Gesture::addGesture(std::shared_ptr<BaseGesture::Gesture> gesture)

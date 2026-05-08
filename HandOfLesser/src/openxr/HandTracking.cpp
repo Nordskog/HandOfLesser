@@ -234,6 +234,7 @@ void HOL::OpenXR::HandTracking::initGestures()
 			}
 
 			auto grabAction = TriggerAction::Create();
+			//grabAction->getParameters().triggerThreshold = 0.8f;
 			grabAction->getParameters().releaseThreshold = 0.8;
 			grabAction.get()->setTriggerGesture(grabGesture);
 			grabAction.get()->addSink(
@@ -261,6 +262,7 @@ void HOL::OpenXR::HandTracking::initGestures()
 			// Requiring that you also close your fist is a good way to sidestep this, and not miss-fire trigger.
 			auto grabPinchGesture = ComboGesture::Gesture::Create();
 			grabPinchGesture->parameters.holdUntilAllReleased = false;
+			grabPinchGesture->parameters.valueMode = ComboGesture::ValueMode::Product;
 
 			std::vector<HOL::FingerType> allGrabFingers
 				= {FingerType::FingerMiddle, FingerType::FingerRing, FingerType::FingerLittle};
@@ -276,10 +278,12 @@ void HOL::OpenXR::HandTracking::initGestures()
 
 			// Use aim for pinch
 			auto triggerGesture = ProximityGesture::Create();
-			triggerGesture->setup(FingerType::FingerIndex, (HandSide)i);
+			triggerGesture->setup(
+				FingerType::FingerIndex, side, FingerType::FingerThumb, side, 0.025f, 0.08f);
 			grabPinchGesture.get()->addGesture(triggerGesture);
 
 			auto triggerAction = TriggerAction::Create();
+			//triggerAction->getParameters().triggerThreshold = 0.8f;
 			triggerAction.get()->setTriggerGesture(grabPinchGesture);
 
 			triggerAction.get()->addSink(

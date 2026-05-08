@@ -27,6 +27,7 @@ namespace HOL
 		// Iterate if down occurs within mMaxDoubleTapTime of up
 		int minTapCount = 1; // taps required to trigger. 1 is single press.
 		int tapCount = 0;
+		float triggerThreshold = 1;
 		float touchThreshold = 0.5;
 		float releaseThreshold = 1;
 	};

@@ -8,9 +8,16 @@ using namespace std::chrono_literals;
 
 namespace HOL::Gesture::ComboGesture
 {
+	enum class ValueMode
+	{
+		Minimum,
+		Product
+	};
+
 	struct Parameters
 	{
 		bool holdUntilAllReleased = true;
+		ValueMode valueMode = ValueMode::Minimum;
 	};
 
 	class Gesture : public BaseGesture::Gesture
