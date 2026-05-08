@@ -14,6 +14,7 @@
 #include "src/hands/gesture/chain_gesture.h"
 #include "src/hands/gesture/combo_gesture.h"
 #include "src/hands/gesture/finger_curl_gesture.h"
+#include "src/hands/gesture/inverse_gesture.h"
 #include "src/hands/gesture/aim_gesture.h"
 #include "src/hands/action/trigger_action.h"
 #include "src/hands/input/steamvr_float_input.h"
@@ -182,8 +183,26 @@ void HOL::OpenXR::HandTracking::initGestures()
 			aimGesture->parameters.side = side;
 			aimGesture->parameters.flags = XR_HAND_TRACKING_AIM_MENU_PRESSED_BIT_FB;
 
+			auto openHandMenuGesture = ComboGesture::Gesture::Create();
+			openHandMenuGesture->parameters.holdUntilAllReleased = false;
+			openHandMenuGesture->addGesture(aimGesture);
+
+			std::vector<HOL::FingerType> menuOpenFingers
+				= {FingerType::FingerMiddle, FingerType::FingerRing, FingerType::FingerLittle};
+			for (auto finger : menuOpenFingers)
+			{
+				auto curlGesture = FingerCurlGesture::Gesture::Create();
+				curlGesture->parameters.finger = finger;
+				curlGesture->parameters.side = side;
+
+				auto openFingerGesture = InverseGesture::Gesture::Create();
+				openFingerGesture->setGesture(curlGesture);
+				openFingerGesture->setBinaryThreshold(1.0f);
+				openHandMenuGesture->addGesture(openFingerGesture);
+			}
+
 			auto buttonAction = ButtonAction::Create();
-			buttonAction->setTriggerGesture(aimGesture);
+			buttonAction->setTriggerGesture(openHandMenuGesture);
 			buttonAction->addSink(
 				InputType::Button,
 				SteamVRBoolInput::Create()->setup(side, SteamVR::Input::System.click()));

@@ -18,11 +18,14 @@ namespace HOL::Gesture::InverseGesture
 		}
 
 		void setGesture(std::shared_ptr<BaseGesture::Gesture> gesture);
+		void setBinaryThreshold(float threshold);
 
 	protected:
 		float evaluateInternal(GestureData data) override;
 
 	private:
 		std::shared_ptr<BaseGesture::Gesture> mGesture;
+		bool mUseBinaryThreshold = false;
+		float mBinaryThreshold = 1.0f;
 	};
 } // namespace HOL::Gesture::InverseGesture
