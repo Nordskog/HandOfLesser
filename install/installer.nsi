@@ -139,6 +139,7 @@ Section "Install" SecInstall
 
 	SetOutPath "$INSTDIR\${DRIVER_NAME}\resources\bin\win64"
 	File "${DRIVER_OUTDIR}\resources\bin\win64\HandOfLesser.exe"
+	File "${DRIVER_OUTDIR}\resources\bin\win64\openvr_api.dll"
 
 	SetOutPath "$INSTDIR\${DRIVER_NAME}\resources\icons"
 	File "${DRIVER_OUTDIR}\resources\icons\controller_status_error.png"
@@ -163,6 +164,7 @@ Section "Install" SecInstall
 	DetailPrint "Registering SteamVR driver..."
 	ExecWait '"$vrPathReg" adddriver "$INSTDIR\${DRIVER_NAME}"' $0
 	DetailPrint "vrpathreg adddriver exit code: $0"
+	nsExec::ExecToLog '"$INSTDIR\${DRIVER_NAME}\resources\bin\win64\HandOfLesser.exe" -activatemultipledrivers'
 
 	WriteRegStr HKLM "${APP_REG_KEY}\Main" "" "$INSTDIR"
 	WriteRegStr HKLM "${APP_REG_KEY}\Driver" "" "$INSTDIR\${DRIVER_NAME}"

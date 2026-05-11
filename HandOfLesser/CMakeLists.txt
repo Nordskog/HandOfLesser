@@ -42,6 +42,7 @@
 	src/hands/input/osc_float_input.cpp
 	src/hands/input/osc_alternate_float_input.cpp
 	src/steamvr/steamvr_input.cpp
+	src/steamvr/steamvr_setup.cpp
 	src/hands/input/steamvr_float_input.cpp
 	src/hands/input/steamvr_bool_input.cpp
 	src/steamvr/skeletal_input.cpp
@@ -83,6 +84,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../output)
 set(ARCH_TARGET "win64")
 set_target_properties(HandOfLesser PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/drivers/00handoflesser/resources/bin/${ARCH_TARGET}>
+)
+
+add_custom_command(TARGET HandOfLesser
+	POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		${OPENVR_LIB_DIR}/bin/${ARCH_TARGET}/openvr_api.dll
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/drivers/00handoflesser/resources/bin/${ARCH_TARGET}/openvr_api.dll
 )
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

@@ -1,9 +1,16 @@
 ﻿#include "HandOfLesser.h"
 #include "core/HandOfLesserCore.h"
+#include "steamvr/steamvr_setup.h"
 #include <HandOfLesserCommon.h>
 
-int main(int /* argc */, char* /* argv */[])
+int main(int argc, char* argv[])
 {
+	int exitCode = 0;
+	if (HOL::SteamVR::handleUtilityCommandLine(argc, argv, exitCode))
+	{
+		return exitCode;
+	}
+
 	bool shouldRestart = false;
 
 	do
