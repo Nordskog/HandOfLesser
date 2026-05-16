@@ -173,6 +173,11 @@ void HOL::HandOfLesserCore::requestTerminate(bool restart)
 	this->mShouldTerminate.store(true);
 }
 
+void HOL::HandOfLesserCore::rebuildActions()
+{
+	this->mHandTracking.rebuildActions();
+}
+
 bool HOL::HandOfLesserCore::shouldTerminate() const
 {
 	return this->mShouldTerminate.load();

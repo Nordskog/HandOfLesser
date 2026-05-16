@@ -150,10 +150,33 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "rotationOut", settings.rotationOut);
 		}
 
+		inline void to_json(nlohmann::json& j, const GestureBinding& binding)
+		{
+			j = {{"enabled", binding.enabled},
+				 {"side", binding.side},
+				 {"kind", binding.kind},
+				 {"proximityFinger", binding.proximityFinger},
+				 {"chainDirection", binding.chainDirection},
+				 {"modifier", binding.modifier},
+				 {"target", binding.target}};
+		}
+
+		inline void from_json(const nlohmann::json& j, GestureBinding& binding)
+		{
+			nlohmann::get_to_if_present(j, "enabled", binding.enabled);
+			nlohmann::get_to_if_present(j, "side", binding.side);
+			nlohmann::get_to_if_present(j, "kind", binding.kind);
+			nlohmann::get_to_if_present(j, "proximityFinger", binding.proximityFinger);
+			nlohmann::get_to_if_present(j, "chainDirection", binding.chainDirection);
+			nlohmann::get_to_if_present(j, "modifier", binding.modifier);
+			nlohmann::get_to_if_present(j, "target", binding.target);
+		}
+
 		inline void to_json(nlohmann::json& j, const InputSettings& settings)
 		{
 			j = {{"sendOscInput", settings.sendOscInput},
-				 {"joystickReferenceMode", settings.joystickReferenceMode}};
+				 {"joystickReferenceMode", settings.joystickReferenceMode},
+				 {"gestureBindings", settings.gestureBindings}};
 		}
 
 		inline void from_json(const nlohmann::json& j, InputSettings& settings)
@@ -161,6 +184,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "sendOscInput", settings.sendOscInput);
 			nlohmann::get_to_if_present(
 				j, "joystickReferenceMode", settings.joystickReferenceMode);
+			nlohmann::get_to_if_present(j, "gestureBindings", settings.gestureBindings);
 		}
 
 		inline void to_json(nlohmann::json& j, const OpenXRSettings& settings)

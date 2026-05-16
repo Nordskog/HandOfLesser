@@ -40,6 +40,11 @@ namespace HOL
 		bool mShowAllDevices = false;
 		std::vector<std::string> mAvailableOpenXRRuntimes;
 
+		// Gesture binding editor state
+		int mEditBindingIndex = -1;
+		settings::GestureBinding mEditBinding;
+		bool mShowingEditForm = false;
+
 		void updateStyles(float scale);
 
 		bool rightAlignButton(const char* label, int verticalLineOffset = 0);
@@ -70,7 +75,7 @@ namespace HOL
 		void buildMain();
 		void buildSteamVR();
 		void buildVRChatOSCSettings();
-		void buildInput();
+		void buildBindings();
 		void buildVisual();
 		void buildMisc();
 		void buildBodyTrackers();

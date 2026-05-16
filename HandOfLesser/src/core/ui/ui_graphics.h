@@ -59,5 +59,9 @@ namespace HOL
 						const std::vector<std::pair<HOL::FingerType, HOL::FingerType>>& tapPairs
 						= {},
 						bool showThumb = true);
+
+		static float bindingPreviewWidth(float scale, const settings::GestureBinding& binding);
+		static void drawBindingPreview(
+			float scale, const settings::GestureBinding& binding, bool compactSequence = true);
 	};
 } // namespace HOL

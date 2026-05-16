@@ -29,7 +29,7 @@ namespace HOL
 		int tapCount = 0;
 		float triggerThreshold = 1;
 		float touchThreshold = 0.5;
-		float releaseThreshold = 1;
+		float releaseThreshold = 0.8f;
 	};
 
 	class BaseAction

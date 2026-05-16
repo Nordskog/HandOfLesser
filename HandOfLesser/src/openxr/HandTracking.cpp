@@ -8,20 +8,9 @@
 #include "XrUtils.h"
 #include "src/core/settings_global.h"
 #include "xr_hand_utils.h"
-
-#include "src/hands/input/settings_toggle_input.h"
-#include "src/hands/action/button_action.h"
-#include "src/hands/gesture/chain_gesture.h"
-#include "src/hands/gesture/combo_gesture.h"
-#include "src/hands/gesture/finger_curl_gesture.h"
-#include "src/hands/gesture/inverse_gesture.h"
-#include "src/hands/gesture/aim_gesture.h"
-#include "src/hands/action/trigger_action.h"
-#include "src/hands/input/steamvr_float_input.h"
-#include "src/hands/input/steamvr_bool_input.h"
-#include "src/steamvr/input_wrapper.h"
-#include "src/steamvr/steamvr_input.h"
+#include "src/hands/gesture_binding_builder.h"
 #include "src/core/state_global.h"
+#include "src/steamvr/steamvr_input.h"
 
 using namespace HOL;
 using namespace HOL::OpenXR;
@@ -31,7 +20,7 @@ void HandTracking::init(xr::UniqueDynamicInstance& instance, xr::UniqueDynamicSe
 {
 	HandTrackingInterface::init(instance);
 	this->initHands(session);
-	initGestures();
+	rebuildActions();
 }
 
 void HandTracking::initHands(xr::UniqueDynamicSession& session)
@@ -40,265 +29,23 @@ void HandTracking::initHands(xr::UniqueDynamicSession& session)
 	this->mRightHand.init(session, HOL::RightHand);
 }
 
-void HOL::OpenXR::HandTracking::initGestures()
+void HOL::OpenXR::HandTracking::rebuildActions()
 {
-	// Joystick
+	this->mActions.clear();
+
+	for (const auto& binding : Config.input.gestureBindings)
 	{
-		HandSide side = HandSide::LeftHand;
-
-		auto handDragAction = HandDragAction::Create()->setup(side, XrHandJointEXT::XR_HAND_JOINT_THUMB_TIP_EXT);
-
-		auto triggerGesture = OpenHandPinchGesture::Gesture::Create();
-		triggerGesture->parameters.pinchFinger = FingerType::FingerMiddle;
-		triggerGesture->parameters.side = side;
-		triggerGesture->setup();
-
-
-		auto holdGesture = ProximityGesture::Create();
-		holdGesture->setup(FingerType::FingerMiddle, side);
-
-		ActionParameters actionParams = handDragAction->getParameters();
-		actionParams.minReleaseTime = 0ms;
-		actionParams.releaseThreshold = 0.8;
-
-		handDragAction->setTriggerGesture(triggerGesture);
-		handDragAction->setHoldGesture(holdGesture);
-		handDragAction->addSink(
-			InputType::XAxis,
-			SteamVRFloatInput::Create()->setup(side, SteamVR::Input::Joystick.x()));
-		handDragAction->addSink(
-			InputType::ZAxis,
-			SteamVRFloatInput::Create()->setup(side, SteamVR::Input::Joystick.y()));
-		handDragAction->addSink(
-			InputType::Touch,
-			SteamVRBoolInput::Create()->setup(side, SteamVR::Input::Joystick.touch()));
-
-		this->mActions.push_back(handDragAction);
-	}
-
-	// Toggle input
-	{
-		HandSide side = HandSide::RightHand;
-
-		auto chainGesture = ChainGesture::Gesture::Create();
-
-		std::vector<HOL::FingerType> allPinchFingers = {FingerType::FingerIndex,
-														FingerType::FingerMiddle,
-														FingerType::FingerRing,
-														FingerType::FingerLittle};
-		std::reverse(allPinchFingers.begin(),
-					 allPinchFingers.end()); // Let's do from pinky to index
-
-		for (auto otherFinger : allPinchFingers)
+		// Skip system aim bindings when the runtime doesn't support it
+		if (binding.kind == settings::GestureKind::SystemAim
+			&& !HOL::state::Runtime.supportsHandTrackingAim)
 		{
-			auto triggerGesture = OpenHandPinchGesture::Gesture::Create();
-			triggerGesture->parameters.pinchFinger = otherFinger;
-			triggerGesture->parameters.side = side;
-			triggerGesture->setup();
-
-			chainGesture->addGesture(triggerGesture);
+			continue;
 		}
 
-		auto settingsToggleInput = SettingsToggleInput::Create()->setup(HolSetting::SendSteamVRInput);
-
-		auto buttonAction = ButtonAction::Create();
-		buttonAction->setTriggerGesture(chainGesture);
-		buttonAction->addSink(InputType::Button, settingsToggleInput);
-
-		this->mActions.push_back(buttonAction);
-	}
-
-
-	// Y ( vrchat menu button )
-	{
-		HandSide side = HandSide::LeftHand;
-
-		auto chainGesture = ChainGesture::Gesture::Create();
-
-		std::vector<HOL::FingerType> allPinchFingers = {FingerType::FingerIndex,
-														FingerType::FingerMiddle,
-														FingerType::FingerRing,
-														FingerType::FingerLittle};
-		std::reverse(allPinchFingers.begin(),
-					 allPinchFingers.end()); // Let's do from pinky to index
-
-		for (auto otherFinger : allPinchFingers)
+		auto action = GestureBindings::buildAction(binding);
+		if (action)
 		{
-			auto triggerGesture = OpenHandPinchGesture::Gesture::Create();
-			triggerGesture->parameters.pinchFinger = otherFinger;
-			triggerGesture->parameters.side = side;
-			triggerGesture->setup();
-
-			chainGesture->addGesture(triggerGesture);
-		}
-
-		auto buttonAction = ButtonAction::Create();
-		buttonAction->setTriggerGesture(chainGesture);
-
-		buttonAction.get()->addSink(
-			InputType::Button, 
-			SteamVRBoolInput::Create()->setup(side, SteamVR::Input::Y.click()));
-
-		this->mActions.push_back(buttonAction);
-	}
-
-	// X ( vrchat mute button )
-	{
-		HandSide side = HandSide::LeftHand;
-
-		auto chainGesture = ChainGesture::Gesture::Create();
-
-		// Index to pinky
-		std::vector<HOL::FingerType> allPinchFingers = {FingerType::FingerIndex,
-														FingerType::FingerMiddle,
-														FingerType::FingerRing,
-														FingerType::FingerLittle};
-
-		for (auto otherFinger : allPinchFingers)
-		{
-			auto triggerGesture = OpenHandPinchGesture::Gesture::Create();
-			triggerGesture->parameters.pinchFinger = otherFinger;
-			triggerGesture->parameters.side = side;
-			triggerGesture->setup();
-
-			chainGesture->addGesture(triggerGesture);
-		}
-
-		auto buttonAction = ButtonAction::Create();
-		buttonAction->setTriggerGesture(chainGesture);
-
-		buttonAction.get()->addSink(
-			InputType::Button, SteamVRBoolInput::Create()->setup(side, SteamVR::Input::X.click()));
-
-		this->mActions.push_back(buttonAction);
-	}
-
-	if (HOL::state::Runtime.supportsHandTrackingAim)
-	{
-		for (int i = 0; i < HandSide::HandSide_MAX; i++)
-		{
-			HandSide side = (HandSide)i;
-
-			auto aimGesture = AimGesture::Gesture::Create();
-			aimGesture->parameters.side = side;
-			aimGesture->parameters.flags = XR_HAND_TRACKING_AIM_MENU_PRESSED_BIT_FB;
-
-			auto openHandMenuGesture = ComboGesture::Gesture::Create();
-			openHandMenuGesture->parameters.holdUntilAllReleased = false;
-			openHandMenuGesture->addGesture(aimGesture);
-
-			std::vector<HOL::FingerType> menuOpenFingers
-				= {FingerType::FingerMiddle, FingerType::FingerRing, FingerType::FingerLittle};
-			for (auto finger : menuOpenFingers)
-			{
-				auto curlGesture = FingerCurlGesture::Gesture::Create();
-				curlGesture->parameters.finger = finger;
-				curlGesture->parameters.side = side;
-
-				auto openFingerGesture = InverseGesture::Gesture::Create();
-				openFingerGesture->setGesture(curlGesture);
-				openFingerGesture->setBinaryThreshold(1.0f);
-				openHandMenuGesture->addGesture(openFingerGesture);
-			}
-
-			auto buttonAction = ButtonAction::Create();
-			buttonAction->setTriggerGesture(openHandMenuGesture);
-			buttonAction->addSink(
-				InputType::Button,
-				SteamVRBoolInput::Create()->setup(side, SteamVR::Input::System.click()));
-
-			this->mActions.push_back(buttonAction);
-		}
-	}
-
-	// Grab
-
-	{
-		for (int i = 0; i < HandSide::HandSide_MAX; i++)
-		{
-
-			auto grabGesture = ComboGesture::Gesture::Create();
-			grabGesture->parameters.holdUntilAllReleased = true;
-
-			std::vector<HOL::FingerType> allGrabFingers
-				= {FingerType::FingerMiddle, FingerType::FingerRing, FingerType::FingerLittle};
-
-			// Grab if all but index curled
-			for (auto finger : allGrabFingers)
-			{
-				auto curlGesture = FingerCurlGesture::Gesture::Create();
-				curlGesture->parameters.finger = finger;
-				curlGesture->parameters.side = (HandSide)i;
-
-				grabGesture->addGesture(curlGesture);
-			}
-
-			auto grabAction = TriggerAction::Create();
-			//grabAction->getParameters().triggerThreshold = 0.8f;
-			grabAction->getParameters().releaseThreshold = 0.8;
-			grabAction.get()->setTriggerGesture(grabGesture);
-			grabAction.get()->addSink(
-				InputType::Button,
-				SteamVRBoolInput::Create()->setup((HandSide)i, SteamVR::Input::Grip.click()));
-			// Touch-style controllers do not expose a real grip click; SteamVR/Oculus treat a
-			// low analog pull threshold as the button press. Drive value from the binary button
-			// path for now so apps see reliable grip activation instead of only analog movement.
-			grabAction.get()->addSink(
-				InputType::Button,	// Using button instead of sink because quest controller has no click action
-				SteamVRFloatInput::Create()->setup((HandSide)i, SteamVR::Input::Grip.value()));
-
-
-			this->mActions.push_back(grabAction);
-		}
-	}
-
-	// Trigger
-
-	{
-		for (int i = 0; i < HandSide::HandSide_MAX; i++)
-		{
-			HandSide side = (HandSide)i;
-		
-
-			// Trigger is grab + pinch
-			// SteamVR won't open the menu if trigger is held at the same time as the menu button is presed.
-			// Requiring that you also close your fist is a good way to sidestep this, and not miss-fire trigger.
-			auto grabPinchGesture = ComboGesture::Gesture::Create();
-			grabPinchGesture->parameters.holdUntilAllReleased = false;
-			grabPinchGesture->parameters.valueMode = ComboGesture::ValueMode::Product;
-
-			std::vector<HOL::FingerType> allGrabFingers
-				= {FingerType::FingerMiddle, FingerType::FingerRing, FingerType::FingerLittle};
-
-			// Grab is all but index curled
-			for (auto finger : allGrabFingers)
-			{
-				auto curlGesture = FingerCurlGesture::Gesture::Create();
-				curlGesture->parameters.finger = finger;
-				curlGesture->parameters.side = (HandSide)i;
-				grabPinchGesture->addGesture(curlGesture);
-			}
-
-			// Use aim for pinch
-			auto triggerGesture = ProximityGesture::Create();
-			triggerGesture->setup(
-				FingerType::FingerIndex, side, FingerType::FingerThumb, side, 0.025f, 0.08f);
-			grabPinchGesture.get()->addGesture(triggerGesture);
-
-			auto triggerAction = TriggerAction::Create();
-			//triggerAction->getParameters().triggerThreshold = 0.8f;
-			triggerAction.get()->setTriggerGesture(grabPinchGesture);
-
-			triggerAction.get()->addSink(
-				InputType::Button,
-				SteamVRBoolInput::Create()->setup((HandSide)i, SteamVR::Input::Trigger.click()));
-			// Same as grip: Touch-style trigger button state is effectively value-thresholded
-			// rather than backed by a real click component, so keep value binary for reliability.
-			triggerAction.get()->addSink(
-				InputType::Button,
-				SteamVRFloatInput::Create()->setup((HandSide)i, SteamVR::Input::Trigger.value()));
-
-			this->mActions.push_back(triggerAction);
+			this->mActions.push_back(action);
 		}
 	}
 }

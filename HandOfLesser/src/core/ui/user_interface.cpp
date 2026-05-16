@@ -19,6 +19,7 @@
 #include "src/core/state_global.h"
 #include <HandOfLesserCommon.h>
 #include "src/core/HandOfLesserCore.h"
+#include "src/hands/gesture_binding_builder.h"
 
 using namespace HOL;
 
@@ -162,6 +163,9 @@ void UserInterface::updateStyles(float scale)
 	style.ScrollbarRounding = 0.0f;
 	style.GrabRounding = 0.0f;
 	style.TabRounding = 0.0f;
+	// Keep modal and popup dimming dark so it matches the rest of the UI
+	style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.55f);
+	style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.55f);
 	style.ScaleAllSizes(scale);
 
 	io.FontGlobalScale = scale; // Fonts look blurry, need to rebuild atlas I guess.
@@ -539,14 +543,40 @@ void HOL::UserInterface::buildVisual()
 	mVisualizer.drawVisualizer();
 }
 
-void HOL::UserInterface::buildInput()
+void HOL::UserInterface::buildBindings()
 {
-	bool syncSettings = false;
+	const char* editBindingPopupLabel = "EditBindingPopup";
+	bool syncDriverSettings = false;
+	bool rebuildActions = false;
+	bool openEditBindingPopup = false;
+	auto ensureCompatibleTarget = [](settings::GestureBinding& binding)
+	{
+		if (!GestureBindings::isGestureTargetCompatible(binding.kind, binding.target))
+		{
+			binding.target = GestureBindings::firstCompatibleInputTarget(binding.kind);
+		}
+	};
 
-	ImGui::BeginChild("InputWindow", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
+	auto startNewBinding = [&]()
+	{
+		mEditBindingIndex = -1;
+		mEditBinding = settings::GestureBinding{};
+		mEditBinding.enabled = true;
+		mEditBinding.kind = settings::GestureKind::Proximity;
+		mEditBinding.proximityFinger = FingerMiddle;
+		ensureCompatibleTarget(mEditBinding);
+		mShowingEditForm = true;
+		openEditBindingPopup = true;
+	};
 
-	ImGui::SeparatorText("Hard-coded SteamVR Input");
-	ImGui::TextWrapped("Minimal hard-coded bindings. These are not intended to be comprehensive.");
+	ImGui::BeginChild("BindingsWindow",
+					   ImVec2(scaleSize(PanelWidth), 0),
+					   ImGuiChildFlags_AutoResizeY);
+
+	ImGui::SeparatorText("Gesture Bindings");
+	ImGui::TextWrapped(
+		"Configure which hand gesture maps to which controller input.\n"
+		"Changes apply immediately.");
 
 	ImGui::SeparatorText("Joystick Reference");
 	ImGui::TextWrapped(
@@ -567,11 +597,10 @@ void HOL::UserInterface::buildInput()
 			ImGui::BeginDisabled();
 		}
 
-		if (ImGui::RadioButton(
-				label, Config.input.joystickReferenceMode == mode))
+		if (ImGui::RadioButton(label, Config.input.joystickReferenceMode == mode))
 		{
 			Config.input.joystickReferenceMode = mode;
-			syncSettings = true;
+			syncDriverSettings = true;
 		}
 
 		if (!enabled)
@@ -599,140 +628,382 @@ void HOL::UserInterface::buildInput()
 					   true,
 					   "");
 
-	using FingerHighlights = UiGraphics::FingerHighlights;
-	using FingerFlags = UiGraphics::FingerFlags;
-	auto makeFingerHighlights
-		= [](HOL::InputGestureHighlight highlight, std::initializer_list<HOL::FingerType> fingers)
+	
+	ImGui::SeparatorText("Gesture Bindings");
+
+	if (ImGui::Button("Add Binding"))
 	{
-		FingerHighlights flags{};
-		flags.fill(HOL::InputGestureHighlight_None);
-		for (HOL::FingerType finger : fingers)
+		startNewBinding();
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Restore Defaults"))
+	{
+		ImGui::OpenPopup("RestoreDefaultsBindings");
+	}
+
+	if (ImGui::BeginPopupModal("RestoreDefaultsBindings",
+								NULL,
+								ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::Text("Restore gesture bindings to default?");
+
+		float btnW = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f;
+
+		if (ImGui::Button("OK##restoreBindings", ImVec2(btnW, 0)))
 		{
-			flags[finger] = highlight;
+			Config.input.gestureBindings = settings::defaultGestureBindings();
+			ImGui::CloseCurrentPopup();
+			rebuildActions = true;
 		}
-		return flags;
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel##restoreBindings", ImVec2(btnW, 0)))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+
+	auto renderBindingsForSide = [&](HandSide side, const char* label)
+	{
+		ImGui::SeparatorText(label);
+
+		bool hasBindings = false;
+		int visibleBindingIndex = 0;
+		for (int i = 0; i < static_cast<int>(Config.input.gestureBindings.size()); i++)
+		{
+			const settings::GestureBinding& binding = Config.input.gestureBindings[i];
+			if (binding.side != side)
+			{
+				continue;
+			}
+
+			hasBindings = true;
+			ImGui::PushID(i);
+
+			const ImGuiStyle& style = ImGui::GetStyle();
+			const ImVec4 windowBg = style.Colors[ImGuiCol_WindowBg];
+			const ImVec4 frameBg = style.Colors[ImGuiCol_FrameBg];
+			auto blendColor = [](const ImVec4& a, const ImVec4& b, float t)
+			{
+				return ImVec4(a.x + (b.x - a.x) * t,
+							  a.y + (b.y - a.y) * t,
+							  a.z + (b.z - a.z) * t,
+							  a.w + (b.w - a.w) * t);
+			};
+			ImVec4 rowBg
+				= (visibleBindingIndex % 2 == 0)
+					  ? blendColor(windowBg, frameBg, 0.20f)
+					  : blendColor(windowBg, frameBg, 0.10f);
+			rowBg.w = 1.0f;
+
+			ImGui::PushStyleColor(ImGuiCol_ChildBg, rowBg);
+			ImGui::PushStyleVar(
+				ImGuiStyleVar_WindowPadding, ImVec2(scaleSize(8.0f), scaleSize(6.0f)));
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, scaleSize(4.0f));
+			ImGui::BeginChild("BindingRow",
+							  ImVec2(0, 0),
+							  ImGuiChildFlags_AutoResizeY
+								  | ImGuiChildFlags_AlwaysUseWindowPadding);
+
+			const float previewScale = this->mScale * 0.5f;
+			const float previewWidth = UiGraphics::bindingPreviewWidth(previewScale, binding);
+			const float previewHeight = previewWidth > 0.0f ? previewScale * 66.0f : 0.0f;
+			const float spacing = ImGui::GetStyle().ItemSpacing.x;
+			const float previewRightPadding = scaleSize(6.0f);
+			const float rowStartY = ImGui::GetCursorPosY();
+			bool deleted = false;
+
+			ImGui::BeginGroup();
+
+			bool enabled = binding.enabled;
+			if (ImGui::Checkbox("##enabled", &enabled))
+			{
+				Config.input.gestureBindings[i].enabled = enabled;
+				rebuildActions = true;
+			}
+			ImGui::SameLine();
+			const float leftIndent = ImGui::GetCursorPosX();
+
+			const std::string description = GestureBindings::describeBinding(binding);
+			ImGui::TextUnformatted(description.c_str());
+			ImGui::SameLine();
+			ImGui::TextDisabled("->");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.6f, 0.9f, 0.6f, 1.0f),
+							   "%s",
+							   GestureBindings::inputTargetName(binding.target));
+
+			//ImGui::SetCursorPosX(leftIndent);
+			if (ImGui::Button("Edit"))
+			{
+				mEditBindingIndex = i;
+				mEditBinding = binding;
+				mShowingEditForm = true;
+				openEditBindingPopup = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Delete"))
+			{
+				Config.input.gestureBindings.erase(Config.input.gestureBindings.begin() + i);
+				rebuildActions = true;
+				deleted = true;
+			}
+
+			ImGui::EndGroup();
+
+			const float leftHeight = ImGui::GetItemRectSize().y;
+			if (!deleted && previewWidth > 0.0f)
+			{
+				const float rightEdgeX = ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x;
+				const float previewX = rightEdgeX - previewWidth - previewRightPadding;
+				const float previewY = rowStartY + std::max(0.0f, (leftHeight - previewHeight) * 0.5f);
+				ImGui::SameLine(std::max(ImGui::GetCursorPosX() + spacing, previewX));
+				ImGui::SetCursorPosY(previewY);
+				UiGraphics::drawBindingPreview(previewScale, binding);
+			}
+
+			ImGui::EndChild();
+			ImGui::PopStyleVar(2);
+			ImGui::PopStyleColor();
+			ImGui::PopID();
+			if (deleted)
+			{
+				break;
+			}
+			ImGui::Spacing();
+			visibleBindingIndex++;
+		}
+
+		if (!hasBindings)
+		{
+			ImGui::TextDisabled("No bindings");
+		}
 	};
 
-	auto mergeFingerHighlights
-		= [](const FingerHighlights& primary, const FingerHighlights& secondary)
+	renderBindingsForSide(LeftHand, "Left Hand");
+	ImGui::Spacing();
+	renderBindingsForSide(RightHand, "Right Hand");
+
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	if (openEditBindingPopup)
 	{
-		FingerHighlights merged = secondary;
-		for (int i = 0; i < HOL::FingerType_MAX; i++)
+		ImGui::OpenPopup(editBindingPopupLabel);
+	}
+	if (mShowingEditForm
+		&& ImGui::BeginPopupModal(editBindingPopupLabel, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::SeparatorText(mEditBindingIndex >= 0 ? "Edit Binding" : "Add Binding");
+		settings::GestureBinding& b = mEditBinding;
+
+		int sideValue = static_cast<int>(b.side);
+		ImGui::RadioButton("Left", &sideValue, static_cast<int>(LeftHand));
+		ImGui::SameLine();
+		ImGui::RadioButton("Right", &sideValue, static_cast<int>(RightHand));
+		b.side = static_cast<HandSide>(sideValue);
+		ImGui::Separator();
+
+		const std::array<settings::GestureKind, 4> editableKinds = {
+			settings::GestureKind::Proximity,
+			settings::GestureKind::Chain,
+			settings::GestureKind::Grip,
+			settings::GestureKind::SystemAim};
+
+		int kindIndex = 0;
+		for (int i = 0; i < static_cast<int>(editableKinds.size()); i++)
 		{
-			if (primary[i] != HOL::InputGestureHighlight_None)
+			if (editableKinds[i] == b.kind)
 			{
-				merged[i] = primary[i];
+				kindIndex = i;
+				break;
 			}
 		}
-		return merged;
-	};
 
-	auto makeFingerFlags = [](std::initializer_list<HOL::FingerType> fingers)
-	{
-		FingerFlags flags{};
-		flags.fill(false);
-		for (HOL::FingerType finger : fingers)
+		const char* currentKindLabel = GestureBindings::gestureKindName(editableKinds[kindIndex]);
+		if (ImGui::BeginCombo("Gesture", currentKindLabel))
 		{
-			flags[finger] = true;
+			for (int i = 0; i < static_cast<int>(editableKinds.size()); i++)
+			{
+				const bool selected = kindIndex == i;
+				if (ImGui::Selectable(
+						GestureBindings::gestureKindName(editableKinds[i]), selected))
+				{
+					b.kind = editableKinds[i];
+					ensureCompatibleTarget(b);
+					kindIndex = i;
+				}
+
+				if (selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
 		}
-		return flags;
-	};
 
-	ImGui::SeparatorText("Either Hand");
+		ImGui::Separator();
 
-	UiGraphics::drawDualBinding(
-		this->mScale,
-		"Grip",
-		"Grip",
-		"Close the middle, ring, and little fingers into a grab.",
-		makeFingerHighlights(HOL::InputGestureHighlight_Secondary,
-							 {HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle}),
-		makeFingerFlags({HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle}));
+		if (b.kind == settings::GestureKind::Proximity)
+		{
+			const std::array<FingerType, 4> fingers = {
+				FingerIndex, FingerMiddle, FingerRing, FingerLittle};
+			int fingerIndex = 0;
+			for (int i = 0; i < static_cast<int>(fingers.size()); i++)
+			{
+				if (fingers[i] == b.proximityFinger)
+				{
+					fingerIndex = i;
+					break;
+				}
+			}
 
-	UiGraphics::drawDualBinding(
-		this->mScale,
-		"Trigger",
-		"Trigger",
-		"Make a fist, then tap thumb and index fingers.",
-		mergeFingerHighlights(
-			makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-								 {HOL::FingerThumb, HOL::FingerIndex}),
-			makeFingerHighlights(HOL::InputGestureHighlight_Secondary,
-								 {HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle})),
-		makeFingerFlags({HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle}),
-		{{HOL::FingerThumb, HOL::FingerIndex}});
+			static const char* fingerNames[] = {"Index", "Middle", "Ring", "Little"};
+			if (ImGui::Combo("Finger", &fingerIndex, fingerNames, IM_ARRAYSIZE(fingerNames)))
+			{
+				b.proximityFinger = fingers[fingerIndex];
+			}
 
-	ImGui::SeparatorText("Left Hand");
+			const std::array<settings::GripModifier, 3> modifiers = {
+				settings::GripModifier::None,
+				settings::GripModifier::Open,
+				settings::GripModifier::Closed};
+			int modifierIndex = 0;
+			for (int i = 0; i < static_cast<int>(modifiers.size()); i++)
+			{
+				if (modifiers[i] == b.modifier)
+				{
+					modifierIndex = i;
+					break;
+				}
+			}
 
-	UiGraphics::drawSingleBinding(this->mScale,
-								  "Joystick",
-								  "Movement",
-								  "Drag while pinching thumb and middle finger",
-								  HOL::LeftHand,
-								  makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-													   {HOL::FingerThumb, HOL::FingerMiddle}),
-								  makeFingerFlags({}),
-								  {{HOL::FingerThumb, HOL::FingerMiddle}});
+			const char* currentModifierLabel
+				= GestureBindings::gripModifierName(modifiers[modifierIndex]);
+			if (ImGui::BeginCombo("Modifier", currentModifierLabel))
+			{
+				for (int i = 0; i < static_cast<int>(modifiers.size()); i++)
+				{
+					const bool selected = modifierIndex == i;
+					if (ImGui::Selectable(
+							GestureBindings::gripModifierName(modifiers[i]), selected))
+					{
+						b.modifier = modifiers[i];
+						modifierIndex = i;
+					}
 
-	UiGraphics::drawSequenceBinding(this->mScale,
-									"Y",
-									"Vrchat menu",
-									"Tap pinky, ring, middle, index in sequence, quickly",
-									HOL::LeftHand,
-									{makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerLittle}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerRing}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerMiddle}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerIndex})});
+					if (selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
 
-	UiGraphics::drawSequenceBinding(this->mScale,
-									"X",
-									"VRchat mute",
-									"Tap index, middle, ring, pinky in sequence, quickly",
-									HOL::LeftHand,
-									{makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerIndex}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerMiddle}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerRing}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerLittle})});
+				ImGui::EndCombo();
+			}
 
-	UiGraphics::drawSingleBinding(this->mScale,
-								  "Menu",
-								  "Oculus system gesture",
-								  "Pinch thumb and index fingers while facing you",
-								  HOL::LeftHand,
-								  makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-													   {HOL::FingerThumb, HOL::FingerIndex}),
-								  makeFingerFlags({}),
-								  {{HOL::FingerThumb, HOL::FingerIndex}});
+			ImGui::Separator();
+		}
 
-	ImGui::SeparatorText("Right Hand");
+		if (b.kind == settings::GestureKind::Chain)
+		{
+			const std::array<settings::ChainDirection, 2> directions = {
+				settings::ChainDirection::Ascending,
+				settings::ChainDirection::Descending};
+			int directionIndex = (b.chainDirection == settings::ChainDirection::Descending) ? 1 : 0;
+			const char* currentDirectionLabel
+				= GestureBindings::chainDirectionName(directions[directionIndex]);
+			if (ImGui::BeginCombo("Direction", currentDirectionLabel))
+			{
+				for (int i = 0; i < static_cast<int>(directions.size()); i++)
+				{
+					const bool selected = directionIndex == i;
+					if (ImGui::Selectable(
+							GestureBindings::chainDirectionName(directions[i]), selected))
+					{
+						b.chainDirection = directions[i];
+						directionIndex = i;
+					}
 
-	UiGraphics::drawSequenceBinding(this->mScale,
-									"Toggle SteamVR Input",
-									"Can also be toggled in SteamVR tab",
-									"Tap pinky, ring, middle, index in sequence, quickly",
-									HOL::RightHand,
-									{makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerLittle}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerRing}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerMiddle}),
-									 makeFingerHighlights(HOL::InputGestureHighlight_Primary,
-														  {HOL::FingerThumb, HOL::FingerIndex})});
+					if (selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
+			ImGui::Separator();
+		}
+
+		std::vector<GestureBindings::InputTargetOption> compatibleTargets;
+		for (const auto& option : GestureBindings::inputTargetOptions())
+		{
+			if (GestureBindings::isGestureTargetCompatible(b.kind, option.target))
+			{
+				compatibleTargets.push_back(option);
+			}
+		}
+		ensureCompatibleTarget(b);
+
+		const char* currentTargetLabel = GestureBindings::inputTargetName(b.target);
+		if (ImGui::BeginCombo("Target", currentTargetLabel))
+		{
+			for (const auto& option : compatibleTargets)
+			{
+				const bool selected = option.target == b.target;
+				if (ImGui::Selectable(option.label, selected))
+				{
+					b.target = option.target;
+				}
+
+				if (selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+
+		ImGui::Separator();
+		if (ImGui::Button("Save"))
+		{
+			ensureCompatibleTarget(b);
+			if (mEditBindingIndex >= 0
+				&& mEditBindingIndex < static_cast<int>(Config.input.gestureBindings.size()))
+			{
+				Config.input.gestureBindings[mEditBindingIndex] = b;
+			}
+			else
+			{
+				Config.input.gestureBindings.push_back(b);
+			}
+
+			rebuildActions = true;
+			mShowingEditForm = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			mShowingEditForm = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
 
 	ImGui::EndChild();
 
-	if (syncSettings)
+	if (syncDriverSettings)
 	{
 		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+
+	if (rebuildActions)
+	{
+		HOL::HandOfLesserCore::Current->rebuildActions();
 	}
 }
 
@@ -1981,7 +2252,7 @@ void UserInterface::buildInterface()
 		}
 		if (ImGui::BeginTabItem("Input"))
 		{
-			buildInput();
+			buildBindings();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("Visual"))

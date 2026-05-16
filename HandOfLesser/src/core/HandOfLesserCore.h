@@ -38,6 +38,7 @@ namespace HOL
 		void syncState();
 		void saveSettings();
 		void loadSettings();
+		void rebuildActions();
 		bool isDriverConnected() const;
 
 		virtual std::vector<const char*> getRequiredExtensions();

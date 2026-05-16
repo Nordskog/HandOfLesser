@@ -6,6 +6,7 @@
 #include <src/controller/controller.h>
 #include <map>
 #include <string>
+#include <vector>
 #include "openvr_driver.h"
 
 namespace HOL
@@ -173,10 +174,81 @@ namespace HOL
 			Hand
 		};
 
+		// Gesture kind the user selects for a binding
+		enum class GestureKind
+		{
+			None = 0,
+			Proximity, // Touch thumb + one other finger
+			Chain,     // Touch fingers in sequence
+			Grip,      // Curl middle+ring+little
+			SystemAim  // Oculus system gesture (head-facing)
+		};
+
+		// Chain direction (for Chain gesture kind)
+		enum class ChainDirection
+		{
+			Ascending = 0,  // Index -> Middle -> Ring -> Little
+			Descending      // Little -> Ring -> Middle -> Index
+		};
+
+		// Modifier on Proximity gestures (grip state requirement)
+		enum class GripModifier
+		{
+			None = 0,     // No grip requirement
+			Open,         // Middle+Ring+Little must be extended
+			Closed        // Middle+Ring+Little must be curled
+		};
+
+		// Input target — determines gesture kind compatibility and action type.
+		enum class InputTarget
+		{
+			None = 0,
+			// Analog inputs (Grip/Trigger have both click + continuous value)
+			Grip,
+			Trigger,
+			// Binary button inputs (click/touch only)
+			A,
+			B,
+			X,
+			Y,
+			System,
+			Menu,
+			Thumbrest,
+			Toggle_SteamVRInput,
+			Toggle_OscInput,
+			// Joystick (X/Z axes + touch — requires Proximity gesture)
+			Joystick
+		};
+
+		struct GestureBinding;
+
+		// Returns the default set of gesture bindings matching the previous hard-coded bindings.
+		std::vector<GestureBinding> defaultGestureBindings();
+
+		// A single configurable gesture binding
+		struct GestureBinding
+		{
+			bool enabled = true;
+			HOL::HandSide side = HOL::LeftHand;
+
+			// Gesture definition
+			GestureKind kind = GestureKind::None;
+			HOL::FingerType proximityFinger
+				= HOL::FingerIndex;         // Finger for Proximity kind (Index/Middle/Ring/Little)
+			ChainDirection chainDirection
+				= ChainDirection::Descending; // Direction for Chain kind
+			GripModifier modifier
+				= GripModifier::None;  // Modifier for Proximity kind (None/Open/Closed)
+
+			// Output target — determines action/sink type.
+			InputTarget target = InputTarget::None;
+		};
+
 		struct InputSettings
 		{
 			bool sendOscInput = true;
 			JoystickReferenceMode joystickReferenceMode = JoystickReferenceMode::Head;
+			std::vector<GestureBinding> gestureBindings = defaultGestureBindings();
 		};
 
 		struct OpenXRSettings

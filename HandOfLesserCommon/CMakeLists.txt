@@ -7,6 +7,7 @@ add_library(HandOfLesserCommon STATIC
 	src/hand/finger_bend.cpp
 	src/controller/controller.cpp
 	src/steamvr/input_wrapper.cpp
+	src/settings/settings.cpp
 )
 
 target_link_libraries(HandOfLesserCommon PUBLIC

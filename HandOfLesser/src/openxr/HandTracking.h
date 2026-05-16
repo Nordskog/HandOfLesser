@@ -25,9 +25,10 @@ namespace HOL::OpenXR
 		void drawHands();
 		OpenXRHand* getHand(HOL::HandSide side);
 
+		void rebuildActions();
+
 	private:
 		void initHands(xr::UniqueDynamicSession& session);
-		void initGestures();
 		void submitLegacyFingerCurl();
 		void updateSimpleGestures();
 		OpenXRHand mLeftHand;

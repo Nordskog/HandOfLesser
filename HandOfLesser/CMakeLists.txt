@@ -32,12 +32,12 @@
 	src/hands/input/settings_toggle_input.cpp
 	src/hands/action/trigger_action.cpp
 	src/hands/action/button_action.cpp
-	src/hands/action/button_action.cpp
 	
 	src/hands/gesture/finger_curl_gesture.cpp
 	src/hands/gesture/combo_gesture.cpp
 	src/hands/gesture/aim_gesture.cpp
 	src/hands/gesture/inverse_gesture.cpp
+	src/hands/gesture_binding_builder.cpp
 	src/vrchat/vrchat_input.cpp
 	src/hands/input/osc_float_input.cpp
 	src/hands/input/osc_alternate_float_input.cpp
