@@ -309,20 +309,23 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	// so using the body trackign values actually breaks things.
 	bool alwaysUseUpperBodyTracking = false;	// Add to config later, probably does nothing though.
 	bool usingBodyTrackingFallback = false;
+	XrBodyJointLocationFB* bodyPalmJoint = nullptr;
+	if (bodyTracker.active)
+	{
+		bodyPalmJoint = &bodyTracker.getLastJointLocations()[this->mSide == HandSide::LeftHand
+																 ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
+																 : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
+	}
+
 	if ((bodyTracker.active) && (!this->handPose.poseTracked))
 	{
-		XrBodyJointLocationFB& bodyPalmJoint
-			= bodyTracker.getLastJointLocations()[this->mSide == HandSide::LeftHand
-													  ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
-													  : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
-
 		// Copy prev to current to maintain finger pose
 		std::copy(std::begin(mPrevJointLocations),
 				  std::end(mPrevJointLocations),
 				  std::begin(mJointLocations));
 
-		palmLocation.pose.position = bodyPalmJoint.pose.position;
-		palmLocation.pose.orientation = bodyPalmJoint.pose.orientation;
+		palmLocation.pose.position = bodyPalmJoint->pose.position;
+		palmLocation.pose.orientation = bodyPalmJoint->pose.orientation;
 
 		this->handPose.active = true;
 		this->handPose.poseValid = true;
@@ -332,13 +335,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	else if (bodyTracker.active && alwaysUseUpperBodyTracking)
 	{
 		// Just copy palm position from body.
-		XrBodyJointLocationFB& bodyPalmJoint
-			= bodyTracker.getLastJointLocations()[this->mSide == HandSide::LeftHand
-													  ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
-													  : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
-
-		palmLocation.pose.position = bodyPalmJoint.pose.position;
-		palmLocation.pose.orientation = bodyPalmJoint.pose.orientation;
+		palmLocation.pose.position = bodyPalmJoint->pose.position;
+		palmLocation.pose.orientation = bodyPalmJoint->pose.orientation;
 
 		this->handPose.active = true;
 		this->handPose.poseValid = true;
@@ -355,6 +353,23 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->handPose.poseTracked = false;
 	}
 
+	// Hand tracking data starts off very noisy, and will often
+	// flicker between tracking and not tracking. Body tracking
+	// is a much more stable source of palm position data,
+	// but is higher latency. Keep track of how long we have had
+	// hand tracking data and blend betwene the two accordingly.
+	if (!usingBodyTrackingFallback && this->handPose.poseTracked)
+	{
+		if (this->mDirectHandTrackingStartTime == 0)
+		{
+			this->mDirectHandTrackingStartTime = time;
+		}
+	}
+	else
+	{
+		this->mDirectHandTrackingStartTime = 0;
+	}
+
 	bool poseStateChanged = this->handPose.active != prevActive
 							|| this->handPose.poseValid != prevPoseValid
 							|| this->handPose.poseTracked != prevPoseTracked;
@@ -365,6 +380,28 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		Eigen::Vector3f newPalmPosition = toEigenVector(palmLocation.pose.position);
 		Eigen::Quaternionf newPalmOrientation = toEigenQuaternion(palmLocation.pose.orientation);
 		auto palmVelocity = this->mJointVelocities[XrHandJointEXT::XR_HAND_JOINT_PALM_EXT];
+		float resumeBlendAlpha = 1.0f;
+
+		if (!usingBodyTrackingFallback && bodyPalmJoint != nullptr
+			&& this->mDirectHandTrackingStartTime > 0)
+		{
+			float blendDurationSeconds = HOL::Config.steamvr.handTrackingResumeBlendMS / 1000.0f;
+			if (blendDurationSeconds > 0.0f)
+			{
+				float elapsedSeconds
+					= (float)(time - this->mDirectHandTrackingStartTime) / 1000000000.0f;
+				resumeBlendAlpha = std::clamp(elapsedSeconds / blendDurationSeconds, 0.0f, 1.0f);
+
+				Eigen::Vector3f bodyPalmPosition = toEigenVector(bodyPalmJoint->pose.position);
+				Eigen::Quaternionf bodyPalmOrientation
+					= toEigenQuaternion(bodyPalmJoint->pose.orientation);
+
+				newPalmPosition
+					= bodyPalmPosition + resumeBlendAlpha * (newPalmPosition - bodyPalmPosition);
+				newPalmOrientation
+					= bodyPalmOrientation.slerp(resumeBlendAlpha, newPalmOrientation);
+			}
+		}
 
 		//////////////
 		// Staleness
@@ -397,6 +434,13 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 				// corresponds to the pose we are submitting.
 				rawPalmVelocity.linearVelocity = Eigen::Vector3f::Zero();
 				rawPalmVelocity.angularVelocity = Eigen::Vector3f::Zero();
+			}
+			else if (resumeBlendAlpha < 1.0f)
+			{
+				// Blend in hand velocity gradually when tracking resumes so SteamVR prediction
+				// does not latch onto a bogus recovery sample.
+				rawPalmVelocity.linearVelocity *= resumeBlendAlpha;
+				rawPalmVelocity.angularVelocity *= resumeBlendAlpha;
 			}
 
 			rawPalmVelocity.linearVelocity *= HOL::Config.steamvr.linearVelocityMultiplier;

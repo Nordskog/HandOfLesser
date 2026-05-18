@@ -233,6 +233,7 @@ namespace HOL
 				 {"steamPoseTimeOffsetMS", settings.steamPoseTimeOffsetMS},
 				 {"positionSmoothingMS", settings.positionSmoothingMS},
 				 {"rotationSmoothingMS", settings.rotationSmoothingMS},
+				 {"handTrackingResumeBlendMS", settings.handTrackingResumeBlendMS},
 				 {"linearVelocityMultiplier", settings.linearVelocityMultiplier},
 				 {"angularVelocityMultiplier", settings.angularVelocityMultiplier},
 				 {"forceInactive", settings.forceInactive},
@@ -260,6 +261,8 @@ namespace HOL
 				j, "positionSmoothingMS", settings.positionSmoothingMS);
 			nlohmann::get_to_if_present(
 				j, "rotationSmoothingMS", settings.rotationSmoothingMS);
+			nlohmann::get_to_if_present(
+				j, "handTrackingResumeBlendMS", settings.handTrackingResumeBlendMS);
 			nlohmann::get_to_if_present(
 				j, "linearVelocityMultiplier", settings.linearVelocityMultiplier);
 			nlohmann::get_to_if_present(

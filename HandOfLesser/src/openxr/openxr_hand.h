@@ -41,5 +41,6 @@ private:
 	bool mPrevPoseTracked = false;
 	bool mHasPrevRawPose = false;
 	bool mHasFilteredPalmPose = false;
+	XrTime mDirectHandTrackingStartTime = 0;
 	XrTime mPrevFilteredSampleTime = 0;
 };

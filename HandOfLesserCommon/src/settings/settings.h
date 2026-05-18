@@ -278,6 +278,7 @@ namespace HOL
 			float steamPoseTimeOffsetMS = 0.0f;
 			float positionSmoothingMS = 40.0f;
 			float rotationSmoothingMS = 0.0f;
+			float handTrackingResumeBlendMS = 500.0f;
 			float linearVelocityMultiplier = 1.0f;
 			float angularVelocityMultiplier = 0.0f;
 			bool forceInactive = false;
