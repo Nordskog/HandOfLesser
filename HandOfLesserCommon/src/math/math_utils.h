@@ -15,6 +15,10 @@ namespace HOL
 	float degreesToRadians(float degrees);
 	float radiansToDegrees(float radians);
 	float angleBetweenVectors(const Eigen::Vector3f& first, const Eigen::Vector3f& second);
+	float getClosestSegmentDistance(const Eigen::Vector3f& p1,
+									const Eigen::Vector3f& q1,
+									const Eigen::Vector3f& p2,
+									const Eigen::Vector3f& q2);
 
 	Eigen::Vector3f flipHandRotation(Eigen::Vector3f& rot);
 	Eigen::Vector3f flipHandTranslation(Eigen::Vector3f& trans);

@@ -8,12 +8,27 @@ namespace HOL::Gesture
 {
 	float ProximityGesture::evaluateInternal(GestureData data)
 	{
-		auto pos1 = OpenXR::getJointPosition(data.joints[this->mSide1], this->mJoint1);
-		auto pos2 = OpenXR::getJointPosition(data.joints[this->mSide2], this->mJoint2);
+		float distance = 0.0f;
 
-		auto vectorBetween = pos1 - pos2;
+		if (this->mUseLineDistance)
+		{
+			auto line1Start
+				= OpenXR::getJointPosition(data.joints[this->mSide1], this->mJoint1Start);
+			auto line1End
+				= OpenXR::getJointPosition(data.joints[this->mSide1], this->mJoint1);
+			auto line2Start
+				= OpenXR::getJointPosition(data.joints[this->mSide2], this->mJoint2Start);
+			auto line2End
+				= OpenXR::getJointPosition(data.joints[this->mSide2], this->mJoint2);
 
-		float distance = vectorBetween.norm();
+			distance = getClosestSegmentDistance(line1Start, line1End, line2Start, line2End);
+		}
+		else
+		{
+			auto pos1 = OpenXR::getJointPosition(data.joints[this->mSide1], this->mJoint1);
+			auto pos2 = OpenXR::getJointPosition(data.joints[this->mSide2], this->mJoint2);
+			distance = (pos1 - pos2).norm();
+		}
 
 		distance -= this->mMinDistance;
 		distance = std::clamp(distance, 0.0f, this->mMaxDistance);
@@ -24,39 +39,48 @@ namespace HOL::Gesture
 	}
 
 	void ProximityGesture::setup(HOL::FingerType fingerTip1,
-									  HOL::HandSide side1,
-									  HOL::FingerType fingerTip2,
-									  HOL::HandSide side2,
-									  float minDistance,
-									  float maxDistance)
+								 HOL::HandSide side1,
+								 HOL::FingerType fingerTip2,
+								 HOL::HandSide side2,
+								 float minDistance,
+								 float maxDistance)
 	{
-		auto joint1 = OpenXR::getFingerTip(fingerTip1);
-		auto joint2 = OpenXR::getFingerTip(fingerTip2);
-		setup(joint1, side1, joint2, side2, minDistance, maxDistance);
+		this->name = "ProximityGesture";
+
+		this->mJoint1 = OpenXR::getFingerTip(fingerTip1);
+		this->mJoint1Start = static_cast<XrHandJointEXT>(this->mJoint1 - 1);
+		this->mSide1 = side1;
+		this->mJoint2 = OpenXR::getFingerTip(fingerTip2);
+		this->mJoint2Start = static_cast<XrHandJointEXT>(this->mJoint2 - 1);
+		this->mSide2 = side2;
+		this->mUseLineDistance = true;
+		this->mMinDistance = minDistance;
+		this->mMaxDistance = maxDistance;
 	}
 
 	void ProximityGesture::setup(XrHandJointEXT joint1,
-									  HOL::HandSide side1,
-									  XrHandJointEXT joint2,
-									  HOL::HandSide side2,
-									  float minDistance,
-									  float maxDistance)
+								 HOL::HandSide side1,
+								 XrHandJointEXT joint2,
+								 HOL::HandSide side2,
+								 float minDistance,
+								 float maxDistance)
 	{
 		this->name = "ProximityGesture";
 
 		this->mJoint1 = joint1;
+		this->mJoint1Start = joint1;
 		this->mSide1 = side1;
 		this->mJoint2 = joint2;
+		this->mJoint2Start = joint2;
 		this->mSide2 = side2;
+		this->mUseLineDistance = false;
 		this->mMinDistance = minDistance;
 		this->mMaxDistance = maxDistance;
 	}
 
 	void ProximityGesture::setup(HOL::FingerType fingerTip1, HOL::HandSide side1)
 	{
-		auto joint1 = OpenXR::getFingerTip(fingerTip1);
-		auto joint2 = OpenXR::getFingerTip(HOL::FingerType::FingerThumb);
-		setup(joint1, side1, joint2, side1);
+		setup(fingerTip1, side1, HOL::FingerType::FingerThumb, side1);
 	}
 
 }
