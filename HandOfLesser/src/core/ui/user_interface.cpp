@@ -2025,16 +2025,18 @@ void HOL::UserInterface::buildMain()
 		}
 	}
 
-	/////////////////
-	// General
-	/////////////////
+	ImGui::EndChild();
+}
 
-	ImGui::SeparatorText("General");
+void HOL::UserInterface::buildTracking()
+{
+	ImGui::BeginChild(
+		"TrackingWindow", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
+
+	ImGui::SeparatorText("Runtime");
 	ImGui::InputInt("Prediction (ms)", &Config.general.motionPredictionMS);
 	if (ImGui::InputInt("Update Interval (ms)", &Config.general.updateIntervalMS))
 	{
-		// We probably shouldn't sleep for less than 1ms, and sleeping for
-		// negative time is probably undefined behavior.
 		if (Config.general.updateIntervalMS < 1)
 		{
 			Config.general.updateIntervalMS = 1;
@@ -2042,8 +2044,6 @@ void HOL::UserInterface::buildMain()
 	}
 
 	ImGui::Checkbox("Force inactive", &Config.general.forceInactive);
-	ImGui::SameLine();
-
 	ImGui::SameLine();
 	if (rightAlignButton("Reset##General"))
 	{
@@ -2076,7 +2076,7 @@ void HOL::UserInterface::buildMain()
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}
 
-	ImGui::BeginChild("TranslationInput",
+	ImGui::BeginChild("TrackingTranslationInput",
 					  ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0),
 					  ImGuiChildFlags_AutoResizeY);
 
@@ -2091,7 +2091,7 @@ void HOL::UserInterface::buildMain()
 	ImGui::EndChild();
 	ImGui::SameLine();
 
-	ImGui::BeginChild("OrientationInput", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
+	ImGui::BeginChild("TrackingOrientationInput", ImVec2(0, 0), ImGuiChildFlags_AutoResizeY);
 
 	ImGui::SeparatorText("Orientation");
 
@@ -2107,11 +2107,6 @@ void HOL::UserInterface::buildMain()
 		HOL::HandOfLesserCore::Current->syncSettings();
 	}
 
-	///////////////////
-	// Hand pose
-	///////////////////
-
-	// Hand transform
 	buildSingleHandTransformDisplay(HOL::LeftHand);
 	ImGui::SameLine();
 	buildSingleHandTransformDisplay(HOL::RightHand);
@@ -2341,6 +2336,11 @@ void UserInterface::buildInterface()
 		if (ImGui::BeginTabItem("Main"))
 		{
 			buildMain();
+			ImGui::EndTabItem();
+		}
+		if (ImGui::BeginTabItem("Tracking"))
+		{
+			buildTracking();
 			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("SteamVR"))
