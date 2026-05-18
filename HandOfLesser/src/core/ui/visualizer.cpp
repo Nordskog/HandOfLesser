@@ -121,7 +121,7 @@ namespace HOL
 		// handle input and draw widgets after drawing scene,
 		// so we know the area we don't want to be interactable
 		ImGui::SliderFloat("FoV", &this->mFov, 10.f, 179.f, "%.3f");
-		if (ImGui::Checkbox("Follow left", &HOL::Config.visualizer.followLeftHand))
+		if (ImGui::Checkbox("Follow left   ", &HOL::Config.visualizer.followLeftHand))
 		{
 			if (Config.visualizer.followLeftHand)
 			{
@@ -139,15 +139,20 @@ namespace HOL
 			}
 		}
 
-		// Palm axes visualization controls
-		ImGui::Checkbox("Show Body Palm Axes", &HOL::Config.visualizer.showBodyTrackingPalmAxes);
+		// Body tracking / tracker visualization controls
+		ImGui::Checkbox("Body Palm Axes", &HOL::Config.visualizer.showBodyTrackingPalmAxes);
 		ImGui::SameLine();
-		ImGui::Checkbox("Show Hand Palm Axes", &HOL::Config.visualizer.showHandTrackingPalmAxes);
+		ImGui::Checkbox("Body Joint Axes", &HOL::Config.visualizer.showBodyTrackingJointAxes);
 		ImGui::SameLine();
-		ImGui::Checkbox("Show Hand Joint Axes", &HOL::Config.visualizer.showHandTrackingJointAxes);
-		ImGui::Checkbox("Show Body Tracker Axes", &HOL::Config.visualizer.showBodyTrackerAxes);
+		ImGui::Checkbox("Body Tracker Axes", &HOL::Config.visualizer.showBodyTrackerAxes);
+
+		// Hand tracking visualization controls
+		ImGui::Checkbox("Hand Palm Axes", &HOL::Config.visualizer.showHandTrackingPalmAxes);
 		ImGui::SameLine();
-		ImGui::Checkbox("Show Controller Trails", &HOL::Config.visualizer.showControllerPositionTrails);
+		ImGui::Checkbox("Hand Joint Axes", &HOL::Config.visualizer.showHandTrackingJointAxes);
+
+		// Final controller pose visualization controls
+		ImGui::Checkbox("Controller Trails", &HOL::Config.visualizer.showControllerPositionTrails);
 
 		ImVec2 uiBounds = ImVec2(0, ImGui::GetCursorScreenPos().y);
 		ImGui::SameLine(); // so we get the actual end position of the slider

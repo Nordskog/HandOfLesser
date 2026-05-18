@@ -133,6 +133,11 @@ namespace HOL
 		{
 			j = {{"followLeftHand", settings.followLeftHand},
 				 {"followRightHand", settings.followRightHand},
+				 {"showBodyTrackingPalmAxes", settings.showBodyTrackingPalmAxes},
+				 {"showBodyTrackingJointAxes", settings.showBodyTrackingJointAxes},
+				 {"showHandTrackingPalmAxes", settings.showHandTrackingPalmAxes},
+				 {"showHandTrackingJointAxes", settings.showHandTrackingJointAxes},
+				 {"showBodyTrackerAxes", settings.showBodyTrackerAxes},
 				 {"showControllerPositionTrails", settings.showControllerPositionTrails}};
 		}
 
@@ -140,6 +145,15 @@ namespace HOL
 		{
 			nlohmann::get_to_if_present(j, "followLeftHand", settings.followLeftHand);
 			nlohmann::get_to_if_present(j, "followRightHand", settings.followRightHand);
+			nlohmann::get_to_if_present(
+				j, "showBodyTrackingPalmAxes", settings.showBodyTrackingPalmAxes);
+			nlohmann::get_to_if_present(
+				j, "showBodyTrackingJointAxes", settings.showBodyTrackingJointAxes);
+			nlohmann::get_to_if_present(
+				j, "showHandTrackingPalmAxes", settings.showHandTrackingPalmAxes);
+			nlohmann::get_to_if_present(
+				j, "showHandTrackingJointAxes", settings.showHandTrackingJointAxes);
+			nlohmann::get_to_if_present(j, "showBodyTrackerAxes", settings.showBodyTrackerAxes);
 			nlohmann::get_to_if_present(
 				j, "showControllerPositionTrails", settings.showControllerPositionTrails);
 		}

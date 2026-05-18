@@ -48,6 +48,28 @@ void HOL::OpenXR::BodyTracking::drawBody()
 		vis->submitPoint(OpenXR::toEigenVector(joint.pose.position), color, 7);
 	}
 
+	if (Config.visualizer.showBodyTrackingJointAxes)
+	{
+		for (int j = 0; j < XR_BODY_JOINT_COUNT_FB; j++)
+		{
+			auto& joint = jointLocations[j];
+			bool positionValid = (joint.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+								 == XR_SPACE_LOCATION_POSITION_VALID_BIT;
+			bool orientationValid = (joint.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+									== XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+
+			if (!positionValid || !orientationValid)
+			{
+				continue;
+			}
+
+			vis->submitOrientationAxes(OpenXR::toEigenVector(joint.pose.position),
+									   OpenXR::toEigenQuaternion(joint.pose.orientation),
+									   0.040f,
+									   2.0f);
+		}
+	}
+
 	const auto drawFallbackPalm = [&](XrBodyJointFB jointIndex)
 	{
 		auto& palm = jointLocations[jointIndex];

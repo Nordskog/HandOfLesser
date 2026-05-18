@@ -158,6 +158,7 @@ namespace HOL
 			bool followLeftHand;
 			bool followRightHand;
 			bool showBodyTrackingPalmAxes = false;
+			bool showBodyTrackingJointAxes = false;
 			bool showHandTrackingPalmAxes = false;
 			bool showHandTrackingJointAxes = false;
 			bool showBodyTrackerAxes = false;
