@@ -16,6 +16,7 @@
 	src/oculus/oculus_hacks.cpp
 	src/vrchat/vrchat_osc.cpp
 	src/openxr/openxr_state.cpp
+	src/windows/crash_handler.cpp
 	src/windows/windows_utils.cpp
 	src/core/ui/visualizer.cpp
 	src/openxr/xr_hand_utils.cpp
@@ -54,6 +55,7 @@
 find_package(OpenGL REQUIRED)
 
 target_link_libraries(HandOfLesser PRIVATE
+	dbghelp
 	d3d11
 	eigen
 	glfw
@@ -84,6 +86,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../output)
 set(ARCH_TARGET "win64")
 set_target_properties(HandOfLesser PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/drivers/00handoflesser/resources/bin/${ARCH_TARGET}>
+	PDB_OUTPUT_DIRECTORY $<1:${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/drivers/00handoflesser/resources/bin/${ARCH_TARGET}>
 )
 
 add_custom_command(TARGET HandOfLesser
@@ -91,8 +94,22 @@ add_custom_command(TARGET HandOfLesser
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		${OPENVR_LIB_DIR}/bin/${ARCH_TARGET}/openvr_api.dll
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/drivers/00handoflesser/resources/bin/${ARCH_TARGET}/openvr_api.dll
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		$<TARGET_PDB_FILE:HandOfLesser>
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/drivers/00handoflesser/resources/bin/${ARCH_TARGET}/
 )
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
 	set_property(TARGET HandOfLesser PROPERTY CXX_STANDARD 20)
+endif()
+
+if (MSVC)
+	target_compile_options(HandOfLesser PRIVATE
+		$<$<CONFIG:Release>:/Zi>
+		$<$<CONFIG:RelWithDebInfo>:/Zi>
+	)
+	target_link_options(HandOfLesser PRIVATE
+		$<$<CONFIG:Release>:/DEBUG:FULL>
+		$<$<CONFIG:RelWithDebInfo>:/DEBUG:FULL>
+	)
 endif()

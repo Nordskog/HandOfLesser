@@ -51,4 +51,9 @@ namespace HOL::Paths
 	{
 		return ensureAppDataDirectory() / "imgui.ini";
 	}
+
+	inline std::filesystem::path getCrashDirectory()
+	{
+		return ensureAppDataDirectory() / "crashes";
+	}
 } // namespace HOL::Paths

@@ -139,6 +139,7 @@ Section "Install" SecInstall
 
 	SetOutPath "$INSTDIR\${DRIVER_NAME}\resources\bin\win64"
 	File "${DRIVER_OUTDIR}\resources\bin\win64\HandOfLesser.exe"
+	File "${DRIVER_OUTDIR}\resources\bin\win64\HandOfLesser.pdb"
 	File "${DRIVER_OUTDIR}\resources\bin\win64\openvr_api.dll"
 
 	SetOutPath "$INSTDIR\${DRIVER_NAME}\resources\icons"

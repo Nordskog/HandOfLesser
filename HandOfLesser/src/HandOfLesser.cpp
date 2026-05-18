@@ -1,7 +1,9 @@
 ﻿#include "HandOfLesser.h"
 #include "core/HandOfLesserCore.h"
 #include "steamvr/steamvr_setup.h"
+#include "windows/crash_handler.h"
 #include <HandOfLesserCommon.h>
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
@@ -10,6 +12,10 @@ int main(int argc, char* argv[])
 	{
 		return exitCode;
 	}
+
+#if !defined(_DEBUG)
+	HOL::Windows::CrashHandler::install();
+#endif
 
 	bool shouldRestart = false;
 
@@ -30,12 +36,12 @@ int main(int argc, char* argv[])
 		}
 		catch (const std::exception& ex)
 		{
-			std::cerr << "Fatal error: " << ex.what() << std::endl;
+			HOL::Windows::CrashHandler::logHandledException(ex);
 			shouldRestart = false;
 		}
 		catch (...)
 		{
-			std::cerr << "Fatal error: unknown exception" << std::endl;
+			HOL::Windows::CrashHandler::logHandledUnknownException();
 			shouldRestart = false;
 		}
 #endif
