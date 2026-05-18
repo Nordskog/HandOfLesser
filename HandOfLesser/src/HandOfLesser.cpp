@@ -17,15 +17,28 @@ int main(int argc, char* argv[])
 	{
 		HOL::HandOfLesserCore app;
 
-		//try
+#if defined(_DEBUG)
 		{
 			app.init(9005);
 			shouldRestart = app.start();
 		}
-		//catch (std::exception exp)
+#else
+		try
 		{
-			//std::cerr << exp.what() << std::endl;
+			app.init(9005);
+			shouldRestart = app.start();
 		}
+		catch (const std::exception& ex)
+		{
+			std::cerr << "Fatal error: " << ex.what() << std::endl;
+			shouldRestart = false;
+		}
+		catch (...)
+		{
+			std::cerr << "Fatal error: unknown exception" << std::endl;
+			shouldRestart = false;
+		}
+#endif
 	}
 	while (shouldRestart);
 
