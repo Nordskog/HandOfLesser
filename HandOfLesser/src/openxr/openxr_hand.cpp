@@ -405,7 +405,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 			float positionSmoothingAlpha
 				= getSmoothingAlpha(HOL::Config.steamvr.positionSmoothingMS,
 									this->mHasFilteredPalmPose,
-									poseStateChanged,
+									this->handPose.active != prevActive
+										|| this->handPose.poseValid != prevPoseValid,
 									this->mPrevFilteredSampleTime,
 									time);
 			float rotationSmoothingAlpha
