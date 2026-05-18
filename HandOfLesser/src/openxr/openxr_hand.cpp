@@ -308,6 +308,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 	// Airlink provides incorrect values for anything but handtracking without controllers,
 	// so using the body trackign values actually breaks things.
 	bool alwaysUseUpperBodyTracking = false;	// Add to config later, probably does nothing though.
+	bool usingBodyTrackingFallback = false;
 	if ((bodyTracker.active) && (!this->handPose.poseTracked))
 	{
 		XrBodyJointLocationFB& bodyPalmJoint
@@ -326,6 +327,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->handPose.active = true;
 		this->handPose.poseValid = true;
 		this->handPose.poseTracked = false; // otherwise estimated usign upper-body
+		usingBodyTrackingFallback = true;
 	}
 	else if (bodyTracker.active && alwaysUseUpperBodyTracking)
 	{
@@ -341,6 +343,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->handPose.active = true;
 		this->handPose.poseValid = true;
 		this->handPose.poseTracked = false; // otherwise estimated usign upper-body
+		usingBodyTrackingFallback = true;
 	}
 	
 
@@ -387,6 +390,14 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 			HOL::PoseVelocity rawPalmVelocity;
 			rawPalmVelocity.linearVelocity = toEigenVector(palmVelocity.linearVelocity);
 			rawPalmVelocity.angularVelocity = toEigenVector(palmVelocity.angularVelocity);
+
+			if (usingBodyTrackingFallback)
+			{
+				// The fallback pose comes from body tracking, so the hand-joint velocity no longer
+				// corresponds to the pose we are submitting.
+				rawPalmVelocity.linearVelocity = Eigen::Vector3f::Zero();
+				rawPalmVelocity.angularVelocity = Eigen::Vector3f::Zero();
+			}
 
 			rawPalmVelocity.linearVelocity *= HOL::Config.steamvr.linearVelocityMultiplier;
 			rawPalmVelocity.angularVelocity *= HOL::Config.steamvr.angularVelocityMultiplier;
