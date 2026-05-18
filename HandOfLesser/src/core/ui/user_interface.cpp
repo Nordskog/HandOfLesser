@@ -1991,40 +1991,6 @@ void HOL::UserInterface::buildMain()
 		}
 	}
 
-	ImGui::SeparatorText("Body tracking");
-
-	float bodyTrackingConfidence = HOL::display::BodyTracking.confidence;
-	bool hasBodyTrackingEstimate = bodyTrackingConfidence > 0.0f;
-
-	ImGui::Text("Confidence:");
-	ImGui::SameLine();
-	if (hasBodyTrackingEstimate)
-	{
-		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%.3f", bodyTrackingConfidence);
-	}
-	else
-	{
-		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
-						   "%.3f - Unavailable",
-						   bodyTrackingConfidence);
-	}
-	if (ImGui::IsItemHovered())
-	{
-		if (!hasBodyTrackingEstimate)
-		{
-			showWrappedTooltip(
-				"Body tracking data is unavailable. Upper body tracking, simultaneous "
-				"hand/controller tracking, and non-hand joystick reference modes all rely on "
-				"body tracking data being available here.");
-		}
-		else
-		{
-			showWrappedTooltip("Upper body tracking, multimodal controller detection, and non-hand "
-							   "joystick reference modes all rely on body tracking data being "
-							   "available here.");
-		}
-	}
-
 	ImGui::EndChild();
 }
 
@@ -2110,6 +2076,40 @@ void HOL::UserInterface::buildTracking()
 	buildSingleHandTransformDisplay(HOL::LeftHand);
 	ImGui::SameLine();
 	buildSingleHandTransformDisplay(HOL::RightHand);
+
+	ImGui::SeparatorText("Body tracking");
+
+	float bodyTrackingConfidence = HOL::display::BodyTracking.confidence;
+	bool hasBodyTrackingEstimate = bodyTrackingConfidence > 0.0f;
+
+	ImGui::Text("Confidence:");
+	ImGui::SameLine();
+	if (hasBodyTrackingEstimate)
+	{
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%.3f", bodyTrackingConfidence);
+	}
+	else
+	{
+		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f),
+						   "%.3f - Unavailable",
+						   bodyTrackingConfidence);
+	}
+	if (ImGui::IsItemHovered())
+	{
+		if (!hasBodyTrackingEstimate)
+		{
+			showWrappedTooltip(
+				"Body tracking data is unavailable. Upper body tracking, simultaneous "
+				"hand/controller tracking, and non-hand joystick reference modes all rely on "
+				"body tracking data being available here.");
+		}
+		else
+		{
+			showWrappedTooltip("Upper body tracking, multimodal controller detection, and non-hand "
+							   "joystick reference modes all rely on body tracking data being "
+							   "available here.");
+		}
+	}
 
 	ImGui::EndChild();
 }
