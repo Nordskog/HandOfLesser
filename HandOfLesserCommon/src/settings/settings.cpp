@@ -7,10 +7,11 @@ namespace HOL::settings
 		std::vector<GestureBinding> bindings;
 		auto addBinding = [&](const GestureBinding& binding) { bindings.push_back(binding); };
 
-		// Joystick — Left hand, Middle finger proximity → Joystick target
+		// Joystick — Both hands, Middle finger proximity → Joystick target
+		for (int i = 0; i < HandSide::HandSide_MAX; i++)
 		{
 			GestureBinding b;
-			b.side = HOL::LeftHand;
+			b.side = (HOL::HandSide)i;
 			b.kind = GestureKind::Proximity;
 			b.proximityFinger = HOL::FingerMiddle;
 			b.target = InputTarget::Joystick;
@@ -39,49 +40,62 @@ namespace HOL::settings
 			addBinding(b);
 		}
 
-		// Y (VRChat menu) — Left hand, Ring -> Middle -> Index
+		// Left System — Index tap and hold, auto release
 		{
 			GestureBinding b;
 			b.side = HOL::LeftHand;
-			b.kind = GestureKind::Chain;
-			b.chainFingers = {
-				HOL::FingerRing, HOL::FingerMiddle, HOL::FingerIndex, HOL::FingerLittle};
-			b.chainLength = 3;
-			b.target = InputTarget::Y;
+			b.kind = GestureKind::Proximity;
+			b.proximityFinger = HOL::FingerIndex;
+			b.modifiers = static_cast<uint32_t>(GestureModifier::Hold)
+						  | static_cast<uint32_t>(GestureModifier::LookingAtHand);
+			b.target = InputTarget::System;
+			b.pressAndRelease = true;
 			addBinding(b);
 		}
 
-		// X (VRChat mute) — Left hand, Index -> Middle -> Ring
+		// Left X — Ring tap and hold
 		{
 			GestureBinding b;
 			b.side = HOL::LeftHand;
-			b.kind = GestureKind::Chain;
-			b.chainFingers = {
-				HOL::FingerIndex, HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle};
-			b.chainLength = 3;
+			b.kind = GestureKind::Proximity;
+			b.proximityFinger = HOL::FingerRing;
+			b.modifiers = static_cast<uint32_t>(GestureModifier::Hold)
+						  | static_cast<uint32_t>(GestureModifier::LookingAtHand);
 			b.target = InputTarget::X;
 			addBinding(b);
 		}
 
-		// Toggle SteamVR Input — Right hand, Ring -> Middle -> Index
+		// Left Y — Pinky tap and hold
 		{
 			GestureBinding b;
-			b.side = HOL::RightHand;
-			b.kind = GestureKind::Chain;
-			b.chainFingers = {
-				HOL::FingerRing, HOL::FingerMiddle, HOL::FingerIndex, HOL::FingerLittle};
-			b.chainLength = 3;
-			b.target = InputTarget::Toggle_SteamVRInput;
+			b.side = HOL::LeftHand;
+			b.kind = GestureKind::Proximity;
+			b.proximityFinger = HOL::FingerLittle;
+			b.modifiers = static_cast<uint32_t>(GestureModifier::Hold)
+						  | static_cast<uint32_t>(GestureModifier::LookingAtHand);
+			b.target = InputTarget::Y;
 			addBinding(b);
 		}
 
-		// System Aim — Both hands (Oculus only, but stored for convenience)
-		for (int i = 0; i < HandSide::HandSide_MAX; i++)
+		// Right X — Ring tap
 		{
 			GestureBinding b;
-			b.side = (HOL::HandSide)i;
-			b.kind = GestureKind::SystemAim;
-			b.target = InputTarget::System;
+			b.side = HOL::RightHand;
+			b.kind = GestureKind::Proximity;
+			b.proximityFinger = HOL::FingerRing;
+			b.target = InputTarget::X;
+			addBinding(b);
+		}
+
+		// Right Y — Pinky tap and hold
+		{
+			GestureBinding b;
+			b.side = HOL::RightHand;
+			b.kind = GestureKind::Proximity;
+			b.proximityFinger = HOL::FingerLittle;
+			b.modifiers = static_cast<uint32_t>(GestureModifier::Hold)
+						  | static_cast<uint32_t>(GestureModifier::LookingAtHand);
+			b.target = InputTarget::Y;
 			addBinding(b);
 		}
 

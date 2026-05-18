@@ -126,7 +126,7 @@ namespace HOL
 			bool fallbackOnly = false;
 			bool applyBaseOffset = true;
 			HOL::EmulatedControllerProfile emulatedControllerProfile
-				= HOL::EmulatedControllerProfile::EmulatedControllerProfile_Index;
+				= HOL::EmulatedControllerProfile::EmulatedControllerProfile_OculusTouch;
 			Eigen::Vector3f orientationOffset = Eigen::Vector3f(0, 0, 0);
 			Eigen::Vector3f positionOffset = Eigen::Vector3f(0, 0, 0);
 		};
@@ -268,7 +268,7 @@ namespace HOL
 			bool sendOscInput = true;
 			JoystickReferenceMode joystickReferenceMode = JoystickReferenceMode::Head;
 			int chainGestureTimeoutMS = 500;
-			int holdDurationMS = 2000;
+			int holdDurationMS = 1000;
 			float lookAtFovDegrees = 45.0f;
 			std::vector<GestureBinding> gestureBindings = defaultGestureBindings();
 		};
