@@ -16,11 +16,6 @@ namespace HOL
 					break;
 				}
 
-				case HolSetting::SendOscInput: {
-					Config.input.sendOscInput = !Config.input.sendOscInput;
-					break;
-				}
-
 				case HolSetting::SendSteamVRInput: {
 					Config.steamvr.sendSteamVRInput = !Config.steamvr.sendSteamVRInput;
 					break;

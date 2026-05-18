@@ -12,7 +12,6 @@ namespace HOL
 	enum HolSetting
 	{
 		Default,
-		SendOscInput,
 		SendSteamVRInput,
 		HolSetting_MAX,
 	};

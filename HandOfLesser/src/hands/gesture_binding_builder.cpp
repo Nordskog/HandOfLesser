@@ -40,7 +40,7 @@ namespace
 
 	constexpr std::array<const char*, 4> FingerNames = {"Index", "Middle", "Ring", "Little"};
 
-	constexpr std::array<HOL::GestureBindings::InputTargetOption, 12> InputTargetOptions = {{
+	constexpr std::array<HOL::GestureBindings::InputTargetOption, 11> InputTargetOptions = {{
 		{InputTarget::Joystick, "Joystick"},
 		{InputTarget::Grip, "Grip"},
 		{InputTarget::Trigger, "Trigger"},
@@ -52,7 +52,6 @@ namespace
 		{InputTarget::Menu, "Menu"},
 		{InputTarget::Thumbrest, "Thumbrest"},
 		{InputTarget::Toggle_SteamVRInput, "Toggle SteamVR Input"},
-		{InputTarget::Toggle_OscInput, "Toggle OSC Input"},
 	}};
 
 	bool isAnalogTarget(InputTarget target)
@@ -62,8 +61,7 @@ namespace
 
 	bool isToggleTarget(InputTarget target)
 	{
-		return target == InputTarget::Toggle_SteamVRInput
-			   || target == InputTarget::Toggle_OscInput;
+		return target == InputTarget::Toggle_SteamVRInput;
 	}
 
 	bool isButtonTarget(InputTarget target)
@@ -108,8 +106,6 @@ namespace
 		{
 			case InputTarget::Toggle_SteamVRInput:
 				return HolSetting::SendSteamVRInput;
-			case InputTarget::Toggle_OscInput:
-				return HolSetting::SendOscInput;
 			default:
 				return HolSetting::Default;
 		}
@@ -538,11 +534,6 @@ namespace HOL::GestureBindings
 			{
 				return option.target;
 			}
-		}
-
-		if (isGestureTargetCompatible(kind, InputTarget::Toggle_OscInput))
-		{
-			return InputTarget::Toggle_OscInput;
 		}
 
 		return InputTarget::None;

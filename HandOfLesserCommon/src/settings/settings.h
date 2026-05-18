@@ -229,7 +229,6 @@ namespace HOL
 			Menu,
 			Thumbrest,
 			Toggle_SteamVRInput,
-			Toggle_OscInput,
 			// Joystick (X/Z axes + touch — requires Proximity gesture)
 			Joystick
 		};
