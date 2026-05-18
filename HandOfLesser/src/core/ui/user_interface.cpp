@@ -901,26 +901,30 @@ void HOL::UserInterface::buildBindings()
 			if (ImGui::Combo("Finger", &fingerIndex, fingerNames, IM_ARRAYSIZE(fingerNames)))
 			{
 				b.proximityFinger = fingers[fingerIndex];
+				if (b.proximityFinger != FingerIndex)
+				{
+					settings::setGestureModifier(
+						b.modifiers, settings::GestureModifier::ClosedHand, false);
+				}
 			}
 
-			bool requiresOpenHand = b.modifier == settings::GripModifier::Open;
-			if (ImGui::Checkbox("Open Hand", &requiresOpenHand))
-			{
-				b.modifier = requiresOpenHand ? settings::GripModifier::Open
-											  : settings::GripModifier::None;
-			}
-
-			bool requiresClosedHand = b.modifier == settings::GripModifier::Closed;
+			bool requiresClosedHand = settings::hasGestureModifier(
+				b.modifiers, settings::GestureModifier::ClosedHand);
+			ImGui::BeginDisabled(b.proximityFinger != FingerIndex);
 			if (ImGui::Checkbox("Closed Hand", &requiresClosedHand))
 			{
-				b.modifier = requiresClosedHand ? settings::GripModifier::Closed
-												: settings::GripModifier::None;
+				settings::setGestureModifier(
+					b.modifiers,
+					settings::GestureModifier::ClosedHand,
+					requiresClosedHand);
 			}
+			ImGui::EndDisabled();
 
-			if (b.modifier != settings::GripModifier::None)
+			if (settings::hasGestureModifier(
+					b.modifiers, settings::GestureModifier::ClosedHand))
 			{
 				ImGui::SameLine();
-				ImGui::TextDisabled("(%s)", GestureBindings::gripModifierName(b.modifier));
+				ImGui::TextDisabled("(Closed Hand)");
 			}
 
 			ImGui::Separator();

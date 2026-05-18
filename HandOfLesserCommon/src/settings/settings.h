@@ -192,13 +192,30 @@ namespace HOL
 			Descending      // Little -> Ring -> Middle -> Index
 		};
 
-		// Modifier on Proximity gestures (grip state requirement)
-		enum class GripModifier
+		enum class GestureModifier : uint32_t
 		{
-			None = 0,     // No grip requirement
-			Open,         // Middle+Ring+Little must be extended
-			Closed        // Middle+Ring+Little must be curled
+			ClosedHand = 1 << 0,
+			InFrontOfUser = 1 << 1,
+			LookingAtHand = 1 << 2
 		};
+
+		inline bool hasGestureModifier(uint32_t modifiers, GestureModifier modifier)
+		{
+			return (modifiers & static_cast<uint32_t>(modifier)) != 0;
+		}
+
+		inline void setGestureModifier(
+			uint32_t& modifiers, GestureModifier modifier, bool enabled)
+		{
+			if (enabled)
+			{
+				modifiers |= static_cast<uint32_t>(modifier);
+			}
+			else
+			{
+				modifiers &= ~static_cast<uint32_t>(modifier);
+			}
+		}
 
 		// Input target — determines gesture kind compatibility and action type.
 		enum class InputTarget
@@ -238,8 +255,7 @@ namespace HOL
 				= HOL::FingerIndex;         // Finger for Proximity kind (Index/Middle/Ring/Little)
 			ChainDirection chainDirection
 				= ChainDirection::Descending; // Direction for Chain kind
-			GripModifier modifier
-				= GripModifier::None;  // Modifier for Proximity kind (None/Open/Closed)
+			uint32_t modifiers = 0; // Proximity modifiers. ClosedHand is currently the only active one.
 
 			// Output target — determines action/sink type.
 			InputTarget target = InputTarget::None;

@@ -23,7 +23,7 @@ namespace
 	using HOL::settings::ChainDirection;
 	using HOL::settings::GestureBinding;
 	using HOL::settings::GestureKind;
-	using HOL::settings::GripModifier;
+	using HOL::settings::GestureModifier;
 
 	FingerHighlights makeFingerHighlights(
 		HOL::InputGestureHighlight highlight, std::initializer_list<HOL::FingerType> fingers)
@@ -357,7 +357,8 @@ namespace
 				glyph.tapPairs.push_back(
 					std::make_pair(HOL::FingerThumb, binding.proximityFinger));
 
-				if (binding.modifier != GripModifier::None)
+				if (HOL::settings::hasGestureModifier(
+						binding.modifiers, GestureModifier::ClosedHand))
 				{
 					std::array<HOL::FingerType, 3> modifierFingers
 						= getModifierFingers(binding.proximityFinger);
@@ -367,10 +368,7 @@ namespace
 					for (HOL::FingerType finger : modifierFingers)
 					{
 						modifierHighlights[finger] = HOL::InputGestureHighlight_Secondary;
-						if (binding.modifier == GripModifier::Closed)
-						{
-							glyph.curledFingers[finger] = true;
-						}
+						glyph.curledFingers[finger] = true;
 					}
 
 					glyph.fingerHighlights

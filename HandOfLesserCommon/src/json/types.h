@@ -160,7 +160,7 @@ namespace HOL
 				 {"kind", binding.kind},
 				 {"proximityFinger", binding.proximityFinger},
 				 {"chainDirection", binding.chainDirection},
-				 {"modifier", binding.modifier},
+				 {"modifiers", binding.modifiers},
 				 {"target", binding.target}};
 		}
 
@@ -171,7 +171,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "kind", binding.kind);
 			nlohmann::get_to_if_present(j, "proximityFinger", binding.proximityFinger);
 			nlohmann::get_to_if_present(j, "chainDirection", binding.chainDirection);
-			nlohmann::get_to_if_present(j, "modifier", binding.modifier);
+			nlohmann::get_to_if_present(j, "modifiers", binding.modifiers);
 			nlohmann::get_to_if_present(j, "target", binding.target);
 		}
 

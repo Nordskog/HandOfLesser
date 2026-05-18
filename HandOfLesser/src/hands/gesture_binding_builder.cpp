@@ -33,7 +33,7 @@ namespace
 	using HOL::settings::ChainDirection;
 	using HOL::settings::GestureBinding;
 	using HOL::settings::GestureKind;
-	using HOL::settings::GripModifier;
+	using HOL::settings::GestureModifier;
 	using HOL::settings::InputTarget;
 
 	constexpr std::array<const char*, 4> FingerNames = {"Index", "Middle", "Ring", "Little"};
@@ -131,8 +131,8 @@ namespace
 		return modifierFingers;
 	}
 
-	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildGripModifier(
-		GripModifier modifier, HandSide side, HOL::FingerType pinchFinger)
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildClosedHandModifier(
+		HandSide side, HOL::FingerType pinchFinger)
 	{
 		auto curlCombo = HOL::Gesture::ComboGesture::Gesture::Create();
 		curlCombo->parameters.holdUntilAllReleased = true;
@@ -147,15 +147,7 @@ namespace
 			curlCombo->addGesture(curl);
 		}
 
-		if (modifier == GripModifier::Closed)
-		{
-			return curlCombo;
-		}
-
-		auto inverse = HOL::Gesture::InverseGesture::Gesture::Create();
-		inverse->setGesture(curlCombo);
-		inverse->setBinaryThreshold(1.0f);
-		return inverse;
+		return curlCombo;
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildChainGesture(
@@ -180,6 +172,16 @@ namespace
 		}
 
 		return chain;
+	}
+
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildOpenHandPinchGesture(
+		HandSide side, HOL::FingerType finger)
+	{
+		auto pinch = HOL::Gesture::OpenHandPinchGesture::Gesture::Create();
+		pinch->parameters.pinchFinger = finger;
+		pinch->parameters.side = side;
+		pinch->setup();
+		return pinch;
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildGripGesture(HandSide side)
@@ -328,21 +330,6 @@ namespace HOL::GestureBindings
 		return "(none)";
 	}
 
-	const char* gripModifierName(GripModifier modifier)
-	{
-		switch (modifier)
-		{
-			case GripModifier::None:
-				return "None";
-			case GripModifier::Open:
-				return "Open Hand";
-			case GripModifier::Closed:
-				return "Closed Hand";
-			default:
-				return "(unknown)";
-		}
-	}
-
 	const char* chainDirectionName(ChainDirection direction)
 	{
 		switch (direction)
@@ -366,11 +353,10 @@ namespace HOL::GestureBindings
 				description += fingerName(binding.proximityFinger);
 				description += " Finger";
 
-				if (binding.modifier != GripModifier::None)
+				if (HOL::settings::hasGestureModifier(
+						binding.modifiers, GestureModifier::ClosedHand))
 				{
-					description += " (";
-					description += gripModifierName(binding.modifier);
-					description += ")";
+					description += " (Closed Hand)";
 				}
 
 				return description;
@@ -473,18 +459,22 @@ namespace HOL::GestureBindings
 		}
 		else if (binding.kind == GestureKind::Proximity)
 		{
-			auto proximity = HOL::Gesture::ProximityGesture::Create();
-			proximity->setup(binding.proximityFinger, binding.side, FingerThumb, binding.side);
+			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
+				= buildOpenHandPinchGesture(binding.side, binding.proximityFinger);
 
-			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture = proximity;
-			if (binding.modifier != GripModifier::None)
+			if (HOL::settings::hasGestureModifier(
+					binding.modifiers, GestureModifier::ClosedHand)
+				&& binding.proximityFinger == HOL::FingerIndex)
 			{
+				auto proximity = HOL::Gesture::ProximityGesture::Create();
+				proximity->setup(binding.proximityFinger, binding.side, FingerThumb, binding.side);
+
 				auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
 				combo->parameters.holdUntilAllReleased = false;
 				combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
 				combo->addGesture(proximity);
 				combo->addGesture(
-					buildGripModifier(binding.modifier, binding.side, binding.proximityFinger));
+					buildClosedHandModifier(binding.side, binding.proximityFinger));
 				triggerGesture = combo;
 			}
 

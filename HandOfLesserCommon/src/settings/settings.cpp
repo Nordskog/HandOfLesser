@@ -24,7 +24,7 @@ namespace HOL::settings
 			b.side = (HOL::HandSide)i;
 			b.kind = GestureKind::Proximity;
 			b.proximityFinger = HOL::FingerIndex;
-			b.modifier = GripModifier::Closed;
+			b.modifiers = static_cast<uint32_t>(GestureModifier::ClosedHand);
 			b.target = InputTarget::Trigger;
 			addBinding(b);
 		}
