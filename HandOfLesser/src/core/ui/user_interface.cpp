@@ -560,6 +560,13 @@ void HOL::UserInterface::buildBindings()
 		}
 	};
 
+	auto supportsPressAndRelease = [](settings::InputTarget target)
+	{
+		return target == settings::InputTarget::Trigger
+			   || (target >= settings::InputTarget::A
+				   && target <= settings::InputTarget::Thumbrest);
+	};
+
 	auto startNewBinding = [&]()
 	{
 		mEditBindingIndex = -1;
@@ -641,6 +648,13 @@ void HOL::UserInterface::buildBindings()
 	if (ImGui::InputInt("Hold Duration (ms)", &holdDurationMS))
 	{
 		Config.input.holdDurationMS = std::max(50, holdDurationMS);
+		rebuildActions = true;
+	}
+
+	float lookAtFovDegrees = Config.input.lookAtFovDegrees;
+	if (ImGui::InputFloat("Look-at FoV (deg)", &lookAtFovDegrees))
+	{
+		Config.input.lookAtFovDegrees = std::clamp(lookAtFovDegrees, 1.0f, 179.0f);
 		rebuildActions = true;
 	}
 
@@ -882,6 +896,10 @@ void HOL::UserInterface::buildBindings()
 				{
 					b.kind = editableKinds[i];
 					ensureCompatibleTarget(b);
+					if (!supportsPressAndRelease(b.target))
+					{
+						b.pressAndRelease = false;
+					}
 					kindIndex = i;
 				}
 
@@ -990,6 +1008,19 @@ void HOL::UserInterface::buildBindings()
 			ImGui::TextDisabled("(%d ms)", Config.input.holdDurationMS);
 		}
 
+		bool useLookAt
+			= settings::hasGestureModifier(b.modifiers, settings::GestureModifier::LookingAtHand);
+		if (ImGui::Checkbox("Look At Hand", &useLookAt))
+		{
+			settings::setGestureModifier(
+				b.modifiers, settings::GestureModifier::LookingAtHand, useLookAt);
+		}
+		if (useLookAt)
+		{
+			ImGui::SameLine();
+			ImGui::TextDisabled("(%.1f deg)", Config.input.lookAtFovDegrees);
+		}
+
 		ImGui::Separator();
 
 		std::vector<GestureBindings::InputTargetOption> compatibleTargets;
@@ -1011,6 +1042,10 @@ void HOL::UserInterface::buildBindings()
 				if (ImGui::Selectable(option.label, selected))
 				{
 					b.target = option.target;
+					if (!supportsPressAndRelease(b.target))
+					{
+						b.pressAndRelease = false;
+					}
 				}
 
 				if (selected)
@@ -1020,6 +1055,13 @@ void HOL::UserInterface::buildBindings()
 			}
 
 			ImGui::EndCombo();
+		}
+
+		if (supportsPressAndRelease(b.target))
+		{
+			if (ImGui::Checkbox("Press and Release", &b.pressAndRelease))
+			{
+			}
 		}
 
 		ImGui::Separator();

@@ -14,6 +14,7 @@
 #include "src/hands/gesture/finger_curl_gesture.h"
 #include "src/hands/gesture/hold_gesture.h"
 #include "src/hands/gesture/inverse_gesture.h"
+#include "src/hands/gesture/look_at_gesture.h"
 #include "src/hands/gesture/open_hand_pinch_gesture.h"
 #include "src/hands/gesture/proximity_gesture.h"
 #include "src/hands/input/settings_toggle_input.h"
@@ -161,6 +162,16 @@ namespace
 		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::ClosedHand);
 	}
 
+	bool usesLookAtHand(const GestureBinding& binding)
+	{
+		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::LookingAtHand);
+	}
+
+	bool supportsPressAndRelease(InputTarget target)
+	{
+		return isButtonTarget(target) || target == InputTarget::Trigger;
+	}
+
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithHold(
 		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture)
 	{
@@ -168,6 +179,21 @@ namespace
 		hold->parameters.duration = std::chrono::milliseconds(HOL::Config.input.holdDurationMS);
 		hold->setGesture(gesture);
 		return hold;
+	}
+
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithLookAtHand(
+		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture, HandSide side)
+	{
+		auto lookAt = HOL::Gesture::LookAtGesture::Gesture::Create();
+		lookAt->parameters.side = side;
+		lookAt->parameters.fovDegrees = HOL::Config.input.lookAtFovDegrees;
+
+		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
+		combo->parameters.holdUntilAllReleased = false;
+		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
+		combo->addGesture(gesture);
+		combo->addGesture(lookAt);
+		return combo;
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildChainGesture(
@@ -189,6 +215,20 @@ namespace
 		}
 
 		return chain;
+	}
+
+	bool isRepeatedFingerChain(const GestureBinding& binding)
+	{
+		int chainLength = std::clamp(binding.chainLength, 1, GestureBinding::MaxChainLength);
+		for (int i = 1; i < chainLength; i++)
+		{
+			if (binding.chainFingers[i] != binding.chainFingers[0])
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildOpenHandPinchGesture(
@@ -406,6 +446,16 @@ namespace HOL::GestureBindings
 					description += " (Hold)";
 				}
 
+				if (usesLookAtHand(binding))
+				{
+					description += " (Look At Hand)";
+				}
+
+				if (binding.pressAndRelease)
+				{
+					description += " (Press and Release)";
+				}
+
 				return description;
 			}
 
@@ -415,6 +465,15 @@ namespace HOL::GestureBindings
 				if (usesHold(binding))
 				{
 					description += " (Hold)";
+				}
+
+				if (usesLookAtHand(binding))
+				{
+					description += " (Look At Hand)";
+				}
+				if (binding.pressAndRelease)
+				{
+					description += " (Press and Release)";
 				}
 				return description;
 			}
@@ -426,6 +485,15 @@ namespace HOL::GestureBindings
 				if (usesHold(binding))
 				{
 					description += " (Hold)";
+				}
+
+				if (usesLookAtHand(binding))
+				{
+					description += " (Look At Hand)";
+				}
+				if (binding.pressAndRelease)
+				{
+					description += " (Press and Release)";
 				}
 				return description;
 			}
@@ -512,15 +580,24 @@ namespace HOL::GestureBindings
 
 			auto holdGesture = HOL::Gesture::ProximityGesture::Create();
 			holdGesture->setup(binding.proximityFinger, binding.side);
+			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalHoldGesture = holdGesture;
+			if (usesLookAtHand(binding))
+			{
+				finalHoldGesture = wrapWithLookAtHand(finalHoldGesture, binding.side);
+			}
 
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalTriggerGesture = triggerGesture;
+			if (usesLookAtHand(binding))
+			{
+				finalTriggerGesture = wrapWithLookAtHand(finalTriggerGesture, binding.side);
+			}
 			if (usesHold(binding))
 			{
 				finalTriggerGesture = wrapWithHold(finalTriggerGesture);
 			}
 
 			dragAction->setTriggerGesture(finalTriggerGesture);
-			dragAction->setHoldGesture(holdGesture);
+			dragAction->setHoldGesture(finalHoldGesture);
 			dragAction->getParameters().releaseThreshold = 0.8f;
 			action = dragAction;
 		}
@@ -562,6 +639,16 @@ namespace HOL::GestureBindings
 				action = HOL::ButtonAction::Create();
 			}
 
+			if (supportsPressAndRelease(binding.target))
+			{
+				action->getParameters().pressAndRelease = binding.pressAndRelease;
+			}
+
+			if (usesLookAtHand(binding))
+			{
+				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
+			}
+
 			if (usesHold(binding))
 			{
 				triggerGesture = wrapWithHold(triggerGesture);
@@ -572,8 +659,20 @@ namespace HOL::GestureBindings
 		else if (binding.kind == GestureKind::Chain)
 		{
 			action = HOL::ButtonAction::Create();
+			action->getParameters().pressAndRelease = binding.pressAndRelease;
+			if (isRepeatedFingerChain(binding))
+			{
+				// When the same pinch is tapped repeatedly, the thumb often only lifts slightly
+				// between taps. Tighten release hysteresis so the action does not remain held
+				// between intended taps.
+				action->getParameters().releaseThreshold = 0.999f;
+			}
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
 				= buildChainGesture(binding);
+			if (usesLookAtHand(binding))
+			{
+				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
+			}
 			if (usesHold(binding))
 			{
 				triggerGesture = wrapWithHold(triggerGesture);
@@ -584,6 +683,10 @@ namespace HOL::GestureBindings
 		{
 			auto gripGesture = buildGripGesture(binding.side);
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture = gripGesture;
+			if (usesLookAtHand(binding))
+			{
+				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
+			}
 			if (usesHold(binding))
 			{
 				triggerGesture = wrapWithHold(triggerGesture);
@@ -604,13 +707,23 @@ namespace HOL::GestureBindings
 				action = HOL::ButtonAction::Create();
 			}
 
+			if (supportsPressAndRelease(binding.target))
+			{
+				action->getParameters().pressAndRelease = binding.pressAndRelease;
+			}
+
 			action->setTriggerGesture(triggerGesture);
 		}
 		else if (binding.kind == GestureKind::SystemAim)
 		{
 			action = HOL::ButtonAction::Create();
+			action->getParameters().pressAndRelease = binding.pressAndRelease;
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
 				= buildSystemAimGesture(binding.side);
+			if (usesLookAtHand(binding))
+			{
+				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
+			}
 			if (usesHold(binding))
 			{
 				triggerGesture = wrapWithHold(triggerGesture);

@@ -142,6 +142,20 @@ XrBodyTrackerFB OpenXRBody::getBodyTrackerFB()
 	return this->mBodyTracker;
 }
 
+bool OpenXRBody::getHeadPose(HOL::PoseLocation& pose) const
+{
+	const auto& head = mJointLocations[XR_BODY_JOINT_HEAD_FB];
+	if (!(head.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+		|| !(head.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+	{
+		return false;
+	}
+
+	pose.position = OpenXR::toEigenVector(head.pose.position);
+	pose.orientation = OpenXR::toEigenQuaternion(head.pose.orientation);
+	return true;
+}
+
 void OpenXRBody::preservePalmPose(HandSide side)
 {
 	XrBodyJointFB anchorJoint

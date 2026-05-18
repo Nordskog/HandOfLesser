@@ -27,6 +27,7 @@
 	src/hands/gesture/above_below_curl_plane_gesture.cpp
 	src/hands/gesture/open_hand_pinch_gesture.cpp
 	src/hands/gesture/hold_gesture.cpp
+	src/hands/gesture/look_at_gesture.cpp
 	src/hands/action/base_action.cpp
 	src/hands/input/base_input.cpp
 	src/hands/action/hand_drag_action.cpp

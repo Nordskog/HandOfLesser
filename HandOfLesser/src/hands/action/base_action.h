@@ -30,6 +30,7 @@ namespace HOL
 		float triggerThreshold = 1;
 		float touchThreshold = 0.5;
 		float releaseThreshold = 0.8f;
+		bool pressAndRelease = false;
 	};
 
 	class BaseAction
@@ -63,6 +64,8 @@ namespace HOL
 		std::chrono::milliseconds timeSinceUp();
 
 	private:
+		static constexpr std::chrono::milliseconds PressAndReleasePulseDuration{50};
+
 		// Must be 1 to enter action, equivalent to a button press
 		std::shared_ptr<BaseGesture::Gesture> mTriggerGesture;
 
@@ -83,6 +86,8 @@ namespace HOL
 		// before we update the actual state
 		bool mDelayedDown = false;
 		bool mDelayedUp = false;
+		bool mPressAndReleasePulseActive = false;
+		std::chrono::steady_clock::time_point mPressAndReleasePulseEndTime;
 
 		int mTapCount = 0;
 
@@ -96,6 +101,8 @@ namespace HOL
 		// These should be populated by the action
 		// Name is used to determine the number of slots, and what values they receive.
 		std::vector<InputType> mSupportedInputs;
+
+		bool getButtonOutputState(const ActionData& actionData);
 
 		void submitInput(InputType type, float value);
 

@@ -162,7 +162,8 @@ namespace HOL
 				 {"chainFingers", binding.chainFingers},
 				 {"chainLength", binding.chainLength},
 				 {"modifiers", binding.modifiers},
-				 {"target", binding.target}};
+				 {"target", binding.target},
+				 {"pressAndRelease", binding.pressAndRelease}};
 		}
 
 		inline void from_json(const nlohmann::json& j, GestureBinding& binding)
@@ -175,6 +176,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "chainLength", binding.chainLength);
 			nlohmann::get_to_if_present(j, "modifiers", binding.modifiers);
 			nlohmann::get_to_if_present(j, "target", binding.target);
+			nlohmann::get_to_if_present(j, "pressAndRelease", binding.pressAndRelease);
 		}
 
 		inline void to_json(nlohmann::json& j, const InputSettings& settings)
@@ -183,6 +185,7 @@ namespace HOL
 				 {"joystickReferenceMode", settings.joystickReferenceMode},
 				 {"chainGestureTimeoutMS", settings.chainGestureTimeoutMS},
 				 {"holdDurationMS", settings.holdDurationMS},
+				 {"lookAtFovDegrees", settings.lookAtFovDegrees},
 				 {"gestureBindings", settings.gestureBindings}};
 		}
 
@@ -194,6 +197,7 @@ namespace HOL
 			nlohmann::get_to_if_present(
 				j, "chainGestureTimeoutMS", settings.chainGestureTimeoutMS);
 			nlohmann::get_to_if_present(j, "holdDurationMS", settings.holdDurationMS);
+			nlohmann::get_to_if_present(j, "lookAtFovDegrees", settings.lookAtFovDegrees);
 			nlohmann::get_to_if_present(j, "gestureBindings", settings.gestureBindings);
 		}
 

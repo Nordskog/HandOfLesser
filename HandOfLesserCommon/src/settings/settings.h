@@ -260,6 +260,7 @@ namespace HOL
 
 			// Output target — determines action/sink type.
 			InputTarget target = InputTarget::None;
+			bool pressAndRelease = false;
 		};
 
 		struct InputSettings
@@ -268,6 +269,7 @@ namespace HOL
 			JoystickReferenceMode joystickReferenceMode = JoystickReferenceMode::Head;
 			int chainGestureTimeoutMS = 500;
 			int holdDurationMS = 2000;
+			float lookAtFovDegrees = 45.0f;
 			std::vector<GestureBinding> gestureBindings = defaultGestureBindings();
 		};
 

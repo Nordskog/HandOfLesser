@@ -190,6 +190,34 @@ namespace HOL
 		}
 	}
 
+	bool BaseAction::getButtonOutputState(const ActionData& actionData)
+	{
+		if (!this->mParameters.pressAndRelease)
+		{
+			return actionData.isDown;
+		}
+
+		if (actionData.onDown)
+		{
+			this->mPressAndReleasePulseActive = true;
+			this->mPressAndReleasePulseEndTime
+				= std::chrono::steady_clock::now() + PressAndReleasePulseDuration;
+		}
+
+		if (!this->mPressAndReleasePulseActive)
+		{
+			return false;
+		}
+
+		if (std::chrono::steady_clock::now() >= this->mPressAndReleasePulseEndTime)
+		{
+			this->mPressAndReleasePulseActive = false;
+			return false;
+		}
+
+		return true;
+	}
+
 	void BaseAction::addSink(InputType type, std::shared_ptr<BaseInput<float>> input )
 	{
 		this->mInputs[type].push_back(input);

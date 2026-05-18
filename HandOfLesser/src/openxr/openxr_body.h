@@ -17,6 +17,7 @@ public:
 	XrBodyJointLocationFB* getLastJointLocations();
 	bool isAvailable() const;
 	XrBodyTrackerFB getBodyTrackerFB();
+	bool getHeadPose(HOL::PoseLocation& pose) const;
 	Eigen::Quaternionf getReferenceOrientation(HOL::settings::JoystickReferenceMode mode,
 											   bool& valid) const;
 	float confidence = 0.0f;
