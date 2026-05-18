@@ -118,25 +118,28 @@ namespace
 		return out.str();
 	}
 
-	void printStackFrames(void* const* frames, USHORT frameCount)
+	void appendStackFrames(std::ostringstream& out, void* const* frames, USHORT frameCount)
 	{
 		if (frameCount == 0)
 		{
 			return;
 		}
 
-		std::cerr << "Stack trace:" << std::endl;
+		out << "Stack trace:" << std::endl;
 		for (USHORT i = 0; i < frameCount; i++)
 		{
-			std::cerr << "  [" << i << "] " << formatAddress(frames[i]) << std::endl;
+			out << "  [" << i << "] " << formatAddress(frames[i]) << std::endl;
 		}
 	}
 
-	void printCurrentStackTrace()
+	std::string getCurrentStackTraceText()
 	{
 		void* frames[MaxStackFrames]{};
 		USHORT frameCount = CaptureStackBackTrace(0, MaxStackFrames, frames, nullptr);
-		printStackFrames(frames, frameCount);
+
+		std::ostringstream out;
+		appendStackFrames(out, frames, frameCount);
+		return out.str();
 	}
 
 	USHORT captureExceptionStackTrace(EXCEPTION_POINTERS* exceptionPointers,
@@ -200,6 +203,22 @@ namespace
 		return frameCount;
 	}
 
+	std::string getExceptionStackTraceText(EXCEPTION_POINTERS* exceptionPointers)
+	{
+		void* frames[MaxStackFrames]{};
+		const USHORT frameCount
+			= captureExceptionStackTrace(exceptionPointers, frames, MaxStackFrames);
+
+		if (frameCount > 0)
+		{
+			std::ostringstream out;
+			appendStackFrames(out, frames, frameCount);
+			return out.str();
+		}
+
+		return getCurrentStackTraceText();
+	}
+
 	std::filesystem::path writeMiniDump(EXCEPTION_POINTERS* exceptionPointers)
 	{
 		std::filesystem::path crashDirectory = HOL::Paths::getCrashDirectory();
@@ -258,20 +277,37 @@ namespace
 		return dumpPath;
 	}
 
+	void emitCrashReport(const std::string& report, bool isFatal)
+	{
+		std::cerr << report;
+		if (!report.empty() && report.back() != '\n')
+		{
+			std::cerr << std::endl;
+		}
+
+		const char* title = isFatal ? "HandOfLesser Fatal Error" : "HandOfLesser Error";
+		MessageBoxA(nullptr,
+					report.c_str(),
+					title,
+					MB_OK | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST | MB_SYSTEMMODAL);
+	}
+
 	LONG WINAPI unhandledExceptionFilter(EXCEPTION_POINTERS* exceptionPointers)
 	{
 		if (exceptionPointers == nullptr || exceptionPointers->ExceptionRecord == nullptr)
 		{
-			std::cerr << "Fatal structured exception: no exception record available" << std::endl;
-			printCurrentStackTrace();
+			std::ostringstream out;
+			out << "Fatal structured exception: no exception record available" << std::endl;
+			out << getCurrentStackTraceText();
+			emitCrashReport(out.str(), true);
 			return EXCEPTION_EXECUTE_HANDLER;
 		}
 
 		const EXCEPTION_RECORD* record = exceptionPointers->ExceptionRecord;
-		std::cerr << "Fatal structured exception: "
-				  << getStructuredExceptionName(record->ExceptionCode) << " ("
-				  << FormatWindowsError(record->ExceptionCode) << ")" << std::endl;
-		std::cerr << "Exception address: " << formatAddress(record->ExceptionAddress) << std::endl;
+		std::ostringstream out;
+		out << "Fatal structured exception: " << getStructuredExceptionName(record->ExceptionCode)
+			<< " (" << FormatWindowsError(record->ExceptionCode) << ")" << std::endl;
+		out << "Exception address: " << formatAddress(record->ExceptionAddress) << std::endl;
 
 		if ((record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION
 			 || record->ExceptionCode == EXCEPTION_IN_PAGE_ERROR)
@@ -291,35 +327,28 @@ namespace
 				accessType = "execute";
 			}
 
-			std::cerr << "Access violation type: " << accessType << std::endl;
-			std::cerr << "Fault address: "
-					  << formatAddress(reinterpret_cast<void*>(record->ExceptionInformation[1]))
-					  << std::endl;
+			out << "Access violation type: " << accessType << std::endl;
+			out << "Fault address: "
+				<< formatAddress(reinterpret_cast<void*>(record->ExceptionInformation[1]))
+				<< std::endl;
 		}
 
-		void* frames[MaxStackFrames]{};
-		USHORT frameCount = captureExceptionStackTrace(exceptionPointers, frames, MaxStackFrames);
-		if (frameCount > 0)
-		{
-			printStackFrames(frames, frameCount);
-		}
-		else
-		{
-			printCurrentStackTrace();
-		}
+		out << getExceptionStackTraceText(exceptionPointers);
 
 		std::filesystem::path dumpPath = writeMiniDump(exceptionPointers);
 		if (!dumpPath.empty())
 		{
-			std::cerr << "Crash dump written to: " << dumpPath.string() << std::endl;
+			out << "Crash dump written to: " << dumpPath.string() << std::endl;
 		}
 
+		emitCrashReport(out.str(), true);
 		return EXCEPTION_EXECUTE_HANDLER;
 	}
 
 	void terminateHandler()
 	{
-		std::cerr << "Fatal error: std::terminate called" << std::endl;
+		std::ostringstream out;
+		out << "Fatal error: std::terminate called" << std::endl;
 
 		if (std::exception_ptr currentException = std::current_exception())
 		{
@@ -329,23 +358,24 @@ namespace
 			}
 			catch (const std::exception& ex)
 			{
-				std::cerr << "Unhandled C++ exception: " << ex.what() << std::endl;
+				out << "Unhandled C++ exception: " << ex.what() << std::endl;
 			}
 			catch (const std::string& message)
 			{
-				std::cerr << "Unhandled C++ exception: " << message << std::endl;
+				out << "Unhandled C++ exception: " << message << std::endl;
 			}
 			catch (const char* message)
 			{
-				std::cerr << "Unhandled C++ exception: " << message << std::endl;
+				out << "Unhandled C++ exception: " << message << std::endl;
 			}
 			catch (...)
 			{
-				std::cerr << "Unhandled C++ exception of unknown type" << std::endl;
+				out << "Unhandled C++ exception of unknown type" << std::endl;
 			}
 		}
 
-		printCurrentStackTrace();
+		out << getCurrentStackTraceText();
+		emitCrashReport(out.str(), true);
 		std::_Exit(1);
 	}
 } // namespace
@@ -360,13 +390,17 @@ void HOL::Windows::CrashHandler::install()
 void HOL::Windows::CrashHandler::logHandledException(const std::exception& ex)
 {
 	initializeSymbols();
-	std::cerr << "Fatal handled C++ exception: " << ex.what() << std::endl;
-	printCurrentStackTrace();
+	std::ostringstream out;
+	out << "Fatal handled C++ exception: " << ex.what() << std::endl;
+	out << getCurrentStackTraceText();
+	emitCrashReport(out.str(), true);
 }
 
 void HOL::Windows::CrashHandler::logHandledUnknownException()
 {
 	initializeSymbols();
-	std::cerr << "Fatal handled C++ exception: unknown type" << std::endl;
-	printCurrentStackTrace();
+	std::ostringstream out;
+	out << "Fatal handled C++ exception: unknown type" << std::endl;
+	out << getCurrentStackTraceText();
+	emitCrashReport(out.str(), true);
 }
