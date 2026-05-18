@@ -13,3 +13,4 @@ _deps
 .vs
 **/out
 **/output
+install/*.exe
