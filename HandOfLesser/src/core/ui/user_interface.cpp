@@ -868,41 +868,24 @@ void HOL::UserInterface::buildBindings()
 				b.proximityFinger = fingers[fingerIndex];
 			}
 
-			const std::array<settings::GripModifier, 3> modifiers = {
-				settings::GripModifier::None,
-				settings::GripModifier::Open,
-				settings::GripModifier::Closed};
-			int modifierIndex = 0;
-			for (int i = 0; i < static_cast<int>(modifiers.size()); i++)
+			bool requiresOpenHand = b.modifier == settings::GripModifier::Open;
+			if (ImGui::Checkbox("Open Hand", &requiresOpenHand))
 			{
-				if (modifiers[i] == b.modifier)
-				{
-					modifierIndex = i;
-					break;
-				}
+				b.modifier = requiresOpenHand ? settings::GripModifier::Open
+											  : settings::GripModifier::None;
 			}
 
-			const char* currentModifierLabel
-				= GestureBindings::gripModifierName(modifiers[modifierIndex]);
-			if (ImGui::BeginCombo("Modifier", currentModifierLabel))
+			bool requiresClosedHand = b.modifier == settings::GripModifier::Closed;
+			if (ImGui::Checkbox("Closed Hand", &requiresClosedHand))
 			{
-				for (int i = 0; i < static_cast<int>(modifiers.size()); i++)
-				{
-					const bool selected = modifierIndex == i;
-					if (ImGui::Selectable(
-							GestureBindings::gripModifierName(modifiers[i]), selected))
-					{
-						b.modifier = modifiers[i];
-						modifierIndex = i;
-					}
+				b.modifier = requiresClosedHand ? settings::GripModifier::Closed
+												: settings::GripModifier::None;
+			}
 
-					if (selected)
-					{
-						ImGui::SetItemDefaultFocus();
-					}
-				}
-
-				ImGui::EndCombo();
+			if (b.modifier != settings::GripModifier::None)
+			{
+				ImGui::SameLine();
+				ImGui::TextDisabled("(%s)", GestureBindings::gripModifierName(b.modifier));
 			}
 
 			ImGui::Separator();
