@@ -483,6 +483,11 @@ void HandOfLesserCore::doOpenXRStuff()
 
 void HOL::HandOfLesserCore::sendOscData()
 {
+	if (!Config.vrchat.sendOsc)
+	{
+		return;
+	}
+
 	if (Config.vrchat.sendDebugOsc)
 	{
 		this->mVrchatOSC.generateOscTestOutput();

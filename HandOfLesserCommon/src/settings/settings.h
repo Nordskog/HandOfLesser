@@ -133,7 +133,8 @@ namespace HOL
 
 		struct VRChatSettings
 		{
-			bool sendFull = false;
+			bool sendOsc = true;
+			bool sendFull = true;
 			bool sendAlternating = false;
 			bool sendPacked = true;
 

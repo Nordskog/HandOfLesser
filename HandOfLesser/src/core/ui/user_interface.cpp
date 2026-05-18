@@ -2124,27 +2124,31 @@ void UserInterface::buildVRChatOSCSettings()
 	ImGui::BeginChild(
 		"VRChatSettings", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
 
+	const HOL::settings::VRChatSettings vrchatDefaults;
+	Config.vrchat.sendFull = vrchatDefaults.sendFull;
+	Config.vrchat.sendAlternating = vrchatDefaults.sendAlternating;
+	Config.vrchat.sendPacked = vrchatDefaults.sendPacked;
+	Config.vrchat.interlacePacked = vrchatDefaults.interlacePacked;
+	Config.vrchat.useUnityHumanoidSplay = vrchatDefaults.useUnityHumanoidSplay;
+	Config.vrchat.alternateCurlTest = vrchatDefaults.alternateCurlTest;
+
 	ImGui::SeparatorText("VRChat");
 
-	ImGui::Checkbox("Send full", &Config.vrchat.sendFull);
-	ImGui::SameLine();
-	ImGui::Checkbox("Send Packed", &Config.vrchat.sendPacked);
-	ImGui::SameLine();
-	ImGui::Checkbox("Send Alternating", &Config.vrchat.sendAlternating);
-
-	ImGui::Checkbox("Interlace packed", &Config.vrchat.interlacePacked);
-	ImGui::Checkbox("Use Unity Humanoid Splay", &Config.vrchat.useUnityHumanoidSplay);
+	ImGui::Checkbox("Send OSC", &Config.vrchat.sendOsc);
+	// ImGui::Checkbox("Send full", &Config.vrchat.sendFull);
+	// ImGui::SameLine();
+	// ImGui::Checkbox("Send Packed", &Config.vrchat.sendPacked);
 
 	ImGui::Checkbox("Send OSC test data", &Config.vrchat.sendDebugOsc);
 
-	if (ImGui::InputInt("Packed Update Interval (ms)", &Config.vrchat.packedUpdateInterval))
-	{
-		// Should never be anything but 100, and definitely never less
-		if (Config.vrchat.packedUpdateInterval < 100)
-		{
-			Config.vrchat.packedUpdateInterval = 100;
-		}
-	}
+	// if (ImGui::InputInt("Packed Update Interval (ms)", &Config.vrchat.packedUpdateInterval))
+	// {
+	// 	// Should never be anything but 100, and definitely never less
+	// 	if (Config.vrchat.packedUpdateInterval < 100)
+	// 	{
+	// 		Config.vrchat.packedUpdateInterval = 100;
+	// 	}
+	// }
 
 	ImGui::SameLine();
 	if (rightAlignButton("Reset##VRChat"))
@@ -2155,8 +2159,6 @@ void UserInterface::buildVRChatOSCSettings()
 	if (Config.vrchat.sendDebugOsc)
 	{
 		ImGui::SeparatorText("OSC test data");
-		ImGui::Checkbox("Alternate curl test (requires interlace)",
-						&Config.vrchat.alternateCurlTest);
 		ImGui::SliderFloat("Curl", &Config.vrchat.curlDebug, -1, 1);
 		ImGui::SliderFloat("Splay", &Config.vrchat.splayDebug, -1, 1);
 	}

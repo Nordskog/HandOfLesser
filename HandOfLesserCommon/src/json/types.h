@@ -101,7 +101,8 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const VRChatSettings& settings)
 		{
-			j = {{"sendFull", settings.sendFull},
+			j = {{"sendOsc", settings.sendOsc},
+				 {"sendFull", settings.sendFull},
 				 {"sendAlternating", settings.sendAlternating},
 				 {"sendPacked", settings.sendPacked},
 				 {"interlacePacked", settings.interlacePacked},
@@ -115,6 +116,7 @@ namespace HOL
 
 		inline void from_json(const nlohmann::json& j, VRChatSettings& settings)
 		{
+			nlohmann::get_to_if_present(j, "sendOsc", settings.sendOsc);
 			nlohmann::get_to_if_present(j, "sendFull", settings.sendFull);
 			nlohmann::get_to_if_present(j, "sendAlternating", settings.sendAlternating);
 			nlohmann::get_to_if_present(j, "sendPacked", settings.sendPacked);
