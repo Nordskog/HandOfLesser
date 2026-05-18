@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include <HandOfLesserCommon.h>
 #include "src/core/settings_global.h"
+#include "src/core/ui/display_global.h"
 #include <src/core/HandOfLesserCore.h>
 
 namespace HOL
@@ -23,6 +24,13 @@ namespace HOL
 		this->mActiveDrawQueue = &this->mDrawSwap0;
 		this->mSwapQueue = &this->mDrawSwap1;
 		this->mDrawQueue = &this->mDrawSwap2;
+	}
+
+	ImU32 Visualizer::fadeColor(ImU32 baseColor, float alpha)
+	{
+		ImVec4 asFloat = ImGui::ColorConvertU32ToFloat4(baseColor);
+		asFloat.w *= std::clamp(alpha, 0.0f, 1.0f);
+		return ImGui::ColorConvertFloat4ToU32(asFloat);
 	}
 
 	void Visualizer::init()
@@ -100,6 +108,12 @@ namespace HOL
 		*/
 
 		calculateProjectionMatrix();
+
+		// Controllers
+		updateControllerTrails();
+		drawControllerTrails();
+
+		// General draw requests
 		drawLines();
 		drawPoints();
 		this->clearInternalDrawQueue(); // Leave clean slate for next frame
@@ -132,6 +146,8 @@ namespace HOL
 		ImGui::SameLine();
 		ImGui::Checkbox("Show Hand Joint Axes", &HOL::Config.visualizer.showHandTrackingJointAxes);
 		ImGui::Checkbox("Show Body Tracker Axes", &HOL::Config.visualizer.showBodyTrackerAxes);
+		ImGui::SameLine();
+		ImGui::Checkbox("Show Controller Trails", &HOL::Config.visualizer.showControllerPositionTrails);
 
 		ImVec2 uiBounds = ImVec2(0, ImGui::GetCursorScreenPos().y);
 		ImGui::SameLine(); // so we get the actual end position of the slider
@@ -177,6 +193,96 @@ namespace HOL
 													line.color,
 													line.width); // Red dot
 			}
+		}
+	}
+
+	void Visualizer::updateControllerTrails()
+	{
+		// Grabs the final position we send to steamvr.
+		// Note that this does not include the driver offset.
+
+		if (!HOL::Config.visualizer.showControllerPositionTrails)
+		{
+			clearControllerTrails();
+			return;
+		}
+
+		// Add current position
+		auto now = std::chrono::steady_clock::now();
+		for (int side = 0; side < HandSide_MAX; side++)
+		{
+			auto& trail = this->mControllerTrails[side];
+
+			// Get rid of older points
+			while (!trail.empty() && now - trail.front().time > ControllerTrailDuration)
+			{
+				trail.pop_front();
+			}
+
+			const auto& transform = HOL::display::HandTransform[side];
+			if (!transform.active || !transform.positionValid)
+			{
+				continue;
+			}
+
+			trail.push_back({transform.finalPose.position, now});
+		}
+	}
+
+	void Visualizer::drawControllerTrails()
+	{
+		if (!HOL::Config.visualizer.showControllerPositionTrails)
+		{
+			return;
+		}
+
+		auto now = std::chrono::steady_clock::now();
+		const ImU32 trailColors[] = {
+			IM_COL32(80, 180, 255, 220),
+			IM_COL32(255, 180, 80, 220),
+		};
+
+		for (int side = 0; side < HandSide_MAX; side++)
+		{
+			auto& trail = this->mControllerTrails[side];
+			if (trail.size() < 2)
+			{
+				continue;
+			}
+
+			for (size_t i = 1; i < trail.size(); i++)
+			{
+				float startAge = std::chrono::duration<float>(now - trail[i - 1].time).count()
+								 / std::chrono::duration<float>(ControllerTrailDuration).count();
+				float endAge = std::chrono::duration<float>(now - trail[i].time).count()
+							   / std::chrono::duration<float>(ControllerTrailDuration).count();
+				float segmentAlpha = 1.0f - ((startAge + endAge) * 0.5f);
+
+				// Fade older segments out so the freshest motion stands out at a glance.
+				ImGui::GetWindowDrawList()->AddLine(projectToScreen(trail[i - 1].position),
+													projectToScreen(trail[i].position),
+													fadeColor(trailColors[side], segmentAlpha),
+													2.0f);
+			}
+
+			for (const auto& point : trail)
+			{
+				float pointAge = std::chrono::duration<float>(now - point.time).count()
+								 / std::chrono::duration<float>(ControllerTrailDuration).count();
+				float pointAlpha = 1.0f - pointAge;
+				ImGui::GetWindowDrawList()->AddCircleFilled(
+					projectToScreen(point.position),
+					2.5f,
+					fadeColor(trailColors[side], pointAlpha));
+			}
+		}
+	}
+
+	void Visualizer::clearControllerTrails()
+	{
+		for (auto& trail : this->mControllerTrails)
+		{
+			trail.clear();
 		}
 	}
 

@@ -130,13 +130,16 @@ namespace HOL
 		inline void to_json(nlohmann::json& j, const VisualizerSettings& settings)
 		{
 			j = {{"followLeftHand", settings.followLeftHand},
-				 {"followRightHand", settings.followRightHand}};
+				 {"followRightHand", settings.followRightHand},
+				 {"showControllerPositionTrails", settings.showControllerPositionTrails}};
 		}
 
 		inline void from_json(const nlohmann::json& j, VisualizerSettings& settings)
 		{
 			nlohmann::get_to_if_present(j, "followLeftHand", settings.followLeftHand);
 			nlohmann::get_to_if_present(j, "followRightHand", settings.followRightHand);
+			nlohmann::get_to_if_present(
+				j, "showControllerPositionTrails", settings.showControllerPositionTrails);
 		}
 
 		inline void to_json(nlohmann::json& j, const DebugSettings& settings)

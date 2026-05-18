@@ -159,6 +159,7 @@ namespace HOL
 			bool showHandTrackingPalmAxes = false;
 			bool showHandTrackingJointAxes = false;
 			bool showBodyTrackerAxes = false;
+			bool showControllerPositionTrails = false;
 		};
 
 		struct DebugSettings

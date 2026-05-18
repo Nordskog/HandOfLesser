@@ -3,8 +3,10 @@
 #include "imgui.h"
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <vector>
+#include <chrono>
+#include <deque>
 #include <mutex>
+#include <vector>
 
 namespace HOL
 {
@@ -27,6 +29,12 @@ namespace HOL
 	{
 		std::vector<Point> points;
 		std::vector<Line> lines;
+	};
+
+	struct TimedTrailPoint
+	{
+		Eigen::Vector3f position;
+		std::chrono::steady_clock::time_point time;
 	};
 
 	class Visualizer
@@ -55,8 +63,14 @@ namespace HOL
 		void clearDrawQueue();	// before drawing ( frame start )
 
 	private:
+		static constexpr std::chrono::seconds ControllerTrailDuration{3};
+		static ImU32 fadeColor(ImU32 baseColor, float alpha);
+
 		void drawPoints();
 		void drawLines();
+		void updateControllerTrails();
+		void drawControllerTrails();
+		void clearControllerTrails();
 		void swapInnerDrawQueue(); // before drawing
 		void clearInternalDrawQueue(); // before drawing
 
@@ -94,6 +108,8 @@ namespace HOL
 		DrawQueue mDrawSwap0;
 		DrawQueue mDrawSwap1;
 		DrawQueue mDrawSwap2;
+
+		std::deque<TimedTrailPoint> mControllerTrails[2];
 
 		bool mIsActive = false;
 
