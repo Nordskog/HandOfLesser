@@ -23,6 +23,13 @@ public:
 	bool active = false;
 
 private:
+	struct StoredPalmTransform
+	{
+		Eigen::Vector3f relativePos = Eigen::Vector3f::Zero();
+		Eigen::Quaternionf relativeRot = Eigen::Quaternionf::Identity();
+		bool valid = false;
+	};
+
 	void shutdown();
 	void calculateRelativeTransform(const XrBodyJointLocationFB& baseJoint,
 									const XrBodyJointLocationFB& childJoint,
@@ -36,12 +43,14 @@ private:
 	void preservePalmPose(HandSide side);
 	bool canUseArmTrackingAnchor() const;
 	void generateMissingPalmJoint(HandSide side);
+	void updateTrackedPalmTransform(HandSide side, XrBodyJointFB anchorJoint, XrTime time);
 
 	Eigen::Quaternionf fixOculusJointOrientation(const Eigen::Vector3f& currentJointPos,
 												 const Eigen::Vector3f& nextJointPos,
 												 const Eigen::Quaternionf& bogusOrientation);
-	XrBodyJointLocationFB mLastTrackedPalms[2]{};
-	XrBodyJointLocationFB mLastTrackedAnchors[2]{};
+	StoredPalmTransform mStoredPalmTransforms[2]{};
+	XrTime mHandTrackingAcquiredTime[2]{};
+	bool mWasHandTrackingTracked[2]{};
 
 	XrBodyTrackerFB mBodyTracker = nullptr;
 	XrPath mInputSourcePath;

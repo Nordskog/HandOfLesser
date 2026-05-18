@@ -89,16 +89,15 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		auto& leftMetacarpal = mJointLocations[XR_BODY_JOINT_LEFT_HAND_MIDDLE_METACARPAL_FB];
 		if (leftMetacarpal.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 		{
-			// Hand tracking is active - save current palm and whichever body anchor
-			// we will use if hand tracking is later lost.
-			mLastTrackedPalms[(int)HandSide::LeftHand]
-				= mJointLocations[XR_BODY_JOINT_LEFT_HAND_PALM_FB];
-			mLastTrackedAnchors[(int)HandSide::LeftHand]
-				= mJointLocations[useArmTrackingAnchor ? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
-													   : XR_BODY_JOINT_CHEST_FB];
+			updateTrackedPalmTransform(HandSide::LeftHand,
+									 useArmTrackingAnchor ? XR_BODY_JOINT_LEFT_ARM_LOWER_FB
+														  : XR_BODY_JOINT_CHEST_FB,
+									 time);
 		}
 		else
 		{
+			mHandTrackingAcquiredTime[(int)HandSide::LeftHand] = 0;
+			mWasHandTrackingTracked[(int)HandSide::LeftHand] = false;
 			preservePalmPose(HandSide::LeftHand);
 		}
 
@@ -106,16 +105,15 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		auto& rightMetacarpal = mJointLocations[XR_BODY_JOINT_RIGHT_HAND_MIDDLE_METACARPAL_FB];
 		if (rightMetacarpal.locationFlags & XR_SPACE_LOCATION_POSITION_TRACKED_BIT)
 		{
-			// Hand tracking is active - save current palm and whichever body anchor
-			// we will use if hand tracking is later lost.
-			mLastTrackedPalms[(int)HandSide::RightHand]
-				= mJointLocations[XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
-			mLastTrackedAnchors[(int)HandSide::RightHand]
-				= mJointLocations[useArmTrackingAnchor ? XR_BODY_JOINT_RIGHT_ARM_LOWER_FB
-														: XR_BODY_JOINT_CHEST_FB];
+			updateTrackedPalmTransform(HandSide::RightHand,
+									 useArmTrackingAnchor ? XR_BODY_JOINT_RIGHT_ARM_LOWER_FB
+														  : XR_BODY_JOINT_CHEST_FB,
+									 time);
 		}
 		else
 		{
+			mHandTrackingAcquiredTime[(int)HandSide::RightHand] = 0;
+			mWasHandTrackingTracked[(int)HandSide::RightHand] = false;
 			preservePalmPose(HandSide::RightHand);
 		}
 	}
@@ -152,35 +150,79 @@ void OpenXRBody::preservePalmPose(HandSide side)
 											: XR_BODY_JOINT_RIGHT_ARM_LOWER_FB)
 			  : XR_BODY_JOINT_CHEST_FB;
 
-	XrBodyJointLocationFB& lastAnchor = this->mLastTrackedAnchors[(int)side];
-	XrBodyJointLocationFB& lastPalm = this->mLastTrackedPalms[(int)side];
-
 	XrBodyJointLocationFB& currentAnchor = this->mJointLocations[anchorJoint];
+	StoredPalmTransform& storedTransform = this->mStoredPalmTransforms[(int)side];
 
 	XrBodyJointLocationFB& currentPalm
 		= this->mJointLocations[side == HandSide::LeftHand ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
 														   : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
 
-	if (!(lastAnchor.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
-		|| !(lastAnchor.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
-		|| !(lastPalm.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
-		|| !(lastPalm.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+	if (!storedTransform.valid
 		|| !(currentAnchor.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
 		|| !(currentAnchor.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 	{
 		return;
 	}
 
-	Eigen::Vector3f relativePos;
-	Eigen::Quaternionf relativeRot;
-
-	calculateRelativeTransform(lastAnchor, lastPalm, relativePos, relativeRot);
-	applyRelativeTransform(currentAnchor, currentPalm, relativePos, relativeRot);
+	applyRelativeTransform(
+		currentAnchor, currentPalm, storedTransform.relativePos, storedTransform.relativeRot);
 
 	currentPalm.locationFlags |= XR_SPACE_LOCATION_POSITION_VALID_BIT;
 	currentPalm.locationFlags |= XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
 	currentPalm.locationFlags &= ~XR_SPACE_LOCATION_POSITION_TRACKED_BIT;
 	currentPalm.locationFlags &= ~XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT;
+}
+
+void OpenXRBody::updateTrackedPalmTransform(HandSide side, XrBodyJointFB anchorJoint, XrTime time)
+{
+	XrBodyJointLocationFB& currentAnchor = this->mJointLocations[anchorJoint];
+	XrBodyJointLocationFB& currentPalm
+		= this->mJointLocations[side == HandSide::LeftHand ? XR_BODY_JOINT_LEFT_HAND_PALM_FB
+														   : XR_BODY_JOINT_RIGHT_HAND_PALM_FB];
+	StoredPalmTransform& storedTransform = this->mStoredPalmTransforms[(int)side];
+
+	if (!(currentAnchor.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+		|| !(currentAnchor.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)
+		|| !(currentPalm.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+		|| !(currentPalm.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
+	{
+		return;
+	}
+
+	if (!mWasHandTrackingTracked[(int)side])
+	{
+		// Start a fresh acquisition window the first frame tracked hand data comes back.
+		mHandTrackingAcquiredTime[(int)side] = time;
+		mWasHandTrackingTracked[(int)side] = true;
+	}
+
+	Eigen::Vector3f currentRelativePos;
+	Eigen::Quaternionf currentRelativeRot;
+	calculateRelativeTransform(currentAnchor, currentPalm, currentRelativePos, currentRelativeRot);
+
+	if (!storedTransform.valid)
+	{
+		storedTransform.relativePos = currentRelativePos;
+		storedTransform.relativeRot = currentRelativeRot;
+		storedTransform.valid = true;
+		return;
+	}
+
+	float blendAlpha = 1.0f;
+	float blendDurationSeconds = HOL::Config.steamvr.handTrackingResumeBlendMS / 1000.0f;
+	if (blendDurationSeconds > 0.0f && mHandTrackingAcquiredTime[(int)side] > 0)
+	{
+		float elapsedSeconds
+			= (float)(time - mHandTrackingAcquiredTime[(int)side]) / 1000000000.0f;
+		blendAlpha = std::clamp(elapsedSeconds / blendDurationSeconds, 0.0f, 1.0f);
+	}
+
+	// Blend newly reacquired tracked data into the stored fallback transform so a bogus
+	// one-frame hand pose cannot immediately overwrite the preserved wrist-relative pose.
+	storedTransform.relativePos = storedTransform.relativePos
+								  + blendAlpha * (currentRelativePos - storedTransform.relativePos);
+	storedTransform.relativeRot
+		= storedTransform.relativeRot.slerp(blendAlpha, currentRelativeRot);
 }
 
 bool OpenXRBody::canUseArmTrackingAnchor() const
