@@ -2,9 +2,11 @@
 
 #include <array>
 #include <string>
+#include <unordered_set>
 #include <HandOfLesserCommon.h>
 #include <GLFW/glfw3.h>
 #include "ui_graphics.h"
+#include "ui_gesture_debug.h"
 #include "visualizer.h"
 
 namespace HOL
@@ -46,6 +48,7 @@ namespace HOL
 		int mEditBindingIndex = -1;
 		settings::GestureBinding mEditBinding;
 		bool mShowingEditForm = false;
+		std::unordered_set<int> mExpandedBindingDebugRows;
 
 		void updateStyles(float scale);
 

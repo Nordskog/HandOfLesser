@@ -145,6 +145,31 @@ namespace HOL
 		return this->mParameters;
 	}
 
+	const ActionData& BaseAction::getActionData() const
+	{
+		return this->mActionData;
+	}
+
+	const std::shared_ptr<BaseGesture::Gesture>& BaseAction::getTriggerGesture() const
+	{
+		return this->mTriggerGesture;
+	}
+
+	const std::shared_ptr<BaseGesture::Gesture>& BaseAction::getHoldGesture() const
+	{
+		return this->mHoldGesture;
+	}
+
+	const std::shared_ptr<BaseGesture::Gesture>& BaseAction::getTapGesture() const
+	{
+		return this->mTapGesture;
+	}
+
+	bool BaseAction::usesHoldGesture() const
+	{
+		return this->mUseHoldGesture;
+	}
+
 	std::chrono::milliseconds BaseAction::timeSinceDown()
 	{
 		auto currentTime = std::chrono::steady_clock::now();

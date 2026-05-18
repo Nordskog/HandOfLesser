@@ -52,6 +52,11 @@ namespace HOL
 
 		// Editable!
 		ActionParameters& getParameters();
+		const ActionData& getActionData() const;
+		const std::shared_ptr<BaseGesture::Gesture>& getTriggerGesture() const;
+		const std::shared_ptr<BaseGesture::Gesture>& getHoldGesture() const;
+		const std::shared_ptr<BaseGesture::Gesture>& getTapGesture() const;
+		bool usesHoldGesture() const;
 
 		std::chrono::milliseconds timeSinceDown();
 

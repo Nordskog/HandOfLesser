@@ -530,10 +530,12 @@ void HOL::UiGraphics::drawBindingPreview(
 	float scale, const settings::GestureBinding& binding, bool compactSequence)
 {
 	const std::vector<BindingPreviewGlyph> glyphs = buildPreviewGlyphs(binding);
+	const float previewStartY = ImGui::GetCursorPosY();
 	for (int i = 0; i < (int)glyphs.size(); i++)
 	{
 		const BindingPreviewGlyph& glyph = glyphs[i];
 		ImGui::PushID(i);
+		ImGui::SetCursorPosY(previewStartY);
 		drawInputGestureHandGlyph(scale,
 								 binding.side,
 								 glyph.fingerHighlights,
@@ -548,8 +550,14 @@ void HOL::UiGraphics::drawBindingPreview(
 			ImGui::SameLine();
 			if (!compactSequence)
 			{
+				ImGui::SetCursorPosY(previewStartY + scaleSize(scale, 42.0f));
 				ImGui::TextDisabled("->");
 				ImGui::SameLine();
+				ImGui::SetCursorPosY(previewStartY);
+			}
+			else
+			{
+				ImGui::SetCursorPosY(previewStartY);
 			}
 		}
 	}

@@ -39,6 +39,7 @@ namespace HOL
 		void saveSettings();
 		void loadSettings();
 		void rebuildActions();
+		std::shared_ptr<BaseAction> getActionForBindingIndex(size_t bindingIndex) const;
 		bool isDriverConnected() const;
 
 		virtual std::vector<const char*> getRequiredExtensions();

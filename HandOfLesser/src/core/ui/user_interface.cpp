@@ -655,6 +655,7 @@ void HOL::UserInterface::buildBindings()
 		if (ImGui::Button("OK##restoreBindings", ImVec2(btnW, 0)))
 		{
 			Config.input.gestureBindings = settings::defaultGestureBindings();
+			mExpandedBindingDebugRows.clear();
 			ImGui::CloseCurrentPopup();
 			rebuildActions = true;
 		}
@@ -749,13 +750,47 @@ void HOL::UserInterface::buildBindings()
 			if (ImGui::Button("Delete"))
 			{
 				Config.input.gestureBindings.erase(Config.input.gestureBindings.begin() + i);
+				std::unordered_set<int> updatedExpandedRows;
+				for (int expandedIndex : mExpandedBindingDebugRows)
+				{
+					if (expandedIndex < i)
+					{
+						updatedExpandedRows.insert(expandedIndex);
+					}
+					else if (expandedIndex > i)
+					{
+						updatedExpandedRows.insert(expandedIndex - 1);
+					}
+				}
+				mExpandedBindingDebugRows = std::move(updatedExpandedRows);
 				rebuildActions = true;
 				deleted = true;
+			}
+			ImGui::SameLine();
+			const bool expanded = mExpandedBindingDebugRows.contains(i);
+			if (ImGui::ArrowButton(
+					"##debugExpand", expanded ? ImGuiDir_Down : ImGuiDir_Right))
+			{
+				if (expanded)
+				{
+					mExpandedBindingDebugRows.erase(i);
+				}
+				else
+				{
+					mExpandedBindingDebugRows.insert(i);
+				}
 			}
 
 			ImGui::EndGroup();
 
-			const float leftHeight = ImGui::GetItemRectSize().y;
+			if (!deleted && mExpandedBindingDebugRows.contains(i))
+			{
+				ImGui::Spacing();
+				UiGestureDebug::drawActionDebug(
+					this->mScale, HOL::HandOfLesserCore::Current->getActionForBindingIndex(i));
+			}
+
+			const float leftHeight = ImGui::GetCursorPosY() - rowStartY;
 			if (!deleted && previewWidth > 0.0f)
 			{
 				const float rightEdgeX = ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x;

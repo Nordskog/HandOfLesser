@@ -6,6 +6,11 @@ namespace HOL::Gesture::InverseGesture
 	void Gesture::setGesture(std::shared_ptr<BaseGesture::Gesture> gesture)
 	{
 		this->mGesture = gesture;
+		this->mSubGestures.clear();
+		if (gesture)
+		{
+			this->mSubGestures.push_back(gesture);
+		}
 	}
 
 	void Gesture::setBinaryThreshold(float threshold)

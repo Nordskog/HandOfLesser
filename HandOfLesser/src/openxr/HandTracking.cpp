@@ -32,9 +32,13 @@ void HandTracking::initHands(xr::UniqueDynamicSession& session)
 void HOL::OpenXR::HandTracking::rebuildActions()
 {
 	this->mActions.clear();
+	this->mActionsByBindingIndex.clear();
+	this->mActionsByBindingIndex.resize(Config.input.gestureBindings.size());
 
-	for (const auto& binding : Config.input.gestureBindings)
+	for (size_t i = 0; i < Config.input.gestureBindings.size(); i++)
 	{
+		const auto& binding = Config.input.gestureBindings[i];
+
 		// Skip system aim bindings when the runtime doesn't support it
 		if (binding.kind == settings::GestureKind::SystemAim
 			&& !HOL::state::Runtime.supportsHandTrackingAim)
@@ -46,8 +50,19 @@ void HOL::OpenXR::HandTracking::rebuildActions()
 		if (action)
 		{
 			this->mActions.push_back(action);
+			this->mActionsByBindingIndex[i] = action;
 		}
 	}
+}
+
+std::shared_ptr<BaseAction> HOL::OpenXR::HandTracking::getActionForBindingIndex(size_t bindingIndex) const
+{
+	if (bindingIndex >= this->mActionsByBindingIndex.size())
+	{
+		return nullptr;
+	}
+
+	return this->mActionsByBindingIndex[bindingIndex];
 }
 
 void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker)

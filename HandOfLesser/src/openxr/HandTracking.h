@@ -26,6 +26,7 @@ namespace HOL::OpenXR
 		OpenXRHand* getHand(HOL::HandSide side);
 
 		void rebuildActions();
+		std::shared_ptr<BaseAction> getActionForBindingIndex(size_t bindingIndex) const;
 
 	private:
 		void initHands(xr::UniqueDynamicSession& session);
@@ -35,5 +36,6 @@ namespace HOL::OpenXR
 		OpenXRHand mRightHand;
 
 		std::vector<std::shared_ptr<BaseAction>> mActions;
+		std::vector<std::shared_ptr<BaseAction>> mActionsByBindingIndex;
 	};
 } // namespace HOL::OpenXR

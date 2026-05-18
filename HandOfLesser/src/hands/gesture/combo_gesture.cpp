@@ -52,5 +52,6 @@ namespace HOL::Gesture
 	void ComboGesture::Gesture::addGesture(std::shared_ptr<BaseGesture::Gesture> gesture)
 	{
 		this->mComboGestures.push_back(gesture);
+		this->mSubGestures.push_back(gesture);
 	}
 }

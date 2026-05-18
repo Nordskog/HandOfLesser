@@ -77,7 +77,7 @@ namespace HOL::Gesture
 	void ChainGesture::Gesture::addGesture(std::shared_ptr<BaseGesture::Gesture> gesture)
 	{
 		this->mChainedGestures.push_back(gesture);
+		this->mSubGestures.push_back(gesture);
 	}
 
 }
-

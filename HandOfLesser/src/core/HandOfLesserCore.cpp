@@ -180,6 +180,11 @@ void HOL::HandOfLesserCore::rebuildActions()
 	this->mHandTracking.rebuildActions();
 }
 
+std::shared_ptr<BaseAction> HOL::HandOfLesserCore::getActionForBindingIndex(size_t bindingIndex) const
+{
+	return this->mHandTracking.getActionForBindingIndex(bindingIndex);
+}
+
 bool HOL::HandOfLesserCore::shouldTerminate() const
 {
 	return this->mShouldTerminate.load();
