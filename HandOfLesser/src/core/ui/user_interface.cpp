@@ -582,8 +582,6 @@ void HOL::UserInterface::buildBindings()
 		"Changes apply immediately.");
 
 	ImGui::SeparatorText("Joystick Reference");
-	ImGui::TextWrapped(
-		"Choose the reference direction used by the left-hand movement gesture.");
 
 	const bool bodyTrackingAvailable = HOL::state::Runtime.supportsBodyTracking;
 	const bool chestReferenceAvailable
