@@ -2,11 +2,14 @@
 #include "core/HandOfLesserCore.h"
 #include "steamvr/steamvr_setup.h"
 #include "windows/crash_handler.h"
+#include "windows/console_log.h"
 #include <HandOfLesserCommon.h>
 #include <iostream>
 
 int main(int argc, char* argv[])
 {
+	HOL::Windows::ConsoleLog::install();
+
 	int exitCode = 0;
 	if (HOL::SteamVR::handleUtilityCommandLine(argc, argv, exitCode))
 	{

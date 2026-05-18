@@ -56,4 +56,9 @@ namespace HOL::Paths
 	{
 		return ensureAppDataDirectory() / "crashes";
 	}
+
+	inline std::filesystem::path getLogFilePath()
+	{
+		return ensureAppDataDirectory() / "HandOfLesser.log";
+	}
 } // namespace HOL::Paths

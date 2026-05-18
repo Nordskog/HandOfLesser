@@ -17,6 +17,7 @@
 	src/vrchat/vrchat_osc.cpp
 	src/openxr/openxr_state.cpp
 	src/windows/crash_handler.cpp
+	src/windows/console_log.cpp
 	src/windows/windows_utils.cpp
 	src/core/ui/visualizer.cpp
 	src/openxr/xr_hand_utils.cpp
