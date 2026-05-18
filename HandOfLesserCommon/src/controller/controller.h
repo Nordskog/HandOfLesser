@@ -47,7 +47,6 @@ namespace HOL
 	{
 		ZERO,
 		RoughyVRChatHand,
-		RoughyVRChatHand2,
 		ControllerOffsetPreset_MAX
 	};
 
