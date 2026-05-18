@@ -629,7 +629,22 @@ void HOL::UserInterface::buildBindings()
 					   true,
 					   "");
 
-	
+	ImGui::SeparatorText("Gesture Timing");
+	int chainGestureTimeoutMS = Config.input.chainGestureTimeoutMS;
+	if (ImGui::InputInt("Sequence Timeout (ms)", &chainGestureTimeoutMS))
+	{
+		Config.input.chainGestureTimeoutMS = std::max(50, chainGestureTimeoutMS);
+		rebuildActions = true;
+	}
+
+	int holdDurationMS = Config.input.holdDurationMS;
+	if (ImGui::InputInt("Hold Duration (ms)", &holdDurationMS))
+	{
+		Config.input.holdDurationMS = std::max(50, holdDurationMS);
+		rebuildActions = true;
+	}
+
+
 	ImGui::SeparatorText("Gesture Bindings");
 
 	if (ImGui::Button("Add Binding"))
@@ -930,35 +945,52 @@ void HOL::UserInterface::buildBindings()
 
 		if (b.kind == settings::GestureKind::Chain)
 		{
-			const std::array<settings::ChainDirection, 2> directions = {
-				settings::ChainDirection::Ascending,
-				settings::ChainDirection::Descending};
-			int directionIndex = (b.chainDirection == settings::ChainDirection::Descending) ? 1 : 0;
-			const char* currentDirectionLabel
-				= GestureBindings::chainDirectionName(directions[directionIndex]);
-			if (ImGui::BeginCombo("Direction", currentDirectionLabel))
+			int chainLength = b.chainLength;
+			if (ImGui::SliderInt(
+					"Tap Count",
+					&chainLength,
+					1,
+					settings::GestureBinding::MaxChainLength))
 			{
-				for (int i = 0; i < static_cast<int>(directions.size()); i++)
-				{
-					const bool selected = directionIndex == i;
-					if (ImGui::Selectable(
-							GestureBindings::chainDirectionName(directions[i]), selected))
-					{
-						b.chainDirection = directions[i];
-						directionIndex = i;
-					}
+				b.chainLength = chainLength;
+			}
 
-					if (selected)
+			static const char* fingerNames[] = {"Index", "Middle", "Ring", "Little"};
+			for (int i = 0; i < b.chainLength; i++)
+			{
+				int fingerIndex = 0;
+				for (int finger = 0; finger < 4; finger++)
+				{
+					if (static_cast<int>(b.chainFingers[i]) == finger)
 					{
-						ImGui::SetItemDefaultFocus();
+						fingerIndex = finger;
+						break;
 					}
 				}
 
-				ImGui::EndCombo();
+				std::string label = "Tap " + std::to_string(i + 1);
+				if (ImGui::Combo(
+						label.c_str(), &fingerIndex, fingerNames, IM_ARRAYSIZE(fingerNames)))
+				{
+					b.chainFingers[i] = static_cast<FingerType>(fingerIndex);
+				}
 			}
 
 			ImGui::Separator();
 		}
+
+		bool useHold = settings::hasGestureModifier(b.modifiers, settings::GestureModifier::Hold);
+		if (ImGui::Checkbox("Hold", &useHold))
+		{
+			settings::setGestureModifier(b.modifiers, settings::GestureModifier::Hold, useHold);
+		}
+		if (useHold)
+		{
+			ImGui::SameLine();
+			ImGui::TextDisabled("(%d ms)", Config.input.holdDurationMS);
+		}
+
+		ImGui::Separator();
 
 		std::vector<GestureBindings::InputTargetOption> compatibleTargets;
 		for (const auto& option : GestureBindings::inputTargetOptions())

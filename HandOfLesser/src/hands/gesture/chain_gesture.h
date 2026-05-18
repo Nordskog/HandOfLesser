@@ -10,7 +10,7 @@ namespace HOL::Gesture::ChainGesture
 {
 	struct Parameters
 	{
-		std::chrono::milliseconds maxDelay;
+		std::chrono::milliseconds maxDelay = 500ms;
 	};
 
 	class Gesture : public BaseGesture::Gesture
@@ -32,10 +32,11 @@ namespace HOL::Gesture::ChainGesture
 
 	private:
 		std::vector<std::shared_ptr<BaseGesture::Gesture>> mChainedGestures;
-		std::chrono::milliseconds mMaxDelay = 500ms;
 		std::chrono::steady_clock::time_point mLastActivation;
 		int mCurrentGestureIndex = 0; // Iterate as each gesture is activated
 		bool mActivated = false;
+		bool mCurrentGesturePressed = false;
+		bool mRequireCurrentGestureRelease = false;
 
 	protected:
 		float evaluateInternal(GestureData data) override;

@@ -3,6 +3,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <cstdint>
+#include <array>
 #include <src/controller/controller.h>
 #include <map>
 #include <string>
@@ -180,23 +181,17 @@ namespace HOL
 		{
 			None = 0,
 			Proximity, // Touch thumb + one other finger
-			Chain,     // Touch fingers in sequence
+			Chain,     // Tap a configurable finger sequence
 			Grip,      // Curl middle+ring+little
 			SystemAim  // Oculus system gesture (head-facing)
-		};
-
-		// Chain direction (for Chain gesture kind)
-		enum class ChainDirection
-		{
-			Ascending = 0,  // Index -> Middle -> Ring -> Little
-			Descending      // Little -> Ring -> Middle -> Index
 		};
 
 		enum class GestureModifier : uint32_t
 		{
 			ClosedHand = 1 << 0,
-			InFrontOfUser = 1 << 1,
-			LookingAtHand = 1 << 2
+			Hold = 1 << 1,
+			InFrontOfUser = 1 << 2,
+			LookingAtHand = 1 << 3
 		};
 
 		inline bool hasGestureModifier(uint32_t modifiers, GestureModifier modifier)
@@ -246,6 +241,8 @@ namespace HOL
 		// A single configurable gesture binding
 		struct GestureBinding
 		{
+			static constexpr int MaxChainLength = 4;
+
 			bool enabled = true;
 			HOL::HandSide side = HOL::LeftHand;
 
@@ -253,9 +250,13 @@ namespace HOL
 			GestureKind kind = GestureKind::None;
 			HOL::FingerType proximityFinger
 				= HOL::FingerIndex;         // Finger for Proximity kind (Index/Middle/Ring/Little)
-			ChainDirection chainDirection
-				= ChainDirection::Descending; // Direction for Chain kind
-			uint32_t modifiers = 0; // Proximity modifiers. ClosedHand is currently the only active one.
+			std::array<HOL::FingerType, MaxChainLength> chainFingers = {
+				HOL::FingerIndex,
+				HOL::FingerMiddle,
+				HOL::FingerRing,
+				HOL::FingerLittle};
+			int chainLength = MaxChainLength;
+			uint32_t modifiers = 0; // Gesture modifiers.
 
 			// Output target — determines action/sink type.
 			InputTarget target = InputTarget::None;
@@ -265,6 +266,8 @@ namespace HOL
 		{
 			bool sendOscInput = true;
 			JoystickReferenceMode joystickReferenceMode = JoystickReferenceMode::Head;
+			int chainGestureTimeoutMS = 500;
+			int holdDurationMS = 2000;
 			std::vector<GestureBinding> gestureBindings = defaultGestureBindings();
 		};
 

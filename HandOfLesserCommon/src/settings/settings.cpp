@@ -39,32 +39,38 @@ namespace HOL::settings
 			addBinding(b);
 		}
 
-		// Y (VRChat menu) — Left hand, Descending chain
+		// Y (VRChat menu) — Left hand, Ring -> Middle -> Index
 		{
 			GestureBinding b;
 			b.side = HOL::LeftHand;
 			b.kind = GestureKind::Chain;
-			b.chainDirection = ChainDirection::Descending;
+			b.chainFingers = {
+				HOL::FingerRing, HOL::FingerMiddle, HOL::FingerIndex, HOL::FingerLittle};
+			b.chainLength = 3;
 			b.target = InputTarget::Y;
 			addBinding(b);
 		}
 
-		// X (VRChat mute) — Left hand, Ascending chain
+		// X (VRChat mute) — Left hand, Index -> Middle -> Ring
 		{
 			GestureBinding b;
 			b.side = HOL::LeftHand;
 			b.kind = GestureKind::Chain;
-			b.chainDirection = ChainDirection::Ascending;
+			b.chainFingers = {
+				HOL::FingerIndex, HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle};
+			b.chainLength = 3;
 			b.target = InputTarget::X;
 			addBinding(b);
 		}
 
-		// Toggle SteamVR Input — Right hand, Descending chain
+		// Toggle SteamVR Input — Right hand, Ring -> Middle -> Index
 		{
 			GestureBinding b;
 			b.side = HOL::RightHand;
 			b.kind = GestureKind::Chain;
-			b.chainDirection = ChainDirection::Descending;
+			b.chainFingers = {
+				HOL::FingerRing, HOL::FingerMiddle, HOL::FingerIndex, HOL::FingerLittle};
+			b.chainLength = 3;
 			b.target = InputTarget::Toggle_SteamVRInput;
 			addBinding(b);
 		}

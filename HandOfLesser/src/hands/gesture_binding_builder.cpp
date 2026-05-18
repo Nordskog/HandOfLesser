@@ -12,12 +12,14 @@
 #include "src/hands/gesture/chain_gesture.h"
 #include "src/hands/gesture/combo_gesture.h"
 #include "src/hands/gesture/finger_curl_gesture.h"
+#include "src/hands/gesture/hold_gesture.h"
 #include "src/hands/gesture/inverse_gesture.h"
 #include "src/hands/gesture/open_hand_pinch_gesture.h"
 #include "src/hands/gesture/proximity_gesture.h"
 #include "src/hands/input/settings_toggle_input.h"
 #include "src/hands/input/steamvr_bool_input.h"
 #include "src/hands/input/steamvr_float_input.h"
+#include "src/core/settings_global.h"
 #include "src/steamvr/input_wrapper.h"
 
 namespace
@@ -30,7 +32,6 @@ namespace
 	using HOL::HandSide;
 	using HOL::HolSetting;
 	using HOL::InputType;
-	using HOL::settings::ChainDirection;
 	using HOL::settings::GestureBinding;
 	using HOL::settings::GestureKind;
 	using HOL::settings::GestureModifier;
@@ -150,23 +151,39 @@ namespace
 		return curlCombo;
 	}
 
+	bool usesHold(const GestureBinding& binding)
+	{
+		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::Hold);
+	}
+
+	bool usesClosedHand(const GestureBinding& binding)
+	{
+		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::ClosedHand);
+	}
+
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithHold(
+		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture)
+	{
+		auto hold = HOL::Gesture::HoldGesture::Gesture::Create();
+		hold->parameters.duration = std::chrono::milliseconds(HOL::Config.input.holdDurationMS);
+		hold->setGesture(gesture);
+		return hold;
+	}
+
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildChainGesture(
-		HandSide side, ChainDirection direction)
+		const GestureBinding& binding)
 	{
 		auto chain = HOL::Gesture::ChainGesture::Gesture::Create();
-		std::array<HOL::FingerType, 4> fingers = {
-			FingerIndex, FingerMiddle, FingerRing, FingerLittle};
+		chain->parameters.maxDelay
+			= std::chrono::milliseconds(HOL::Config.input.chainGestureTimeoutMS);
+		int chainLength = std::clamp(binding.chainLength, 1, GestureBinding::MaxChainLength);
 
-		if (direction == ChainDirection::Descending)
+		for (int i = 0; i < chainLength; i++)
 		{
-			std::reverse(fingers.begin(), fingers.end());
-		}
-
-		for (HOL::FingerType finger : fingers)
-		{
+			HOL::FingerType finger = binding.chainFingers[i];
 			auto pinch = HOL::Gesture::OpenHandPinchGesture::Gesture::Create();
 			pinch->parameters.pinchFinger = finger;
-			pinch->parameters.side = side;
+			pinch->parameters.side = binding.side;
 			pinch->setup();
 			chain->addGesture(pinch);
 		}
@@ -307,7 +324,7 @@ namespace HOL::GestureBindings
 			case GestureKind::Proximity:
 				return "Tap Finger";
 			case GestureKind::Chain:
-				return "Tap All Fingers";
+				return "Tap Sequence";
 			case GestureKind::Grip:
 				return "Grip";
 			case GestureKind::SystemAim:
@@ -330,17 +347,43 @@ namespace HOL::GestureBindings
 		return "(none)";
 	}
 
-	const char* chainDirectionName(ChainDirection direction)
+	std::string describeChainSequence(const GestureBinding& binding)
 	{
-		switch (direction)
+		int chainLength = std::clamp(binding.chainLength, 1, GestureBinding::MaxChainLength);
+		if (chainLength <= 0)
 		{
-			case ChainDirection::Ascending:
-				return "Index -> Pinky";
-			case ChainDirection::Descending:
-				return "Pinky -> Index";
-			default:
-				return "(unknown)";
+			return "(none)";
 		}
+
+		bool repeatedFinger = true;
+		for (int i = 1; i < chainLength; i++)
+		{
+			if (binding.chainFingers[i] != binding.chainFingers[0])
+			{
+				repeatedFinger = false;
+				break;
+			}
+		}
+
+		if (repeatedFinger)
+		{
+			std::string description = "Tap ";
+			description += fingerName(binding.chainFingers[0]);
+			description += " x";
+			description += std::to_string(chainLength);
+			return description;
+		}
+
+		std::string description = "Tap ";
+		for (int i = 0; i < chainLength; i++)
+		{
+			if (i > 0)
+			{
+				description += " -> ";
+			}
+			description += fingerName(binding.chainFingers[i]);
+		}
+		return description;
 	}
 
 	std::string describeBinding(const GestureBinding& binding)
@@ -353,21 +396,39 @@ namespace HOL::GestureBindings
 				description += fingerName(binding.proximityFinger);
 				description += " Finger";
 
-				if (HOL::settings::hasGestureModifier(
-						binding.modifiers, GestureModifier::ClosedHand))
+				if (usesClosedHand(binding))
 				{
 					description += " (Closed Hand)";
+				}
+
+				if (usesHold(binding))
+				{
+					description += " (Hold)";
 				}
 
 				return description;
 			}
 
 			case GestureKind::Chain:
-				return std::string("Tap ") + chainDirectionName(binding.chainDirection);
+			{
+				std::string description = describeChainSequence(binding);
+				if (usesHold(binding))
+				{
+					description += " (Hold)";
+				}
+				return description;
+			}
 
 			case GestureKind::Grip:
 			case GestureKind::SystemAim:
-				return gestureKindName(binding.kind);
+			{
+				std::string description = gestureKindName(binding.kind);
+				if (usesHold(binding))
+				{
+					description += " (Hold)";
+				}
+				return description;
+			}
 
 			default:
 				return "(none)";
@@ -452,7 +513,13 @@ namespace HOL::GestureBindings
 			auto holdGesture = HOL::Gesture::ProximityGesture::Create();
 			holdGesture->setup(binding.proximityFinger, binding.side);
 
-			dragAction->setTriggerGesture(triggerGesture);
+			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalTriggerGesture = triggerGesture;
+			if (usesHold(binding))
+			{
+				finalTriggerGesture = wrapWithHold(finalTriggerGesture);
+			}
+
+			dragAction->setTriggerGesture(finalTriggerGesture);
 			dragAction->setHoldGesture(holdGesture);
 			dragAction->getParameters().releaseThreshold = 0.8f;
 			action = dragAction;
@@ -462,8 +529,7 @@ namespace HOL::GestureBindings
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
 				= buildOpenHandPinchGesture(binding.side, binding.proximityFinger);
 
-			if (HOL::settings::hasGestureModifier(
-					binding.modifiers, GestureModifier::ClosedHand)
+			if (usesClosedHand(binding)
 				&& binding.proximityFinger == HOL::FingerIndex)
 			{
 				auto proximity = HOL::Gesture::ProximityGesture::Create();
@@ -496,16 +562,32 @@ namespace HOL::GestureBindings
 				action = HOL::ButtonAction::Create();
 			}
 
+			if (usesHold(binding))
+			{
+				triggerGesture = wrapWithHold(triggerGesture);
+			}
+
 			action->setTriggerGesture(triggerGesture);
 		}
 		else if (binding.kind == GestureKind::Chain)
 		{
 			action = HOL::ButtonAction::Create();
-			action->setTriggerGesture(buildChainGesture(binding.side, binding.chainDirection));
+			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
+				= buildChainGesture(binding);
+			if (usesHold(binding))
+			{
+				triggerGesture = wrapWithHold(triggerGesture);
+			}
+			action->setTriggerGesture(triggerGesture);
 		}
 		else if (binding.kind == GestureKind::Grip)
 		{
 			auto gripGesture = buildGripGesture(binding.side);
+			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture = gripGesture;
+			if (usesHold(binding))
+			{
+				triggerGesture = wrapWithHold(triggerGesture);
+			}
 
 			if (isAnalogTarget(binding.target))
 			{
@@ -522,12 +604,18 @@ namespace HOL::GestureBindings
 				action = HOL::ButtonAction::Create();
 			}
 
-			action->setTriggerGesture(gripGesture);
+			action->setTriggerGesture(triggerGesture);
 		}
 		else if (binding.kind == GestureKind::SystemAim)
 		{
 			action = HOL::ButtonAction::Create();
-			action->setTriggerGesture(buildSystemAimGesture(binding.side));
+			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
+				= buildSystemAimGesture(binding.side);
+			if (usesHold(binding))
+			{
+				triggerGesture = wrapWithHold(triggerGesture);
+			}
+			action->setTriggerGesture(triggerGesture);
 		}
 
 		if (action)

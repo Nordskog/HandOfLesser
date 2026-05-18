@@ -13,65 +13,81 @@ namespace HOL::Gesture
 {
 	float ChainGesture::Gesture::evaluateInternal(GestureData data)
 	{
-		// printf("Evaluate\n");
+		if (this->mChainedGestures.empty())
+		{
+			return 0.0f;
+		}
 
 		if (this->mCurrentGestureIndex >= this->mChainedGestures.size())
 		{
-			printf("index Out of range\n");
 			this->mCurrentGestureIndex = 0;
 			this->mActivated = false;
-			return 0;
+			this->mCurrentGesturePressed = false;
+			this->mRequireCurrentGestureRelease = false;
+			return 0.0f;
 		}
 
 		auto currGesture = this->mChainedGestures[this->mCurrentGestureIndex];
-		float curreGestureValue = currGesture.get()->evaluate(data);
+		float currentGestureValue = currGesture->evaluate(data);
+		const bool currentGestureActive = currentGestureValue >= 1.0f;
 
-		// Not on first gesture, and final gesture has not been activated
-		if (!mActivated && mCurrentGestureIndex > 0
-			&& timeSince(this->mLastActivation) > this->mMaxDelay)
+		if (this->mRequireCurrentGestureRelease)
 		{
-			// Time threshold exceeded, reset.
+			if (currentGestureActive)
+			{
+				this->mCurrentGesturePressed = true;
+				return 0.0f;
+			}
+
+			this->mRequireCurrentGestureRelease = false;
+			this->mCurrentGesturePressed = false;
+		}
+
+		const bool currentGestureOnDown = currentGestureActive && !this->mCurrentGesturePressed;
+		this->mCurrentGesturePressed = currentGestureActive;
+
+		if (!mActivated && mCurrentGestureIndex > 0
+			&& timeSince(this->mLastActivation) > this->parameters.maxDelay)
+		{
 			this->mCurrentGestureIndex = 0;
 			this->mActivated = false;
-			return 0;
+			this->mCurrentGesturePressed = false;
+			this->mRequireCurrentGestureRelease = false;
+			return 0.0f;
 		}
 
-		// printf("Current Value: %.3f", curreGestureValue);
-
-		// // We're on the final gesture
 		if (this->mCurrentGestureIndex == this->mChainedGestures.size() - 1)
 		{
-			if (curreGestureValue >= 1)
+			if (currentGestureOnDown)
 			{
-				// Gesture is active
 				this->mActivated = true;
-				return curreGestureValue;
+				return currentGestureValue;
 			}
-			else
+
+			if (currentGestureActive && this->mActivated)
 			{
-				if (this->mActivated)
-				{
-					// Gesture was active, so we reset
-					this->mCurrentGestureIndex = 0;
-					this->mActivated = false;
-					return 0;
-				}
+				return currentGestureValue;
+			}
+
+			if (!currentGestureActive && this->mActivated)
+			{
+				this->mCurrentGestureIndex = 0;
+				this->mActivated = false;
+				this->mCurrentGesturePressed = false;
+				this->mRequireCurrentGestureRelease = false;
+				return 0.0f;
 			}
 		}
-		else
+		else if (currentGestureOnDown)
 		{
-			// Any gesture but the final one, and we have not exceeded
-			// time threshold. If active, iterate counter and set time.
-			if (curreGestureValue >= 1.f)
-			{
-
-				this->mCurrentGestureIndex++;
-				this->mLastActivation = std::chrono::steady_clock::now();
-				return 0;
-			}
+			this->mCurrentGestureIndex++;
+			this->mLastActivation = std::chrono::steady_clock::now();
+			this->mCurrentGesturePressed = false;
+			this->mRequireCurrentGestureRelease = true;
+			return 0.0f;
 		}
 
-		return 0;
+		return 0.0f;
 	}
 
 	void ChainGesture::Gesture::addGesture(std::shared_ptr<BaseGesture::Gesture> gesture)

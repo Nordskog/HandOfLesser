@@ -23,7 +23,6 @@ namespace HOL::GestureBindings
 	// runtime agree on labels and compatibility rules.
 	const char* gestureKindName(settings::GestureKind kind);
 	const char* inputTargetName(settings::InputTarget target);
-	const char* chainDirectionName(settings::ChainDirection direction);
 	std::string describeBinding(const settings::GestureBinding& binding);
 	std::span<const InputTargetOption> inputTargetOptions();
 

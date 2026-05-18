@@ -159,7 +159,8 @@ namespace HOL
 				 {"side", binding.side},
 				 {"kind", binding.kind},
 				 {"proximityFinger", binding.proximityFinger},
-				 {"chainDirection", binding.chainDirection},
+				 {"chainFingers", binding.chainFingers},
+				 {"chainLength", binding.chainLength},
 				 {"modifiers", binding.modifiers},
 				 {"target", binding.target}};
 		}
@@ -170,7 +171,8 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "side", binding.side);
 			nlohmann::get_to_if_present(j, "kind", binding.kind);
 			nlohmann::get_to_if_present(j, "proximityFinger", binding.proximityFinger);
-			nlohmann::get_to_if_present(j, "chainDirection", binding.chainDirection);
+			nlohmann::get_to_if_present(j, "chainFingers", binding.chainFingers);
+			nlohmann::get_to_if_present(j, "chainLength", binding.chainLength);
 			nlohmann::get_to_if_present(j, "modifiers", binding.modifiers);
 			nlohmann::get_to_if_present(j, "target", binding.target);
 		}
@@ -179,6 +181,8 @@ namespace HOL
 		{
 			j = {{"sendOscInput", settings.sendOscInput},
 				 {"joystickReferenceMode", settings.joystickReferenceMode},
+				 {"chainGestureTimeoutMS", settings.chainGestureTimeoutMS},
+				 {"holdDurationMS", settings.holdDurationMS},
 				 {"gestureBindings", settings.gestureBindings}};
 		}
 
@@ -187,6 +191,9 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "sendOscInput", settings.sendOscInput);
 			nlohmann::get_to_if_present(
 				j, "joystickReferenceMode", settings.joystickReferenceMode);
+			nlohmann::get_to_if_present(
+				j, "chainGestureTimeoutMS", settings.chainGestureTimeoutMS);
+			nlohmann::get_to_if_present(j, "holdDurationMS", settings.holdDurationMS);
 			nlohmann::get_to_if_present(j, "gestureBindings", settings.gestureBindings);
 		}
 

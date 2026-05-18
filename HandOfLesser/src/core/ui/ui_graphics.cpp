@@ -20,7 +20,6 @@ namespace
 
 	using FingerFlags = HOL::UiGraphics::FingerFlags;
 	using FingerHighlights = HOL::UiGraphics::FingerHighlights;
-	using HOL::settings::ChainDirection;
 	using HOL::settings::GestureBinding;
 	using HOL::settings::GestureKind;
 	using HOL::settings::GestureModifier;
@@ -323,15 +322,11 @@ namespace
 
 		if (binding.kind == GestureKind::Chain)
 		{
-			std::array<HOL::FingerType, 4> fingers = {
-				HOL::FingerIndex, HOL::FingerMiddle, HOL::FingerRing, HOL::FingerLittle};
-			if (binding.chainDirection == ChainDirection::Descending)
+			int chainLength = std::clamp(
+				binding.chainLength, 1, HOL::settings::GestureBinding::MaxChainLength);
+			for (int i = 0; i < chainLength; i++)
 			{
-				std::reverse(fingers.begin(), fingers.end());
-			}
-
-			for (HOL::FingerType finger : fingers)
-			{
+				HOL::FingerType finger = binding.chainFingers[i];
 				BindingPreviewGlyph glyph;
 				glyph.fingerHighlights = makeFingerHighlights(
 					HOL::InputGestureHighlight_Primary, {HOL::FingerThumb, finger});
