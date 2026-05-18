@@ -2,10 +2,12 @@
 #include <thread>
 #include "src/oculus/oculus_hacks.h"
 #include "src/openxr/XrUtils.h"
+#include "src/core/app_paths.h"
 #include "src/core/settings_global.h"
 #include "src/core/state_global.h"
 #include "src/core/ui/display_global.h"
 #include "src/vrchat/vrchat_osc.h"
+#include <filesystem>
 #include <fstream>
 #include <cstring>
 #include <nlohmann/json.hpp>
@@ -628,15 +630,15 @@ void HOL::HandOfLesserCore::syncState()
 
 void HOL::HandOfLesserCore::saveSettings()
 {
-	// Good enough for now
-	std::ofstream file("settings.json");
+	std::ofstream file(HOL::Paths::getSettingsFilePath());
 	nlohmann::json j = Config;
 	file << j.dump(4); // indented
 }
 
 void HOL::HandOfLesserCore::loadSettings()
 {
-	std::ifstream file("settings.json");
+	std::filesystem::path settingsFilePath = HOL::Paths::getSettingsFilePath();
+	std::ifstream file(settingsFilePath);
 	if (file.is_open())
 	{
 		try
@@ -667,7 +669,8 @@ void HOL::HandOfLesserCore::loadSettings()
 	}
 	else
 	{
-		std::cout << "No settings.json found, using defaults." << std::endl;
+		std::cout << "No settings.json found at " << settingsFilePath.string()
+				  << ", using defaults." << std::endl;
 	}
 }
 

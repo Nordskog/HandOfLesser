@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 #include <HandOfLesserCommon.h>
 #include <GLFW/glfw3.h>
 #include "ui_graphics.h"
@@ -35,6 +36,7 @@ namespace HOL
 		void updateWindowSize(bool preserveHeight = true);
 
 		Visualizer mVisualizer;
+		std::string mImguiIniPath;
 
 		// UI state
 		bool mShowAllDevices = false;

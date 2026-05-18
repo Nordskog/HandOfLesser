@@ -15,6 +15,7 @@
 #include <unordered_map>
 
 #include "src/core/settings_global.h"
+#include "src/core/app_paths.h"
 #include "src/core/ui/display_global.h"
 #include "src/core/state_global.h"
 #include <HandOfLesserCommon.h>
@@ -90,6 +91,7 @@ HOL::UserInterface::UserInterface()
 void UserInterface::init()
 {
 	initGLFW();
+	this->mImguiIniPath = HOL::Paths::getImguiIniFilePath().string();
 	initImgui();
 	this->mVisualizer.init();
 	this->mAvailableOpenXRRuntimes = HOL::OpenXR::getAvailableOpenXRRuntimePaths(1);
@@ -287,6 +289,7 @@ void UserInterface::initImgui()
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO();
+	io.IniFilename = this->mImguiIniPath.c_str();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
