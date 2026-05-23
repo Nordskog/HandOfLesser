@@ -33,7 +33,7 @@ public class HandOfLesserAnimationGenerator : EditorWindow
 
         sTargetAvatar = (GameObject) EditorGUILayout.ObjectField("Avatar:", sTargetAvatar, typeof(GameObject), true);
 
-        sUseSkeletal = EditorGUILayout.Toggle("Use skeletal: ", sUseSkeletal);
+        // sUseSkeletal = EditorGUILayout.Toggle("Use skeletal: ", sUseSkeletal);
 
         sAdjustSmoothingToFramerate = EditorGUILayout.Toggle("Adjust smoothing to framrate: ", sAdjustSmoothingToFramerate);
 
