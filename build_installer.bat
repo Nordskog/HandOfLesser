@@ -4,10 +4,18 @@ setlocal
 set "ROOT_DIR=%~dp0"
 set "MAKENSIS=makensis.exe"
 set "VERSION_FILE=%ROOT_DIR%output\version.txt"
+set "DIST_DIR=%ROOT_DIR%distribution"
+set "APP_EXE=%ROOT_DIR%output\drivers\00handoflesser\resources\bin\win64\HandOfLesser.exe"
 
 if not exist "%VERSION_FILE%" (
 	echo Could not find "%VERSION_FILE%".
 	echo Run build.bat before building the installer so CMake can generate the version file.
+	exit /b 1
+)
+
+if not exist "%APP_EXE%" (
+	echo Could not find "%APP_EXE%".
+	echo Run build.bat before building the installer so the app executable exists.
 	exit /b 1
 )
 
@@ -25,9 +33,19 @@ if errorlevel 1 (
 	)
 )
 
-pushd "%ROOT_DIR%install"
+if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
+
+pushd "%ROOT_DIR%"
 "%MAKENSIS%" /DVERSION=%HOL_VERSION% installer.nsi
 set "RESULT=%ERRORLEVEL%"
 popd
 
-exit /b %RESULT%
+if not "%RESULT%"=="0" exit /b %RESULT%
+
+copy /Y "%APP_EXE%" "%DIST_DIR%\HandOfLesser.exe" >nul
+if errorlevel 1 (
+	echo Failed to copy HandOfLesser.exe into distribution.
+	exit /b 1
+)
+
+exit /b 0

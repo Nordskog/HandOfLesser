@@ -12,14 +12,14 @@
 	!endif
 
 	!define DRIVER_NAME "00handoflesser"
-	!define DRIVER_OUTDIR "..\output\drivers\${DRIVER_NAME}"
+	!define DRIVER_OUTDIR "output\drivers\${DRIVER_NAME}"
 	!define COMPANY_NAME "Nordskog"
 	!define PRODUCT_NAME "HandOfLesser"
 	!define APP_REG_KEY "Software\${COMPANY_NAME}\${PRODUCT_NAME}"
 	!define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANY_NAME} ${PRODUCT_NAME}"
 
 	Name "${PRODUCT_NAME}"
-	OutFile "HandOfLesserInstaller.exe"
+	OutFile "distribution\HandOfLesserInstaller.exe"
 	InstallDir "$PROGRAMFILES64\${COMPANY_NAME}\${PRODUCT_NAME}"
 	InstallDirRegKey HKLM "${APP_REG_KEY}\Main" ""
 	RequestExecutionLevel admin
@@ -45,7 +45,7 @@
 ;--------------------------------
 ; Pages
 
-	!insertmacro MUI_PAGE_LICENSE "..\LICENSE.md"
+	!insertmacro MUI_PAGE_LICENSE "LICENSE.md"
 	!insertmacro MUI_PAGE_DIRECTORY
 	!insertmacro MUI_PAGE_INSTFILES
 
@@ -125,8 +125,8 @@ Section "Install" SecInstall
 	DetailPrint "Using vrpathreg: $vrPathReg"
 
 	SetOutPath "$INSTDIR"
-	File "..\LICENSE.md"
-	File "..\README.md"
+	File "LICENSE.md"
+	File "README.md"
 
 	SetOutPath "$INSTDIR\${DRIVER_NAME}"
 	File "${DRIVER_OUTDIR}\driver.vrdrivermanifest"
