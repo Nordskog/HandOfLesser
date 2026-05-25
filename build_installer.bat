@@ -9,13 +9,13 @@ set "APP_EXE=%ROOT_DIR%output\drivers\00handoflesser\resources\bin\win64\HandOfL
 
 if not exist "%VERSION_FILE%" (
 	echo Could not find "%VERSION_FILE%".
-	echo Run build.bat before building the installer so CMake can generate the version file.
+	echo Build the project first so CMake can generate the version file.
 	exit /b 1
 )
 
 if not exist "%APP_EXE%" (
 	echo Could not find "%APP_EXE%".
-	echo Run build.bat before building the installer so the app executable exists.
+	echo Build the project first so the app executable exists.
 	exit /b 1
 )
 
