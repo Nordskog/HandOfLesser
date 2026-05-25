@@ -62,6 +62,7 @@ namespace HOL::settings
 			b.modifiers = static_cast<uint32_t>(GestureModifier::Hold)
 						  | static_cast<uint32_t>(GestureModifier::LookingAtHand);
 			b.target = InputTarget::X;
+			b.pressAndRelease = true;
 			addBinding(b);
 		}
 
@@ -74,6 +75,7 @@ namespace HOL::settings
 			b.modifiers = static_cast<uint32_t>(GestureModifier::Hold)
 						  | static_cast<uint32_t>(GestureModifier::LookingAtHand);
 			b.target = InputTarget::Y;
+			b.pressAndRelease = true;
 			addBinding(b);
 		}
 
