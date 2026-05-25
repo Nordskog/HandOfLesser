@@ -372,7 +372,8 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const HandOfLesserSettings& settings)
 		{
-			j = {{"general", settings.general},
+			j = {{"version", settings.version},
+				 {"general", settings.general},
 				 {"fingerBend", settings.fingerBend},
 				 {"skeletalBend", settings.skeletalBend},
 				 {"handPose", settings.handPose},
@@ -390,6 +391,7 @@ namespace HOL
 
 		inline void from_json(const nlohmann::json& j, HandOfLesserSettings& settings)
 		{
+			nlohmann::get_to_if_present(j, "version", settings.version);
 			nlohmann::get_to_if_present(j, "general", settings.general);
 			nlohmann::get_to_if_present(j, "fingerBend", settings.fingerBend);
 			nlohmann::get_to_if_present(j, "skeletalBend", settings.skeletalBend);

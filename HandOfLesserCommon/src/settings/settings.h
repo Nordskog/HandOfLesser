@@ -355,6 +355,9 @@ namespace HOL
 
 		struct HandOfLesserSettings
 		{
+			static constexpr int CurrentVersion = 1;
+
+			int version = CurrentVersion;
 			GeneralSettings general;
 			FingerBendSettings fingerBend;
 			SkeletalBendSettings skeletalBend;
