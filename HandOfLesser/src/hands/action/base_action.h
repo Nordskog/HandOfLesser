@@ -64,7 +64,7 @@ namespace HOL
 		std::chrono::milliseconds timeSinceUp();
 
 	private:
-		static constexpr std::chrono::milliseconds PressAndReleasePulseDuration{50};
+		static constexpr std::chrono::milliseconds PressAndReleasePulseDuration{100};
 
 		// Must be 1 to enter action, equivalent to a button press
 		std::shared_ptr<BaseGesture::Gesture> mTriggerGesture;
