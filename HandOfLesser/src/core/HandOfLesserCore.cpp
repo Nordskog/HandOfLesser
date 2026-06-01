@@ -440,6 +440,9 @@ void HandOfLesserCore::mainLoop()
 
 	std::cout << "Exiting loop" << std::endl;
 
+	// Shut it down!
+	this->mInstanceHolder.endSession();
+
 	// Signal threads to stop
 	this->mActive.store(false);
 
