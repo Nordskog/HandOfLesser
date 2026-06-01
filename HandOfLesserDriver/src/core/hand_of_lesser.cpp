@@ -347,6 +347,10 @@ namespace HOL
 		bool anyTrackerSettingChanged
 			= Config.bodyTrackers.enableHips != oldConfig.bodyTrackers.enableHips
 			  || Config.bodyTrackers.enableChest != oldConfig.bodyTrackers.enableChest
+			  || Config.bodyTrackers.enableLeftUpperArm
+					 != oldConfig.bodyTrackers.enableLeftUpperArm
+			  || Config.bodyTrackers.enableLeftLowerArm
+					 != oldConfig.bodyTrackers.enableLeftLowerArm
 			  || Config.bodyTrackers.enableRightUpperArm
 					 != oldConfig.bodyTrackers.enableRightUpperArm
 			  || Config.bodyTrackers.enableRightLowerArm
