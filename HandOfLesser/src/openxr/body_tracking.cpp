@@ -7,6 +7,12 @@ void HOL::OpenXR::BodyTracking::init(xr::UniqueDynamicInstance& instance,
 									 xr::UniqueDynamicSession& session)
 {
 	this->mBodyTracker.init(session);
+
+	for (auto& location : this->mLastBodyTrackerLocations)
+	{
+		location.position = Eigen::Vector3f::Zero();
+		location.orientation = Eigen::Quaternionf::Identity();
+	}
 }
 
 void HOL::OpenXR::BodyTracking::updateBody(xr::UniqueDynamicSpace& space, XrTime time)
@@ -109,6 +115,17 @@ void HOL::OpenXR::BodyTracking::drawBody()
 									   6.0f);
 		}
 	}
+
+	if (Config.visualizer.showBodyTrackerAxes)
+	{
+		for (const auto& location : this->mLastBodyTrackerLocations)
+		{
+			vis->submitOrientationAxes(location.position,
+									   location.orientation,
+									   0.060f,
+									   3.0f);
+		}
+	}
 }
 
 OpenXRBody& HOL::OpenXR::BodyTracking::getBodyTracker()
@@ -191,35 +208,37 @@ std::vector<HOL::BodyTrackerPosePayload> HOL::OpenXR::BodyTracking::getBodyTrack
 	{
 		BodyTrackerRole role = static_cast<BodyTrackerRole>(i);
 
-		// Check if this tracker is enabled
-		bool isEnabled = false;
+		bool trackerEnabled = false;
 		switch (role)
 		{
 			case BodyTrackerRole::Hips:
-				isEnabled = Config.bodyTrackers.enableHips;
+				trackerEnabled = Config.bodyTrackers.enableHips;
 				break;
 			case BodyTrackerRole::Chest:
-				isEnabled = Config.bodyTrackers.enableChest;
+				trackerEnabled = Config.bodyTrackers.enableChest;
 				break;
 			case BodyTrackerRole::LeftUpperArm:
-				isEnabled = Config.bodyTrackers.enableLeftUpperArm;
+				trackerEnabled = Config.bodyTrackers.enableLeftUpperArm;
 				break;
 			case BodyTrackerRole::LeftLowerArm:
-				isEnabled = Config.bodyTrackers.enableLeftLowerArm;
+				trackerEnabled = Config.bodyTrackers.enableLeftLowerArm;
 				break;
 			case BodyTrackerRole::RightUpperArm:
-				isEnabled = Config.bodyTrackers.enableRightUpperArm;
+				trackerEnabled = Config.bodyTrackers.enableRightUpperArm;
 				break;
 			case BodyTrackerRole::RightLowerArm:
-				isEnabled = Config.bodyTrackers.enableRightLowerArm;
+				trackerEnabled = Config.bodyTrackers.enableRightLowerArm;
 				break;
 			default:
-				isEnabled = false;
+				trackerEnabled = false;
 				break;
 		}
 
-		if (!isEnabled)
+		bool shouldProcess = trackerEnabled || Config.visualizer.showBodyTrackerAxes;
+		if (!shouldProcess)
+		{
 			continue;
+		}
 
 		// Get the joint for this tracker role
 		XrBodyJointFB joint = bodyTrackerRoleToJoint(role);
@@ -292,21 +311,15 @@ std::vector<HOL::BodyTrackerPosePayload> HOL::OpenXR::BodyTracking::getBodyTrack
 				payload.location.orientation, HOL::quaternionFromEulerAnglesDegrees(180, 0, 0));
 		}
 
-		// Visualize body tracker axes if enabled
-		if (Config.visualizer.showBodyTrackerAxes && payload.valid)
-		{
-			auto* vis = HOL::UserInterface::Current->getVisualizer();
-			vis->submitOrientationAxes(trackerPosition,
-									   payload.location.orientation,
-									   0.060f,	// Half the size of palm axes (0.120f / 2)
-									   3.0f);	// Half the line width (6.0f / 2)
-		}
-
 		// Velocities left at zero (body tracking velocity data is unreliable)
 		payload.velocity.linearVelocity = Eigen::Vector3f::Zero();
 		payload.velocity.angularVelocity = Eigen::Vector3f::Zero();
 
-		payloads.push_back(payload);
+		this->mLastBodyTrackerLocations[static_cast<int>(role)] = payload.location;
+		if (trackerEnabled)
+		{
+			payloads.push_back(payload);
+		}
 	}
 
 	return payloads;

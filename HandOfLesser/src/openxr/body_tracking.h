@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <d3d11.h> // Why do you need this??
 #include <memory>
 #include "openxr_body.h" // replace with body!
@@ -19,5 +20,7 @@ namespace HOL::OpenXR
 
 	private:
 		OpenXRBody mBodyTracker;
+		std::array<HOL::PoseLocation, static_cast<int>(HOL::BodyTrackerRole::TrackerRole_MAX)>
+			mLastBodyTrackerLocations;
 	};
 } // namespace HOL::OpenXR
