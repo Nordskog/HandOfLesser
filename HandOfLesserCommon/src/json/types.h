@@ -205,6 +205,7 @@ namespace HOL
 				 {"holdDurationMS", settings.holdDurationMS},
 				 {"inFrontFovDegrees", settings.inFrontFovDegrees},
 				 {"lookAtFovDegrees", settings.lookAtFovDegrees},
+				 {"palmFacingFovDegrees", settings.palmFacingFovDegrees},
 				 {"gestureBindings", settings.gestureBindings}};
 		}
 
@@ -218,6 +219,8 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "holdDurationMS", settings.holdDurationMS);
 			nlohmann::get_to_if_present(j, "inFrontFovDegrees", settings.inFrontFovDegrees);
 			nlohmann::get_to_if_present(j, "lookAtFovDegrees", settings.lookAtFovDegrees);
+			nlohmann::get_to_if_present(
+				j, "palmFacingFovDegrees", settings.palmFacingFovDegrees);
 			nlohmann::get_to_if_present(j, "gestureBindings", settings.gestureBindings);
 		}
 

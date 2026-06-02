@@ -193,7 +193,8 @@ namespace HOL
 			ClosedHand = 1 << 0,
 			Hold = 1 << 1,
 			InFrontOfUser = 1 << 2,
-			LookingAtHand = 1 << 3
+			LookingAtHand = 1 << 3,
+			PalmFacingUser = 1 << 4
 		};
 
 		inline bool hasGestureModifier(uint32_t modifiers, GestureModifier modifier)
@@ -286,6 +287,7 @@ namespace HOL
 			int holdDurationMS = 1000;
 			float inFrontFovDegrees = 100.0f;
 			float lookAtFovDegrees = 45.0f;
+			float palmFacingFovDegrees = 45.0f;
 			std::vector<GestureBinding> gestureBindings = defaultGestureBindings();
 		};
 

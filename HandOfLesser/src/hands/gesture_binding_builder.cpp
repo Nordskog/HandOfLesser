@@ -16,6 +16,7 @@
 #include "src/hands/gesture/inverse_gesture.h"
 #include "src/hands/gesture/look_at_gesture.h"
 #include "src/hands/gesture/open_hand_pinch_gesture.h"
+#include "src/hands/gesture/palm_facing_gesture.h"
 #include "src/hands/gesture/proximity_gesture.h"
 #include "src/hands/input/settings_toggle_input.h"
 #include "src/hands/input/steamvr_bool_input.h"
@@ -240,6 +241,31 @@ namespace
 		return combo;
 	}
 
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithPalmFacingUser(
+		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture,
+		HandSide side,
+		bool inverted)
+	{
+		auto palmFacing = HOL::Gesture::PalmFacingGesture::Gesture::Create();
+		palmFacing->parameters.side = side;
+		palmFacing->parameters.fovDegrees = HOL::Config.input.palmFacingFovDegrees;
+
+		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> modifierGesture = palmFacing;
+		if (inverted)
+		{
+			auto inverse = HOL::Gesture::InverseGesture::Gesture::Create();
+			inverse->setGesture(palmFacing);
+			modifierGesture = inverse;
+		}
+
+		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
+		combo->parameters.holdUntilAllReleased = false;
+		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
+		combo->addGesture(gesture);
+		combo->addGesture(modifierGesture);
+		return combo;
+	}
+
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> applyModifiers(
 		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture,
 		const GestureBinding& binding)
@@ -260,6 +286,14 @@ namespace
 				wrappedGesture,
 				binding.side,
 				isModifierInverted(binding, GestureModifier::InFrontOfUser));
+		}
+
+		if (usesModifier(binding, GestureModifier::PalmFacingUser))
+		{
+			wrappedGesture = wrapWithPalmFacingUser(
+				wrappedGesture,
+				binding.side,
+				isModifierInverted(binding, GestureModifier::PalmFacingUser));
 		}
 
 		if (usesModifier(binding, GestureModifier::Hold))
@@ -560,6 +594,11 @@ namespace HOL::GestureBindings
 								 GestureModifier::InFrontOfUser,
 								 "In Front",
 								 "Not In Front");
+		appendModifierDescription(description,
+								 binding,
+								 GestureModifier::PalmFacingUser,
+								 "Palm Facing User",
+								 "Palm Not Facing User");
 		if (binding.pressAndRelease)
 		{
 			description += " (Press and Release)";

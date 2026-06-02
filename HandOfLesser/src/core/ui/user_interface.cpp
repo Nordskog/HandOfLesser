@@ -665,6 +665,13 @@ void HOL::UserInterface::buildBindings()
 		rebuildActions = true;
 	}
 
+	float palmFacingFovDegrees = Config.input.palmFacingFovDegrees;
+	if (ImGui::InputFloat("Palm-facing FoV (deg)", &palmFacingFovDegrees))
+	{
+		Config.input.palmFacingFovDegrees = std::clamp(palmFacingFovDegrees, 1.0f, 179.0f);
+		rebuildActions = true;
+	}
+
 
 	ImGui::SeparatorText("Gesture Bindings");
 
@@ -1075,6 +1082,34 @@ void HOL::UserInterface::buildBindings()
 			{
 				settings::setInvertedGestureModifier(
 					b.invertedModifiers, settings::GestureModifier::InFrontOfUser, invertInFront);
+			}
+		}
+
+		bool usePalmFacing = settings::hasGestureModifier(
+			b.modifiers, settings::GestureModifier::PalmFacingUser);
+		if (ImGui::Checkbox("Palm Facing User", &usePalmFacing))
+		{
+			settings::setGestureModifier(
+				b.modifiers, settings::GestureModifier::PalmFacingUser, usePalmFacing);
+			if (!usePalmFacing)
+			{
+				settings::setInvertedGestureModifier(
+					b.invertedModifiers, settings::GestureModifier::PalmFacingUser, false);
+			}
+		}
+		if (usePalmFacing)
+		{
+			ImGui::SameLine();
+			ImGui::TextDisabled("(%.1f deg)", Config.input.palmFacingFovDegrees);
+			ImGui::SameLine();
+			bool invertPalmFacing = settings::hasGestureModifier(
+				b.invertedModifiers, settings::GestureModifier::PalmFacingUser);
+			if (rightAlignCheckbox("Invert##PalmFacingUser", &invertPalmFacing))
+			{
+				settings::setInvertedGestureModifier(
+					b.invertedModifiers,
+					settings::GestureModifier::PalmFacingUser,
+					invertPalmFacing);
 			}
 		}
 
