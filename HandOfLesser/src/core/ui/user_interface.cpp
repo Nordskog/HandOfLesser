@@ -1983,8 +1983,11 @@ void HOL::UserInterface::buildMain()
 	if (!Config.trackingFeatures.enableSimultaneousTracking)
 		ImGui::BeginDisabled();
 
-	ImGui::Checkbox("Augment controller skeleton with hand tracking",
-					&Config.skeletal.augmentControllerSkeleton);
+	if (ImGui::Checkbox("Augment controller skeleton with hand tracking",
+						&Config.skeletal.augmentControllerSkeleton))
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
 
 	if (!Config.trackingFeatures.enableSimultaneousTracking)
 		ImGui::EndDisabled();
