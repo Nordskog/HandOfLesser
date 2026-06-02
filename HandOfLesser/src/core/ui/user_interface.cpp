@@ -652,21 +652,22 @@ void HOL::UserInterface::buildBindings()
 	}
 
 	float lookAtFovDegrees = Config.input.lookAtFovDegrees;
-	if (ImGui::InputFloat("Look-at FoV (deg)", &lookAtFovDegrees))
+	if (ImGui::InputFloat("Look-at FoV (deg)", &lookAtFovDegrees, 1.0f, 5.0f, "%.1f"))
 	{
 		Config.input.lookAtFovDegrees = std::clamp(lookAtFovDegrees, 1.0f, 179.0f);
 		rebuildActions = true;
 	}
 
 	float inFrontFovDegrees = Config.input.inFrontFovDegrees;
-	if (ImGui::InputFloat("In-front FoV (deg)", &inFrontFovDegrees))
+	if (ImGui::InputFloat("In-front FoV (deg)", &inFrontFovDegrees, 1.0f, 5.0f, "%.1f"))
 	{
 		Config.input.inFrontFovDegrees = std::clamp(inFrontFovDegrees, 1.0f, 179.0f);
 		rebuildActions = true;
 	}
 
 	float palmFacingFovDegrees = Config.input.palmFacingFovDegrees;
-	if (ImGui::InputFloat("Palm-facing FoV (deg)", &palmFacingFovDegrees))
+	if (ImGui::InputFloat(
+			"Palm-facing FoV (deg)", &palmFacingFovDegrees, 1.0f, 5.0f, "%.1f"))
 	{
 		Config.input.palmFacingFovDegrees = std::clamp(palmFacingFovDegrees, 1.0f, 179.0f);
 		rebuildActions = true;

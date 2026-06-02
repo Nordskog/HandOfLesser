@@ -162,6 +162,9 @@ namespace HOL
 			bool showHandTrackingPalmAxes = false;
 			bool showHandTrackingJointAxes = false;
 			bool showBodyTrackerAxes = false;
+			bool showLookAtModifierCone = false;
+			bool showInFrontModifierCone = false;
+			bool showPalmFacingModifierCone = false;
 			bool showControllerPositionTrails = false;
 		};
 

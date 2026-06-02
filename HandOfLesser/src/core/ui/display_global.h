@@ -9,6 +9,8 @@ namespace HOL
 	struct BodyTrackingDisplay
 	{
 		float confidence = 0;
+		PoseLocation headPose;
+		bool headPoseValid = false;
 	};
 
 	struct DriverStatusDisplay

@@ -68,6 +68,7 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		this->confidence = 0.0f;
 		this->active = false;
 		HOL::display::BodyTracking.confidence = this->confidence;
+		HOL::display::BodyTracking.headPoseValid = false;
 		return;
 	}
 
@@ -122,6 +123,9 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 	std::copy(std::begin(mJointLocations),
 			  std::end(mJointLocations),
 			  std::begin(mCorrectedJointLocations));
+
+	HOL::display::BodyTracking.headPoseValid
+		= this->getHeadPose(HOL::display::BodyTracking.headPose);
 
 	// Display
 	HOL::display::BodyTracking.confidence = this->confidence;

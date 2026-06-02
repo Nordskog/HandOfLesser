@@ -5,6 +5,10 @@
 #include "src/core/settings_global.h"
 #include "src/core/ui/display_global.h"
 #include <src/core/HandOfLesserCore.h>
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <numbers>
 
 namespace HOL
 {
@@ -77,6 +81,7 @@ namespace HOL
 	{
 		this->mDrawQueue->points.clear();
 		this->mDrawQueue->lines.clear();
+		this->mDrawQueue->triangles.clear();
 	}
 
 	void Visualizer::drawVisualizer()
@@ -112,8 +117,10 @@ namespace HOL
 		// Controllers
 		updateControllerTrails();
 		drawControllerTrails();
+		drawModifierCones();
 
 		// General draw requests
+		drawTriangles();
 		drawLines();
 		drawPoints();
 		this->clearInternalDrawQueue(); // Leave clean slate for next frame
@@ -153,6 +160,12 @@ namespace HOL
 
 		// Final controller pose visualization controls
 		ImGui::Checkbox("Controller Trails", &HOL::Config.visualizer.showControllerPositionTrails);
+		ImGui::Checkbox("Look-at Cone", &HOL::Config.visualizer.showLookAtModifierCone);
+		ImGui::SameLine();
+		ImGui::Checkbox("In-front Cone", &HOL::Config.visualizer.showInFrontModifierCone);
+		ImGui::SameLine();
+		ImGui::Checkbox(
+			"Palm-facing Cone", &HOL::Config.visualizer.showPalmFacingModifierCone);
 
 		ImVec2 uiBounds = ImVec2(0, ImGui::GetCursorScreenPos().y);
 		ImGui::SameLine(); // so we get the actual end position of the slider
@@ -234,6 +247,22 @@ namespace HOL
 		}
 	}
 
+	void Visualizer::drawTriangles()
+	{
+		auto queues = {this->mActiveDrawQueue, &this->mInternalDrawQueue};
+
+		for (auto queue : queues)
+		{
+			for (auto& triangle : queue->triangles)
+			{
+				ImGui::GetWindowDrawList()->AddTriangleFilled(projectToScreen(triangle.p0),
+															 projectToScreen(triangle.p1),
+															 projectToScreen(triangle.p2),
+															 triangle.color);
+			}
+		}
+	}
+
 	void Visualizer::drawControllerTrails()
 	{
 		if (!HOL::Config.visualizer.showControllerPositionTrails)
@@ -295,6 +324,7 @@ namespace HOL
 	{
 		this->mInternalDrawQueue.points.clear();
 		this->mInternalDrawQueue.lines.clear();
+		this->mInternalDrawQueue.triangles.clear();
 	}
 
 	DrawQueue* Visualizer::getDrawQueueForSubmit()
@@ -586,6 +616,16 @@ namespace HOL
 		queue->lines.push_back({start, end, color, width});
 	}
 
+	void Visualizer::submitTriangle(const Eigen::Vector3f& p0,
+									const Eigen::Vector3f& p1,
+									const Eigen::Vector3f& p2,
+									ImU32 color)
+	{
+		DrawQueue* queue = getDrawQueueForSubmit();
+
+		queue->triangles.push_back({p0, p1, p2, color});
+	}
+
 	void Visualizer::submitOrientationAxes(const Eigen::Vector3f& position,
 										   const Eigen::Quaternionf& orientation,
 										   float axisLength,
@@ -605,6 +645,111 @@ namespace HOL
 		submitLine(position, xEnd, colorRed, lineWidth);	// X axis - Red
 		submitLine(position, yEnd, colorGreen, lineWidth);	// Y axis - Green
 		submitLine(position, zEnd, colorBlue, lineWidth);	// Z axis - Blue
+	}
+
+	void Visualizer::submitCone(const Eigen::Vector3f& origin,
+								const Eigen::Vector3f& forward,
+								float fovDegrees,
+								float length,
+								ImU32 fillColor,
+								ImU32 lineColor,
+								float lineWidth)
+	{
+		Eigen::Vector3f coneForward = forward;
+		if (coneForward.squaredNorm() <= 0.000001f || length <= 0.0f)
+		{
+			return;
+		}
+
+		coneForward.normalize();
+		float clampedFovDegrees = std::clamp(fovDegrees, 1.0f, 179.0f);
+		float halfAngleRadians
+			= clampedFovDegrees * 0.5f * (std::numbers::pi_v<float> / 180.0f);
+		float radius = std::tan(halfAngleRadians) * length;
+		Eigen::Vector3f baseCenter = origin + coneForward * length;
+
+		Eigen::Vector3f referenceUp = std::abs(coneForward.z()) < 0.99f
+										  ? Eigen::Vector3f::UnitZ()
+										  : Eigen::Vector3f::UnitX();
+		Eigen::Vector3f right = coneForward.cross(referenceUp).normalized();
+		Eigen::Vector3f up = right.cross(coneForward).normalized();
+
+		constexpr int SegmentCount = 24;
+		std::array<Eigen::Vector3f, SegmentCount> rimPoints;
+		for (int i = 0; i < SegmentCount; i++)
+		{
+			float angle = (2.0f * std::numbers::pi_v<float> * i) / SegmentCount;
+			rimPoints[i] = baseCenter + right * (std::cos(angle) * radius)
+						   + up * (std::sin(angle) * radius);
+		}
+
+		for (int i = 0; i < SegmentCount; i++)
+		{
+			int next = (i + 1) % SegmentCount;
+			submitTriangle(origin, rimPoints[i], rimPoints[next], fillColor);
+			submitLine(origin, rimPoints[i], lineColor, lineWidth);
+			submitLine(rimPoints[i], rimPoints[next], lineColor, lineWidth);
+		}
+	}
+
+	void Visualizer::drawModifierCones()
+	{
+		const auto& bodyTracking = HOL::display::BodyTracking;
+		if (bodyTracking.headPoseValid)
+		{
+			const Eigen::Vector3f headForward
+				= bodyTracking.headPose.orientation * Eigen::Vector3f::UnitY();
+
+			if (HOL::Config.visualizer.showLookAtModifierCone)
+			{
+				submitCone(bodyTracking.headPose.position,
+						   headForward,
+						   HOL::Config.input.lookAtFovDegrees,
+						   0.25f,
+						   IM_COL32(80, 180, 255, 35),
+						   IM_COL32(80, 180, 255, 110));
+			}
+
+			if (HOL::Config.visualizer.showInFrontModifierCone)
+			{
+				submitCone(bodyTracking.headPose.position,
+						   headForward,
+						   HOL::Config.input.inFrontFovDegrees,
+						   0.25f,
+						   IM_COL32(255, 210, 80, 28),
+						   IM_COL32(255, 210, 80, 110));
+			}
+		}
+
+		if (HOL::Config.visualizer.showPalmFacingModifierCone)
+		{
+			const ImU32 fillColors[] = {
+				IM_COL32(80, 255, 180, 28),
+				IM_COL32(255, 120, 180, 28),
+			};
+			const ImU32 lineColors[] = {
+				IM_COL32(80, 255, 180, 110),
+				IM_COL32(255, 120, 180, 110),
+			};
+
+			for (int side = 0; side < HandSide_MAX; side++)
+			{
+				const auto& transform = HOL::display::HandTransform[side];
+				if (!transform.active || !transform.positionValid)
+				{
+					continue;
+				}
+
+				Eigen::Vector3f palmForward
+					= transform.rawPose.orientation * -Eigen::Vector3f::UnitY();
+				submitCone(transform.rawPose.position,
+						   palmForward,
+						   HOL::Config.input.palmFacingFovDegrees,
+						   0.18f,
+						   fillColors[side],
+						   lineColors[side]);
+			}
+		}
 	}
 
 } // namespace HOL

@@ -25,10 +25,19 @@ namespace HOL
 		float width;
 	};
 
+	struct Triangle
+	{
+		Eigen::Vector3f p0;
+		Eigen::Vector3f p1;
+		Eigen::Vector3f p2;
+		ImU32 color;
+	};
+
 	struct DrawQueue
 	{
 		std::vector<Point> points;
 		std::vector<Line> lines;
+		std::vector<Triangle> triangles;
 	};
 
 	struct TimedTrailPoint
@@ -47,6 +56,10 @@ namespace HOL
 						const Eigen::Vector3f& end,
 						ImU32 color,
 						float width);
+		void submitTriangle(const Eigen::Vector3f& p0,
+							const Eigen::Vector3f& p1,
+							const Eigen::Vector3f& p2,
+							ImU32 color);
 		void submitOrientationAxes(const Eigen::Vector3f& position,
 								   const Eigen::Quaternionf& orientation,
 								   float axisLength = 0.05f,
@@ -68,8 +81,17 @@ namespace HOL
 
 		void drawPoints();
 		void drawLines();
+		void drawTriangles();
 		void updateControllerTrails();
 		void drawControllerTrails();
+		void drawModifierCones();
+		void submitCone(const Eigen::Vector3f& origin,
+						const Eigen::Vector3f& forward,
+						float fovDegrees,
+						float length,
+						ImU32 fillColor,
+						ImU32 lineColor,
+						float lineWidth = 1.5f);
 		void clearControllerTrails();
 		void swapInnerDrawQueue(); // before drawing
 		void clearInternalDrawQueue(); // before drawing
