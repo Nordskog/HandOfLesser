@@ -7,7 +7,9 @@
 #include "src/core/settings_global.h"
 #include "src/core/state_global.h"
 
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 
 // Oculus runtime returns bogus orientations for body tracking.
 // They're not OVR-style either, no idea. Fix them as needed.

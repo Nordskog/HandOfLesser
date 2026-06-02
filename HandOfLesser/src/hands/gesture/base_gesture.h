@@ -14,10 +14,9 @@ namespace HOL::Gesture
 	struct GestureData
 	{
 		XrHandJointLocationEXT* joints[HandSide::HandSide_MAX];
+		const XrBodyJointLocationFB* bodyJoints = nullptr;
 		const XrHandTrackingAimStateFB* aimState[HandSide::HandSide_MAX];
 		HandPose* handPose[HandSide::HandSide_MAX];
-		PoseLocation HeadPose;
-		bool HeadPoseValid = false;
 		// Body tracking reference orientation: chest if upper body tracking active, head otherwise
 		Eigen::Quaternionf ReferenceOrientation = Eigen::Quaternionf::Identity();
 		bool ReferenceOrientationValid = false;

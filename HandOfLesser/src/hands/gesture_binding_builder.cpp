@@ -11,12 +11,11 @@
 #include "src/hands/gesture/aim_gesture.h"
 #include "src/hands/gesture/chain_gesture.h"
 #include "src/hands/gesture/combo_gesture.h"
+#include "src/hands/gesture/facing_gesture.h"
 #include "src/hands/gesture/finger_curl_gesture.h"
 #include "src/hands/gesture/hold_gesture.h"
 #include "src/hands/gesture/inverse_gesture.h"
-#include "src/hands/gesture/look_at_gesture.h"
 #include "src/hands/gesture/open_hand_pinch_gesture.h"
-#include "src/hands/gesture/palm_facing_gesture.h"
 #include "src/hands/gesture/proximity_gesture.h"
 #include "src/hands/input/settings_toggle_input.h"
 #include "src/hands/input/steamvr_bool_input.h"
@@ -196,9 +195,12 @@ namespace
 		HandSide side,
 		bool inverted)
 	{
-		auto lookAt = HOL::Gesture::LookAtGesture::Gesture::Create();
+		auto lookAt = HOL::Gesture::FacingGesture::Gesture::Create();
 		lookAt->parameters.side = side;
 		lookAt->parameters.fovDegrees = HOL::Config.input.lookAtFovDegrees;
+		lookAt->parameters.source = HOL::Gesture::FacingGesture::Source::Head;
+		lookAt->parameters.target = HOL::Gesture::FacingGesture::Target::HandPalm;
+		lookAt->parameters.localForward = Eigen::Vector3f::UnitY();
 
 		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> modifierGesture = lookAt;
 		if (inverted)
@@ -221,9 +223,12 @@ namespace
 		HandSide side,
 		bool inverted)
 	{
-		auto inFront = HOL::Gesture::LookAtGesture::Gesture::Create();
+		auto inFront = HOL::Gesture::FacingGesture::Gesture::Create();
 		inFront->parameters.side = side;
 		inFront->parameters.fovDegrees = HOL::Config.input.inFrontFovDegrees;
+		inFront->parameters.source = HOL::Gesture::FacingGesture::Source::Chest;
+		inFront->parameters.target = HOL::Gesture::FacingGesture::Target::HandPalm;
+		inFront->parameters.localForward = Eigen::Vector3f::UnitY();
 
 		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> modifierGesture = inFront;
 		if (inverted)
@@ -246,9 +251,12 @@ namespace
 		HandSide side,
 		bool inverted)
 	{
-		auto palmFacing = HOL::Gesture::PalmFacingGesture::Gesture::Create();
+		auto palmFacing = HOL::Gesture::FacingGesture::Gesture::Create();
 		palmFacing->parameters.side = side;
 		palmFacing->parameters.fovDegrees = HOL::Config.input.palmFacingFovDegrees;
+		palmFacing->parameters.source = HOL::Gesture::FacingGesture::Source::Palm;
+		palmFacing->parameters.target = HOL::Gesture::FacingGesture::Target::Head;
+		palmFacing->parameters.localForward = -Eigen::Vector3f::UnitY();
 
 		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> modifierGesture = palmFacing;
 		if (inverted)

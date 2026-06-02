@@ -72,7 +72,7 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 
 	// Populate gesture data
 	HOL::Gesture::GestureData data;
-	data.HeadPoseValid = bodyTracker.getHeadPose(data.HeadPose);
+	data.bodyJoints = bodyTracker.getLastJointLocations();
 	data.ReferenceOrientation = bodyTracker.getReferenceOrientation(
 		Config.input.joystickReferenceMode, data.ReferenceOrientationValid);
 

@@ -1,4 +1,5 @@
 #include "body_tracking.h"
+#include "src/core/ui/display_global.h"
 #include "src/core/ui/user_interface.h"
 #include "XrUtils.h"
 #include <src/core/settings_global.h>
@@ -114,6 +115,29 @@ void HOL::OpenXR::BodyTracking::drawBody()
 									   0.120f,
 									   6.0f);
 		}
+	}
+
+	if (Config.visualizer.showInFrontModifierCone)
+	{
+		const auto& bodyTrackingDisplay = ::HOL::display::BodyTracking;
+		Eigen::Vector3f conePosition = bodyTrackingDisplay.headPose.position;
+		Eigen::Quaternionf coneOrientation = bodyTrackingDisplay.headPose.orientation;
+
+		auto& chest = jointLocations[XR_BODY_JOINT_CHEST_FB];
+		bool chestValid = (chest.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
+						  && (chest.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT);
+		if (chestValid)
+		{
+			conePosition = OpenXR::toEigenVector(chest.pose.position);
+			coneOrientation = OpenXR::toEigenQuaternion(chest.pose.orientation);
+		}
+
+		vis->submitCone(conePosition,
+						coneOrientation * Eigen::Vector3f::UnitY(),
+						HOL::Config.input.inFrontFovDegrees,
+						0.25f,
+						IM_COL32(255, 210, 80, 28),
+						IM_COL32(255, 210, 80, 110));
 	}
 
 	if (Config.visualizer.showBodyTrackerAxes)

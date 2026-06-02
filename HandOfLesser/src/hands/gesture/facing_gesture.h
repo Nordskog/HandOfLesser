@@ -2,12 +2,28 @@
 
 #include "base_gesture.h"
 
-namespace HOL::Gesture::LookAtGesture
+namespace HOL::Gesture::FacingGesture
 {
+	enum class Source
+	{
+		Head,
+		Chest,
+		Palm
+	};
+
+	enum class Target
+	{
+		HandPalm,
+		Head
+	};
+
 	struct Parameters
 	{
 		HOL::HandSide side = HOL::LeftHand;
 		float fovDegrees = 45.0f;
+		Source source = Source::Head;
+		Target target = Target::HandPalm;
+		Eigen::Vector3f localForward = Eigen::Vector3f::UnitY();
 	};
 
 	class Gesture : public BaseGesture::Gesture
@@ -15,7 +31,7 @@ namespace HOL::Gesture::LookAtGesture
 	public:
 		Gesture()
 		{
-			this->name = "LookAtGesture";
+			this->name = "FacingGesture";
 		}
 
 		static std::shared_ptr<Gesture> Create()
@@ -28,4 +44,4 @@ namespace HOL::Gesture::LookAtGesture
 	protected:
 		float evaluateInternal(GestureData data) override;
 	};
-} // namespace HOL::Gesture::LookAtGesture
+} // namespace HOL::Gesture::FacingGesture

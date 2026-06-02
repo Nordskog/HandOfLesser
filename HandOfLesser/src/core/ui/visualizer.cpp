@@ -709,16 +709,6 @@ namespace HOL
 						   IM_COL32(80, 180, 255, 35),
 						   IM_COL32(80, 180, 255, 110));
 			}
-
-			if (HOL::Config.visualizer.showInFrontModifierCone)
-			{
-				submitCone(bodyTracking.headPose.position,
-						   headForward,
-						   HOL::Config.input.inFrontFovDegrees,
-						   0.25f,
-						   IM_COL32(255, 210, 80, 28),
-						   IM_COL32(255, 210, 80, 110));
-			}
 		}
 
 		if (HOL::Config.visualizer.showPalmFacingModifierCone)

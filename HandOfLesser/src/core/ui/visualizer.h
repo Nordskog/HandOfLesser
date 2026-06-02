@@ -60,6 +60,13 @@ namespace HOL
 							const Eigen::Vector3f& p1,
 							const Eigen::Vector3f& p2,
 							ImU32 color);
+		void submitCone(const Eigen::Vector3f& origin,
+						const Eigen::Vector3f& forward,
+						float fovDegrees,
+						float length,
+						ImU32 fillColor,
+						ImU32 lineColor,
+						float lineWidth = 1.5f);
 		void submitOrientationAxes(const Eigen::Vector3f& position,
 								   const Eigen::Quaternionf& orientation,
 								   float axisLength = 0.05f,
@@ -85,13 +92,6 @@ namespace HOL
 		void updateControllerTrails();
 		void drawControllerTrails();
 		void drawModifierCones();
-		void submitCone(const Eigen::Vector3f& origin,
-						const Eigen::Vector3f& forward,
-						float fovDegrees,
-						float length,
-						ImU32 fillColor,
-						ImU32 lineColor,
-						float lineWidth = 1.5f);
 		void clearControllerTrails();
 		void swapInnerDrawQueue(); // before drawing
 		void clearInternalDrawQueue(); // before drawing
