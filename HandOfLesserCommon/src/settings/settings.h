@@ -214,6 +214,19 @@ namespace HOL
 			}
 		}
 
+		inline void setInvertedGestureModifier(
+			uint32_t& invertedModifiers, GestureModifier modifier, bool enabled)
+		{
+			if (enabled)
+			{
+				invertedModifiers |= static_cast<uint32_t>(modifier);
+			}
+			else
+			{
+				invertedModifiers &= ~static_cast<uint32_t>(modifier);
+			}
+		}
+
 		// Input target — determines gesture kind compatibility and action type.
 		enum class InputTarget
 		{
@@ -258,6 +271,7 @@ namespace HOL
 				HOL::FingerLittle};
 			int chainLength = MaxChainLength;
 			uint32_t modifiers = 0; // Gesture modifiers.
+			uint32_t invertedModifiers = 0; // Modifiers whose output should be inverted.
 
 			// Output target — determines action/sink type.
 			InputTarget target = InputTarget::None;

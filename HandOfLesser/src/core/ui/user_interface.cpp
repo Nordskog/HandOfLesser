@@ -1015,17 +1015,41 @@ void HOL::UserInterface::buildBindings()
 			ImGui::TextDisabled("(%d ms)", Config.input.holdDurationMS);
 		}
 
+		auto rightAlignCheckbox = [](const char* label, bool* value)
+		{
+			float availableWidth = ImGui::GetContentRegionAvail().x;
+			float checkboxWidth = ImGui::GetFrameHeight()
+								  + ImGui::GetStyle().ItemInnerSpacing.x
+								  + ImGui::CalcTextSize(label, nullptr, true).x;
+			ImGui::SetCursorPosX(
+				ImGui::GetCursorPosX() + std::max(0.0f, availableWidth - checkboxWidth));
+			return ImGui::Checkbox(label, value);
+		};
+
 		bool useLookAt
 			= settings::hasGestureModifier(b.modifiers, settings::GestureModifier::LookingAtHand);
 		if (ImGui::Checkbox("Look At Hand", &useLookAt))
 		{
 			settings::setGestureModifier(
 				b.modifiers, settings::GestureModifier::LookingAtHand, useLookAt);
+			if (!useLookAt)
+			{
+				settings::setInvertedGestureModifier(
+					b.invertedModifiers, settings::GestureModifier::LookingAtHand, false);
+			}
 		}
 		if (useLookAt)
 		{
 			ImGui::SameLine();
 			ImGui::TextDisabled("(%.1f deg)", Config.input.lookAtFovDegrees);
+			ImGui::SameLine();
+			bool invertLookAt = settings::hasGestureModifier(
+				b.invertedModifiers, settings::GestureModifier::LookingAtHand);
+			if (rightAlignCheckbox("Invert##LookAtHand", &invertLookAt))
+			{
+				settings::setInvertedGestureModifier(
+					b.invertedModifiers, settings::GestureModifier::LookingAtHand, invertLookAt);
+			}
 		}
 
 		bool useInFront
@@ -1034,11 +1058,24 @@ void HOL::UserInterface::buildBindings()
 		{
 			settings::setGestureModifier(
 				b.modifiers, settings::GestureModifier::InFrontOfUser, useInFront);
+			if (!useInFront)
+			{
+				settings::setInvertedGestureModifier(
+					b.invertedModifiers, settings::GestureModifier::InFrontOfUser, false);
+			}
 		}
 		if (useInFront)
 		{
 			ImGui::SameLine();
 			ImGui::TextDisabled("(%.1f deg)", Config.input.inFrontFovDegrees);
+			ImGui::SameLine();
+			bool invertInFront = settings::hasGestureModifier(
+				b.invertedModifiers, settings::GestureModifier::InFrontOfUser);
+			if (rightAlignCheckbox("Invert##InFront", &invertInFront))
+			{
+				settings::setInvertedGestureModifier(
+					b.invertedModifiers, settings::GestureModifier::InFrontOfUser, invertInFront);
+			}
 		}
 
 		ImGui::Separator();

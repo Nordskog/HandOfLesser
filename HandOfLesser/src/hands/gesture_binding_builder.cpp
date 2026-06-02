@@ -148,24 +148,32 @@ namespace
 		return curlCombo;
 	}
 
-	bool usesHold(const GestureBinding& binding)
+	bool usesModifier(const GestureBinding& binding, GestureModifier modifier)
 	{
-		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::Hold);
+		return HOL::settings::hasGestureModifier(binding.modifiers, modifier);
 	}
 
-	bool usesClosedHand(const GestureBinding& binding)
+	bool isModifierInverted(const GestureBinding& binding, GestureModifier modifier)
 	{
-		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::ClosedHand);
+		return HOL::settings::hasGestureModifier(binding.invertedModifiers, modifier);
 	}
 
-	bool usesLookAtHand(const GestureBinding& binding)
+	void appendModifierDescription(std::string& description,
+								   const GestureBinding& binding,
+								   GestureModifier modifier,
+								   const char* normalText,
+								   const char* invertedText = nullptr)
 	{
-		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::LookingAtHand);
-	}
+		if (!usesModifier(binding, modifier))
+		{
+			return;
+		}
 
-	bool usesInFrontOfUser(const GestureBinding& binding)
-	{
-		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::InFrontOfUser);
+		description += " (";
+		description += (invertedText != nullptr && isModifierInverted(binding, modifier))
+						   ? invertedText
+						   : normalText;
+		description += ")";
 	}
 
 	bool supportsPressAndRelease(InputTarget target)
@@ -183,33 +191,83 @@ namespace
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithLookAtHand(
-		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture, HandSide side)
+		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture,
+		HandSide side,
+		bool inverted)
 	{
 		auto lookAt = HOL::Gesture::LookAtGesture::Gesture::Create();
 		lookAt->parameters.side = side;
 		lookAt->parameters.fovDegrees = HOL::Config.input.lookAtFovDegrees;
 
+		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> modifierGesture = lookAt;
+		if (inverted)
+		{
+			auto inverse = HOL::Gesture::InverseGesture::Gesture::Create();
+			inverse->setGesture(lookAt);
+			modifierGesture = inverse;
+		}
+
 		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
 		combo->parameters.holdUntilAllReleased = false;
 		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
 		combo->addGesture(gesture);
-		combo->addGesture(lookAt);
+		combo->addGesture(modifierGesture);
 		return combo;
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithInFrontOfUser(
-		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture, HandSide side)
+		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture,
+		HandSide side,
+		bool inverted)
 	{
 		auto inFront = HOL::Gesture::LookAtGesture::Gesture::Create();
 		inFront->parameters.side = side;
 		inFront->parameters.fovDegrees = HOL::Config.input.inFrontFovDegrees;
 
+		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> modifierGesture = inFront;
+		if (inverted)
+		{
+			auto inverse = HOL::Gesture::InverseGesture::Gesture::Create();
+			inverse->setGesture(inFront);
+			modifierGesture = inverse;
+		}
+
 		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
 		combo->parameters.holdUntilAllReleased = false;
 		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
 		combo->addGesture(gesture);
-		combo->addGesture(inFront);
+		combo->addGesture(modifierGesture);
 		return combo;
+	}
+
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> applyModifiers(
+		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture,
+		const GestureBinding& binding)
+	{
+		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrappedGesture = gesture;
+
+		if (usesModifier(binding, GestureModifier::LookingAtHand))
+		{
+			wrappedGesture = wrapWithLookAtHand(
+				wrappedGesture,
+				binding.side,
+				isModifierInverted(binding, GestureModifier::LookingAtHand));
+		}
+
+		if (usesModifier(binding, GestureModifier::InFrontOfUser))
+		{
+			wrappedGesture = wrapWithInFrontOfUser(
+				wrappedGesture,
+				binding.side,
+				isModifierInverted(binding, GestureModifier::InFrontOfUser));
+		}
+
+		if (usesModifier(binding, GestureModifier::Hold))
+		{
+			wrappedGesture = wrapWithHold(wrappedGesture);
+		}
+
+		return wrappedGesture;
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildChainGesture(
@@ -255,6 +313,29 @@ namespace
 		pinch->parameters.side = side;
 		pinch->setup();
 		return pinch;
+	}
+
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildProximityTriggerGesture(
+		const GestureBinding& binding)
+	{
+		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
+			= buildOpenHandPinchGesture(binding.side, binding.proximityFinger);
+
+		if (!usesModifier(binding, GestureModifier::ClosedHand)
+			|| binding.proximityFinger != HOL::FingerIndex)
+		{
+			return triggerGesture;
+		}
+
+		auto proximity = HOL::Gesture::ProximityGesture::Create();
+		proximity->setup(binding.proximityFinger, binding.side, FingerThumb, binding.side);
+
+		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
+		combo->parameters.holdUntilAllReleased = false;
+		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
+		combo->addGesture(proximity);
+		combo->addGesture(buildClosedHandModifier(binding.side, binding.proximityFinger));
+		return combo;
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildGripGesture(HandSide side)
@@ -444,92 +525,47 @@ namespace HOL::GestureBindings
 
 	std::string describeBinding(const GestureBinding& binding)
 	{
+		std::string description;
+
 		switch (binding.kind)
 		{
 			case GestureKind::Proximity:
-			{
-				std::string description = "Tap ";
+				description = "Tap ";
 				description += fingerName(binding.proximityFinger);
 				description += " Finger";
-
-				if (usesClosedHand(binding))
-				{
-					description += " (Closed Hand)";
-				}
-
-				if (usesHold(binding))
-				{
-					description += " (Hold)";
-				}
-
-				if (usesLookAtHand(binding))
-				{
-					description += " (Look At Hand)";
-				}
-
-				if (usesInFrontOfUser(binding))
-				{
-					description += " (In Front)";
-				}
-
-				if (binding.pressAndRelease)
-				{
-					description += " (Press and Release)";
-				}
-
-				return description;
-			}
+				break;
 
 			case GestureKind::Chain:
-			{
-				std::string description = describeChainSequence(binding);
-				if (usesHold(binding))
-				{
-					description += " (Hold)";
-				}
-
-				if (usesLookAtHand(binding))
-				{
-					description += " (Look At Hand)";
-				}
-				if (usesInFrontOfUser(binding))
-				{
-					description += " (In Front)";
-				}
-				if (binding.pressAndRelease)
-				{
-					description += " (Press and Release)";
-				}
-				return description;
-			}
+				description = describeChainSequence(binding);
+				break;
 
 			case GestureKind::Grip:
 			case GestureKind::SystemAim:
-			{
-				std::string description = gestureKindName(binding.kind);
-				if (usesHold(binding))
-				{
-					description += " (Hold)";
-				}
-
-				if (usesLookAtHand(binding))
-				{
-					description += " (Look At Hand)";
-				}
-				if (usesInFrontOfUser(binding))
-				{
-					description += " (In Front)";
-				}
-				if (binding.pressAndRelease)
-				{
-					description += " (Press and Release)";
-				}
-				return description;
-			}
+				description = gestureKindName(binding.kind);
+				break;
 
 			default:
 				return "(none)";
 		}
+
+		appendModifierDescription(description, binding, GestureModifier::ClosedHand, "Closed Hand");
+		appendModifierDescription(description, binding, GestureModifier::Hold, "Hold");
+		appendModifierDescription(description,
+								 binding,
+								 GestureModifier::LookingAtHand,
+								 "Look At Hand",
+								 "Not Look At Hand");
+		appendModifierDescription(description,
+								 binding,
+								 GestureModifier::InFrontOfUser,
+								 "In Front",
+								 "Not In Front");
+		if (binding.pressAndRelease)
+		{
+			description += " (Press and Release)";
+		}
+
+		return description;
 	}
 
 	std::span<const InputTargetOption> inputTargetOptions()
@@ -605,28 +641,9 @@ namespace HOL::GestureBindings
 			auto holdGesture = HOL::Gesture::ProximityGesture::Create();
 			holdGesture->setup(binding.proximityFinger, binding.side);
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalHoldGesture = holdGesture;
-			if (usesLookAtHand(binding))
-			{
-				finalHoldGesture = wrapWithLookAtHand(finalHoldGesture, binding.side);
-			}
-			if (usesInFrontOfUser(binding))
-			{
-				finalHoldGesture = wrapWithInFrontOfUser(finalHoldGesture, binding.side);
-			}
 
-			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalTriggerGesture = triggerGesture;
-			if (usesLookAtHand(binding))
-			{
-				finalTriggerGesture = wrapWithLookAtHand(finalTriggerGesture, binding.side);
-			}
-			if (usesInFrontOfUser(binding))
-			{
-				finalTriggerGesture = wrapWithInFrontOfUser(finalTriggerGesture, binding.side);
-			}
-			if (usesHold(binding))
-			{
-				finalTriggerGesture = wrapWithHold(finalTriggerGesture);
-			}
+			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalTriggerGesture
+				= applyModifiers(triggerGesture, binding);
 
 			dragAction->setTriggerGesture(finalTriggerGesture);
 			dragAction->setHoldGesture(finalHoldGesture);
@@ -636,22 +653,7 @@ namespace HOL::GestureBindings
 		else if (binding.kind == GestureKind::Proximity)
 		{
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
-				= buildOpenHandPinchGesture(binding.side, binding.proximityFinger);
-
-			if (usesClosedHand(binding)
-				&& binding.proximityFinger == HOL::FingerIndex)
-			{
-				auto proximity = HOL::Gesture::ProximityGesture::Create();
-				proximity->setup(binding.proximityFinger, binding.side, FingerThumb, binding.side);
-
-				auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
-				combo->parameters.holdUntilAllReleased = false;
-				combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
-				combo->addGesture(proximity);
-				combo->addGesture(
-					buildClosedHandModifier(binding.side, binding.proximityFinger));
-				triggerGesture = combo;
-			}
+				= buildProximityTriggerGesture(binding);
 
 			if (isAnalogTarget(binding.target))
 			{
@@ -676,19 +678,7 @@ namespace HOL::GestureBindings
 				action->getParameters().pressAndRelease = binding.pressAndRelease;
 			}
 
-			if (usesLookAtHand(binding))
-			{
-				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
-			}
-			if (usesInFrontOfUser(binding))
-			{
-				triggerGesture = wrapWithInFrontOfUser(triggerGesture, binding.side);
-			}
-
-			if (usesHold(binding))
-			{
-				triggerGesture = wrapWithHold(triggerGesture);
-			}
+			triggerGesture = applyModifiers(triggerGesture, binding);
 
 			action->setTriggerGesture(triggerGesture);
 		}
@@ -705,36 +695,14 @@ namespace HOL::GestureBindings
 			}
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
 				= buildChainGesture(binding);
-			if (usesLookAtHand(binding))
-			{
-				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
-			}
-			if (usesInFrontOfUser(binding))
-			{
-				triggerGesture = wrapWithInFrontOfUser(triggerGesture, binding.side);
-			}
-			if (usesHold(binding))
-			{
-				triggerGesture = wrapWithHold(triggerGesture);
-			}
+			triggerGesture = applyModifiers(triggerGesture, binding);
 			action->setTriggerGesture(triggerGesture);
 		}
 		else if (binding.kind == GestureKind::Grip)
 		{
 			auto gripGesture = buildGripGesture(binding.side);
-			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture = gripGesture;
-			if (usesLookAtHand(binding))
-			{
-				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
-			}
-			if (usesInFrontOfUser(binding))
-			{
-				triggerGesture = wrapWithInFrontOfUser(triggerGesture, binding.side);
-			}
-			if (usesHold(binding))
-			{
-				triggerGesture = wrapWithHold(triggerGesture);
-			}
+			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
+				= applyModifiers(gripGesture, binding);
 
 			if (isAnalogTarget(binding.target))
 			{
@@ -764,18 +732,7 @@ namespace HOL::GestureBindings
 			action->getParameters().pressAndRelease = binding.pressAndRelease;
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
 				= buildSystemAimGesture(binding.side);
-			if (usesLookAtHand(binding))
-			{
-				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
-			}
-			if (usesInFrontOfUser(binding))
-			{
-				triggerGesture = wrapWithInFrontOfUser(triggerGesture, binding.side);
-			}
-			if (usesHold(binding))
-			{
-				triggerGesture = wrapWithHold(triggerGesture);
-			}
+			triggerGesture = applyModifiers(triggerGesture, binding);
 			action->setTriggerGesture(triggerGesture);
 		}
 
