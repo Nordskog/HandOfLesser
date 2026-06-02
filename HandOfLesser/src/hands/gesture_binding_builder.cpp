@@ -163,6 +163,11 @@ namespace
 		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::LookingAtHand);
 	}
 
+	bool usesInFrontOfUser(const GestureBinding& binding)
+	{
+		return HOL::settings::hasGestureModifier(binding.modifiers, GestureModifier::InFrontOfUser);
+	}
+
 	bool supportsPressAndRelease(InputTarget target)
 	{
 		return isButtonTarget(target) || target == InputTarget::Trigger;
@@ -189,6 +194,21 @@ namespace
 		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
 		combo->addGesture(gesture);
 		combo->addGesture(lookAt);
+		return combo;
+	}
+
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithInFrontOfUser(
+		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture, HandSide side)
+	{
+		auto inFront = HOL::Gesture::LookAtGesture::Gesture::Create();
+		inFront->parameters.side = side;
+		inFront->parameters.fovDegrees = HOL::Config.input.inFrontFovDegrees;
+
+		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
+		combo->parameters.holdUntilAllReleased = false;
+		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
+		combo->addGesture(gesture);
+		combo->addGesture(inFront);
 		return combo;
 	}
 
@@ -447,6 +467,11 @@ namespace HOL::GestureBindings
 					description += " (Look At Hand)";
 				}
 
+				if (usesInFrontOfUser(binding))
+				{
+					description += " (In Front)";
+				}
+
 				if (binding.pressAndRelease)
 				{
 					description += " (Press and Release)";
@@ -467,6 +492,10 @@ namespace HOL::GestureBindings
 				{
 					description += " (Look At Hand)";
 				}
+				if (usesInFrontOfUser(binding))
+				{
+					description += " (In Front)";
+				}
 				if (binding.pressAndRelease)
 				{
 					description += " (Press and Release)";
@@ -486,6 +515,10 @@ namespace HOL::GestureBindings
 				if (usesLookAtHand(binding))
 				{
 					description += " (Look At Hand)";
+				}
+				if (usesInFrontOfUser(binding))
+				{
+					description += " (In Front)";
 				}
 				if (binding.pressAndRelease)
 				{
@@ -576,11 +609,19 @@ namespace HOL::GestureBindings
 			{
 				finalHoldGesture = wrapWithLookAtHand(finalHoldGesture, binding.side);
 			}
+			if (usesInFrontOfUser(binding))
+			{
+				finalHoldGesture = wrapWithInFrontOfUser(finalHoldGesture, binding.side);
+			}
 
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalTriggerGesture = triggerGesture;
 			if (usesLookAtHand(binding))
 			{
 				finalTriggerGesture = wrapWithLookAtHand(finalTriggerGesture, binding.side);
+			}
+			if (usesInFrontOfUser(binding))
+			{
+				finalTriggerGesture = wrapWithInFrontOfUser(finalTriggerGesture, binding.side);
 			}
 			if (usesHold(binding))
 			{
@@ -639,6 +680,10 @@ namespace HOL::GestureBindings
 			{
 				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
 			}
+			if (usesInFrontOfUser(binding))
+			{
+				triggerGesture = wrapWithInFrontOfUser(triggerGesture, binding.side);
+			}
 
 			if (usesHold(binding))
 			{
@@ -664,6 +709,10 @@ namespace HOL::GestureBindings
 			{
 				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
 			}
+			if (usesInFrontOfUser(binding))
+			{
+				triggerGesture = wrapWithInFrontOfUser(triggerGesture, binding.side);
+			}
 			if (usesHold(binding))
 			{
 				triggerGesture = wrapWithHold(triggerGesture);
@@ -677,6 +726,10 @@ namespace HOL::GestureBindings
 			if (usesLookAtHand(binding))
 			{
 				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
+			}
+			if (usesInFrontOfUser(binding))
+			{
+				triggerGesture = wrapWithInFrontOfUser(triggerGesture, binding.side);
 			}
 			if (usesHold(binding))
 			{
@@ -714,6 +767,10 @@ namespace HOL::GestureBindings
 			if (usesLookAtHand(binding))
 			{
 				triggerGesture = wrapWithLookAtHand(triggerGesture, binding.side);
+			}
+			if (usesInFrontOfUser(binding))
+			{
+				triggerGesture = wrapWithInFrontOfUser(triggerGesture, binding.side);
 			}
 			if (usesHold(binding))
 			{

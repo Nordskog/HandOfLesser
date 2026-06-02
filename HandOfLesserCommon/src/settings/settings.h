@@ -270,6 +270,7 @@ namespace HOL
 			JoystickReferenceMode joystickReferenceMode = JoystickReferenceMode::Head;
 			int chainGestureTimeoutMS = 500;
 			int holdDurationMS = 1000;
+			float inFrontFovDegrees = 100.0f;
 			float lookAtFovDegrees = 45.0f;
 			std::vector<GestureBinding> gestureBindings = defaultGestureBindings();
 		};

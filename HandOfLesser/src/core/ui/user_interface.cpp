@@ -658,6 +658,13 @@ void HOL::UserInterface::buildBindings()
 		rebuildActions = true;
 	}
 
+	float inFrontFovDegrees = Config.input.inFrontFovDegrees;
+	if (ImGui::InputFloat("In-front FoV (deg)", &inFrontFovDegrees))
+	{
+		Config.input.inFrontFovDegrees = std::clamp(inFrontFovDegrees, 1.0f, 179.0f);
+		rebuildActions = true;
+	}
+
 
 	ImGui::SeparatorText("Gesture Bindings");
 
@@ -1019,6 +1026,19 @@ void HOL::UserInterface::buildBindings()
 		{
 			ImGui::SameLine();
 			ImGui::TextDisabled("(%.1f deg)", Config.input.lookAtFovDegrees);
+		}
+
+		bool useInFront
+			= settings::hasGestureModifier(b.modifiers, settings::GestureModifier::InFrontOfUser);
+		if (ImGui::Checkbox("In Front", &useInFront))
+		{
+			settings::setGestureModifier(
+				b.modifiers, settings::GestureModifier::InFrontOfUser, useInFront);
+		}
+		if (useInFront)
+		{
+			ImGui::SameLine();
+			ImGui::TextDisabled("(%.1f deg)", Config.input.inFrontFovDegrees);
 		}
 
 		ImGui::Separator();
