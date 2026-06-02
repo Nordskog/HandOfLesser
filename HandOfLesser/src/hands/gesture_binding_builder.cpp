@@ -207,6 +207,7 @@ namespace
 		{
 			auto inverse = HOL::Gesture::InverseGesture::Gesture::Create();
 			inverse->setGesture(lookAt);
+			inverse->setBinaryThreshold(1.0f);
 			modifierGesture = inverse;
 		}
 
@@ -235,6 +236,7 @@ namespace
 		{
 			auto inverse = HOL::Gesture::InverseGesture::Gesture::Create();
 			inverse->setGesture(inFront);
+			inverse->setBinaryThreshold(1.0f);
 			modifierGesture = inverse;
 		}
 
@@ -263,6 +265,7 @@ namespace
 		{
 			auto inverse = HOL::Gesture::InverseGesture::Gesture::Create();
 			inverse->setGesture(palmFacing);
+			inverse->setBinaryThreshold(1.0f);
 			modifierGesture = inverse;
 		}
 
