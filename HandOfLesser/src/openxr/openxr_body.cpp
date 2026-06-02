@@ -118,6 +118,11 @@ void OpenXRBody::updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time
 		}
 	}
 
+	// Buffer used by any callers so they don't get mid-correction data
+	std::copy(std::begin(mJointLocations),
+			  std::end(mJointLocations),
+			  std::begin(mCorrectedJointLocations));
+
 	// Display
 	HOL::display::BodyTracking.confidence = this->confidence;
 }
@@ -129,7 +134,7 @@ XrBodyJointLocationFB* OpenXRBody::getLastJointLocations()
 		return nullptr;
 	}
 
-	return this->mJointLocations;
+	return this->mCorrectedJointLocations;
 }
 
 bool OpenXRBody::isAvailable() const
@@ -144,7 +149,7 @@ XrBodyTrackerFB OpenXRBody::getBodyTrackerFB()
 
 bool OpenXRBody::getHeadPose(HOL::PoseLocation& pose) const
 {
-	const auto& head = mJointLocations[XR_BODY_JOINT_HEAD_FB];
+	const auto& head = mCorrectedJointLocations[XR_BODY_JOINT_HEAD_FB];
 	if (!(head.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT)
 		|| !(head.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))
 	{
@@ -264,8 +269,8 @@ bool OpenXRBody::canUseArmTrackingAnchor() const
 Eigen::Quaternionf OpenXRBody::getReferenceOrientation(HOL::settings::JoystickReferenceMode mode,
 													   bool& valid) const
 {
-	auto& chest = mJointLocations[XR_BODY_JOINT_CHEST_FB];
-	auto& head = mJointLocations[XR_BODY_JOINT_HEAD_FB];
+	auto& chest = mCorrectedJointLocations[XR_BODY_JOINT_CHEST_FB];
+	auto& head = mCorrectedJointLocations[XR_BODY_JOINT_HEAD_FB];
 
 	auto getOrientation = [](const XrBodyJointLocationFB& joint)
 	{

@@ -57,4 +57,5 @@ private:
 	XrPath mInputSourcePath;
 	XrBodyJointLocationFB mJointLocations[XR_BODY_JOINT_COUNT_FB]{};
 	XrBodyJointLocationFB mPreviousJointLocations[XR_BODY_JOINT_COUNT_FB]{};
+	XrBodyJointLocationFB mCorrectedJointLocations[XR_BODY_JOINT_COUNT_FB]{};
 };
