@@ -208,31 +208,7 @@ std::vector<HOL::BodyTrackerPosePayload> HOL::OpenXR::BodyTracking::getBodyTrack
 	{
 		BodyTrackerRole role = static_cast<BodyTrackerRole>(i);
 
-		bool trackerEnabled = false;
-		switch (role)
-		{
-			case BodyTrackerRole::Hips:
-				trackerEnabled = Config.bodyTrackers.enableHips;
-				break;
-			case BodyTrackerRole::Chest:
-				trackerEnabled = Config.bodyTrackers.enableChest;
-				break;
-			case BodyTrackerRole::LeftUpperArm:
-				trackerEnabled = Config.bodyTrackers.enableLeftUpperArm;
-				break;
-			case BodyTrackerRole::LeftLowerArm:
-				trackerEnabled = Config.bodyTrackers.enableLeftLowerArm;
-				break;
-			case BodyTrackerRole::RightUpperArm:
-				trackerEnabled = Config.bodyTrackers.enableRightUpperArm;
-				break;
-			case BodyTrackerRole::RightLowerArm:
-				trackerEnabled = Config.bodyTrackers.enableRightLowerArm;
-				break;
-			default:
-				trackerEnabled = false;
-				break;
-		}
+		bool trackerEnabled = Config.bodyTrackers.enabled[static_cast<int>(role)];
 
 		bool shouldProcess = trackerEnabled || Config.visualizer.showBodyTrackerAxes;
 		if (!shouldProcess)

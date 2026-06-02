@@ -344,17 +344,7 @@ namespace HOL
 		// Handle body tracker changes
 		bool trackersEnabledChanged
 			= Config.bodyTrackers.enableBodyTrackers != oldConfig.bodyTrackers.enableBodyTrackers;
-		bool anyTrackerSettingChanged
-			= Config.bodyTrackers.enableHips != oldConfig.bodyTrackers.enableHips
-			  || Config.bodyTrackers.enableChest != oldConfig.bodyTrackers.enableChest
-			  || Config.bodyTrackers.enableLeftUpperArm
-					 != oldConfig.bodyTrackers.enableLeftUpperArm
-			  || Config.bodyTrackers.enableLeftLowerArm
-					 != oldConfig.bodyTrackers.enableLeftLowerArm
-			  || Config.bodyTrackers.enableRightUpperArm
-					 != oldConfig.bodyTrackers.enableRightUpperArm
-			  || Config.bodyTrackers.enableRightLowerArm
-					 != oldConfig.bodyTrackers.enableRightLowerArm;
+		bool anyTrackerSettingChanged = Config.bodyTrackers.enabled != oldConfig.bodyTrackers.enabled;
 
 		if (trackersEnabledChanged || anyTrackerSettingChanged)
 		{
@@ -474,34 +464,8 @@ namespace HOL
 			BodyTrackerRole role = static_cast<BodyTrackerRole>(i);
 
 			// Check if this tracker should be enabled (master switch + individual enable)
-			bool shouldBeEnabled = Config.bodyTrackers.enableBodyTrackers;
-			if (shouldBeEnabled)
-			{
-				switch (role)
-				{
-					case BodyTrackerRole::Hips:
-						shouldBeEnabled = Config.bodyTrackers.enableHips;
-						break;
-					case BodyTrackerRole::Chest:
-						shouldBeEnabled = Config.bodyTrackers.enableChest;
-						break;
-					case BodyTrackerRole::LeftUpperArm:
-						shouldBeEnabled = Config.bodyTrackers.enableLeftUpperArm;
-						break;
-					case BodyTrackerRole::LeftLowerArm:
-						shouldBeEnabled = Config.bodyTrackers.enableLeftLowerArm;
-						break;
-					case BodyTrackerRole::RightUpperArm:
-						shouldBeEnabled = Config.bodyTrackers.enableRightUpperArm;
-						break;
-					case BodyTrackerRole::RightLowerArm:
-						shouldBeEnabled = Config.bodyTrackers.enableRightLowerArm;
-						break;
-					default:
-						shouldBeEnabled = false;
-						break;
-				}
-			}
+			bool shouldBeEnabled = Config.bodyTrackers.enableBodyTrackers
+								   && Config.bodyTrackers.enabled[static_cast<int>(role)];
 
 			if (!shouldBeEnabled)
 				continue;
@@ -551,35 +515,8 @@ namespace HOL
 		for (auto& pair : mEmulatedTrackers)
 		{
 			BodyTrackerRole role = pair.first;
-			bool shouldBeConnected = Config.bodyTrackers.enableBodyTrackers;
-
-			if (shouldBeConnected)
-			{
-				switch (role)
-				{
-					case BodyTrackerRole::Hips:
-						shouldBeConnected = Config.bodyTrackers.enableHips;
-						break;
-					case BodyTrackerRole::Chest:
-						shouldBeConnected = Config.bodyTrackers.enableChest;
-						break;
-					case BodyTrackerRole::LeftUpperArm:
-						shouldBeConnected = Config.bodyTrackers.enableLeftUpperArm;
-						break;
-					case BodyTrackerRole::LeftLowerArm:
-						shouldBeConnected = Config.bodyTrackers.enableLeftLowerArm;
-						break;
-					case BodyTrackerRole::RightUpperArm:
-						shouldBeConnected = Config.bodyTrackers.enableRightUpperArm;
-						break;
-					case BodyTrackerRole::RightLowerArm:
-						shouldBeConnected = Config.bodyTrackers.enableRightLowerArm;
-						break;
-					default:
-						shouldBeConnected = false;
-						break;
-				}
-			}
+			bool shouldBeConnected = Config.bodyTrackers.enableBodyTrackers
+									 && Config.bodyTrackers.enabled[static_cast<int>(role)];
 
 			pair.second->setConnectedState(shouldBeConnected);
 		}

@@ -301,24 +301,13 @@ namespace HOL
 
 		inline void to_json(nlohmann::json& j, const BodyTrackerSettings& settings)
 		{
-			j = {{"enableBodyTrackers", settings.enableBodyTrackers},
-				 {"enableHips", settings.enableHips},
-				 {"enableChest", settings.enableChest},
-				 {"enableLeftUpperArm", settings.enableLeftUpperArm},
-				 {"enableLeftLowerArm", settings.enableLeftLowerArm},
-				 {"enableRightUpperArm", settings.enableRightUpperArm},
-				 {"enableRightLowerArm", settings.enableRightLowerArm}};
+			j = {{"enableBodyTrackers", settings.enableBodyTrackers}, {"enabled", settings.enabled}};
 		}
 
 		inline void from_json(const nlohmann::json& j, BodyTrackerSettings& settings)
 		{
 			nlohmann::get_to_if_present(j, "enableBodyTrackers", settings.enableBodyTrackers);
-			nlohmann::get_to_if_present(j, "enableHips", settings.enableHips);
-			nlohmann::get_to_if_present(j, "enableChest", settings.enableChest);
-			nlohmann::get_to_if_present(j, "enableLeftUpperArm", settings.enableLeftUpperArm);
-			nlohmann::get_to_if_present(j, "enableLeftLowerArm", settings.enableLeftLowerArm);
-			nlohmann::get_to_if_present(j, "enableRightUpperArm", settings.enableRightUpperArm);
-			nlohmann::get_to_if_present(j, "enableRightLowerArm", settings.enableRightLowerArm);
+			nlohmann::get_to_if_present(j, "enabled", settings.enabled);
 		}
 
 		inline void to_json(nlohmann::json& j, const DeviceConfig& config)

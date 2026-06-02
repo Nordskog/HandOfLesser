@@ -1176,18 +1176,28 @@ void HOL::UserInterface::buildBodyTrackers()
 
 	ImGui::SeparatorText("Core Trackers");
 
-	syncSettings |= ImGui::Checkbox("Hips", &Config.bodyTrackers.enableHips);
-	syncSettings |= ImGui::Checkbox("Chest", &Config.bodyTrackers.enableChest);
+	syncSettings |= ImGui::Checkbox(
+		"Hips", &Config.bodyTrackers.enabled[static_cast<int>(BodyTrackerRole::Hips)]);
+	syncSettings |= ImGui::Checkbox(
+		"Chest", &Config.bodyTrackers.enabled[static_cast<int>(BodyTrackerRole::Chest)]);
 
 	ImGui::SeparatorText("Left Arm Trackers");
 
-	syncSettings |= ImGui::Checkbox("Left Upper Arm", &Config.bodyTrackers.enableLeftUpperArm);
-	syncSettings |= ImGui::Checkbox("Left Lower Arm", &Config.bodyTrackers.enableLeftLowerArm);
+	syncSettings |= ImGui::Checkbox("Left Upper Arm",
+									&Config.bodyTrackers.enabled[static_cast<int>(
+										BodyTrackerRole::LeftUpperArm)]);
+	syncSettings |= ImGui::Checkbox("Left Lower Arm",
+									&Config.bodyTrackers.enabled[static_cast<int>(
+										BodyTrackerRole::LeftLowerArm)]);
 
 	ImGui::SeparatorText("Right Arm Trackers");
 
-	syncSettings |= ImGui::Checkbox("Right Upper Arm", &Config.bodyTrackers.enableRightUpperArm);
-	syncSettings |= ImGui::Checkbox("Right Lower Arm", &Config.bodyTrackers.enableRightLowerArm);
+	syncSettings |= ImGui::Checkbox("Right Upper Arm",
+									&Config.bodyTrackers.enabled[static_cast<int>(
+										BodyTrackerRole::RightUpperArm)]);
+	syncSettings |= ImGui::Checkbox("Right Lower Arm",
+									&Config.bodyTrackers.enabled[static_cast<int>(
+										BodyTrackerRole::RightLowerArm)]);
 
 	ImGui::EndChild();
 

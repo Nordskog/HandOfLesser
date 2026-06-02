@@ -311,13 +311,8 @@ namespace HOL
 		{
 			bool enableBodyTrackers = false;
 
-			// Individual tracker enables
-			bool enableHips = false;
-			bool enableChest = false;
-			bool enableLeftUpperArm = false;
-			bool enableLeftLowerArm = false;
-			bool enableRightUpperArm = false;
-			bool enableRightLowerArm = false;
+			std::array<bool, static_cast<int>(HOL::BodyTrackerRole::TrackerRole_MAX)> enabled = {
+				true, true, true, true, true, true};
 		};
 
 		struct DeviceConfig
