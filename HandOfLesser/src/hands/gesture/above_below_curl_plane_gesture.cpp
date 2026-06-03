@@ -29,13 +29,13 @@ namespace HOL::Gesture
 		Eigen::Vector3f planeNormal = palmX.cross(planeTipJoint - planeKnuckleJoint);
 		planeNormal.normalize();
 
-		// dot product of normal and vector from plane tip to other tip decide over/under.
+		// Dot product sign decides whether the other fingertip is above or below the plane.
 		auto otherTipJoint = getJointPosition(data.joints[this->parameters.side],
 											  getFingerTip(this->parameters.otherFinger));
 
 		Eigen::Vector3f otherVector = otherTipJoint - planeTipJoint;
 
-		return planeNormal.dot(otherVector);
+		return planeNormal.dot(otherVector) > 0.0f ? 1.0f : 0.0f;
 	}
 }
 

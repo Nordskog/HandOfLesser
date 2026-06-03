@@ -212,6 +212,7 @@ namespace HOL
 				 {"joystickReferenceMode", settings.joystickReferenceMode},
 				 {"chainGestureTimeoutMS", settings.chainGestureTimeoutMS},
 				 {"holdDurationMS", settings.holdDurationMS},
+				 {"gateLeadTimeMS", settings.gateLeadTimeMS},
 				 {"inFrontFovDegrees", settings.inFrontFovDegrees},
 				 {"lookAtFovDegrees", settings.lookAtFovDegrees},
 				 {"palmFacingFovDegrees", settings.palmFacingFovDegrees},
@@ -226,6 +227,7 @@ namespace HOL
 			nlohmann::get_to_if_present(
 				j, "chainGestureTimeoutMS", settings.chainGestureTimeoutMS);
 			nlohmann::get_to_if_present(j, "holdDurationMS", settings.holdDurationMS);
+			nlohmann::get_to_if_present(j, "gateLeadTimeMS", settings.gateLeadTimeMS);
 			nlohmann::get_to_if_present(j, "inFrontFovDegrees", settings.inFrontFovDegrees);
 			nlohmann::get_to_if_present(j, "lookAtFovDegrees", settings.lookAtFovDegrees);
 			nlohmann::get_to_if_present(

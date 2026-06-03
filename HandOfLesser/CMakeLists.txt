@@ -28,6 +28,7 @@
 	src/hands/gesture/open_hand_pinch_gesture.cpp
 	src/hands/gesture/hold_gesture.cpp
 	src/hands/gesture/facing_gesture.cpp
+	src/hands/gesture/gate_gesture.cpp
 	src/hands/action/base_action.cpp
 	src/hands/input/base_input.cpp
 	src/hands/action/hand_drag_action.cpp

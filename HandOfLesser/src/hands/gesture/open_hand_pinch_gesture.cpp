@@ -2,8 +2,10 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include "src/core/settings_global.h"
 #include "src/openxr/xr_hand_utils.h"
 #include "above_below_curl_plane_gesture.h"
+#include "combo_gesture.h"
 #include "open_hand_pinch_gesture.h"
 
 using namespace HOL;
@@ -13,25 +15,7 @@ namespace HOL::Gesture::OpenHandPinchGesture
 {
 	float Gesture::evaluateInternal(GestureData data)
 	{
-		float proximity = this->mProxGesture->evaluate(data);
-
-		// In this case, all the other fingers need to be above the plane.
-		bool above = true;
-		for (auto& planeGesture : this->mCurlPlaneGestures)
-		{
-			above = above && (planeGesture->evaluate(data) > 0);
-		}
-
-		// printf("Prox: %.3f, above: %s\n", proximity, (above ? "true" : "false"));
-
-		if (above)
-		{
-			return proximity;
-		}
-		else
-		{
-			return 0;
-		}
+		return this->mGateGesture ? this->mGateGesture->evaluate(data) : 0.0f;
 	}
 
 	void Gesture::setup()
@@ -44,10 +28,7 @@ namespace HOL::Gesture::OpenHandPinchGesture
 		////////////////////
 
 		this->mProxGesture = ProximityGesture::Create();
-
 		this->mProxGesture->setup(this->parameters.pinchFinger, this->parameters.side);
-
-		this->mSubGestures.push_back(this->mProxGesture);
 
 		/////////////////////////////////////
 		// Other fingers above pinch plane
@@ -72,10 +53,22 @@ namespace HOL::Gesture::OpenHandPinchGesture
 			this->mCurlPlaneGestures.push_back(gesture);
 		}
 
+		auto abovePlaneGesture = ComboGesture::Gesture::Create();
+		abovePlaneGesture->parameters.holdUntilAllReleased = false;
+		abovePlaneGesture->parameters.valueMode = ComboGesture::ValueMode::Minimum;
 		for (auto& gesture : this->mCurlPlaneGestures)
 		{
-			this->mSubGestures.push_back(gesture);
+			abovePlaneGesture->addGesture(gesture);
 		}
+
+		this->mGateGesture = GateGesture::Gesture::Create();
+		this->mGateGesture->parameters.requiredLeadTime
+			= std::chrono::milliseconds(HOL::Config.input.gateLeadTimeMS);
+		this->mGateGesture->setTriggerGesture(this->mProxGesture);
+		this->mGateGesture->setModifierGesture(abovePlaneGesture);
+
+		this->mSubGestures.clear();
+		this->mSubGestures.push_back(this->mGateGesture);
 	}
 }
 

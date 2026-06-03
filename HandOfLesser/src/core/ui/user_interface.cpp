@@ -651,6 +651,13 @@ void HOL::UserInterface::buildBindings()
 		rebuildActions = true;
 	}
 
+	int gateLeadTimeMS = Config.input.gateLeadTimeMS;
+	if (ImGui::InputInt("Gate Lead Time (ms)", &gateLeadTimeMS))
+	{
+		Config.input.gateLeadTimeMS = std::max(0, gateLeadTimeMS);
+		rebuildActions = true;
+	}
+
 	float lookAtFovDegrees = Config.input.lookAtFovDegrees;
 	if (ImGui::InputFloat("Look-at FoV (deg)", &lookAtFovDegrees, 1.0f, 5.0f, "%.1f"))
 	{

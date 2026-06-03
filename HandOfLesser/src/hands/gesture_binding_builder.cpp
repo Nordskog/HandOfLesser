@@ -15,6 +15,7 @@
 #include "src/hands/gesture/finger_curl_gesture.h"
 #include "src/hands/gesture/hold_gesture.h"
 #include "src/hands/gesture/inverse_gesture.h"
+#include "src/hands/gesture/gate_gesture.h"
 #include "src/hands/gesture/open_hand_pinch_gesture.h"
 #include "src/hands/gesture/proximity_gesture.h"
 #include "src/hands/input/settings_toggle_input.h"
@@ -190,10 +191,8 @@ namespace
 		return hold;
 	}
 
-	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithLookAtHand(
-		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture,
-		HandSide side,
-		bool inverted)
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildLookAtHandModifier(HandSide side,
+																				bool inverted)
 	{
 		auto lookAt = HOL::Gesture::FacingGesture::Gesture::Create();
 		lookAt->parameters.side = side;
@@ -211,18 +210,11 @@ namespace
 			modifierGesture = inverse;
 		}
 
-		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
-		combo->parameters.holdUntilAllReleased = false;
-		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
-		combo->addGesture(gesture);
-		combo->addGesture(modifierGesture);
-		return combo;
+		return modifierGesture;
 	}
 
-	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithInFrontOfUser(
-		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture,
-		HandSide side,
-		bool inverted)
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildInFrontOfUserModifier(HandSide side,
+																				   bool inverted)
 	{
 		auto inFront = HOL::Gesture::FacingGesture::Gesture::Create();
 		inFront->parameters.side = side;
@@ -240,18 +232,11 @@ namespace
 			modifierGesture = inverse;
 		}
 
-		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
-		combo->parameters.holdUntilAllReleased = false;
-		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
-		combo->addGesture(gesture);
-		combo->addGesture(modifierGesture);
-		return combo;
+		return modifierGesture;
 	}
 
-	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrapWithPalmFacingUser(
-		const std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>& gesture,
-		HandSide side,
-		bool inverted)
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildPalmFacingUserModifier(HandSide side,
+																					bool inverted)
 	{
 		auto palmFacing = HOL::Gesture::FacingGesture::Gesture::Create();
 		palmFacing->parameters.side = side;
@@ -269,11 +254,57 @@ namespace
 			modifierGesture = inverse;
 		}
 
+		return modifierGesture;
+	}
+
+	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildGatedModifierGesture(
+		const GestureBinding& binding)
+	{
+		std::vector<std::shared_ptr<HOL::Gesture::BaseGesture::Gesture>> modifiers;
+
+		if (usesModifier(binding, GestureModifier::ClosedHand)
+			&& binding.kind == GestureKind::Proximity
+			&& binding.proximityFinger == HOL::FingerIndex)
+		{
+			modifiers.push_back(buildClosedHandModifier(binding.side, binding.proximityFinger));
+		}
+
+		if (usesModifier(binding, GestureModifier::LookingAtHand))
+		{
+			modifiers.push_back(buildLookAtHandModifier(
+				binding.side, isModifierInverted(binding, GestureModifier::LookingAtHand)));
+		}
+
+		if (usesModifier(binding, GestureModifier::InFrontOfUser))
+		{
+			modifiers.push_back(buildInFrontOfUserModifier(
+				binding.side, isModifierInverted(binding, GestureModifier::InFrontOfUser)));
+		}
+
+		if (usesModifier(binding, GestureModifier::PalmFacingUser))
+		{
+			modifiers.push_back(buildPalmFacingUserModifier(
+				binding.side, isModifierInverted(binding, GestureModifier::PalmFacingUser)));
+		}
+
+		if (modifiers.empty())
+		{
+			return nullptr;
+		}
+
+		if (modifiers.size() == 1)
+		{
+			return modifiers.front();
+		}
+
 		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
 		combo->parameters.holdUntilAllReleased = false;
 		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
-		combo->addGesture(gesture);
-		combo->addGesture(modifierGesture);
+		for (const auto& modifier : modifiers)
+		{
+			combo->addGesture(modifier);
+		}
+
 		return combo;
 	}
 
@@ -283,28 +314,14 @@ namespace
 	{
 		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> wrappedGesture = gesture;
 
-		if (usesModifier(binding, GestureModifier::LookingAtHand))
+		if (auto gatedModifierGesture = buildGatedModifierGesture(binding))
 		{
-			wrappedGesture = wrapWithLookAtHand(
-				wrappedGesture,
-				binding.side,
-				isModifierInverted(binding, GestureModifier::LookingAtHand));
-		}
-
-		if (usesModifier(binding, GestureModifier::InFrontOfUser))
-		{
-			wrappedGesture = wrapWithInFrontOfUser(
-				wrappedGesture,
-				binding.side,
-				isModifierInverted(binding, GestureModifier::InFrontOfUser));
-		}
-
-		if (usesModifier(binding, GestureModifier::PalmFacingUser))
-		{
-			wrappedGesture = wrapWithPalmFacingUser(
-				wrappedGesture,
-				binding.side,
-				isModifierInverted(binding, GestureModifier::PalmFacingUser));
+			auto gate = HOL::Gesture::GateGesture::Gesture::Create();
+			gate->parameters.requiredLeadTime
+				= std::chrono::milliseconds(HOL::Config.input.gateLeadTimeMS);
+			gate->setTriggerGesture(wrappedGesture);
+			gate->setModifierGesture(gatedModifierGesture);
+			wrappedGesture = gate;
 		}
 
 		if (usesModifier(binding, GestureModifier::Hold))
@@ -363,24 +380,15 @@ namespace
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildProximityTriggerGesture(
 		const GestureBinding& binding)
 	{
-		std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> triggerGesture
-			= buildOpenHandPinchGesture(binding.side, binding.proximityFinger);
-
-		if (!usesModifier(binding, GestureModifier::ClosedHand)
-			|| binding.proximityFinger != HOL::FingerIndex)
+		if (usesModifier(binding, GestureModifier::ClosedHand)
+			&& binding.proximityFinger == HOL::FingerIndex)
 		{
-			return triggerGesture;
+			auto proximity = HOL::Gesture::ProximityGesture::Create();
+			proximity->setup(binding.proximityFinger, binding.side, FingerThumb, binding.side);
+			return proximity;
 		}
 
-		auto proximity = HOL::Gesture::ProximityGesture::Create();
-		proximity->setup(binding.proximityFinger, binding.side, FingerThumb, binding.side);
-
-		auto combo = HOL::Gesture::ComboGesture::Gesture::Create();
-		combo->parameters.holdUntilAllReleased = false;
-		combo->parameters.valueMode = HOL::Gesture::ComboGesture::ValueMode::Product;
-		combo->addGesture(proximity);
-		combo->addGesture(buildClosedHandModifier(binding.side, binding.proximityFinger));
-		return combo;
+		return buildOpenHandPinchGesture(binding.side, binding.proximityFinger);
 	}
 
 	std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> buildGripGesture(HandSide side)
