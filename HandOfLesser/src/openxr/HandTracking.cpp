@@ -31,9 +31,8 @@ void HandTracking::initHands(xr::UniqueDynamicSession& session)
 
 void HOL::OpenXR::HandTracking::rebuildActions()
 {
-	this->mActions.clear();
-	this->mActionsByBindingIndex.clear();
-	this->mActionsByBindingIndex.resize(Config.input.gestureBindings.size());
+	auto newActionSet = std::make_shared<ActionSet>();
+	newActionSet->actionsByBindingIndex.resize(Config.input.gestureBindings.size());
 
 	for (size_t i = 0; i < Config.input.gestureBindings.size(); i++)
 	{
@@ -49,20 +48,25 @@ void HOL::OpenXR::HandTracking::rebuildActions()
 		auto action = GestureBindings::buildAction(binding);
 		if (action)
 		{
-			this->mActions.push_back(action);
-			this->mActionsByBindingIndex[i] = action;
+			newActionSet->actions.push_back(action);
+			newActionSet->actionsByBindingIndex[i] = action;
 		}
 	}
+
+	std::atomic_store_explicit(
+		&this->mActionSet, std::shared_ptr<const ActionSet>(newActionSet), std::memory_order_release);
 }
 
 std::shared_ptr<BaseAction> HOL::OpenXR::HandTracking::getActionForBindingIndex(size_t bindingIndex) const
 {
-	if (bindingIndex >= this->mActionsByBindingIndex.size())
+	std::shared_ptr<const ActionSet> actionSet
+		= std::atomic_load_explicit(&this->mActionSet, std::memory_order_acquire);
+	if (!actionSet || bindingIndex >= actionSet->actionsByBindingIndex.size())
 	{
 		return nullptr;
 	}
 
-	return this->mActionsByBindingIndex[bindingIndex];
+	return actionSet->actionsByBindingIndex[bindingIndex];
 }
 
 void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker)
@@ -85,7 +89,14 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 	}
 
 	// Evaluate gestures
-	for (auto& action : this->mActions)
+	std::shared_ptr<const ActionSet> actionSet
+		= std::atomic_load_explicit(&this->mActionSet, std::memory_order_acquire);
+	if (!actionSet)
+	{
+		return;
+	}
+
+	for (auto& action : actionSet->actions)
 	{
 		action->evaluate(data);
 	}

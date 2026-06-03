@@ -40,8 +40,8 @@ namespace HOL::Gesture
 		HOL::HandSide mSide2;
 		bool mUseLineDistance = false;
 
-		float mMinDistance;
-		float mMaxDistance;
+		float mMinDistance = 0.02f;
+		float mMaxDistance = 0.08f;
 
 	protected:
 		float evaluateInternal(GestureData data) override;

@@ -30,9 +30,10 @@ namespace HOL::Gesture
 			distance = (pos1 - pos2).norm();
 		}
 
+		float distanceRange = this->mMaxDistance - this->mMinDistance;
 		distance -= this->mMinDistance;
-		distance = std::clamp(distance, 0.0f, this->mMaxDistance);
-		distance /= (this->mMaxDistance - this->mMinDistance);
+		distance = std::clamp(distance, 0.0f, distanceRange);
+		distance /= distanceRange;
 		distance = 1.f - distance;
 
 		return distance;

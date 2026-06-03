@@ -1,6 +1,7 @@
 #pragma once
 
 #include <d3d11.h> // Why do you need this??
+#include <atomic>
 #include <memory>
 #include "openxr_hand.h"
 #include "openxr_body.h"
@@ -29,13 +30,18 @@ namespace HOL::OpenXR
 		std::shared_ptr<BaseAction> getActionForBindingIndex(size_t bindingIndex) const;
 
 	private:
+		struct ActionSet
+		{
+			std::vector<std::shared_ptr<BaseAction>> actions;
+			std::vector<std::shared_ptr<BaseAction>> actionsByBindingIndex;
+		};
+
 		void initHands(xr::UniqueDynamicSession& session);
 		void submitLegacyFingerCurl();
 		void updateSimpleGestures();
 		OpenXRHand mLeftHand;
 		OpenXRHand mRightHand;
 
-		std::vector<std::shared_ptr<BaseAction>> mActions;
-		std::vector<std::shared_ptr<BaseAction>> mActionsByBindingIndex;
+		std::shared_ptr<const ActionSet> mActionSet = std::make_shared<ActionSet>();
 	};
 } // namespace HOL::OpenXR
