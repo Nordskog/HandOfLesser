@@ -1,7 +1,10 @@
 #include "crash_handler.h"
 #include "src/core/app_paths.h"
 #include "windows_utils.h"
+#include <csignal>
+#include <crtdbg.h>
 #include <dbghelp.h>
+#include <eh.h>
 #include <exception>
 #include <filesystem>
 #include <iostream>
@@ -116,6 +119,26 @@ namespace
 		}
 
 		return out.str();
+	}
+
+	std::string narrowWideString(const wchar_t* value)
+	{
+		if (value == nullptr || value[0] == L'\0')
+		{
+			return {};
+		}
+
+		int requiredSize
+			= WideCharToMultiByte(CP_UTF8, 0, value, -1, nullptr, 0, nullptr, nullptr);
+		if (requiredSize <= 1)
+		{
+			return {};
+		}
+
+		std::string result(static_cast<size_t>(requiredSize - 1), '\0');
+		WideCharToMultiByte(
+			CP_UTF8, 0, value, -1, result.data(), requiredSize, nullptr, nullptr);
+		return result;
 	}
 
 	void appendStackFrames(std::ostringstream& out, void* const* frames, USHORT frameCount)
@@ -292,6 +315,22 @@ namespace
 					MB_OK | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST | MB_SYSTEMMODAL);
 	}
 
+	[[noreturn]] void emitFatalRuntimeReport(const std::string& header)
+	{
+		std::ostringstream out;
+		out << header << std::endl;
+		out << getCurrentStackTraceText();
+
+		std::filesystem::path dumpPath = writeMiniDump(nullptr);
+		if (!dumpPath.empty())
+		{
+			out << "Crash dump written to: " << dumpPath.string() << std::endl;
+		}
+
+		emitCrashReport(out.str(), true);
+		std::_Exit(1);
+	}
+
 	LONG WINAPI unhandledExceptionFilter(EXCEPTION_POINTERS* exceptionPointers)
 	{
 		if (exceptionPointers == nullptr || exceptionPointers->ExceptionRecord == nullptr)
@@ -378,6 +417,57 @@ namespace
 		emitCrashReport(out.str(), true);
 		std::_Exit(1);
 	}
+
+	void __cdecl invalidParameterHandler(const wchar_t* expression,
+										 const wchar_t* function,
+										 const wchar_t* file,
+										 unsigned int line,
+										 uintptr_t)
+	{
+		std::ostringstream out;
+		out << "Fatal CRT invalid-parameter failure" << std::endl;
+		if (expression && expression[0] != L'\0')
+		{
+			out << "Expression: " << narrowWideString(expression) << std::endl;
+		}
+		if (function && function[0] != L'\0')
+		{
+			out << "Function: " << narrowWideString(function) << std::endl;
+		}
+		if (file && file[0] != L'\0')
+		{
+			out << "File: " << narrowWideString(file);
+			if (line != 0)
+			{
+				out << ":" << line;
+			}
+			out << std::endl;
+		}
+
+		emitFatalRuntimeReport(out.str());
+	}
+
+	void __cdecl purecallHandler()
+	{
+		emitFatalRuntimeReport("Fatal CRT pure virtual function call");
+	}
+
+	void __cdecl signalHandler(int signalCode)
+	{
+		const char* signalName = "unknown";
+		switch (signalCode)
+		{
+			case SIGABRT:
+				signalName = "SIGABRT";
+				break;
+			default:
+				break;
+		}
+
+		std::ostringstream out;
+		out << "Fatal CRT signal: " << signalName << " (" << signalCode << ")";
+		emitFatalRuntimeReport(out.str());
+	}
 } // namespace
 
 void HOL::Windows::CrashHandler::install()
@@ -385,6 +475,10 @@ void HOL::Windows::CrashHandler::install()
 	initializeSymbols();
 	SetUnhandledExceptionFilter(unhandledExceptionFilter);
 	std::set_terminate(terminateHandler);
+	_set_invalid_parameter_handler(invalidParameterHandler);
+	_set_purecall_handler(purecallHandler);
+	_set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+	std::signal(SIGABRT, signalHandler);
 }
 
 void HOL::Windows::CrashHandler::logHandledException(const std::exception& ex)
