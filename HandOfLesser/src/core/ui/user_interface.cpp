@@ -636,7 +636,7 @@ void HOL::UserInterface::buildBindings()
 					   true,
 					   "");
 
-	ImGui::SeparatorText("Gesture Timing");
+	ImGui::SeparatorText("Gesture Conditions");
 	int chainGestureTimeoutMS = Config.input.chainGestureTimeoutMS;
 	if (ImGui::InputInt("Sequence Timeout (ms)", &chainGestureTimeoutMS))
 	{
