@@ -45,6 +45,14 @@ namespace HOL::Gesture::OpenHandPinchGesture
 			if (otherFinger == this->parameters.pinchFinger)
 				continue;
 
+			// Quest tracking is unreliable for pinky posture during ring-finger pinches,
+			// so do not require the pinky to satisfy the open-hand plane gate in that case.
+			if (this->parameters.pinchFinger == FingerType::FingerRing
+				&& otherFinger == FingerType::FingerLittle)
+			{
+				continue;
+			}
+
 			auto gesture = AboveBelowCurlPlaneGesture::Gesture::Create();
 			gesture->parameters.otherFinger = otherFinger;
 			gesture->parameters.planeFinger = this->parameters.pinchFinger;
