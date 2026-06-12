@@ -780,8 +780,9 @@ void HOL::UserInterface::buildBindings()
 			ImGui::SameLine();
 			const float leftIndent = ImGui::GetCursorPosX();
 
-			const std::string description = GestureBindings::describeBinding(binding);
-			ImGui::TextUnformatted(description.c_str());
+			const std::string baseDescription = GestureBindings::describeBindingBase(binding);
+			const std::string modifierDescription = GestureBindings::describeBindingModifiers(binding);
+			ImGui::TextUnformatted(baseDescription.c_str());
 			ImGui::SameLine();
 			ImGui::TextDisabled("->");
 			ImGui::SameLine();
@@ -830,6 +831,11 @@ void HOL::UserInterface::buildBindings()
 				{
 					mExpandedBindingDebugRows.insert(i);
 				}
+			}
+			if (!deleted && !modifierDescription.empty())
+			{
+				ImGui::SameLine();
+				ImGui::TextDisabled("%s", modifierDescription.c_str());
 			}
 
 			ImGui::EndGroup();
