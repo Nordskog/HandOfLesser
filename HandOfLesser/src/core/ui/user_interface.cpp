@@ -716,6 +716,8 @@ void HOL::UserInterface::buildBindings()
 		ImGui::EndPopup();
 	}
 
+	ImGui::Spacing();
+	ImGui::SeparatorText("Bindings By Side");
 
 	auto renderBindingsForSide = [&](HandSide side, const char* label)
 	{
@@ -868,9 +870,22 @@ void HOL::UserInterface::buildBindings()
 		}
 	};
 
-	renderBindingsForSide(LeftHand, "Left Hand");
-	ImGui::Spacing();
-	renderBindingsForSide(RightHand, "Right Hand");
+	if (ImGui::BeginTabBar("BindingSides"))
+	{
+		if (ImGui::BeginTabItem("Left Hand"))
+		{
+			renderBindingsForSide(LeftHand, "Left Hand");
+			ImGui::EndTabItem();
+		}
+
+		if (ImGui::BeginTabItem("Right Hand"))
+		{
+			renderBindingsForSide(RightHand, "Right Hand");
+			ImGui::EndTabItem();
+		}
+
+		ImGui::EndTabBar();
+	}
 
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
