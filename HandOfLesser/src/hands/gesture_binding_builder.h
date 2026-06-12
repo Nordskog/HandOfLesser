@@ -24,7 +24,7 @@ namespace HOL::GestureBindings
 	const char* gestureKindName(settings::GestureKind kind);
 	const char* inputTargetName(settings::InputTarget target);
 	std::string describeBindingBase(const settings::GestureBinding& binding);
-	std::string describeBindingModifiers(const settings::GestureBinding& binding);
+	std::vector<std::string> describeBindingModifierLabels(const settings::GestureBinding& binding);
 	std::string describeBinding(const settings::GestureBinding& binding);
 	std::span<const InputTargetOption> inputTargetOptions();
 

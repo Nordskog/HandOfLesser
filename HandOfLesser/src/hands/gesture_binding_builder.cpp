@@ -159,45 +159,20 @@ namespace
 		return HOL::settings::hasGestureModifier(binding.invertedModifiers, modifier);
 	}
 
-	void appendModifierDescription(std::string& description,
-								   const GestureBinding& binding,
-								   GestureModifier modifier,
-								   const char* normalText,
-								   const char* invertedText = nullptr)
+	void appendModifierLabel(std::vector<std::string>& labels,
+							 const GestureBinding& binding,
+							 GestureModifier modifier,
+							 const char* normalText,
+							 const char* invertedText = nullptr)
 	{
 		if (!usesModifier(binding, modifier))
 		{
 			return;
 		}
 
-		description += " (";
-		description += (invertedText != nullptr && isModifierInverted(binding, modifier))
-						   ? invertedText
-						   : normalText;
-		description += ")";
-	}
-
-	void appendModifierDescriptionNoLeadingSpace(std::string& description,
-												 const GestureBinding& binding,
-												 GestureModifier modifier,
-												 const char* normalText,
-												 const char* invertedText = nullptr)
-	{
-		if (!usesModifier(binding, modifier))
-		{
-			return;
-		}
-
-		if (!description.empty())
-		{
-			description += " ";
-		}
-
-		description += "(";
-		description += (invertedText != nullptr && isModifierInverted(binding, modifier))
-						   ? invertedText
-						   : normalText;
-		description += ")";
+		labels.push_back((invertedText != nullptr && isModifierInverted(binding, modifier))
+							 ? invertedText
+							 : normalText);
 	}
 
 	bool supportsPressAndRelease(InputTarget target)
@@ -627,48 +602,45 @@ namespace HOL::GestureBindings
 		return description;
 	}
 
-	std::string describeBindingModifiers(const GestureBinding& binding)
+	std::vector<std::string> describeBindingModifierLabels(const GestureBinding& binding)
 	{
-		std::string description;
+		std::vector<std::string> labels;
 
-		appendModifierDescriptionNoLeadingSpace(
-			description, binding, GestureModifier::ClosedHand, "Closed Hand");
-		appendModifierDescriptionNoLeadingSpace(description, binding, GestureModifier::Hold, "Hold");
-		appendModifierDescriptionNoLeadingSpace(description,
-											   binding,
-											   GestureModifier::LookingAtHand,
-											   "Look At Hand",
-											   "Not Look At Hand");
-		appendModifierDescriptionNoLeadingSpace(description,
-											   binding,
-											   GestureModifier::InFrontOfUser,
-											   "In Front",
-											   "Not In Front");
-		appendModifierDescriptionNoLeadingSpace(description,
-											   binding,
-											   GestureModifier::PalmFacingUser,
-											   "Palm Facing User",
-											   "Palm Not Facing User");
+		appendModifierLabel(labels, binding, GestureModifier::ClosedHand, "Closed Hand");
+		appendModifierLabel(labels, binding, GestureModifier::Hold, "Hold");
+		appendModifierLabel(labels,
+							binding,
+							GestureModifier::LookingAtHand,
+							"Look At Hand",
+							"Not Look At Hand");
+		appendModifierLabel(labels,
+							binding,
+							GestureModifier::InFrontOfUser,
+							"In Front",
+							"Not In Front");
+		appendModifierLabel(labels,
+							binding,
+							GestureModifier::PalmFacingUser,
+							"Palm Facing User",
+							"Palm Not Facing User");
 		if (binding.pressAndRelease)
 		{
-			if (!description.empty())
-			{
-				description += " ";
-			}
-			description += "(Press and Release)";
+			labels.push_back("Press and Release");
 		}
 
-		return description;
+		return labels;
 	}
 
 	std::string describeBinding(const GestureBinding& binding)
 	{
 		std::string description = describeBindingBase(binding);
-		std::string modifierDescription = describeBindingModifiers(binding);
-		if (!modifierDescription.empty())
+		const std::vector<std::string> modifierLabels = describeBindingModifierLabels(binding);
+		for (const std::string& modifierLabel : modifierLabels)
 		{
 			description += " ";
-			description += modifierDescription;
+			description += "(";
+			description += modifierLabel;
+			description += ")";
 		}
 
 		return description;

@@ -781,7 +781,8 @@ void HOL::UserInterface::buildBindings()
 			const float leftIndent = ImGui::GetCursorPosX();
 
 			const std::string baseDescription = GestureBindings::describeBindingBase(binding);
-			const std::string modifierDescription = GestureBindings::describeBindingModifiers(binding);
+			const std::vector<std::string> modifierLabels
+				= GestureBindings::describeBindingModifierLabels(binding);
 			ImGui::TextUnformatted(baseDescription.c_str());
 			ImGui::SameLine();
 			ImGui::TextDisabled("->");
@@ -832,9 +833,20 @@ void HOL::UserInterface::buildBindings()
 					mExpandedBindingDebugRows.insert(i);
 				}
 			}
-			if (!deleted && !modifierDescription.empty())
+			if (!deleted && !modifierLabels.empty())
 			{
 				ImGui::SameLine();
+				std::string modifierDescription;
+				for (size_t modifierIndex = 0; modifierIndex < modifierLabels.size(); modifierIndex++)
+				{
+					if (modifierIndex > 0)
+					{
+						modifierDescription += " ";
+					}
+					modifierDescription += "(";
+					modifierDescription += modifierLabels[modifierIndex];
+					modifierDescription += ")";
+				}
 				ImGui::TextDisabled("%s", modifierDescription.c_str());
 			}
 
