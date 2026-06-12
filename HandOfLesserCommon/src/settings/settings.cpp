@@ -5,7 +5,11 @@ namespace HOL::settings
 	std::vector<GestureBinding> defaultGestureBindings()
 	{
 		std::vector<GestureBinding> bindings;
-		auto addBinding = [&](const GestureBinding& binding) { bindings.push_back(binding); };
+		auto addBinding = [&](GestureBinding binding)
+		{
+			binding.modifiers |= static_cast<uint32_t>(GestureModifier::InFrontOfUser);
+			bindings.push_back(binding);
+		};
 
 		// Joystick — Both hands, Middle finger proximity → Joystick target
 		for (int i = 0; i < HandSide::HandSide_MAX; i++)
@@ -18,7 +22,18 @@ namespace HOL::settings
 			addBinding(b);
 		}
 
-		// Trigger — Both hands, Index finger proximity with Closed grip modifier
+		// Trigger — Both hands, standard Index pinch
+		for (int i = 0; i < HandSide::HandSide_MAX; i++)
+		{
+			GestureBinding b;
+			b.side = (HOL::HandSide)i;
+			b.kind = GestureKind::Proximity;
+			b.proximityFinger = HOL::FingerIndex;
+			b.target = InputTarget::Trigger;
+			addBinding(b);
+		}
+
+		// Trigger — Both hands, Index finger proximity with Closed Hand modifier
 		for (int i = 0; i < HandSide::HandSide_MAX; i++)
 		{
 			GestureBinding b;
