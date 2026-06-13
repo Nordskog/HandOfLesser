@@ -43,6 +43,8 @@ namespace HOL
 		// UI state
 		bool mShowAllDevices = false;
 		std::vector<std::string> mAvailableOpenXRRuntimes;
+		std::string mSelectedTouchOverrideDeviceSerial;
+		std::string mSelectedTouchOverrideButtonPath;
 
 		// Gesture binding editor state
 		int mEditBindingIndex = -1;
@@ -83,6 +85,7 @@ namespace HOL
 		void buildVRChatOSCSettings();
 		void buildBindings();
 		void buildVisual();
+		void buildControllerInput();
 		void buildMisc();
 		void buildBodyTrackers();
 	};

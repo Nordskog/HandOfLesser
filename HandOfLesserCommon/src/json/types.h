@@ -328,12 +328,24 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "enabled", settings.enabled);
 		}
 
+		inline void to_json(nlohmann::json& j, const ControllerButtonOverride& override)
+		{
+			j = {{"buttonPath", override.buttonPath}, {"suppressTouch", override.suppressTouch}};
+		}
+
+		inline void from_json(const nlohmann::json& j, ControllerButtonOverride& override)
+		{
+			nlohmann::get_to_if_present(j, "buttonPath", override.buttonPath);
+			nlohmann::get_to_if_present(j, "suppressTouch", override.suppressTouch);
+		}
+
 		inline void to_json(nlohmann::json& j, const DeviceConfig& config)
 		{
 			j = {{"serial", config.serial},
 				 {"role", config.role},
 				 {"actAsTracker", config.actAsTracker},
-				 {"alsoWhenHeld", config.alsoWhenHeld}};
+				 {"alsoWhenHeld", config.alsoWhenHeld},
+				 {"inputOverrides", config.inputOverrides}};
 		}
 
 		inline void from_json(const nlohmann::json& j, DeviceConfig& config)
@@ -342,6 +354,7 @@ namespace HOL
 			nlohmann::get_to_if_present(j, "role", config.role);
 			nlohmann::get_to_if_present(j, "actAsTracker", config.actAsTracker);
 			nlohmann::get_to_if_present(j, "alsoWhenHeld", config.alsoWhenHeld);
+			nlohmann::get_to_if_present(j, "inputOverrides", config.inputOverrides);
 		}
 
 		inline void to_json(nlohmann::json& j, const DeviceSettings& settings)

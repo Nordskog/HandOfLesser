@@ -31,6 +31,7 @@ namespace HOL
 		DriverInitialized,
 		DriverStatus,
 		DeviceState,
+		DeviceInputInfo,
 		AppInitialized,
 		AppShutdownRequested,
 		InvalidPacket
@@ -157,6 +158,14 @@ namespace HOL
 		bool nativeDeviceIsConnected = false;
 		vr::ETrackingResult nativeTrackingResult = vr::TrackingResult_Uninitialized;
 		uint64_t nativePoseAgeMs = 0;
+	};
+
+	struct DeviceInputInfoPayload
+	{
+		static constexpr uint32_t MaxButtonsPerDevice = 16;
+		char serial[128] = {};
+		uint32_t buttonCount = 0;
+		char buttonPaths[MaxButtonsPerDevice][64] = {};
 	};
 
 	struct AppInitializedPayload

@@ -69,9 +69,14 @@ namespace HOL
 		static HOL::state::RuntimeState Runtime;
 
 		void sendDeviceState(HookedController* device);
+		void sendDeviceInputInfo(HookedController* device);
 		void sendAllDeviceStates();
+		void sendAllDeviceInputInfo();
 		void refreshPreferredHookedControllers();
 		void sendStatus();
+		bool shouldSuppressTouchInput(
+			const HookedController* controller, const std::string& inputPath) const;
+		void enforceTouchSuppression(HookedController* controller);
 
 		// Shadow tracker management
 		void updateShadowTrackerState(HookedController* controller);

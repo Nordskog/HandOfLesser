@@ -7,6 +7,7 @@
 #include "src/core/state_global.h"
 #include "src/core/ui/display_global.h"
 #include "src/vrchat/vrchat_osc.h"
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <cstring>
@@ -382,6 +383,36 @@ void HOL::HandOfLesserCore::receiveDataThread()
 					it->second.nativeTrackingResult = devicePayload.nativeTrackingResult;
 					it->second.nativePoseAgeMs = devicePayload.nativePoseAgeMs;
 					it->second.activatedThisSession = true;
+				}
+
+				break;
+			}
+
+			case NativePacketType::DeviceInputInfo: {
+				DeviceInputInfoPayload inputPayload;
+				if (!nativePacket.copyPayload(inputPayload))
+				{
+					break;
+				}
+
+				std::string serial = inputPayload.serial;
+				auto& deviceConfig = Config.deviceSettings.devices[serial];
+				deviceConfig.serial = serial;
+				deviceConfig.activatedThisSession = true;
+				deviceConfig.touchButtons.clear();
+
+				const uint32_t buttonCount
+					= std::min(inputPayload.buttonCount, DeviceInputInfoPayload::MaxButtonsPerDevice);
+				deviceConfig.touchButtons.reserve(buttonCount);
+				for (uint32_t buttonIndex = 0; buttonIndex < buttonCount; ++buttonIndex)
+				{
+					std::string buttonPath = inputPayload.buttonPaths[buttonIndex];
+					if (buttonPath.empty())
+					{
+						continue;
+					}
+
+					deviceConfig.touchButtons.push_back(buttonPath);
 				}
 
 				break;

@@ -12,6 +12,8 @@
 #include <imgui_impl_win32.h>
 #include <iterator>
 #include <algorithm>
+#include <map>
+#include <set>
 #include <unordered_map>
 
 #include "src/core/settings_global.h"
@@ -21,6 +23,7 @@
 #include <HandOfLesserCommon.h>
 #include "src/core/HandOfLesserCore.h"
 #include "src/hands/gesture_binding_builder.h"
+#include "src/steamvr/input_wrapper.h"
 
 using namespace HOL;
 
@@ -1698,6 +1701,214 @@ void HOL::UserInterface::buildSteamVR()
 	}
 }
 
+void HOL::UserInterface::buildControllerInput()
+{
+	bool syncSettings = false;
+
+	ImGui::BeginChild(
+		"ControllerInputWindow", ImVec2(scaleSize(PanelWidth), 0), ImGuiChildFlags_AutoResizeY);
+	ImGui::SeparatorText("Suppress Touch");
+
+	std::map<std::string, std::set<std::string>> discoveredButtonsByDeviceSerial;
+	for (const auto& [serial, device] : Config.deviceSettings.devices)
+	{
+		if (serial.empty()
+			|| (device.role != vr::TrackedDeviceClass_Invalid
+				&& device.role != vr::TrackedDeviceClass_Controller))
+		{
+			continue;
+		}
+
+		for (const std::string& buttonPath : device.touchButtons)
+		{
+			discoveredButtonsByDeviceSerial[serial].insert(buttonPath);
+		}
+	}
+
+	std::vector<std::string> deviceSerials;
+	deviceSerials.reserve(discoveredButtonsByDeviceSerial.size());
+	for (const auto& [serial, buttons] : discoveredButtonsByDeviceSerial)
+	{
+		deviceSerials.push_back(serial);
+	}
+
+	if (!deviceSerials.empty() && (mSelectedTouchOverrideDeviceSerial.empty()
+								   || !discoveredButtonsByDeviceSerial.contains(
+									   mSelectedTouchOverrideDeviceSerial)))
+	{
+		mSelectedTouchOverrideDeviceSerial = deviceSerials.front();
+	}
+	else if (deviceSerials.empty())
+	{
+		mSelectedTouchOverrideDeviceSerial.clear();
+	}
+
+	std::vector<std::string> availableButtons;
+	const auto selectedDeviceIt
+		= discoveredButtonsByDeviceSerial.find(mSelectedTouchOverrideDeviceSerial);
+	if (selectedDeviceIt != discoveredButtonsByDeviceSerial.end())
+	{
+		availableButtons.assign(selectedDeviceIt->second.begin(), selectedDeviceIt->second.end());
+	}
+
+	if (mSelectedTouchOverrideButtonPath.empty()
+		|| std::find(availableButtons.begin(),
+					 availableButtons.end(),
+					 mSelectedTouchOverrideButtonPath)
+			== availableButtons.end())
+	{
+		mSelectedTouchOverrideButtonPath
+			= availableButtons.empty() ? "" : availableButtons.front();
+	}
+
+	const std::string selectedControllerLabel = mSelectedTouchOverrideDeviceSerial.empty()
+													? std::string("No controllers discovered")
+													: mSelectedTouchOverrideDeviceSerial;
+	ImGui::BeginDisabled(deviceSerials.empty());
+	if (ImGui::BeginCombo("Controller", selectedControllerLabel.c_str()))
+	{
+		for (const std::string& serial : deviceSerials)
+		{
+			bool selected = serial == mSelectedTouchOverrideDeviceSerial;
+			if (ImGui::Selectable(serial.c_str(), selected))
+			{
+				mSelectedTouchOverrideDeviceSerial = serial;
+				mSelectedTouchOverrideButtonPath.clear();
+			}
+			if (selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	ImGui::EndDisabled();
+
+	const std::string selectedButtonLabel
+		= mSelectedTouchOverrideButtonPath.empty()
+			  ? std::string("No touch button available")
+			  : HOL::SteamVR::formatLogicalButtonLabel(mSelectedTouchOverrideButtonPath);
+	ImGui::BeginDisabled(availableButtons.empty());
+	if (ImGui::BeginCombo("Button", selectedButtonLabel.c_str()))
+	{
+		for (const std::string& buttonPath : availableButtons)
+		{
+			const std::string label = HOL::SteamVR::formatLogicalButtonLabel(buttonPath);
+			bool selected = buttonPath == mSelectedTouchOverrideButtonPath;
+			if (ImGui::Selectable(label.c_str(), selected))
+			{
+				mSelectedTouchOverrideButtonPath = buttonPath;
+			}
+			if (selected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	ImGui::EndDisabled();
+
+	ImGui::BeginDisabled(mSelectedTouchOverrideDeviceSerial.empty()
+						 || mSelectedTouchOverrideButtonPath.empty());
+	if (ImGui::Button("Add"))
+	{
+		auto& device = Config.deviceSettings.devices[mSelectedTouchOverrideDeviceSerial];
+		device.serial = mSelectedTouchOverrideDeviceSerial;
+		auto buttonIt = std::find_if(
+			device.inputOverrides.begin(),
+			device.inputOverrides.end(),
+			[&](const HOL::settings::ControllerButtonOverride& override)
+			{ return override.buttonPath == mSelectedTouchOverrideButtonPath; });
+		if (buttonIt == device.inputOverrides.end())
+		{
+			HOL::settings::ControllerButtonOverride newButtonOverride;
+			newButtonOverride.buttonPath = mSelectedTouchOverrideButtonPath;
+			newButtonOverride.suppressTouch = true;
+			device.inputOverrides.push_back(newButtonOverride);
+		}
+		else
+		{
+			buttonIt->suppressTouch = true;
+		}
+
+		syncSettings = true;
+	}
+	ImGui::EndDisabled();
+
+	ImGui::SeparatorText("Configured Overrides");
+
+	std::string removeDeviceSerial;
+	int removeButtonIndex = -1;
+	if (ImGui::BeginTable("ControllerTouchOverrides",
+						  4,
+						  ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg
+							  | ImGuiTableFlags_SizingFixedFit))
+	{
+		ImGui::TableSetupColumn("Controller", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableSetupColumn("Button", ImGuiTableColumnFlags_WidthFixed, scaleSize(110));
+		ImGui::TableSetupColumn("Suppress Touch", ImGuiTableColumnFlags_WidthFixed, scaleSize(110));
+		ImGui::TableSetupColumn("Remove", ImGuiTableColumnFlags_WidthFixed, scaleSize(70));
+		ImGui::TableHeadersRow();
+
+		for (auto& [serial, device] : Config.deviceSettings.devices)
+		{
+			for (size_t buttonIndex = 0; buttonIndex < device.inputOverrides.size(); ++buttonIndex)
+			{
+				auto& buttonOverride = device.inputOverrides[buttonIndex];
+				ImGui::TableNextRow();
+
+				ImGui::TableNextColumn();
+				ImGui::TextUnformatted(serial.c_str());
+
+				ImGui::TableNextColumn();
+				const std::string buttonLabel
+					= HOL::SteamVR::formatLogicalButtonLabel(buttonOverride.buttonPath);
+				ImGui::TextUnformatted(buttonLabel.c_str());
+
+				ImGui::TableNextColumn();
+				if (ImGui::Checkbox(("##suppressTouch_" + serial + "_"
+									 + buttonOverride.buttonPath)
+										.c_str(),
+									&buttonOverride.suppressTouch))
+				{
+					syncSettings = true;
+				}
+
+				ImGui::TableNextColumn();
+				if (ImGui::Button(
+						("Delete##touchOverride_" + serial + "_"
+						 + buttonOverride.buttonPath)
+							.c_str()))
+				{
+					removeDeviceSerial = serial;
+					removeButtonIndex = static_cast<int>(buttonIndex);
+				}
+			}
+		}
+
+		ImGui::EndTable();
+	}
+
+	if (!removeDeviceSerial.empty() && removeButtonIndex >= 0)
+	{
+		auto deviceIt = Config.deviceSettings.devices.find(removeDeviceSerial);
+		if (deviceIt != Config.deviceSettings.devices.end()
+			&& removeButtonIndex < static_cast<int>(deviceIt->second.inputOverrides.size()))
+		{
+			deviceIt->second.inputOverrides.erase(
+				deviceIt->second.inputOverrides.begin() + removeButtonIndex);
+		}
+		syncSettings = true;
+	}
+
+	ImGui::EndChild();
+
+	if (syncSettings)
+	{
+		HOL::HandOfLesserCore::Current->syncSettings();
+	}
+}
+
 void HOL::UserInterface::buildMain()
 {
 	ImGui::BeginChild(
@@ -2516,6 +2727,12 @@ void UserInterface::buildInterface()
 		if (ImGui::BeginTabItem("Body Trackers"))
 		{
 			buildBodyTrackers();
+			ImGui::EndTabItem();
+		}
+
+		if (ImGui::BeginTabItem("Touch"))
+		{
+			buildControllerInput();
 			ImGui::EndTabItem();
 		}
 

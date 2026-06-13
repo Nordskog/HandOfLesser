@@ -1,10 +1,22 @@
-#pragma once
-
 #include <string>
+#include <cstring>
+#include <string_view>
 #include "input_wrapper.h"
 
 namespace HOL::SteamVR
 {
+	namespace
+	{
+		bool endsWith(std::string_view value, std::string_view suffix)
+		{
+			if (value.size() < suffix.size())
+			{
+				return false;
+			}
+
+			return value.substr(value.size() - suffix.size()) == suffix;
+		}
+	}
 
 	// e.g. input/x then call touch() to get input/x/touch
 	SteamVR::InputWrapper::InputWrapper(std::string input, HandleType type)
@@ -76,7 +88,40 @@ namespace HOL::SteamVR
 		return this->mBaseInput + "/" + "pinky";
 	}
 
+	bool isTouchInputPath(const std::string& inputPath)
+	{
+		return endsWith(inputPath, "/touch");
+	}
 
+	bool isClickInputPath(const std::string& inputPath)
+	{
+		return endsWith(inputPath, "/click");
+	}
 
+	std::string getLogicalButtonPath(const std::string& inputPath)
+	{
+		if (isTouchInputPath(inputPath))
+		{
+			return inputPath.substr(0, inputPath.size() - std::strlen("/touch"));
+		}
+
+		if (isClickInputPath(inputPath))
+		{
+			return inputPath.substr(0, inputPath.size() - std::strlen("/click"));
+		}
+
+		return inputPath;
+	}
+
+	std::string formatLogicalButtonLabel(const std::string& buttonPath)
+	{
+		const std::string prefix = "/input/";
+		if (buttonPath.rfind(prefix, 0) == 0)
+		{
+			return buttonPath.substr(prefix.size());
+		}
+
+		return buttonPath;
+	}
 
 } // namespace HOL::SteamVR

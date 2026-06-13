@@ -336,10 +336,17 @@ namespace HOL
 				true, true, true, true, true, true};
 		};
 
+		struct ControllerButtonOverride
+		{
+			std::string buttonPath;
+			bool suppressTouch = false;
+		};
+
 		struct DeviceConfig
 		{
 			std::string serial;
 			vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
+			std::vector<std::string> touchButtons; // Runtime flag, not saved to JSON
 			bool activatedThisSession = false; // Runtime flag, not saved to JSON
 			vr::EVRSkeletalTrackingLevel trackingLevel
 				= vr::VRSkeletalTracking_Estimated; // Runtime flag, not saved to JSON
@@ -352,6 +359,7 @@ namespace HOL
 			// Shadow tracker settings
 			bool actAsTracker = false; // Make this device appear as a tracker
 			bool alsoWhenHeld = false; // Act as tracker even when held (multimodal only)
+			std::vector<ControllerButtonOverride> inputOverrides;
 		};
 
 		struct DeviceSettings

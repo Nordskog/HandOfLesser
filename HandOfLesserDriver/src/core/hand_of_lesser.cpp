@@ -3,12 +3,16 @@
 #include <driverlog.h>
 #include "src/controller/emulated_controller_driver.h"
 #include "src/controller/generic_control_interface.h"
+#include "src/hooking/hooks.h"
+#include "src/steamvr/input_wrapper.h"
 #include "src/utils/math_utils.h"
 #include <nlohmann/json.hpp>
 #include <src/json/types.h>
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <limits>
+#include <set>
 
 namespace HOL
 {
@@ -268,6 +272,7 @@ namespace HOL
 
 					DriverLog("App initialized, sending current device state");
 					sendAllDeviceStates();
+					sendAllDeviceInputInfo();
 					sendStatus();
 					break;
 				}
@@ -370,6 +375,10 @@ namespace HOL
 		updateControllerConnectionStates(true);
 		updateTrackerConnectionStates();
 		updateShadowTrackerStates();
+		for (auto& controller : mHookedControllers)
+		{
+			enforceTouchSuppression(controller.get());
+		}
 
 		// Only notify app if we actually changed the device list
 		if (devicesChanged)
@@ -1650,6 +1659,122 @@ namespace HOL
 		for (auto& controller : mHookedControllers)
 		{
 			sendDeviceState(controller.get());
+		}
+	}
+
+	void HandOfLesser::sendDeviceInputInfo(HookedController* device)
+	{
+		DeviceInputInfoPayload payload;
+		if (device == nullptr || device->serial.empty())
+		{
+			return;
+		}
+
+		std::set<std::string> logicalButtons;
+		for (const auto& [handle, input] : device->inputHandles)
+		{
+			if (input.type != ControllerInputType::Boolean
+				|| !HOL::SteamVR::isTouchInputPath(input.inputPath))
+			{
+				continue;
+			}
+
+			logicalButtons.insert(HOL::SteamVR::getLogicalButtonPath(input.inputPath));
+		}
+
+		if (logicalButtons.empty())
+		{
+			return;
+		}
+
+		strncpy_s(payload.serial, sizeof(payload.serial), device->serial.c_str(), _TRUNCATE);
+
+		DriverLog("Sending input metadata for serial=%s touchButtons=%zu",
+				  device->serial.c_str(),
+				  logicalButtons.size());
+
+		for (const std::string& buttonPath : logicalButtons)
+		{
+			if (payload.buttonCount >= DeviceInputInfoPayload::MaxButtonsPerDevice)
+			{
+				break;
+			}
+
+			strncpy_s(payload.buttonPaths[payload.buttonCount],
+					  sizeof(payload.buttonPaths[payload.buttonCount]),
+					  buttonPath.c_str(),
+					  _TRUNCATE);
+			DriverLog("  button: %s", buttonPath.c_str());
+			payload.buttonCount++;
+		}
+
+		if (payload.buttonCount > 0)
+		{
+			this->mTransport.sendPayload<NativePacketType::DeviceInputInfo>(payload);
+		}
+	}
+
+	void HandOfLesser::sendAllDeviceInputInfo()
+	{
+		for (auto& controller : mHookedControllers)
+		{
+			sendDeviceInputInfo(controller.get());
+		}
+	}
+
+	bool HandOfLesser::shouldSuppressTouchInput(
+		const HookedController* controller, const std::string& inputPath) const
+	{
+		if (controller == nullptr || controller->serial.empty())
+		{
+			return false;
+		}
+
+		auto deviceIt = Config.deviceSettings.devices.find(controller->serial);
+		if (deviceIt == Config.deviceSettings.devices.end()
+			|| deviceIt->second.inputOverrides.empty())
+		{
+			return false;
+		}
+
+		if (!HOL::SteamVR::isTouchInputPath(inputPath))
+		{
+			return false;
+		}
+
+		const std::string buttonPath = HOL::SteamVR::getLogicalButtonPath(inputPath);
+		for (const auto& buttonOverride : deviceIt->second.inputOverrides)
+		{
+			if (buttonOverride.buttonPath == buttonPath)
+			{
+				return buttonOverride.suppressTouch;
+			}
+		}
+
+		return false;
+	}
+
+	void HandOfLesser::enforceTouchSuppression(HookedController* controller)
+	{
+		if (controller == nullptr || controller->driverInput == nullptr)
+		{
+			return;
+		}
+
+		for (const auto& [handle, input] : controller->inputHandles)
+		{
+			if (input.type != ControllerInputType::Boolean)
+			{
+				continue;
+			}
+
+			if (!shouldSuppressTouchInput(controller, input.inputPath))
+			{
+				continue;
+			}
+
+			hooks::UpdateBooleanComponent::FunctionHook.originalFunc(
+				controller->driverInput, handle, false, 0.0);
 		}
 	}
 } // namespace HOL

@@ -102,6 +102,8 @@ namespace HOL::hooks
 
 			// This is a good a time as any to communicate the device state
 			controller->sendDeviceState();
+			HOL::HandOfLesser::Current->sendDeviceInputInfo(controller);
+			HOL::HandOfLesser::Current->enforceTouchSuppression(controller);
 
 			if (deviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_Controller)
 			{
@@ -338,10 +340,7 @@ namespace HOL::hooks
 			auto ret = CreateBooleanComponent::FunctionHook.originalFunc(
 				_this, ulContainer, pchName, pHandle);
 
-			// Get the controller by serial
 			auto props = vr::VRProperties();
-			std::string serial
-				= props->GetStringProperty(ulContainer, vr::Prop_SerialNumber_String);
 
 			// We hook this to get a reference to the IVRDriverInput for each controller.
 			// We can identify the controller by the PropertyContainer, because it is unique
@@ -470,6 +469,12 @@ namespace HOL::hooks
 			if (controller != nullptr)
 			{
 				auto& inputHandle = controller->inputHandles[ulComponent];
+				if (HOL::HandOfLesser::Current->shouldSuppressTouchInput(
+						controller, inputHandle.inputPath))
+				{
+					return UpdateBooleanComponent::FunctionHook.originalFunc(
+						_this, ulComponent, false, fTimeOffset);
+				}
 
 				// For the time being allow system gesture
 				if (inputHandle.inputPath.find("system") == std::string::npos)
@@ -507,6 +512,7 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 							return vr::EVRInputError::VRInputError_None;
 						}
 					}
+
 				}
 			}
 			else

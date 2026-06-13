@@ -40,6 +40,11 @@ namespace HOL::SteamVR
 		std::string mBaseInput;
 	};
 
+	bool isTouchInputPath(const std::string& inputPath);
+	bool isClickInputPath(const std::string& inputPath);
+	std::string getLogicalButtonPath(const std::string& inputPath);
+	std::string formatLogicalButtonLabel(const std::string& buttonPath);
+
 	namespace Input
 	{
 		// These may not be universal
