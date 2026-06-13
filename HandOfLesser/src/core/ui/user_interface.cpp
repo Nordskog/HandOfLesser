@@ -646,12 +646,21 @@ void HOL::UserInterface::buildBindings()
 		Config.input.chainGestureTimeoutMS = std::max(50, chainGestureTimeoutMS);
 		rebuildActions = true;
 	}
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip("Maximum time allowed between taps in a sequence or multi-tap gesture.");
+	}
 
 	int holdDurationMS = Config.input.holdDurationMS;
 	if (ImGui::InputInt("Hold Duration (ms)", &holdDurationMS))
 	{
 		Config.input.holdDurationMS = std::max(50, holdDurationMS);
 		rebuildActions = true;
+	}
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip(
+			"How long a gesture must stay active before the Hold modifier triggers.");
 	}
 
 	int gateLeadTimeMS = Config.input.gateLeadTimeMS;
@@ -660,12 +669,21 @@ void HOL::UserInterface::buildBindings()
 		Config.input.gateLeadTimeMS = std::max(0, gateLeadTimeMS);
 		rebuildActions = true;
 	}
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip("How long gating conditions must already be active before the main "
+						   "gesture is allowed to trigger.");
+	}
 
 	float lookAtFovDegrees = Config.input.lookAtFovDegrees;
 	if (ImGui::InputFloat("Look-at FoV (deg)", &lookAtFovDegrees, 1.0f, 5.0f, "%.1f"))
 	{
 		Config.input.lookAtFovDegrees = std::clamp(lookAtFovDegrees, 1.0f, 179.0f);
 		rebuildActions = true;
+	}
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip("Cone of the head looking at the hand");
 	}
 
 	float inFrontFovDegrees = Config.input.inFrontFovDegrees;
@@ -674,13 +692,22 @@ void HOL::UserInterface::buildBindings()
 		Config.input.inFrontFovDegrees = std::clamp(inFrontFovDegrees, 1.0f, 179.0f);
 		rebuildActions = true;
 	}
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip(
+			"Cone infront of the user, from the torso.");
+	}
 
 	float palmFacingFovDegrees = Config.input.palmFacingFovDegrees;
-	if (ImGui::InputFloat(
-			"Palm-facing FoV (deg)", &palmFacingFovDegrees, 1.0f, 5.0f, "%.1f"))
+	if (ImGui::InputFloat("Palm-facing FoV (deg)", &palmFacingFovDegrees, 1.0f, 5.0f, "%.1f"))
 	{
 		Config.input.palmFacingFovDegrees = std::clamp(palmFacingFovDegrees, 1.0f, 179.0f);
 		rebuildActions = true;
+	}
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip(
+			"Cone from the hand that head must be inside.");
 	}
 
 	ImGui::SameLine();
