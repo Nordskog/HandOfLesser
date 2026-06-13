@@ -683,6 +683,19 @@ void HOL::UserInterface::buildBindings()
 		rebuildActions = true;
 	}
 
+	ImGui::SameLine();
+	if (rightAlignButton("Reset##GestureConditions"))
+	{
+		HOL::settings::InputSettings defaults;
+		Config.input.chainGestureTimeoutMS = defaults.chainGestureTimeoutMS;
+		Config.input.holdDurationMS = defaults.holdDurationMS;
+		Config.input.gateLeadTimeMS = defaults.gateLeadTimeMS;
+		Config.input.lookAtFovDegrees = defaults.lookAtFovDegrees;
+		Config.input.inFrontFovDegrees = defaults.inFrontFovDegrees;
+		Config.input.palmFacingFovDegrees = defaults.palmFacingFovDegrees;
+		rebuildActions = true;
+	}
+
 
 	ImGui::SeparatorText("Gesture Bindings");
 
