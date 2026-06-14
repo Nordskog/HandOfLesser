@@ -62,8 +62,8 @@ namespace HOL::Gesture::OpenHandPinchGesture
 		}
 
 		this->mGateGesture = GateGesture::Gesture::Create();
-		this->mGateGesture->parameters.requiredLeadTime
-			= std::chrono::milliseconds(HOL::Config.input.gateLeadTimeMS);
+		this->mGateGesture->parameters.allowedLagTime
+			= std::chrono::milliseconds(HOL::Config.input.gateLagTimeMS);
 		this->mGateGesture->setTriggerGesture(this->mProxGesture);
 		this->mGateGesture->setModifierGesture(abovePlaneGesture);
 

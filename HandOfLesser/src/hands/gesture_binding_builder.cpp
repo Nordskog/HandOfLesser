@@ -315,8 +315,8 @@ namespace
 		if (auto gatedModifierGesture = buildGatedModifierGesture(binding))
 		{
 			auto gate = HOL::Gesture::GateGesture::Gesture::Create();
-			gate->parameters.requiredLeadTime
-				= std::chrono::milliseconds(HOL::Config.input.gateLeadTimeMS);
+			gate->parameters.allowedLagTime
+				= std::chrono::milliseconds(HOL::Config.input.gateLagTimeMS);
 			gate->setTriggerGesture(wrappedGesture);
 			gate->setModifierGesture(gatedModifierGesture);
 			wrappedGesture = gate;

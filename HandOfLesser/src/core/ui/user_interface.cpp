@@ -663,16 +663,16 @@ void HOL::UserInterface::buildBindings()
 			"How long a gesture must stay active before the Hold modifier triggers.");
 	}
 
-	int gateLeadTimeMS = Config.input.gateLeadTimeMS;
-	if (ImGui::InputInt("Gate Lead Time (ms)", &gateLeadTimeMS))
+	int gateLagTimeMS = Config.input.gateLagTimeMS;
+	if (ImGui::InputInt("Gate Lag Time (ms)", &gateLagTimeMS))
 	{
-		Config.input.gateLeadTimeMS = std::max(0, gateLeadTimeMS);
+		Config.input.gateLagTimeMS = std::max(0, gateLagTimeMS);
 		rebuildActions = true;
 	}
 	if (ImGui::IsItemHovered())
 	{
-		showWrappedTooltip("How long gating conditions must already be active before the main "
-						   "gesture is allowed to trigger.");
+		showWrappedTooltip("How long after the main gesture starts a gating condition may still "
+						   "activate and count.");
 	}
 
 	float lookAtFovDegrees = Config.input.lookAtFovDegrees;
@@ -716,7 +716,7 @@ void HOL::UserInterface::buildBindings()
 		HOL::settings::InputSettings defaults;
 		Config.input.chainGestureTimeoutMS = defaults.chainGestureTimeoutMS;
 		Config.input.holdDurationMS = defaults.holdDurationMS;
-		Config.input.gateLeadTimeMS = defaults.gateLeadTimeMS;
+		Config.input.gateLagTimeMS = defaults.gateLagTimeMS;
 		Config.input.lookAtFovDegrees = defaults.lookAtFovDegrees;
 		Config.input.inFrontFovDegrees = defaults.inFrontFovDegrees;
 		Config.input.palmFacingFovDegrees = defaults.palmFacingFovDegrees;

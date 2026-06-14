@@ -50,6 +50,20 @@ namespace HOL::Gesture::GateGesture
 		bool triggerActive = triggerValue >= 1.0f;
 		bool modifierActive = modifierValue >= 1.0f;
 
+		if (triggerActive)
+		{
+			if (!this->mTriggerWasActive)
+			{
+				this->mTriggerActiveSince = now;
+				this->mTriggerWasActive = true;
+			}
+		}
+		else
+		{
+			this->mBlockedUntilReleased = false;
+			this->mTriggerWasActive = false;
+		}
+
 		if (modifierActive)
 		{
 			if (!this->mModifierWasActive)
@@ -63,29 +77,34 @@ namespace HOL::Gesture::GateGesture
 			this->mModifierWasActive = false;
 		}
 
-		bool modifierPrimed
-			= modifierActive
-			  && (now - this->mModifierActiveSince) >= this->parameters.requiredLeadTime;
-
-		if (!modifierPrimed && triggerActive)
-		{
-			this->mBlockedUntilReleased = true;
-		}
-
 		if (this->mBlockedUntilReleased)
 		{
-			if (triggerValue <= 0.0f)
-			{
-				this->mBlockedUntilReleased = false;
-			}
-			else
-			{
-				return 0.0f;
-			}
+			return 0.0f;
 		}
 
-		if (!modifierPrimed)
+		if (!triggerActive)
 		{
+			return 0.0f;
+		}
+
+		if (!modifierActive)
+		{
+			if ((now - this->mTriggerActiveSince) > this->parameters.allowedLagTime)
+			{
+				this->mBlockedUntilReleased = true;
+			}
+			return 0.0f;
+		}
+
+		bool modifierWasActiveBeforeTrigger
+			= this->mModifierActiveSince <= this->mTriggerActiveSince;
+		bool modifierActivatedWithinLag
+			= (this->mModifierActiveSince - this->mTriggerActiveSince)
+			  <= this->parameters.allowedLagTime;
+
+		if (!modifierWasActiveBeforeTrigger && !modifierActivatedWithinLag)
+		{
+			this->mBlockedUntilReleased = true;
 			return 0.0f;
 		}
 
