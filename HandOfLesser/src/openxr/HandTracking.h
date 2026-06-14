@@ -2,6 +2,7 @@
 
 #include <d3d11.h> // Why do you need this??
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include "openxr_hand.h"
 #include "openxr_body.h"
@@ -50,10 +51,13 @@ namespace HOL::OpenXR
 		void submitLegacyFingerCurl();
 		void updateSimpleGestures();
 		void updateTriggerStabilizationState(const ActionSet& actionSet);
+		float getTriggerStabilizationSmoothingMS(
+			HOL::HandSide side, std::chrono::steady_clock::time_point now) const;
 		OpenXRHand mLeftHand;
 		OpenXRHand mRightHand;
 
 		std::shared_ptr<const ActionSet> mActionSet = std::make_shared<ActionSet>();
-		std::array<bool, HOL::HandSide_MAX> mTriggerStabilizationActive = {false, false};
+		std::array<std::chrono::steady_clock::time_point, HOL::HandSide_MAX>
+			mLastTriggerStabilizationTime = {};
 	};
 } // namespace HOL::OpenXR

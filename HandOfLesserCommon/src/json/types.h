@@ -280,6 +280,7 @@ namespace HOL
 				 {"rotationSmoothingMS", settings.rotationSmoothingMS},
 				 {"triggerStabilization", settings.triggerStabilization},
 				 {"triggerStabilizationSmoothingMS", settings.triggerStabilizationSmoothingMS},
+				 {"triggerStabilizationFalloffMS", settings.triggerStabilizationFalloffMS},
 				 {"handTrackingResumeBlendMS", settings.handTrackingResumeBlendMS},
 				 {"linearVelocityMultiplier", settings.linearVelocityMultiplier},
 				 {"angularVelocityMultiplier", settings.angularVelocityMultiplier},
@@ -312,6 +313,8 @@ namespace HOL
 				j, "triggerStabilization", settings.triggerStabilization);
 			nlohmann::get_to_if_present(
 				j, "triggerStabilizationSmoothingMS", settings.triggerStabilizationSmoothingMS);
+			nlohmann::get_to_if_present(
+				j, "triggerStabilizationFalloffMS", settings.triggerStabilizationFalloffMS);
 			nlohmann::get_to_if_present(
 				j, "handTrackingResumeBlendMS", settings.handTrackingResumeBlendMS);
 			nlohmann::get_to_if_present(

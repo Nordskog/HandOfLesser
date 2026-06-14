@@ -1423,6 +1423,11 @@ void HOL::UserInterface::buildSteamVR()
 									  10.0f,
 									  50.0f,
 									  "%.0f");
+	syncSettings |= ImGui::InputFloat("Stabilization Falloff (ms)",
+									  &Config.steamvr.triggerStabilizationFalloffMS,
+									  10.0f,
+									  50.0f,
+									  "%.0f");
 	syncSettings |= ImGui::InputFloat("Hand-tracking resume blend (ms)",
 									  &Config.steamvr.handTrackingResumeBlendMS,
 									  10.0f,
@@ -1449,6 +1454,8 @@ void HOL::UserInterface::buildSteamVR()
 		Config.steamvr.triggerStabilization = steamVrDefaults.triggerStabilization;
 		Config.steamvr.triggerStabilizationSmoothingMS
 			= steamVrDefaults.triggerStabilizationSmoothingMS;
+		Config.steamvr.triggerStabilizationFalloffMS
+			= steamVrDefaults.triggerStabilizationFalloffMS;
 		Config.steamvr.handTrackingResumeBlendMS = steamVrDefaults.handTrackingResumeBlendMS;
 		Config.steamvr.linearVelocityMultiplier = steamVrDefaults.linearVelocityMultiplier;
 		Config.steamvr.angularVelocityMultiplier = steamVrDefaults.angularVelocityMultiplier;

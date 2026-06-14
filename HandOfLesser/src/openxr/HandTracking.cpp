@@ -72,17 +72,17 @@ std::shared_ptr<BaseAction> HOL::OpenXR::HandTracking::getActionForBindingIndex(
 
 void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker)
 {
-	bool triggerStabilizationEnabled = Config.steamvr.triggerStabilization;
+	auto now = std::chrono::steady_clock::now();
 	this->mLeftHand.updateJointLocations(
 		space,
 		time,
 		bodyTracker,
-		triggerStabilizationEnabled && this->mTriggerStabilizationActive[HOL::LeftHand]);
+		getTriggerStabilizationSmoothingMS(HOL::LeftHand, now));
 	this->mRightHand.updateJointLocations(
 		space,
 		time,
 		bodyTracker,
-		triggerStabilizationEnabled && this->mTriggerStabilizationActive[HOL::RightHand]);
+		getTriggerStabilizationSmoothingMS(HOL::RightHand, now));
 
 	// Populate gesture data
 	HOL::Gesture::GestureData data;
@@ -116,7 +116,6 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 
 void HOL::OpenXR::HandTracking::updateTriggerStabilizationState(const ActionSet& actionSet)
 {
-	this->mTriggerStabilizationActive.fill(false);
 	if (!Config.steamvr.triggerStabilization)
 	{
 		return;
@@ -138,16 +137,47 @@ void HOL::OpenXR::HandTracking::updateTriggerStabilizationState(const ActionSet&
 			continue;
 		}
 
-		if (!action->getActionData().isDown)
+		if (!action->getActionData().onDown)
 		{
 			continue;
 		}
 
 		if (binding.side >= 0 && binding.side < HOL::HandSide_MAX)
 		{
-			this->mTriggerStabilizationActive[binding.side] = true;
+			this->mLastTriggerStabilizationTime[binding.side] = std::chrono::steady_clock::now();
 		}
 	}
+}
+
+float HOL::OpenXR::HandTracking::getTriggerStabilizationSmoothingMS(
+	HOL::HandSide side, std::chrono::steady_clock::time_point now) const
+{
+	if (!Config.steamvr.triggerStabilization )
+	{
+		return 0.0f;
+	}
+
+	float falloffMS = Config.steamvr.triggerStabilizationFalloffMS;
+	if (falloffMS <= 0.0f)
+	{
+		return 0.0f;
+	}
+
+	const auto& triggerTime = this->mLastTriggerStabilizationTime[side];
+	if (triggerTime == std::chrono::steady_clock::time_point{})
+	{
+		return 0.0f;
+	}
+
+	float elapsedMS
+		= std::chrono::duration<float, std::milli>(now - triggerTime).count();
+	if (elapsedMS >= falloffMS)
+	{
+		return 0.0f;
+	}
+
+	float remainingAlpha = 1.0f - (elapsedMS / falloffMS);
+	return Config.steamvr.triggerStabilizationSmoothingMS * std::clamp(remainingAlpha, 0.0f, 1.0f);
 }
 
 void HandTracking::updateInputs()

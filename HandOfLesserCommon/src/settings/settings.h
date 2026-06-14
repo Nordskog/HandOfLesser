@@ -324,6 +324,7 @@ namespace HOL
 			float rotationSmoothingMS = 0.0f;
 			bool triggerStabilization = true;
 			float triggerStabilizationSmoothingMS = 200.0f;
+			float triggerStabilizationFalloffMS = 500.0f;
 			float handTrackingResumeBlendMS = 500.0f;
 			float linearVelocityMultiplier = 1.0f;
 			float angularVelocityMultiplier = 0.0f;
