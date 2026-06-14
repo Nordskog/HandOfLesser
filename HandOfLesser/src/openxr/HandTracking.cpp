@@ -116,6 +116,7 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 
 void HOL::OpenXR::HandTracking::updateTriggerStabilizationState(const ActionSet& actionSet)
 {
+	this->mTriggerStabilizationHeld.fill(false);
 	if (!Config.steamvr.triggerStabilization)
 	{
 		return;
@@ -137,6 +138,12 @@ void HOL::OpenXR::HandTracking::updateTriggerStabilizationState(const ActionSet&
 			continue;
 		}
 
+		if (binding.side >= 0 && binding.side < HOL::HandSide_MAX
+			&& action->getActionData().isDown)
+		{
+			this->mTriggerStabilizationHeld[binding.side] = true;
+		}
+
 		if (!action->getActionData().onDown)
 		{
 			continue;
@@ -152,7 +159,12 @@ void HOL::OpenXR::HandTracking::updateTriggerStabilizationState(const ActionSet&
 float HOL::OpenXR::HandTracking::getTriggerStabilizationSmoothingMS(
 	HOL::HandSide side, std::chrono::steady_clock::time_point now) const
 {
-	if (!Config.steamvr.triggerStabilization )
+	if (!Config.steamvr.triggerStabilization)
+	{
+		return 0.0f;
+	}
+
+	if (!this->mTriggerStabilizationHeld[side])
 	{
 		return 0.0f;
 	}
