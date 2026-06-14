@@ -32,16 +32,28 @@ namespace HOL::OpenXR
 	private:
 		struct ActionSet
 		{
+			static constexpr size_t InputTargetCount
+				= static_cast<size_t>(HOL::settings::InputTarget::InputTarget_MAX);
+
 			std::vector<std::shared_ptr<BaseAction>> actions;
 			std::vector<std::shared_ptr<BaseAction>> actionsByBindingIndex;
+			std::array<std::vector<size_t>, InputTargetCount> bindingIndicesByTarget;
+
+			const std::vector<size_t>& getBindingIndicesForTarget(
+				HOL::settings::InputTarget target) const
+			{
+				return this->bindingIndicesByTarget[static_cast<size_t>(target)];
+			}
 		};
 
 		void initHands(xr::UniqueDynamicSession& session);
 		void submitLegacyFingerCurl();
 		void updateSimpleGestures();
+		void updateTriggerStabilizationState(const ActionSet& actionSet);
 		OpenXRHand mLeftHand;
 		OpenXRHand mRightHand;
 
 		std::shared_ptr<const ActionSet> mActionSet = std::make_shared<ActionSet>();
+		std::array<bool, HOL::HandSide_MAX> mTriggerStabilizationActive = {false, false};
 	};
 } // namespace HOL::OpenXR

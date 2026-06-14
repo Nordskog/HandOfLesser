@@ -14,7 +14,8 @@ class OpenXRHand
 public:
 	~OpenXRHand();
 	void init(xr::UniqueDynamicSession& session, HOL::HandSide side);
-	void updateJointLocations(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker);
+	void updateJointLocations(
+		xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker, bool stabilizeTrigger);
 
 	HandPose handPose;
 	XrHandJointLocationEXT* getLastJointLocations();

@@ -50,6 +50,7 @@ void HOL::OpenXR::HandTracking::rebuildActions()
 		{
 			newActionSet->actions.push_back(action);
 			newActionSet->actionsByBindingIndex[i] = action;
+			newActionSet->bindingIndicesByTarget[static_cast<size_t>(binding.target)].push_back(i);
 		}
 	}
 
@@ -71,8 +72,17 @@ std::shared_ptr<BaseAction> HOL::OpenXR::HandTracking::getActionForBindingIndex(
 
 void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenXRBody& bodyTracker)
 {
-	this->mLeftHand.updateJointLocations(space, time, bodyTracker);
-	this->mRightHand.updateJointLocations(space, time, bodyTracker);
+	bool triggerStabilizationEnabled = Config.steamvr.triggerStabilization;
+	this->mLeftHand.updateJointLocations(
+		space,
+		time,
+		bodyTracker,
+		triggerStabilizationEnabled && this->mTriggerStabilizationActive[HOL::LeftHand]);
+	this->mRightHand.updateJointLocations(
+		space,
+		time,
+		bodyTracker,
+		triggerStabilizationEnabled && this->mTriggerStabilizationActive[HOL::RightHand]);
 
 	// Populate gesture data
 	HOL::Gesture::GestureData data;
@@ -99,6 +109,44 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 	for (auto& action : actionSet->actions)
 	{
 		action->evaluate(data);
+	}
+
+	updateTriggerStabilizationState(*actionSet);
+}
+
+void HOL::OpenXR::HandTracking::updateTriggerStabilizationState(const ActionSet& actionSet)
+{
+	this->mTriggerStabilizationActive.fill(false);
+	if (!Config.steamvr.triggerStabilization)
+	{
+		return;
+	}
+
+	for (size_t bindingIndex :
+		 actionSet.getBindingIndicesForTarget(settings::InputTarget::Trigger))
+	{
+		if (bindingIndex >= Config.input.gestureBindings.size()
+			|| bindingIndex >= actionSet.actionsByBindingIndex.size())
+		{
+			continue;
+		}
+
+		const auto& binding = Config.input.gestureBindings[bindingIndex];
+		const auto& action = actionSet.actionsByBindingIndex[bindingIndex];
+		if (!action)
+		{
+			continue;
+		}
+
+		if (!action->getActionData().isDown)
+		{
+			continue;
+		}
+
+		if (binding.side >= 0 && binding.side < HOL::HandSide_MAX)
+		{
+			this->mTriggerStabilizationActive[binding.side] = true;
+		}
 	}
 }
 

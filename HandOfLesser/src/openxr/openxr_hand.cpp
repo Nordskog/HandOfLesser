@@ -214,7 +214,8 @@ void OpenXRHand::calculateCurlSplay()
 
 void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 									  XrTime time,
-									  OpenXRBody& bodyTracker)
+									  OpenXRBody& bodyTracker,
+									  bool stabilizeTrigger)
 {
 	// Copy to prev
 	std::copy(
@@ -446,15 +447,19 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 			rawPalmVelocity.linearVelocity *= HOL::Config.steamvr.linearVelocityMultiplier;
 			rawPalmVelocity.angularVelocity *= HOL::Config.steamvr.angularVelocityMultiplier;
 
+			float triggerStabilizationSmoothingMS
+				= stabilizeTrigger ? HOL::Config.steamvr.triggerStabilizationSmoothingMS : 0.0f;
 			float positionSmoothingAlpha
-				= getSmoothingAlpha(HOL::Config.steamvr.positionSmoothingMS,
+				= getSmoothingAlpha(HOL::Config.steamvr.positionSmoothingMS
+										+ triggerStabilizationSmoothingMS,
 									this->mHasFilteredPalmPose,
 									this->handPose.active != prevActive
 										|| this->handPose.poseValid != prevPoseValid,
 									this->mPrevFilteredSampleTime,
 									time);
 			float rotationSmoothingAlpha
-				= getSmoothingAlpha(HOL::Config.steamvr.rotationSmoothingMS,
+				= getSmoothingAlpha(HOL::Config.steamvr.rotationSmoothingMS
+										+ triggerStabilizationSmoothingMS,
 									this->mHasFilteredPalmPose,
 									poseStateChanged,
 									this->mPrevFilteredSampleTime,
