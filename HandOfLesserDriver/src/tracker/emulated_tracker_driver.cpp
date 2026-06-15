@@ -218,6 +218,7 @@ namespace HOL
 		mLastPose = pose;
 		// Ensure connected state is preserved
 		mLastPose.deviceIsConnected = mDeviceConnected;
+		mPendingPoseUpdate = true;
 	}
 
 	void EmulatedTrackerDriver::SubmitPose()
@@ -229,20 +230,32 @@ namespace HOL
 		}
 	}
 
+	void EmulatedTrackerDriver::FlushPoseUpdate()
+	{
+		if (!mPendingPoseUpdate || !mIsActive || mDeviceIndex == vr::k_unTrackedDeviceIndexInvalid)
+		{
+			return;
+		}
+
+		mPendingPoseUpdate = false;
+
+		if (mDeviceConnected)
+		{
+			SubmitPose();
+			return;
+		}
+
+		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
+			mDeviceIndex, ControllerCommon::generateDisconnectedPose(), sizeof(vr::DriverPose_t));
+	}
+
 	void EmulatedTrackerDriver::setConnectedState(bool connected)
 	{
 		if (mDeviceConnected == connected)
 			return;
 
 		mDeviceConnected = connected;
-
-		// Only submit pose if activated (have a valid device index)
-		if (!connected && mIsActive && mDeviceIndex != vr::k_unTrackedDeviceIndexInvalid)
-		{
-			// Submit disconnected pose
-			vr::VRServerDriverHost()->TrackedDevicePoseUpdated(
-				mDeviceIndex, ControllerCommon::generateDisconnectedPose(), sizeof(vr::DriverPose_t));
-		}
+		mPendingPoseUpdate = true;
 	}
 
 } // namespace HOL

@@ -37,6 +37,7 @@ namespace HOL
 		void UpdatePose(const HOL::BodyTrackerPosePayload& payload);
 		void UpdatePose(const vr::DriverPose_t& pose);  // Generic pose update
 		void SubmitPose();
+		void FlushPoseUpdate();
 		void setConnectedState(bool connected);
 		
 		bool isShadowTracker() const { return !mRole.has_value(); }
@@ -49,6 +50,7 @@ namespace HOL
 		std::atomic<vr::TrackedDeviceIndex_t> mDeviceIndex = vr::k_unTrackedDeviceIndexInvalid;
 		std::atomic<bool> mIsActive = false;
 		std::atomic<bool> mDeviceConnected = true;
+		bool mPendingPoseUpdate = false;
 		vr::DriverPose_t mLastPose;
 	};
 

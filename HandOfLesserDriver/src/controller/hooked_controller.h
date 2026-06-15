@@ -39,6 +39,7 @@ namespace HOL
 		void setSuppressed(bool suppressed);
 
 		void sendDisconnectState();
+		void FlushDisconnectState();
 
 		bool canPossess();
 		bool shouldPossess();
@@ -116,6 +117,7 @@ namespace HOL
 		bool mLoggedMissingSkeletonHandle = false;
 		vr::VRBoneTransform_t mSkeletalPose[SteamVR::HandSkeletonBone::eBone_Count]{};
 		bool mSuppressed = false;
+		bool mPendingDisconnectState = false;
 
 		// Shadow tracker support
 		EmulatedTrackerDriver* mShadowTracker = nullptr;

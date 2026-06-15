@@ -24,7 +24,11 @@ namespace HOL
 
 		if (suppressed)
 		{
-			this->sendDisconnectState();
+			mPendingDisconnectState = true;
+		}
+		else
+		{
+			mPendingDisconnectState = false;
 		}
 	}
 
@@ -33,6 +37,17 @@ namespace HOL
 		vr::DriverPose_t disconnectPose = HOL::ControllerCommon::generateDisconnectedPose();
 		HOL::hooks::TrackedDevicePoseUpdated::FunctionHook.originalFunc(
 			this->mHookedHost, this->mDeviceId, disconnectPose, sizeof(vr::DriverPose_t));
+	}
+
+	void HookedController::FlushDisconnectState()
+	{
+		if (!mPendingDisconnectState)
+		{
+			return;
+		}
+
+		mPendingDisconnectState = false;
+		sendDisconnectState();
 	}
 
 	HookedController::HookedController(uint32_t id,

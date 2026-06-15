@@ -257,9 +257,6 @@ namespace HOL::hooks
 				// reset frame counter
 				controller->framesSinceLastPoseUpdate = 0;
 
-				// Update shadow tracker state (may transition controller ↔ tracker)
-				HOL::HandOfLesser::Current->updateShadowTrackerState(controller);
-
 				if (config.steamvr.showDevicePoseDiagnostics)
 				{
 					controller->sendDeviceState();
@@ -279,8 +276,11 @@ namespace HOL::hooks
 					{
 						if (auto* shadow = controller->getShadowTracker())
 						{
+							// Actual submission happens in HandOfLesser::runFrame().
+							// VD forces itself to be loaded before all other drivers,
+							// and if we try to update the pose from here we end up in 
+							// a recursive deadlock.
 							shadow->UpdatePose(newPose);
-							shadow->SubmitPose();
 						}
 					}
 
