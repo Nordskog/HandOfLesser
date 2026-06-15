@@ -116,6 +116,7 @@ private:
 			mEmulatedTrackers;
 		std::unordered_map<std::string, std::unique_ptr<EmulatedTrackerDriver>>
 			mShadowTrackers; // Keyed by source device serial
+		bool mHasConfiguredShadowTrackers = false;
 		std::array<HookedController*, HOL::HandSide_MAX> mPreferredHookedControllers{};
 		std::array<HookedController*, HOL::HandSide_MAX> mRecoveryHookedControllers{};
 		HOL::HandTransformPayload mLastHandTransforms[HOL::HandSide_MAX]{};

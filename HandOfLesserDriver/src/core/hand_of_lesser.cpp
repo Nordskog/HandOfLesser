@@ -321,6 +321,15 @@ namespace HOL
 	void HandOfLesser::handleConfigurationChange(HOL::settings::HandOfLesserSettings& oldConfig)
 	{
 		bool devicesChanged = false;
+		mHasConfiguredShadowTrackers = false;
+		for (const auto& [serial, device] : Config.deviceSettings.devices)
+		{
+			if (device.actAsTracker)
+			{
+				mHasConfiguredShadowTrackers = true;
+				break;
+			}
+		}
 
 		// Add or remove ( or enable/disable ) emulated controllers on controller mode change
 		if (Config.handPose.controllerMode != oldConfig.handPose.controllerMode)
@@ -980,6 +989,11 @@ namespace HOL
 
 	void HandOfLesser::updateShadowTrackerStates()
 	{
+		if (!mHasConfiguredShadowTrackers && mShadowTrackers.empty())
+		{
+			return;
+		}
+
 		for (auto& controllerContainer : mHookedControllers)
 		{
 			updateShadowTrackerState(controllerContainer.get());
