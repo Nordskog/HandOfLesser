@@ -13,7 +13,7 @@ namespace HOL
 
 		if (isShadowTracker())
 		{
-			HookedController* sourceController
+			auto sourceController
 				= HandOfLesser::Current->getHookedControllerBySerial(mSourceSerial);
 			if (sourceController != nullptr)
 			{
@@ -23,7 +23,7 @@ namespace HOL
 		}
 		else
 		{
-			HookedController* hmd = HandOfLesser::Current->getHMD();
+			auto hmd = HandOfLesser::Current->getHMD();
 			if (hmd != nullptr)
 			{
 				return props->GetStringProperty(

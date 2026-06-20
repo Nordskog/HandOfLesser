@@ -23,6 +23,7 @@ namespace HOL
 
 	HandOfLesser::HandOfLesser()
 	{
+		mHookedControllers.store(std::make_shared<const HookedControllerList>());
 	}
 
 	void HandOfLesser::init()
@@ -109,7 +110,9 @@ namespace HOL
 						}
 					}
 
-					GenericControllerInterface* controller = this->GetActiveController(payload.side);
+					std::shared_ptr<HookedController> hookedControllerOwner;
+					GenericControllerInterface* controller
+						= this->GetActiveController(payload.side, hookedControllerOwner);
 					if (controller != nullptr)
 					{
 						controller->UpdatePose(&payload);
@@ -159,7 +162,9 @@ namespace HOL
 					{
 						break;
 					}
-					auto controller = this->GetActiveController(payload.side);
+					std::shared_ptr<HookedController> hookedControllerOwner;
+					auto controller
+						= this->GetActiveController(payload.side, hookedControllerOwner);
 					if (controller != nullptr)
 					{
 						controller->UpdateFloatInput(payload.inputName, payload.value);
@@ -175,7 +180,9 @@ namespace HOL
 					{
 						break;
 					}
-					auto controller = this->GetActiveController(payload.side);
+					std::shared_ptr<HookedController> hookedControllerOwner;
+					auto controller
+						= this->GetActiveController(payload.side, hookedControllerOwner);
 					if (controller != nullptr)
 					{
 						controller->UpdateBoolInput(payload.inputName, payload.value);
@@ -192,7 +199,9 @@ namespace HOL
 					}
 
 					// Send to active controller (for normal skeletal input)
-					auto activeController = this->GetActiveController(payload.side);
+					std::shared_ptr<HookedController> hookedControllerOwner;
+					auto activeController
+						= this->GetActiveController(payload.side, hookedControllerOwner);
 					if (activeController != nullptr)
 					{
 						activeController->UpdateSkeletal(&payload);
@@ -384,7 +393,8 @@ namespace HOL
 		updateControllerConnectionStates(true);
 		updateTrackerConnectionStates();
 		updateShadowTrackerStates();
-		for (auto& controller : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
 			enforceTouchSuppression(controller.get());
 		}
@@ -549,10 +559,9 @@ namespace HOL
 
 		if (hookedMode && forceUpdate)
 		{
-			for (auto& controllerContainer : mHookedControllers)
+			auto hookedControllers = mHookedControllers.load();
+			for (const auto& hooked : *hookedControllers)
 			{
-				HookedController* hooked = controllerContainer.get();
-
 				if (hooked->mDeviceClass != vr::TrackedDeviceClass_Controller)
 				{
 					continue;
@@ -583,7 +592,7 @@ namespace HOL
 				bool handTrackingPrimary = emulationMode && isHandTrackingPrimary(side);
 
 				// TODO: Add bool to determine if we should suppress existing controllers
-				for (auto* hooked : getHookedControllers(side))
+				for (const auto& hooked : getHookedControllers(side))
 				{
 					// This will set suppressed state and a disconnect event depending on the
 					// existing suppression state, meaning it may not trigger if we've been
@@ -629,40 +638,45 @@ namespace HOL
 									  vr::ITrackedDeviceServerDriver* driver,
 									  vr::PropertyContainerHandle_t propertyContainer)
 	{
+		auto controller = std::make_shared<HookedController>(
+			id, HandSide::HandSide_MAX, host, driver, propertyContainer);
+		HookedController* newController = controller.get();
 
-		this->mHookedControllers.push_back(std::make_unique<HookedController>(
-			id, HandSide::HandSide_MAX, host, driver, propertyContainer));
-
-		HookedController* newController = this->mHookedControllers.back().get();
-
+		// SteamVR serializes device activation, making this collection single-writer.
+		auto updatedControllers
+			= std::make_shared<HookedControllerList>(*mHookedControllers.load());
+		updatedControllers->push_back(std::move(controller));
+		mHookedControllers.store(std::move(updatedControllers));
 		return newController;
 	}
 
 	// We don't bother removing devices when they're deactivated at the moment, since we
 	// may went to continue controlling them. This may mean they can be activated again.
 	// We can't identify them until they have been fully activated, so once they have been
-	// fully activated and populated, check for duplicate serials and nuke the oldest instance.
+	// fully activated and populated, remove older duplicates from the published device list.
 	void HandOfLesser::removeDuplicateDevices()
 	{
 		std::unordered_map<std::string, int> existingSerials;
+		auto updatedControllers
+			= std::make_shared<HookedControllerList>(*mHookedControllers.load());
 
 		// count duplicates
-		for (auto& controllerContainer : mHookedControllers)
+		for (const auto& controller : *updatedControllers)
 		{
-			existingSerials[controllerContainer->serial]++;
+			existingSerials[controller->serial]++;
 		}
 
 		// Starting from oldest, delete while duplicate count > 1
-		auto it = mHookedControllers.begin();
-		while (it != mHookedControllers.end())
+		auto it = updatedControllers->begin();
+		while (it != updatedControllers->end())
 		{
-			if (existingSerials[it->get()->serial] > 1)
+			if (existingSerials[(*it)->serial] > 1)
 			{
-				std::string serial = it->get()->serial;
+				std::string serial = (*it)->serial;
 				DriverLog("Removing duplicate device with serial: %s", serial.c_str());
 
 				existingSerials[serial]--;
-				it = mHookedControllers.erase(it);
+				it = updatedControllers->erase(it);
 			}
 			else
 			{
@@ -670,6 +684,7 @@ namespace HOL
 			}
 		}
 
+		mHookedControllers.store(std::move(updatedControllers));
 		refreshPreferredHookedControllers();
 	}
 
@@ -678,7 +693,7 @@ namespace HOL
 		if (HandOfLesser::Current->Config.handPose.controllerMode
 			== ControllerMode::HookedControllerMode)
 		{
-			return shouldPossess(getHookedControllerByDeviceId(deviceId));
+			return shouldPossess(getHookedControllerByDeviceId(deviceId).get());
 		}
 
 		return false;
@@ -693,7 +708,8 @@ namespace HOL
 		}
 
 		// Only the selected controller for a side should ever be possessed.
-		if (controller == nullptr || controller != getHookedController(controller->getSide()))
+		if (controller == nullptr
+			|| controller != getHookedController(controller->getSide()).get())
 		{
 			return false;
 		}
@@ -750,11 +766,9 @@ namespace HOL
 		// If a driver provides hand-tracking controllers we may be hooking 
 		// those instead of the real controllers, but still want to use the real
 		// controls to determine whether or not we should stop hand tracking entirely.
-		HookedController* recoveryController = getRecoveryHookedController(controller->getSide());
-		if (recoveryController == nullptr)
-		{
-			recoveryController = controller;
-		}
+		auto recoveryControllerOwner = getRecoveryHookedController(controller->getSide());
+		HookedController* recoveryController
+			= recoveryControllerOwner ? recoveryControllerOwner.get() : controller;
 
 		bool canPoss = controller->canPossess();
 		bool recoveryPoseValid = recoveryController->mLastOriginalPoseValid;
@@ -838,15 +852,15 @@ namespace HOL
 		// Once a side is hand-tracking-primary, only the selected hooked controller for that
 		// side stays live. Every other same-side controller should be hidden until native
 		// control takes priority again.
-		return controller != getHookedController(side);
+		return controller != getHookedController(side).get();
 	}
 
 	bool HandOfLesser::isHandTrackingPrimary(HOL::HandSide side)
 	{
-		HookedController* hooked = getHookedController(side);
+		auto hooked = getHookedController(side);
 		if (hooked != nullptr)
 		{
-			return shouldUseHandTracking(hooked);
+			return shouldUseHandTracking(hooked.get());
 		}
 
 		if (side < 0 || side >= HOL::HandSide_MAX)
@@ -994,36 +1008,38 @@ namespace HOL
 			return;
 		}
 
-		for (auto& controllerContainer : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
-			updateShadowTrackerState(controllerContainer.get());
+			updateShadowTrackerState(controller.get());
 		}
 	}
 
 	// Only works if a side has been assigned
 	// usually is, just not right after being activated.
-	HookedController* HandOfLesser::getHookedController(HOL::HandSide side)
+	std::shared_ptr<HookedController> HandOfLesser::getHookedController(HOL::HandSide side)
 	{
 		if (side < 0 || side >= HOL::HandSide_MAX)
 		{
 			return nullptr;
 		}
 
-		return mPreferredHookedControllers[side];
+		return mPreferredHookedControllers[side].load();
 	}
 
-	std::vector<HookedController*> HandOfLesser::getHookedControllers(HOL::HandSide side)
+	std::vector<std::shared_ptr<HookedController>>
+	HandOfLesser::getHookedControllers(HOL::HandSide side)
 	{
-		std::vector<HookedController*> controllers;
+		std::vector<std::shared_ptr<HookedController>> controllers;
 
 		if (side < 0 || side >= HOL::HandSide_MAX)
 		{
 			return controllers;
 		}
 
-		for (auto& controllerContainer : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
-			HookedController* controller = controllerContainer.get();
 			if (controller->mDeviceClass != vr::TrackedDeviceClass_Controller)
 			{
 				continue;
@@ -1060,43 +1076,45 @@ namespace HOL
 			return;
 		}
 
-		mPreferredHookedControllers[side] = nullptr;
-
 		auto controllers = getHookedControllers(side);
 		if (controllers.empty())
 		{
+			mPreferredHookedControllers[side].store(nullptr);
 			return;
 		}
 
+		std::shared_ptr<HookedController> bestController;
 		std::string preferredSerial = getPreferredHookedControllerSerial(side);
 		if (!preferredSerial.empty())
 		{
 			// Explicit user selection always wins when that serial is currently available.
-			for (HookedController* controller : controllers)
+			for (const auto& controller : controllers)
 			{
 				if (controller->serial == preferredSerial)
 				{
-					mPreferredHookedControllers[side] = controller;
-					return;
+					bestController = controller;
+					break;
 				}
 			}
 		}
 
-		HookedController* bestController = nullptr;
 		int bestScore = std::numeric_limits<int>::lowest();
 
-		for (HookedController* controller : controllers)
+		if (bestController == nullptr)
 		{
-			int score = getHookedControllerSelectionScore(controller);
-			if (bestController == nullptr || score > bestScore
-				|| (score == bestScore && controller->serial < bestController->serial))
+			for (const auto& controller : controllers)
 			{
-				bestController = controller;
-				bestScore = score;
+				int score = getHookedControllerSelectionScore(controller.get());
+				if (bestController == nullptr || score > bestScore
+					|| (score == bestScore && controller->serial < bestController->serial))
+				{
+					bestController = controller;
+					bestScore = score;
+				}
 			}
 		}
 
-		mPreferredHookedControllers[side] = bestController;
+		mPreferredHookedControllers[side].store(bestController);
 	}
 
 	void HandOfLesser::refreshRecoveryHookedController(HOL::HandSide side)
@@ -1106,9 +1124,8 @@ namespace HOL
 			return;
 		}
 
-		mRecoveryHookedControllers[side] = nullptr;
-
-		for (HookedController* controller : getHookedControllers(side))
+		std::shared_ptr<HookedController> recoveryController;
+		for (const auto& controller : getHookedControllers(side))
 		{
 			// Full skeletal tracking indicates the dedicated hand-tracking controller pair, which is
 			// not useful as the signal that native controller tracking has returned.
@@ -1123,9 +1140,11 @@ namespace HOL
 				continue;
 			}
 
-			mRecoveryHookedControllers[side] = controller;
-			return;
+			recoveryController = controller;
+			break;
 		}
+
+		mRecoveryHookedControllers[side].store(std::move(recoveryController));
 	}
 
 	std::string HandOfLesser::getPreferredHookedControllerSerial(HOL::HandSide side) const
@@ -1141,14 +1160,15 @@ namespace HOL
 		}
 	}
 
-	HookedController* HandOfLesser::getRecoveryHookedController(HOL::HandSide side) const
+	std::shared_ptr<HookedController>
+	HandOfLesser::getRecoveryHookedController(HOL::HandSide side) const
 	{
 		if (side < 0 || side >= HOL::HandSide_MAX)
 		{
 			return nullptr;
 		}
 
-		return mRecoveryHookedControllers[side];
+		return mRecoveryHookedControllers[side].load();
 	}
 
 	vr::EVRSkeletalTrackingLevel HandOfLesser::getRequestedSkeletalTrackingLevel() const
@@ -1195,11 +1215,12 @@ namespace HOL
 		return score;
 	}
 
-	HookedController* HandOfLesser::getHookedControllerByDeviceId(uint32_t deviceId)
+	std::shared_ptr<HookedController>
+	HandOfLesser::getHookedControllerByDeviceId(uint32_t deviceId)
 	{
-		for (auto& controllerContainer : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
-			HookedController* controller = controllerContainer.get();
 			if (controller->getDeviceId() == deviceId)
 			{
 				return controller;
@@ -1209,69 +1230,70 @@ namespace HOL
 		return nullptr;
 	}
 
-	HookedController* HandOfLesser::getHookedControllerBySerial(std::string serial)
+	std::shared_ptr<HookedController>
+	HandOfLesser::getHookedControllerBySerial(std::string serial)
 	{
-		for (auto& controllerContainer : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
-			HookedController* controller = controllerContainer.get();
+			if (controller->serial == serial)
 			{
-				if (controller->serial == serial)
-				{
-					return controller;
-				}
+				return controller;
 			}
 		}
 
 		return nullptr;
 	}
 
-	HookedController*
+	std::shared_ptr<HookedController>
 	HandOfLesser::getHookedControllerByPropertyContainer(vr::PropertyContainerHandle_t container)
 	{
-		for (auto& controllerContainer : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
-			if (controllerContainer->propertyContainer == container)
+			if (controller->propertyContainer == container)
 			{
-				return controllerContainer.get();
+				return controller;
 			}
 		}
 
 		return nullptr;
 	}
 
-	HookedController* HandOfLesser::getHMD()
+	std::shared_ptr<HookedController> HandOfLesser::getHMD()
 	{
-		for (auto& controllerContainer : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
-			if (controllerContainer->mDeviceClass
-				== vr::ETrackedDeviceClass::TrackedDeviceClass_HMD)
+			if (controller->mDeviceClass == vr::ETrackedDeviceClass::TrackedDeviceClass_HMD)
 			{
-				return controllerContainer.get();
+				return controller;
 			}
 		}
 
 		return nullptr;
 	}
 
-	HookedController*
+	std::shared_ptr<HookedController>
 	HandOfLesser::getHookedControllerByInputHandle(vr::VRInputComponentHandle_t inputHandle)
 	{
-		for (auto& controllerContainer : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
-			HookedController* controller = controllerContainer.get();
+			if (controller->inputHandles.contains(inputHandle))
 			{
-				if (controller->inputHandles.contains(inputHandle))
-				{
-					return controller;
-				}
+				return controller;
 			}
 		}
 
 		return nullptr;
 	}
 
-	GenericControllerInterface* HandOfLesser::GetActiveController(HOL::HandSide side)
+	GenericControllerInterface* HandOfLesser::GetActiveController(
+		HOL::HandSide side, std::shared_ptr<HookedController>& hookedControllerOwner)
 	{
+		hookedControllerOwner.reset();
+
 		switch (HandOfLesser::Current->Config.handPose.controllerMode)
 		{
 			case ControllerMode::EmulateControllerMode: {
@@ -1288,19 +1310,19 @@ namespace HOL
 				return emulated;
 			}
 			case ControllerMode::HookedControllerMode: {
-				HookedController* hooked = getHookedController(side);
-				if (hooked == nullptr)
+				hookedControllerOwner = getHookedController(side);
+				if (hookedControllerOwner == nullptr)
 				{
 					return nullptr;
 				}
 
 				// Not active if we shouldn't possess it
-				if (!shouldPossess(hooked))
+				if (!shouldPossess(hookedControllerOwner.get()))
 				{
 					return nullptr;
 				}
 
-				return hooked;
+				return hookedControllerOwner.get();
 			}
 			default: {
 				return nullptr;
@@ -1337,8 +1359,9 @@ namespace HOL
 		// being a client, so instead we listen for the event
 		// that says they've been assigned a side, and... guess.
 		std::vector<HookedController*> unsidedControllers;
+		auto hookedControllers = mHookedControllers.load();
 
-		for (auto& controller : mHookedControllers)
+		for (const auto& controller : *hookedControllers)
 		{
 			// Controller with no left/right role hint.
 			// Only applies to Vive wand, and they use the invalid role.
@@ -1371,7 +1394,7 @@ namespace HOL
 					  unsidedControllers.size());
 		}
 
-		HookedController* hmd = getHMD();
+		auto hmd = getHMD();
 		if (hmd == nullptr)
 		{
 			DriverLog("Could not get HMD to do handedness math, so I give up.");
@@ -1497,7 +1520,8 @@ namespace HOL
 		}
 		updateShadowTrackerStates();
 
-		for (auto& controller : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
 			controller->FlushDisconnectState();
 		}
@@ -1522,7 +1546,7 @@ namespace HOL
 			uint64_t nowMs = (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
 							 std::chrono::system_clock::now().time_since_epoch())
 							 .count();
-			for (auto& controller : mHookedControllers)
+			for (const auto& controller : *hookedControllers)
 			{
 				if (controller->mLastOriginalPoseSubmitTimeMs == 0)
 				{
@@ -1539,7 +1563,7 @@ namespace HOL
 		}
 
 		// iterate frame counter for all controller
-		for (auto& controller : this->mHookedControllers)
+		for (const auto& controller : *hookedControllers)
 		{
 			controller->framesSinceLastPoseUpdate++;
 		}
@@ -1626,9 +1650,9 @@ namespace HOL
 			}
 		}
 
-		for (auto& controllerContainer : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
-			HookedController* controller = controllerContainer.get();
 			if (controller->mDeviceClass != vr::TrackedDeviceClass_Controller
 				|| controller->isActingAsTracker())
 			{
@@ -1645,7 +1669,7 @@ namespace HOL
 			}
 		}
 
-		payload.hookedControllerCount = (int)mHookedControllers.size();
+		payload.hookedControllerCount = (int)hookedControllers->size();
 		payload.emulatedTrackerCount = (int)mEmulatedTrackers.size();
 
 		this->mTransport.sendPayload<NativePacketType::DriverStatus>(payload);
@@ -1673,7 +1697,8 @@ namespace HOL
 
 	void HandOfLesser::sendAllDeviceStates()
 	{
-		for (auto& controller : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
 			sendDeviceState(controller.get());
 		}
@@ -1733,7 +1758,8 @@ namespace HOL
 
 	void HandOfLesser::sendAllDeviceInputInfo()
 	{
-		for (auto& controller : mHookedControllers)
+		auto hookedControllers = mHookedControllers.load();
+		for (const auto& controller : *hookedControllers)
 		{
 			sendDeviceInputInfo(controller.get());
 		}

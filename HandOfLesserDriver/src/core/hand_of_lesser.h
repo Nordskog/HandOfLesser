@@ -1,8 +1,10 @@
 #pragma once
 #include <array>
 #include <atomic>
+#include <memory>
 #include <thread>
 #include <unordered_map>
+#include <vector>
 #include <HandOfLesserCommon.h>
 #include "src/controller/emulated_controller_driver.h"
 #include "src/controller/hooked_controller.h"
@@ -43,19 +45,20 @@ namespace HOL
 		bool isEmulatedController(vr::ITrackedDeviceServerDriver* driver);
 		bool isEmulatedTracker(vr::ITrackedDeviceServerDriver* driver);
 		bool isShadowTracker(vr::ITrackedDeviceServerDriver* driver);
-		HookedController* getHookedController(HOL::HandSide side);
-		std::vector<HookedController*> getHookedControllers(HOL::HandSide side);
-		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
-		HookedController* getHookedControllerBySerial(std::string serial);
-		HookedController*
+		std::shared_ptr<HookedController> getHookedController(HOL::HandSide side);
+		std::vector<std::shared_ptr<HookedController>> getHookedControllers(HOL::HandSide side);
+		std::shared_ptr<HookedController> getHookedControllerByDeviceId(uint32_t deviceId);
+		std::shared_ptr<HookedController> getHookedControllerBySerial(std::string serial);
+		std::shared_ptr<HookedController>
 		getHookedControllerByPropertyContainer(vr::PropertyContainerHandle_t container);
-		HookedController* getHMD();
-		HookedController*
+		std::shared_ptr<HookedController> getHMD();
+		std::shared_ptr<HookedController>
 		getHookedControllerByInputHandle(vr::VRInputComponentHandle_t inputHandle);
 
 		// Returns the active controller if we are in a mode that modifies it and it is connected
 		// otherwise returns nullptr
-		GenericControllerInterface* GetActiveController(HOL::HandSide side);
+		GenericControllerInterface* GetActiveController(
+			HOL::HandSide side, std::shared_ptr<HookedController>& hookedControllerOwner);
 
 		void requestEstimateControllerSide();
 
@@ -83,11 +86,13 @@ namespace HOL
 		void updateShadowTrackerStates();
 		EmulatedTrackerDriver* getOrCreateShadowTracker(HookedController* controller);
 
-private:
+	private:
+		using HookedControllerList = std::vector<std::shared_ptr<HookedController>>;
+
 		void refreshPreferredHookedController(HOL::HandSide side);
 		void refreshRecoveryHookedController(HOL::HandSide side);
 		std::string getPreferredHookedControllerSerial(HOL::HandSide side) const;
-		HookedController* getRecoveryHookedController(HOL::HandSide side) const;
+		std::shared_ptr<HookedController> getRecoveryHookedController(HOL::HandSide side) const;
 		vr::EVRSkeletalTrackingLevel getRequestedSkeletalTrackingLevel() const;
 		int getHookedControllerSelectionScore(HookedController* controller) const;
 		void persistAutoLaunchSetting();
@@ -111,14 +116,16 @@ private:
 		std::array<std::array<std::unique_ptr<EmulatedControllerDriver>, HOL::HandSide_MAX>,
 				   HOL::EmulatedControllerVariant_MAX>
 			mAllEmulatedControllers;
-		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
+		std::atomic<std::shared_ptr<const HookedControllerList>> mHookedControllers;
 		std::unordered_map<HOL::BodyTrackerRole, std::unique_ptr<EmulatedTrackerDriver>>
 			mEmulatedTrackers;
 		std::unordered_map<std::string, std::unique_ptr<EmulatedTrackerDriver>>
 			mShadowTrackers; // Keyed by source device serial
 		bool mHasConfiguredShadowTrackers = false;
-		std::array<HookedController*, HOL::HandSide_MAX> mPreferredHookedControllers{};
-		std::array<HookedController*, HOL::HandSide_MAX> mRecoveryHookedControllers{};
+		std::array<std::atomic<std::shared_ptr<HookedController>>, HOL::HandSide_MAX>
+			mPreferredHookedControllers{};
+		std::array<std::atomic<std::shared_ptr<HookedController>>, HOL::HandSide_MAX>
+			mRecoveryHookedControllers{};
 		HOL::HandTransformPayload mLastHandTransforms[HOL::HandSide_MAX]{};
 		bool mHasHandTransform[HOL::HandSide_MAX]{false, false};
 	};

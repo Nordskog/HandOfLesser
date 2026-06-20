@@ -229,7 +229,7 @@ namespace HOL::hooks
 		{
 			auto& config = HOL::HandOfLesser::Current->Config;
 
-			HookedController* controller
+			auto controller
 				= HOL::HandOfLesser::Current->getHookedControllerByDeviceId(unWhichDevice);
 
 			if (controller != nullptr)
@@ -266,7 +266,7 @@ namespace HOL::hooks
 					&& config.handPose.controllerMode == ControllerMode::HookedControllerMode)
 				{
 					controller->setSuppressed(
-						HOL::HandOfLesser::Current->shouldSuppressHookedController(controller));
+						HOL::HandOfLesser::Current->shouldSuppressHookedController(controller.get()));
 				}
 
 				if (controller->isSuppressed())
@@ -296,7 +296,8 @@ namespace HOL::hooks
 				if (controllerMode == ControllerMode::HookedControllerMode)
 				{
 					bool fallbackOnlyActive = config.handPose.fallbackOnly && !HOL::HandOfLesser::Runtime.isOVR;
-					bool shouldPossess = HOL::HandOfLesser::Current->shouldPossess(controller);
+					bool shouldPossess
+						= HOL::HandOfLesser::Current->shouldPossess(controller.get());
 					bool shouldSubmitFallbackPose
 						= shouldPossess && (!fallbackOnlyActive || !newPoseValid);
 
@@ -345,7 +346,7 @@ namespace HOL::hooks
 			// We hook this to get a reference to the IVRDriverInput for each controller.
 			// We can identify the controller by the PropertyContainer, because it is unique
 			// to each controller.
-			HOL::HookedController* controller
+			auto controller
 				= HOL::HandOfLesser::Current->getHookedControllerByPropertyContainer(ulContainer);
 			if (controller != nullptr)
 			{
@@ -387,7 +388,7 @@ namespace HOL::hooks
 			// We hook this to get a reference to the IVRDriverInput for each controller.
 			// We can identify the controller by the PropertyContainer, because it is unique
 			// to each controller.
-			HOL::HookedController* controller
+			auto controller
 				= HOL::HandOfLesser::Current->getHookedControllerByPropertyContainer(ulContainer);
 			if (controller != nullptr)
 			{
@@ -430,7 +431,7 @@ namespace HOL::hooks
 																		  unGripLimitTransformCount,
 																		  pHandle);
 
-			HOL::HookedController* controller
+			auto controller
 				= HOL::HandOfLesser::Current->getHookedControllerByPropertyContainer(ulContainer);
 			if (controller != nullptr)
 			{
@@ -460,7 +461,7 @@ namespace HOL::hooks
 										double fTimeOffset)
 		{
 			auto& config = HOL::HandOfLesser::Current->Config;
-			HookedController* controller
+			auto controller
 				= HandOfLesser::Current->getHookedControllerByInputHandle(ulComponent);
 
 			// TODO we shouldn't do anything here if we're not... doing stuff.
@@ -470,7 +471,7 @@ namespace HOL::hooks
 			{
 				auto& inputHandle = controller->inputHandles[ulComponent];
 				if (HOL::HandOfLesser::Current->shouldSuppressTouchInput(
-						controller, inputHandle.inputPath))
+						controller.get(), inputHandle.inputPath))
 				{
 					return UpdateBooleanComponent::FunctionHook.originalFunc(
 						_this, ulComponent, false, fTimeOffset);
@@ -494,7 +495,7 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 						}
 					}
 
-					if (HOL::HandOfLesser::Current->shouldSuppressHookedController(controller))
+					if (HOL::HandOfLesser::Current->shouldSuppressHookedController(controller.get()))
 					{
 						if (config.steamvr.blockControllerInputWhileHandTracking)
 						{
@@ -537,7 +538,7 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 										double fTimeOffset)
 		{
 			auto& config = HOL::HandOfLesser::Current->Config;
-			HookedController* controller
+			auto controller
 				= HandOfLesser::Current->getHookedControllerByInputHandle(ulComponent);
 
 			// TODO we shouldn't do anything here if we're not... doing stuff.
@@ -562,7 +563,7 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 					}
 				}
 
-				if (HOL::HandOfLesser::Current->shouldSuppressHookedController(controller))
+				if (HOL::HandOfLesser::Current->shouldSuppressHookedController(controller.get()))
 				{
 					if (config.steamvr.blockControllerInputWhileHandTracking)
 					{
@@ -603,7 +604,7 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 										const vr::VRBoneTransform_t* pTransforms,
 										uint32_t unTransformCount)
 		{
-			HookedController* controller
+			auto controller
 				= HandOfLesser::Current->getHookedControllerByInputHandle(ulComponent);
 
 			if (controller != nullptr)
@@ -623,7 +624,7 @@ DriverLog("Controller: %s, Button: %s, value: %s",
 				if (submittingSkeletalInput
 					&& HandOfLesser::Current->Config.handPose.controllerMode
 						   == ControllerMode::HookedControllerMode
-					&& HandOfLesser::Current->shouldPossess(controller))
+					&& HandOfLesser::Current->shouldPossess(controller.get()))
 				{
 					return vr::VRInputError_None;
 				}
