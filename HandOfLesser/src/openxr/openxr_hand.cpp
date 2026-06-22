@@ -239,6 +239,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		useHandTrackingDataSource ? &this->mDataSourceState : nullptr);
 	if (result != XR_SUCCESS)
 	{
+		this->mLastPoseUpdateTime = {};
+		HOL::display::HandTransform[this->mSide].updateRateMS.store(0.0f);
 		this->handPose = {};
 		this->handPose.poseStale = !prevActive && !prevPoseValid && !prevPoseTracked;
 		this->mHasPrevRawPose = false;
@@ -418,6 +420,10 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 
 		if (!this->handPose.poseStale)
 		{
+			HOL::display::updateTrackingRate(
+				this->mLastPoseUpdateTime,
+				HOL::display::HandTransform[this->mSide].updateRateMS);
+
 			//////////////////////////////////
 			// Update transform and velocity
 			//////////////////////////////////
@@ -614,6 +620,8 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 		this->mHasPrevRawPose = false;
 		this->mHasFilteredPalmPose = false;
 		this->mPrevFilteredSampleTime = 0;
+		this->mLastPoseUpdateTime = {};
+		HOL::display::HandTransform[this->mSide].updateRateMS.store(0.0f);
 	}
 
 	mPrevActive = this->handPose.active;

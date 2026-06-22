@@ -4,6 +4,7 @@
 #include <openxr/openxr_platform.h>
 #include <openxr/openxr.hpp>
 #include <HandOfLesserCommon.h>
+#include <chrono>
 #include "src/hands/hand_pose.h"
 #include "openxr_body.h"
 
@@ -47,4 +48,5 @@ private:
 	bool mHasFilteredPalmPose = false;
 	XrTime mDirectHandTrackingStartTime = 0;
 	XrTime mPrevFilteredSampleTime = 0;
+	std::chrono::steady_clock::time_point mLastPoseUpdateTime{};
 };

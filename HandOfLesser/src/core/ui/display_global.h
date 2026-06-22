@@ -3,6 +3,8 @@
 #include <HandOfLesserCommon.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <atomic>
+#include <chrono>
 
 namespace HOL
 {
@@ -29,6 +31,7 @@ namespace HOL
 		bool positionTracked;
 		XrHandTrackingDataSourceEXT dataSource = XR_HAND_TRACKING_DATA_SOURCE_MAX_ENUM_EXT;
 		int trackedJointCount = 0;
+		std::atomic<float> updateRateMS = 0.0f;
 		Eigen::Vector3f finalTranslationOffset;
 		Eigen::Vector3f finalOrientationOffset; // In degrees
 		PoseLocation rawPose;
@@ -48,5 +51,7 @@ namespace HOL
 		extern HandTransformDisplay HandTransform[2];
 		extern BodyTrackingDisplay BodyTracking;
 		extern DriverStatusDisplay DriverStatus;
+		void updateTrackingRate(std::chrono::steady_clock::time_point& lastUpdateTime,
+								std::atomic<float>& updateRateMS);
 	} // namespace display
 } // namespace HOL

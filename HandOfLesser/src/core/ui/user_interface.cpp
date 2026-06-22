@@ -364,6 +364,8 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 
 	ImGui::Text("Data source: %s", dataSource);
 	ImGui::Text("Tracked joints: %d / 26", HOL::display::HandTransform[side].trackedJointCount);
+	ImGui::Text(
+		"Update rate: %5.2f ms", HOL::display::HandTransform[side].updateRateMS.load());
 
 	ImGui::SeparatorText("Position");
 
@@ -717,6 +719,7 @@ void HOL::UserInterface::buildBindings()
 		Config.input.chainGestureTimeoutMS = defaults.chainGestureTimeoutMS;
 		Config.input.holdDurationMS = defaults.holdDurationMS;
 		Config.input.gateLagTimeMS = defaults.gateLagTimeMS;
+		Config.input.pinchDistanceMM = defaults.pinchDistanceMM;
 		Config.input.lookAtFovDegrees = defaults.lookAtFovDegrees;
 		Config.input.inFrontFovDegrees = defaults.inFrontFovDegrees;
 		Config.input.palmFacingFovDegrees = defaults.palmFacingFovDegrees;
@@ -2404,7 +2407,6 @@ void HOL::UserInterface::buildMain()
 			showWrappedTooltip("These features are only available when using the Oculus runtime.");
 		}
 	}
-
 	ImGui::EndChild();
 }
 
@@ -2524,7 +2526,6 @@ void HOL::UserInterface::buildTracking()
 							   "available here.");
 		}
 	}
-
 	ImGui::EndChild();
 }
 
