@@ -88,5 +88,6 @@ namespace HOL
 		void buildControllerInput();
 		void buildMisc();
 		void buildBodyTrackers();
+		void buildAbout();
 	};
 } // namespace HOL

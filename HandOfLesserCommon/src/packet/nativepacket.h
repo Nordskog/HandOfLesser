@@ -7,13 +7,10 @@
 #include "src/steamvr/skeletal_input_joints.h"
 #include "src/state/state.h"
 #include "src/controller/controller.h"
+#include "src/version.h"
 
 namespace HOL
 {
-#ifndef HOL_VERSION_STRING
-#define HOL_VERSION_STRING "0.0.0.0"
-#endif
-
 	inline constexpr size_t SettingsNativePacketSize = 8196;
 	inline constexpr size_t NativePacketBufferSize = 16384;
 

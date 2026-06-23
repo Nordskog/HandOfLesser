@@ -21,6 +21,7 @@
 #include "src/core/ui/display_global.h"
 #include "src/core/state_global.h"
 #include <HandOfLesserCommon.h>
+#include "src/version.h"
 #include "src/core/HandOfLesserCore.h"
 #include "src/hands/gesture_binding_builder.h"
 #include "src/steamvr/input_wrapper.h"
@@ -78,6 +79,13 @@ namespace
 		}
 
 		return bestMonitor;
+	}
+
+	void buildUrlLine(const char* label, const char* url)
+	{
+		ImGui::TextUnformatted(label);
+		ImGui::SameLine();
+		ImGui::TextLinkOpenURL(url);
 	}
 }
 
@@ -2806,12 +2814,30 @@ void UserInterface::buildInterface()
 			ImGui::EndTabItem();
 		}
 
+		if (ImGui::BeginTabItem("About"))
+		{
+			buildAbout();
+			ImGui::EndTabItem();
+		}
+
 		ImGui::EndTabBar();
 	}
 
 	this->mVisualizer.setActive(visualTabOpen);
 
 	ImGui::End();
+}
+
+void UserInterface::buildAbout()
+{
+	ImGui::SeparatorText("HandOfLesser");
+	ImGui::Text("Version: %s (%s)", HOL_VERSION_STRING, HOL_BUILD_COMMIT);
+	ImGui::TextUnformatted("Author: Roughy");
+	ImGui::TextUnformatted("License: MIT");
+
+	ImGui::Spacing();
+	buildUrlLine("GitHub:", "https://github.com/Nordskog/HandOfLesser");
+	buildUrlLine("Discord:", "https://discord.gg/k9QNcvvJmF");
 }
 
 Visualizer* HOL::UserInterface::getVisualizer()

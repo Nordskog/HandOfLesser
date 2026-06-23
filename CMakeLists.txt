@@ -11,12 +11,24 @@ endif()
 project(HandOfLesser VERSION ${HOL_VERSION})
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(Git QUIET)
+set(HOL_BUILD_COMMIT "unknown")
+if(GIT_FOUND)
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		OUTPUT_VARIABLE HOL_BUILD_COMMIT
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		ERROR_QUIET
+	)
+endif()
 
 # App and driver are copied to output directory, along with version string.
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/output")
-file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/output/version.txt" "${PROJECT_VERSION}\n")
+file(WRITE "${CMAKE_CURRENT_SOURCE_DIR}/output/version.txt" "${PROJECT_VERSION} (${HOL_BUILD_COMMIT})\n")
 
 add_compile_definitions(HOL_VERSION_STRING=\"${PROJECT_VERSION}\")
+add_compile_definitions(HOL_BUILD_COMMIT=\"${HOL_BUILD_COMMIT}\")
 
 # Silence C++17 deprecation warnings
 add_definitions(-D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)
