@@ -28,7 +28,11 @@ namespace HOL::Gesture::OpenHandPinchGesture
 		////////////////////
 
 		this->mProxGesture = ProximityGesture::Create();
-		this->mProxGesture->setup(this->parameters.pinchFinger, this->parameters.side);
+		this->mProxGesture->setup(this->parameters.pinchFinger,
+								  this->parameters.side,
+								  FingerThumb,
+								  this->parameters.side,
+								  HOL::Config.input.pinchDistanceMM / 1000.0f);
 
 		/////////////////////////////////////
 		// Other fingers above pinch plane

@@ -382,7 +382,11 @@ namespace
 			&& binding.proximityFinger == HOL::FingerIndex)
 		{
 			auto proximity = HOL::Gesture::ProximityGesture::Create();
-			proximity->setup(binding.proximityFinger, binding.side, FingerThumb, binding.side);
+			proximity->setup(binding.proximityFinger,
+							 binding.side,
+							 FingerThumb,
+							 binding.side,
+							 HOL::Config.input.pinchDistanceMM / 1000.0f);
 			return proximity;
 		}
 
@@ -717,7 +721,10 @@ namespace HOL::GestureBindings
 			triggerGesture->setup();
 
 			auto holdGesture = HOL::Gesture::ProximityGesture::Create();
-			holdGesture->setup(binding.proximityFinger, binding.side);
+			holdGesture->setup(
+				binding.proximityFinger,
+				binding.side,
+				HOL::Config.input.pinchDistanceMM / 1000.0f);
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalHoldGesture = holdGesture;
 
 			std::shared_ptr<HOL::Gesture::BaseGesture::Gesture> finalTriggerGesture

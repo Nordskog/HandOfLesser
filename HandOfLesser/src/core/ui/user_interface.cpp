@@ -677,6 +677,17 @@ void HOL::UserInterface::buildBindings()
 						   "activate and count.");
 	}
 
+	int pinchDistanceMM = Config.input.pinchDistanceMM;
+	if (ImGui::InputInt("Pinch Distance (mm)", &pinchDistanceMM))
+	{
+		Config.input.pinchDistanceMM = std::clamp(pinchDistanceMM, 1, 79);
+		rebuildActions = true;
+	}
+	if (ImGui::IsItemHovered())
+	{
+		showWrappedTooltip("Maximum finger distance at which a pinch is fully active.");
+	}
+
 	float lookAtFovDegrees = Config.input.lookAtFovDegrees;
 	if (ImGui::InputFloat("Look-at FoV (deg)", &lookAtFovDegrees, 1.0f, 5.0f, "%.1f"))
 	{

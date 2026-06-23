@@ -30,6 +30,7 @@ namespace HOL::Gesture
 				   float maxDistance = 0.08f);
 
 		void setup(HOL::FingerType fingerTip1, HOL::HandSide side1);
+		void setup(HOL::FingerType fingerTip1, HOL::HandSide side1, float minDistance);
 
 	private:
 		XrHandJointEXT mJoint1;

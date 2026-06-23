@@ -84,5 +84,11 @@ namespace HOL::Gesture
 		setup(fingerTip1, side1, HOL::FingerType::FingerThumb, side1);
 	}
 
+	void ProximityGesture::setup(
+		HOL::FingerType fingerTip1, HOL::HandSide side1, float minDistance)
+	{
+		setup(fingerTip1, side1, HOL::FingerType::FingerThumb, side1, minDistance);
+	}
+
 }
 

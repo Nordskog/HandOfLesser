@@ -213,6 +213,7 @@ namespace HOL
 				 {"chainGestureTimeoutMS", settings.chainGestureTimeoutMS},
 				 {"holdDurationMS", settings.holdDurationMS},
 				 {"gateLagTimeMS", settings.gateLagTimeMS},
+				 {"pinchDistanceMM", settings.pinchDistanceMM},
 				 {"inFrontFovDegrees", settings.inFrontFovDegrees},
 				 {"lookAtFovDegrees", settings.lookAtFovDegrees},
 				 {"palmFacingFovDegrees", settings.palmFacingFovDegrees},
@@ -228,6 +229,7 @@ namespace HOL
 				j, "chainGestureTimeoutMS", settings.chainGestureTimeoutMS);
 			nlohmann::get_to_if_present(j, "holdDurationMS", settings.holdDurationMS);
 			nlohmann::get_to_if_present(j, "gateLagTimeMS", settings.gateLagTimeMS);
+			nlohmann::get_to_if_present(j, "pinchDistanceMM", settings.pinchDistanceMM);
 			nlohmann::get_to_if_present(j, "inFrontFovDegrees", settings.inFrontFovDegrees);
 			nlohmann::get_to_if_present(j, "lookAtFovDegrees", settings.lookAtFovDegrees);
 			nlohmann::get_to_if_present(
