@@ -377,7 +377,7 @@ namespace HOL
 
 		struct TrackingFeaturesSettings
 		{
-			bool enableUpperBodyTracking = false;
+			bool enableUpperBodyTracking = true;
 			bool enableSimultaneousTracking = false;
 			bool forceMultimodalHandPrimary = false;
 		};
