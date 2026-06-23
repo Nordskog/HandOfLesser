@@ -6,8 +6,10 @@ namespace HOL
 {
 	void SettingsToggleInput::submit(float inputData)
 	{
+		bool active = inputData >= 1.0f;
+
 		// Expect to receive false/true on every frame, so deal with toggle ourselves
-		if (inputData != mLastValue && inputData >= 1)
+		if (active != mLastValue && active)
 		{
 			// Changed from false to true, do the toggle.
 			switch (this->mTargetSetting)
@@ -23,7 +25,7 @@ namespace HOL
 			}
 		}
 
-		mLastValue = inputData;
+		mLastValue = active;
 	}
 
 	std::shared_ptr<SettingsToggleInput> SettingsToggleInput::setup(HolSetting targetSetting)

@@ -82,8 +82,8 @@ namespace HOL::OpenXR
 	std::string getOpenXRRuntimeName(std::string runtimePath)
 	{
 		// In an ideal world we'd go read the json, but I am lazy
-		int lastSlash = runtimePath.find_last_of('\\');
-		if (lastSlash > 0)
+		size_t lastSlash = runtimePath.find_last_of('\\');
+		if (lastSlash != std::string::npos && lastSlash > 0)
 		{
 			// Just get filename from path
 			runtimePath = runtimePath.substr(lastSlash + 1);

@@ -391,8 +391,8 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 
 	{
 		Eigen::Vector3f asEuler
-			= HOL::display::HandTransform[side].rawPose.orientation.toRotationMatrix().eulerAngles(
-				0, 1, 2);
+			= HOL::display::HandTransform[side].rawPose.orientation.toRotationMatrix()
+				  .canonicalEulerAngles(0, 1, 2);
 		ImGui::Text("Raw   : %.3f, %.3f, %.3f",
 					HOL::radiansToDegrees(asEuler.x()),
 					HOL::radiansToDegrees(asEuler.y()),
@@ -402,7 +402,7 @@ void UserInterface::buildSingleHandTransformDisplay(HOL::HandSide side)
 	{
 		Eigen::Vector3f asEuler = HOL::display::HandTransform[side]
 									  .finalPose.orientation.toRotationMatrix()
-									  .eulerAngles(0, 1, 2);
+									  .canonicalEulerAngles(0, 1, 2);
 		ImGui::Text("Final : %.3f, %.3f, %.3f",
 					HOL::radiansToDegrees(asEuler.x()),
 					HOL::radiansToDegrees(asEuler.y()),

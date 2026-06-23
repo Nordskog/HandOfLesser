@@ -54,14 +54,12 @@ void HOL::OpenXR::HandTracking::rebuildActions()
 		}
 	}
 
-	std::atomic_store_explicit(
-		&this->mActionSet, std::shared_ptr<const ActionSet>(newActionSet), std::memory_order_release);
+	this->mActionSet.store(std::shared_ptr<const ActionSet>(newActionSet), std::memory_order_release);
 }
 
 std::shared_ptr<BaseAction> HOL::OpenXR::HandTracking::getActionForBindingIndex(size_t bindingIndex) const
 {
-	std::shared_ptr<const ActionSet> actionSet
-		= std::atomic_load_explicit(&this->mActionSet, std::memory_order_acquire);
+	std::shared_ptr<const ActionSet> actionSet = this->mActionSet.load(std::memory_order_acquire);
 	if (!actionSet || bindingIndex >= actionSet->actionsByBindingIndex.size())
 	{
 		return nullptr;
@@ -99,8 +97,7 @@ void HandTracking::updateHands(xr::UniqueDynamicSpace& space, XrTime time, OpenX
 	}
 
 	// Evaluate gestures
-	std::shared_ptr<const ActionSet> actionSet
-		= std::atomic_load_explicit(&this->mActionSet, std::memory_order_acquire);
+	std::shared_ptr<const ActionSet> actionSet = this->mActionSet.load(std::memory_order_acquire);
 	if (!actionSet)
 	{
 		return;

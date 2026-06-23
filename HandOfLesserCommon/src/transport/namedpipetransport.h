@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN // Exclude winsock.h to avoid conflicts with winsock2.h
+#endif
 #include <windows.h>
 #include "itransport.h"
 

@@ -56,7 +56,7 @@ namespace HOL::OpenXR
 		OpenXRHand mLeftHand;
 		OpenXRHand mRightHand;
 
-		std::shared_ptr<const ActionSet> mActionSet = std::make_shared<ActionSet>();
+		std::atomic<std::shared_ptr<const ActionSet>> mActionSet = std::make_shared<ActionSet>();
 		std::array<bool, HOL::HandSide_MAX> mTriggerStabilizationHeld = {false, false};
 		std::array<std::chrono::steady_clock::time_point, HOL::HandSide_MAX>
 			mLastTriggerStabilizationTime = {};

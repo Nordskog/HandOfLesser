@@ -53,7 +53,7 @@ namespace HOL::hacks
 		// Location of target byte relative to first byte of search pattern
 
 
-		int targetOffset = targetByteSize - targetInstructionSize;
+		size_t targetOffset = targetByteSize - targetInstructionSize;
 
 		// Look up module size to limit search range
 		MODULEINFO moduleInfo;
@@ -283,7 +283,7 @@ namespace HOL::hacks
 
 		HANDLE currentProcess = GetCurrentProcess();
 		HMODULE hModule = getModule(
-			currentProcess, _T("\LibOVRRTImpl64_1.dll")); // dll loaded into this memory address
+			currentProcess, _T("\\LibOVRRTImpl64_1.dll")); // dll loaded into this memory address
 
 		applyPatch(hModule,
 				   targetBytes,
@@ -328,7 +328,7 @@ namespace HOL::hacks
 
 		HANDLE currentProcess = GetCurrentProcess();
 		HMODULE hModule = getModule(
-			currentProcess, _T("\XR_EXT_hand_tracking.dll")); // dll loaded into this memory address
+			currentProcess, _T("\\XR_EXT_hand_tracking.dll")); // dll loaded into this memory address
 
 		applyPatch(hModule,
 				   targetBytes,

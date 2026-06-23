@@ -38,7 +38,7 @@ namespace HOL
 	Eigen::Vector3f quaternionToEulerAngles(const Eigen::Quaternionf& q)
 	{
 		Eigen::Matrix3f rotationMatrix = q.toRotationMatrix();
-		return rotationMatrix.eulerAngles(0, 1, 2); // XYZ
+		return rotationMatrix.canonicalEulerAngles(0, 1, 2); // XYZ
 	}
 
 	float degreesToRadians(float degrees)

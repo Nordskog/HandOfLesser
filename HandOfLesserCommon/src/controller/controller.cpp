@@ -19,6 +19,10 @@ namespace HOL
 			case ControllerOffsetPreset::ZERO: {
 				return {Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 0, 0)};
 			}
+
+			default: {
+				return {Eigen::Vector3f(0, 0, 0), Eigen::Vector3f(0, 0, 0)};
+			}
 		}
 	}
 

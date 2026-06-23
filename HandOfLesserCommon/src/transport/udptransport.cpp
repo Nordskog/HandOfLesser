@@ -2,6 +2,7 @@
 #include "udptransport.h"
 
 #include <iostream>
+#include <limits>
 #include <ws2tcpip.h>
 #include "transportutil.h"
 
@@ -74,8 +75,10 @@ size_t UdpTransport::send(const char* buffer, size_t size)
 		return 0;
 	}
 
-	size_t sent
-		= sendto(this->mSocket, buffer, size, 0, (sockaddr*)&mSendAddr, sizeof(sockaddr_in));
+	constexpr size_t MaxIntAsSize = static_cast<size_t>((std::numeric_limits<int>::max)());
+	int sendSize = static_cast<int>(size > MaxIntAsSize ? MaxIntAsSize : size);
+	int sent
+		= sendto(this->mSocket, buffer, sendSize, 0, (sockaddr*)&mSendAddr, sizeof(sockaddr_in));
 	if (sent == SOCKET_ERROR)
 	{
 		printWSAError("Socket send failed");
@@ -110,6 +113,8 @@ size_t UdpTransport::receive(char* buffer, size_t maxSize)
 	}
 	else
 	{
-		return recv(this->mSocket, buffer, maxSize, 0);
+		constexpr size_t MaxIntAsSize = static_cast<size_t>((std::numeric_limits<int>::max)());
+		int receiveSize = static_cast<int>(maxSize > MaxIntAsSize ? MaxIntAsSize : maxSize);
+		return recv(this->mSocket, buffer, receiveSize, 0);
 	}
 }
