@@ -65,7 +65,6 @@ namespace HOL
 		{
 			j = {{"motionPredictionMS", settings.motionPredictionMS},
 				 {"updateIntervalMS", settings.updateIntervalMS},
-				 {"forceInactive", settings.forceInactive},
 				 {"minTrackedJointsForQuality", settings.minTrackedJointsForQuality}};
 		}
 
@@ -73,7 +72,6 @@ namespace HOL
 		{
 			nlohmann::get_to_if_present(j, "motionPredictionMS", settings.motionPredictionMS);
 			nlohmann::get_to_if_present(j, "updateIntervalMS", settings.updateIntervalMS);
-			nlohmann::get_to_if_present(j, "forceInactive", settings.forceInactive);
 			nlohmann::get_to_if_present(
 				j, "minTrackedJointsForQuality", settings.minTrackedJointsForQuality);
 		}
