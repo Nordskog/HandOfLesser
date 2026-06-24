@@ -241,6 +241,14 @@ namespace HOL
 
 		if (distance > 99999) // Invalid
 		{
+			if (!this->mLastOriginalPoseValid && this->mLastTransformPayload.valid
+				&& this->mLastTransformPayload.tracked)
+			{
+				mLastHeldState = false;
+				mLastStateChangeTime = std::chrono::steady_clock::now();
+				return false;
+			}
+
 			// Don't allow state changes when distance is invalid
 			// Reset the "consistency timer" so we require 500ms of valid data
 			mLastStateChangeTime = std::chrono::steady_clock::now();
