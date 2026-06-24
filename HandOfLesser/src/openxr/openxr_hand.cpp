@@ -343,7 +343,7 @@ void OpenXRHand::updateJointLocations(xr::UniqueDynamicSpace& space,
 
 		this->handPose.active = true;
 		this->handPose.poseValid = true;
-		this->handPose.poseTracked = false; // otherwise estimated usign upper-body
+		this->handPose.poseTracked = this->handPose.poseTracked; // otherwise estimated usign upper-body
 		usingBodyTrackingFallback = true;
 	}
 	
